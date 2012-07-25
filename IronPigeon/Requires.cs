@@ -17,7 +17,7 @@
 		/// <param name="value">The value.</param>
 		/// <param name="parameterName">Name of the parameter.</param>
 		[DebuggerStepThrough]
-		public static void NotNull<T>(T value, string parameterName) where T : class {
+		internal static void NotNull<T>(T value, string parameterName) where T : class {
 			if (value == null) {
 				throw new ArgumentNullException(parameterName);
 			}
@@ -29,7 +29,7 @@
 		/// <param name="value">The value.</param>
 		/// <param name="parameterName">Name of the parameter.</param>
 		[DebuggerStepThrough]
-		public static void NotNullOrEmpty(string value, string parameterName) {
+		internal static void NotNullOrEmpty(string value, string parameterName) {
 			NotNull(value, parameterName);
 			True(value.Length > 0, parameterName, Strings.EmptyStringNotAllowed);
 		}
@@ -41,7 +41,7 @@
 		/// <param name="value">The value.</param>
 		/// <param name="parameterName">Name of the parameter.</param>
 		[DebuggerStepThrough]
-		public static void NotNullOrEmpty<T>(IEnumerable<T> value, string parameterName) {
+		internal static void NotNullOrEmpty<T>(IEnumerable<T> value, string parameterName) {
 			NotNull(value, parameterName);
 			True(value.Any(), parameterName, Strings.InvalidArgument);
 		}
@@ -54,7 +54,7 @@
 		/// <param name="unformattedMessage">The unformatted message.</param>
 		/// <param name="args">Formatting arguments.</param>
 		[DebuggerStepThrough]
-		public static void True(bool condition, string parameterName, string unformattedMessage, params object[] args) {
+		internal static void True(bool condition, string parameterName, string unformattedMessage, params object[] args) {
 			if (!condition) {
 				throw new ArgumentException(String.Format(CultureInfo.CurrentCulture, unformattedMessage, args), parameterName);
 			}

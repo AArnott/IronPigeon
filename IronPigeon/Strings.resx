@@ -126,4 +126,7 @@
   <data name="SequenceContainsNullElement" xml:space="preserve">
     <value>The list contains a null element.</value>
   </data>
+  <data name="UTCTimeRequired" xml:space="preserve">
+    <value>The time must be given in UTC.</value>
+  </data>
 </root>

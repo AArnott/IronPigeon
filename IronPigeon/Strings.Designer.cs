@@ -86,5 +86,14 @@ namespace IronPigeon {
                 return ResourceManager.GetString("SequenceContainsNullElement", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The time must be given in UTC..
+        /// </summary>
+        internal static string UTCTimeRequired {
+            get {
+                return ResourceManager.GetString("UTCTimeRequired", resourceCulture);
+            }
+        }
     }
 }
