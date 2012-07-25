@@ -1,0 +1,26 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2012
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IronPigeon.Tests", "IronPigeon.Tests\IronPigeon.Tests.csproj", "{301BE089-B0A7-4C13-A8A2-3A02FF83999A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IronPigeon", "IronPigeon\IronPigeon.csproj", "{BEFB82D5-C686-4D50-91C7-419846C8F201}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{301BE089-B0A7-4C13-A8A2-3A02FF83999A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{301BE089-B0A7-4C13-A8A2-3A02FF83999A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{301BE089-B0A7-4C13-A8A2-3A02FF83999A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{301BE089-B0A7-4C13-A8A2-3A02FF83999A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BEFB82D5-C686-4D50-91C7-419846C8F201}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BEFB82D5-C686-4D50-91C7-419846C8F201}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BEFB82D5-C686-4D50-91C7-419846C8F201}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BEFB82D5-C686-4D50-91C7-419846C8F201}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
