@@ -20,18 +20,20 @@
 		/// <param name="key">The symmetric key used to encrypt the payload.</param>
 		/// <param name="iv">The initialization vector used to encrypt the payload.</param>
 		/// <param name="expiresUtc">The time beyond which the payload is expected to be deleted.</param>
-		public PayloadReference(Uri location, byte[] hash, byte[] key, byte[] iv, DateTime expiresUtc) {
+		public PayloadReference(Uri location, byte[] hash, byte[] key, byte[] iv, DateTime expiresUtc, string contentType) {
 			Requires.NotNull(location, "location");
 			Requires.NotNullOrEmpty(hash, "hash");
 			Requires.NotNullOrEmpty(key, "key");
 			Requires.NotNullOrEmpty(iv, "iv");
 			Requires.True(expiresUtc.Kind == DateTimeKind.Utc, "expiresUtc", Strings.UTCTimeRequired);
+			Requires.NotNullOrEmpty(contentType, "contentType");
 
 			this.Location = location;
 			this.Hash = hash;
 			this.Key = key;
 			this.IV = iv;
 			this.ExpiresUtc = expiresUtc;
+			this.ContentType = contentType;
 		}
 
 		/// <summary>
@@ -76,5 +78,11 @@
 		/// </value>
 		[DataMember]
 		public DateTime ExpiresUtc { get; private set; }
+
+		/// <summary>
+		/// Gets the type of data contained in the decrypted payload.
+		/// </summary>
+		[DataMember]
+		public string ContentType { get; private set; }
 	}
 }
