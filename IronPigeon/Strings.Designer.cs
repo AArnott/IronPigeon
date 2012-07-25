@@ -61,11 +61,29 @@ namespace IronPigeon {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The buffer is empty..
+        ///   Looks up a localized string similar to The empty string is not allowed..
         /// </summary>
-        internal static string EmptyBuffer {
+        internal static string EmptyStringNotAllowed {
             get {
-                return ResourceManager.GetString("EmptyBuffer", resourceCulture);
+                return ResourceManager.GetString("EmptyStringNotAllowed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The argument has an unexpected value..
+        /// </summary>
+        internal static string InvalidArgument {
+            get {
+                return ResourceManager.GetString("InvalidArgument", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The list contains a null element..
+        /// </summary>
+        internal static string SequenceContainsNullElement {
+            get {
+                return ResourceManager.GetString("SequenceContainsNullElement", resourceCulture);
             }
         }
     }

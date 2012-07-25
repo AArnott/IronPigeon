@@ -15,12 +15,9 @@
 		/// <param name="iv">The initialization vector used to encrypt the data.</param>
 		/// <param name="ciphertext">The encrypted data.</param>
 		public SymmetricEncryptionResult(byte[] key, byte[] iv, byte[] ciphertext) {
-			if (key == null) throw new ArgumentNullException("key");
-			if (iv == null) throw new ArgumentNullException("iv");
-			if (ciphertext == null) throw new ArgumentNullException("ciphertext");
-			if (key.Length == 0) throw new ArgumentException(Strings.EmptyBuffer, "key");
-			if (iv.Length == 0) throw new ArgumentException(Strings.EmptyBuffer, "iv");
-			if (ciphertext.Length == 0) throw new ArgumentException(Strings.EmptyBuffer, "ciphertext");
+			Requires.NotNullOrEmpty(key, "key");
+			Requires.NotNullOrEmpty(iv, "iv");
+			Requires.NotNullOrEmpty(ciphertext, "ciphertext");
 
 			this.Key = key;
 			this.IV = iv;
