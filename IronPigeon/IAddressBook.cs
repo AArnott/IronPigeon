@@ -6,7 +6,7 @@
 	/// <summary>
 	/// Stores and retrieves contacts from some public store.
 	/// </summary>
-	public interface IGlobalAddressBook {
+	public interface IAddressBook {
 		/// <summary>
 		/// Retrieves a contact with some user supplied identifier.
 		/// </summary>

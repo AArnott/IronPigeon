@@ -36,7 +36,7 @@
     <Compile Include="Contact.cs" />
     <Compile Include="ICloudBlobStorageProvider.cs" />
     <Compile Include="ICryptoProvider.cs" />
-    <Compile Include="IGlobalAddressBook.cs" />
+    <Compile Include="IAddressBook.cs" />
     <Compile Include="PayloadReference.cs">
       <SubType>Code</SubType>
     </Compile>
