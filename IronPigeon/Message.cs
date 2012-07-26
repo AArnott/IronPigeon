@@ -10,6 +10,10 @@
 			Requires.NotNull(content, "content");
 			Requires.True(expiresUtc.Kind == DateTimeKind.Utc, "expiresUtc", Strings.UTCTimeRequired);
 			Requires.NotNullOrEmpty(contentType, "contentType");
+
+			this.Content = content;
+			this.ExpiresUtc = expiresUtc;
+			this.ContentType = contentType;
 		}
 
 		public Stream Content { get; private set; }

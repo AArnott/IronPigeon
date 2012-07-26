@@ -15,5 +15,13 @@
 			Assert.Throws<ArgumentNullException>(() => new Message(Constants.ValidStream, Constants.ValidExpirationUtc, null));
 			Assert.Throws<ArgumentException>(() => new Message(Constants.ValidStream, Constants.ValidExpirationUtc, string.Empty));
 		}
+
+		[Test]
+		public void Ctor() {
+			var message = new Message(Constants.ValidStream, Constants.ValidExpirationUtc, Constants.ValidContentType);
+			Assert.That(message.Content, Is.SameAs(Constants.ValidStream));
+			Assert.That(message.ExpiresUtc, Is.EqualTo(Constants.ValidExpirationUtc));
+			Assert.That(message.ContentType, Is.EqualTo(Constants.ValidContentType));
+		}
 	}
 }
