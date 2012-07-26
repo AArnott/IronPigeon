@@ -16,5 +16,6 @@
 		internal static readonly Contact[] OneValidRecipient = new Contact[] { ValidRecipient };
 		internal static readonly Contact[] EmptyRecipients = new Contact[0];
 		internal static readonly Stream ValidStream = new MemoryStream();
+		internal static readonly Message ValidMessage = new Message(ValidStream, ValidExpirationUtc, ValidContentType);
 	}
 }

@@ -7,12 +7,14 @@
 	using System.Threading.Tasks;
 
 	public class Channel {
-		public Task PostAsync(Stream content, DateTime expiresUtc, string contentType, Contact[] recipients) {
-			Requires.NotNull(content, "content");
-			Requires.True(expiresUtc.Kind == DateTimeKind.Utc, "expiresUtc", Strings.UTCTimeRequired);
-			Requires.NotNullOrEmpty(contentType, "contentType");
+		public Task PostAsync(Message message, IReadOnlyList<Contact> recipients) {
+			Requires.NotNull(message, "message");
 			Requires.NotNullOrEmpty(recipients, "recipients");
 
+			throw new NotImplementedException();
+		}
+
+		public Task<IReadOnlyList<Message>> ReceiveAsync(IProgress<Message> progress = null) {
 			throw new NotImplementedException();
 		}
 	}

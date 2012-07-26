@@ -16,12 +16,9 @@
 		[Test]
 		public void PostAsyncBadArgs() {
 			var channel = new Channel();
-			Assert.Throws<ArgumentNullException>(() => channel.PostAsync(null, Constants.ValidExpirationUtc, Constants.ValidContentType, Constants.OneValidRecipient));
-			Assert.Throws<ArgumentException>(() => channel.PostAsync(Constants.ValidStream, DateTime.Now, Constants.ValidContentType, Constants.OneValidRecipient));
-			Assert.Throws<ArgumentNullException>(() => channel.PostAsync(Constants.ValidStream, Constants.ValidExpirationUtc, null, Constants.OneValidRecipient));
-			Assert.Throws<ArgumentException>(() => channel.PostAsync(Constants.ValidStream, Constants.ValidExpirationUtc, string.Empty, Constants.OneValidRecipient));
-			Assert.Throws<ArgumentNullException>(() => channel.PostAsync(Constants.ValidStream, Constants.ValidExpirationUtc, Constants.ValidContentType, null));
-			Assert.Throws<ArgumentException>(() => channel.PostAsync(Constants.ValidStream, Constants.ValidExpirationUtc, Constants.ValidContentType, Constants.EmptyRecipients));
+			Assert.Throws<ArgumentNullException>(() => channel.PostAsync(null, Constants.OneValidRecipient));
+			Assert.Throws<ArgumentNullException>(() => channel.PostAsync(Constants.ValidMessage, null));
+			Assert.Throws<ArgumentException>(() => channel.PostAsync(Constants.ValidMessage, Constants.EmptyRecipients));
 		}
 	}
 }
