@@ -42,6 +42,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ChannelTests.cs" />
+    <Compile Include="Constants.cs" />
     <Compile Include="ContactTests.cs" />
     <Compile Include="PayloadReferenceTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
