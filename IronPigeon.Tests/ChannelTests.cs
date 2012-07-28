@@ -30,6 +30,15 @@
 		}
 
 		[Test]
+		public void HttpMessageHandler() {
+			var channel = new Channel();
+			Assert.That(channel.HttpMessageHandler, Is.InstanceOf<HttpClientHandler>());
+			var handler = new HttpClientHandler();
+			channel.HttpMessageHandler = handler;
+			Assert.That(channel.HttpMessageHandler, Is.SameAs(handler));
+		}
+
+		[Test]
 		public void PostAsyncBadArgs() {
 			var channel = new Channel();
 			Assert.Throws<ArgumentNullException>(() => channel.PostAsync(null, Valid.OneEndpoint, Valid.ExpirationUtc).GetAwaiter().GetResult());
@@ -96,7 +105,12 @@
 				Logger = this.logger,
 			};
 
-			var messages = await channel.ReceiveAsync();
+			Message progressMessage = null;
+			var progress = new Progress<Message>(m => progressMessage = m);
+
+			var messages = await channel.ReceiveAsync(progress);
+			Assert.That(messages.Count, Is.EqualTo(1));
+			Assert.That(progressMessage, Is.SameAs(messages.Single()));
 			return messages;
 		}
 	}
