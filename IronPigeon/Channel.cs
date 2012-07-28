@@ -251,7 +251,7 @@
 		private void Log(string caption, byte[] buffer) {
 			var logger = this.Logger;
 			if (logger != null) {
-				logger.WriteLine(String.Format(CultureInfo.CurrentCulture, "{0}: {1}", caption, BitConverter.ToString(buffer)));
+				logger.WriteLine(caption, buffer);
 			}
 		}
 	}

@@ -6,6 +6,6 @@
 	using System.Threading.Tasks;
 
 	public interface ILogger {
-		void WriteLine(string message);
+		void WriteLine(string message, byte[] buffer);
 	}
 }
