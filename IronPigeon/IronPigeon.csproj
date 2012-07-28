@@ -42,7 +42,6 @@
     <Compile Include="InboxList.cs" />
     <Compile Include="InvalidMessageException.cs" />
     <Compile Include="Message.cs" />
-    <Compile Include="MultipartPostPart.cs" />
     <Compile Include="OwnEndpoint.cs" />
     <Compile Include="PayloadReference.cs">
       <SubType>Code</SubType>
