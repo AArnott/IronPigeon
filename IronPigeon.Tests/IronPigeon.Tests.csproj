@@ -47,12 +47,6 @@
     <Compile Include="..\IronPigeon\Requires.cs">
       <Link>Requires.cs</Link>
     </Compile>
-    <Compile Include="..\IronPigeon\Strings.Designer.cs">
-      <Link>Strings.Designer.cs</Link>
-      <DependentUpon>Strings.resx</DependentUpon>
-      <AutoGen>True</AutoGen>
-      <DesignTime>True</DesignTime>
-    </Compile>
     <Compile Include="ChannelTests.cs" />
     <Compile Include="Invalid.cs" />
     <Compile Include="Mocks\CloudBlobStorageProviderMock.cs" />
@@ -61,6 +55,11 @@
     <Compile Include="Mocks\LoggerMock.cs" />
     <Compile Include="Mocks\MockCryptoProvider.cs" />
     <Compile Include="OwnContactTests.cs" />
+    <Compile Include="Strings.Designer.cs">
+      <DependentUpon>Strings.resx</DependentUpon>
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+    </Compile>
     <Compile Include="Valid.cs" />
     <Compile Include="EndpointTests.cs" />
     <Compile Include="MessageTests.cs" />
@@ -78,10 +77,10 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="..\IronPigeon\Strings.resx">
-      <Link>Strings.resx</Link>
+    <EmbeddedResource Include="Strings.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Strings.Designer.cs</LastGenOutput>
+      <CustomToolNamespace>IronPigeon</CustomToolNamespace>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
