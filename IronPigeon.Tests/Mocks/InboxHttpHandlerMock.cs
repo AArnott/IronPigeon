@@ -17,6 +17,10 @@
 			this.recipients = recipients.ToDictionary(r => r, r => new List<Tuple<DateTime, byte[]>>());
 		}
 
+		internal Dictionary<Endpoint, List<Tuple<DateTime, byte[]>>> Inboxes {
+			get { return this.recipients; }
+		}
+
 		internal void Register(HttpMessageHandlerMock httpMock) {
 			httpMock.RegisterHandler(this.HttpHandler);
 		}

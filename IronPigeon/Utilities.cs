@@ -345,10 +345,13 @@
 			await stream.WriteAsync(buffer, 0, buffer.Length, cancellationToken);
 		}
 
-		public static async Task<byte[]> ReadSizeAndBufferAsync(this Stream stream, CancellationToken cancellationToken) {
+		public static async Task<byte[]> ReadSizeAndBufferAsync(this Stream stream, CancellationToken cancellationToken, int maxSize = 10*1024) {
 			byte[] lengthBuffer = new byte[sizeof(int)];
 			await stream.ReadAsync(lengthBuffer, 0, lengthBuffer.Length, cancellationToken);
 			int size = BitConverter.ToInt32(lengthBuffer, 0);
+			if (size > maxSize) {
+				throw new InvalidMessageException(Strings.MaxAllowableMessagePartSizeExceeded);
+			}
 
 			byte[] buffer = new byte[size];
 			await stream.ReadAsync(buffer, 0, size, cancellationToken);

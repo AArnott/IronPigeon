@@ -123,6 +123,15 @@
   <data name="InvalidArgument" xml:space="preserve">
     <value>The argument has an unexpected value.</value>
   </data>
+  <data name="InvalidMessage" xml:space="preserve">
+    <value>Error when reading incoming message.</value>
+  </data>
+  <data name="MaxAllowableMessagePartSizeExceeded" xml:space="preserve">
+    <value>The message contained a value that claimed to exceed a maximum allowable value.</value>
+  </data>
+  <data name="MisdirectedMessage" xml:space="preserve">
+    <value>Message notification not intended for this recipient.</value>
+  </data>
   <data name="SequenceContainsNullElement" xml:space="preserve">
     <value>The list contains a null element.</value>
   </data>

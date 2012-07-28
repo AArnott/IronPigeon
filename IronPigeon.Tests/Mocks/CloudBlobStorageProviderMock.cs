@@ -17,6 +17,10 @@
 		internal CloudBlobStorageProviderMock() {
 		}
 
+		internal Dictionary<Uri, byte[]> Blobs {
+			get { return this.blobs; }
+		}
+
 		#region ICloudBlobStorageProvider Members
 
 		public async Task<Uri> UploadMessageAsync(Stream encryptedMessageContent, DateTime expiration, CancellationToken cancellationToken) {

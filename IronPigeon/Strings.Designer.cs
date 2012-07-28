@@ -80,6 +80,33 @@ namespace IronPigeon {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Error when reading incoming message..
+        /// </summary>
+        internal static string InvalidMessage {
+            get {
+                return ResourceManager.GetString("InvalidMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The message contained a value that claimed to exceed a maximum allowable value..
+        /// </summary>
+        internal static string MaxAllowableMessagePartSizeExceeded {
+            get {
+                return ResourceManager.GetString("MaxAllowableMessagePartSizeExceeded", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Message notification not intended for this recipient..
+        /// </summary>
+        internal static string MisdirectedMessage {
+            get {
+                return ResourceManager.GetString("MisdirectedMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to The list contains a null element..
         /// </summary>
         internal static string SequenceContainsNullElement {

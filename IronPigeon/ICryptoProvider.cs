@@ -56,5 +56,19 @@
 		/// <param name="data">The data to hash.</param>
 		/// <returns>The computed hash.</returns>
 		byte[] Hash(byte[] data);
+
+		/// <summary>
+		/// Generates a key pair for asymmetric cryptography.
+		/// </summary>
+		/// <param name="keyPair">Receives the serialized key pair (includes private key).</param>
+		/// <param name="publicKey">Receives the public key.</param>
+		void GenerateSigningKeyPair(out byte[] keyPair, out byte[] publicKey);
+
+		/// <summary>
+		/// Generates a key pair for asymmetric cryptography.
+		/// </summary>
+		/// <param name="keyPair">Receives the serialized key pair (includes private key).</param>
+		/// <param name="publicKey">Receives the public key.</param>
+		void GenerateEncryptionKeyPair(out byte[] keyPair, out byte[] publicKey);
 	}
 }

@@ -20,13 +20,15 @@
 		internal static readonly Endpoint[] OneEndpoint = new Endpoint[] { PublicEndpoint };
 		internal static readonly Endpoint[] EmptyEndpoints = new Endpoint[0];
 
-		internal static OwnEndpoint GenerateOwnEndpoint() {
+		internal static OwnEndpoint GenerateOwnEndpoint(ICryptoProvider cryptoProvider = null) {
+			cryptoProvider = cryptoProvider ?? new Mocks.MockCryptoProvider();
+
 			byte[] privateEncryptionKey, publicEncryptionKey;
 			byte[] privateSigningKey, publicSigningKey;
 
-			Mocks.MockCryptoProvider.GenerateKeyPair(out privateEncryptionKey, out publicEncryptionKey);
-			Mocks.MockCryptoProvider.GenerateKeyPair(out privateSigningKey, out publicSigningKey);
-
+			cryptoProvider.GenerateEncryptionKeyPair(out privateEncryptionKey, out publicEncryptionKey);
+			cryptoProvider.GenerateSigningKeyPair(out privateSigningKey, out publicSigningKey);
+			
 			var contact = new Endpoint() {
 				EncryptionKeyPublicMaterial = publicEncryptionKey,
 				SigningKeyPublicMaterial = publicSigningKey,

@@ -6,6 +6,7 @@
 	using System.IO;
 	using System.Linq;
 	using System.Net.Http;
+	using System.Runtime.Serialization;
 	using System.Runtime.Serialization.Json;
 	using System.Text;
 	using System.Threading;
@@ -40,11 +41,23 @@
 
 			var messages = new List<Message>();
 			foreach (var item in inboxItems) {
-				var invite = await this.DownloadPayloadReferenceAsync(item, cancellationToken);
-				var message = await this.DownloadMessageAsync(invite, cancellationToken);
-				messages.Add(message);
-				if (progress != null) {
-					progress.Report(message);
+				try {
+					var invite = await this.DownloadPayloadReferenceAsync(item, cancellationToken);
+					var message = await this.DownloadMessageAsync(invite, cancellationToken);
+					messages.Add(message);
+					if (progress != null) {
+						progress.Report(message);
+					}
+				} catch (SerializationException ex) {
+					throw new InvalidMessageException(Strings.InvalidMessage, ex);
+				} catch (DecoderFallbackException ex) {
+					throw new InvalidMessageException(Strings.InvalidMessage, ex);
+				} catch (OverflowException ex) {
+					throw new InvalidMessageException(Strings.InvalidMessage, ex);
+				} catch (OutOfMemoryException ex) {
+					throw new InvalidMessageException(Strings.InvalidMessage, ex);
+				} catch (Exception ex) { // all those platform-specific exceptions that aren't available to portable libraries.
+					throw new InvalidMessageException(Strings.InvalidMessage, ex);
 				}
 			}
 
@@ -83,11 +96,11 @@
 			var messageReference = Utilities.DeserializeDataContract<PayloadReference>(plainTextPayloadReader);
 
 			if (!this.CryptoServices.VerifySignature(notificationAuthor.SigningKeyPublicMaterial, signedBytes, signature)) {
-				throw new Exception("Message notification tampering detected.");
+				throw new InvalidMessageException();
 			}
 
 			if (!Utilities.AreEquivalent(recipientPublicSigningKeyBuffer, this.Endpoint.PublicEndpoint.SigningKeyPublicMaterial)) {
-				throw new Exception("Message notification not intended for this recipient.");
+				throw new InvalidMessageException(Strings.MisdirectedMessage);
 			}
 
 			return messageReference;
@@ -102,7 +115,7 @@
 			// Calculate hash of downloaded message and check that it matches the referenced message hash.
 			var messageHash = this.CryptoServices.Hash(messageBuffer);
 			if (!Utilities.AreEquivalent(messageHash, notification.Hash)) {
-				throw new Exception("Message tampering detected.");
+				throw new InvalidMessageException();
 			}
 
 			var encryptedResult = new SymmetricEncryptionResult(

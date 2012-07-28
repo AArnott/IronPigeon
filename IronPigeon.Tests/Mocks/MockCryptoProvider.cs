@@ -75,9 +75,23 @@
 			return BitConverter.GetBytes(hash);
 		}
 
+		public void GenerateSigningKeyPair(out byte[] keyPair, out byte[] publicKey) {
+			GenerateKeyPair(out keyPair, out publicKey);
+		}
+
+		public void GenerateEncryptionKeyPair(out byte[] keyPair, out byte[] publicKey) {
+			GenerateKeyPair(out keyPair, out publicKey);
+		}
+
 		#endregion
 
-		internal static void GenerateKeyPair(out byte[] privateKey, out byte[] publicKey) {
+		internal static byte[] GeneratePublicKeyThumbprint(byte[] publicKey) {
+			var hash = new byte[4];
+			Array.Copy(publicKey, hash, Math.Min(4, publicKey.Length));
+			return hash;
+		}
+
+		private static void GenerateKeyPair(out byte[] privateKey, out byte[] publicKey) {
 			var rng = new Random();
 			privateKey = new byte[KeyLengthInBytes];
 			rng.NextBytes(privateKey);
@@ -85,12 +99,6 @@
 			for (int i = 0; i < KeyLengthInBytes; i++) {
 				publicKey[i] = (byte)(privateKey[i] ^ 0xff);
 			}
-		}
-
-		internal static byte[] GeneratePublicKeyThumbprint(byte[] publicKey) {
-			var hash = new byte[4];
-			Array.Copy(publicKey, hash, Math.Min(4, publicKey.Length));
-			return hash;
 		}
 	}
 }

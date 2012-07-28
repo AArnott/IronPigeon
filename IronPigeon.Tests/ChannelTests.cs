@@ -12,9 +12,15 @@
 	public class ChannelTests {
 		private Mocks.LoggerMock logger;
 
+		private DesktopCryptoProvider desktopCryptoProvider;
+
 		[SetUp]
 		public void Setup() {
 			this.logger = new Mocks.LoggerMock();
+			this.desktopCryptoProvider = new DesktopCryptoProvider {
+				AsymmetricKeySize = 512, // use small key sizes so tests run faster
+				SymmetricKeySize = 128,
+			};
 		}
 
 		[TearDown]
@@ -55,10 +61,11 @@
 
 				var cloudStorage = new Mocks.CloudBlobStorageProviderMock();
 				var inboxMock = new Mocks.InboxHttpHandlerMock(new[] { receiver.PublicEndpoint });
+				var cryptoProvider = new Mocks.MockCryptoProvider();
 
 				var sentMessage = Valid.Message;
-				await this.SendMessageAsync(cloudStorage, inboxMock, sender, receiver.PublicEndpoint, sentMessage);
-				var messages = await this.ReceiveMessageAsync(cloudStorage, inboxMock, receiver);
+				await this.SendMessageAsync(cloudStorage, inboxMock, cryptoProvider, sender, receiver.PublicEndpoint, sentMessage);
+				var messages = await this.ReceiveMessageAsync(cloudStorage, inboxMock, new Mocks.MockCryptoProvider(), receiver);
 
 				Assert.That(messages.Count, Is.EqualTo(1));
 				var receivedMessage = messages.Single();
@@ -67,7 +74,57 @@
 			}).GetAwaiter().GetResult();
 		}
 
-		private async Task SendMessageAsync(Mocks.CloudBlobStorageProviderMock cloudBlobStorage, Mocks.InboxHttpHandlerMock inboxMock, OwnEndpoint sender, Endpoint receiver, Message message) {
+		[Test]
+		public void PayloadReferenceTamperingTests() {
+			Task.Run(async delegate {
+				var sender = Valid.GenerateOwnEndpoint(desktopCryptoProvider);
+				var receiver = Valid.GenerateOwnEndpoint(desktopCryptoProvider);
+
+				for (int i = 0; i < 100; i++) {
+					var cloudStorage = new Mocks.CloudBlobStorageProviderMock();
+					var inboxMock = new Mocks.InboxHttpHandlerMock(new[] { receiver.PublicEndpoint });
+
+					var sentMessage = Valid.Message;
+					await this.SendMessageAsync(cloudStorage, inboxMock, desktopCryptoProvider, sender, receiver.PublicEndpoint, sentMessage);
+
+					// Tamper with the payload reference.
+					ApplyFuzzing(inboxMock.Inboxes[receiver.PublicEndpoint][0].Item2, 1);
+
+					Assert.Throws<InvalidMessageException>(() => this.ReceiveMessageAsync(cloudStorage, inboxMock, desktopCryptoProvider, receiver).GetAwaiter().GetResult()); ;
+				}
+			}).GetAwaiter().GetResult();
+		}
+
+		[Test]
+		public void PayloadTamperingTests() {
+			Task.Run(async delegate {
+				for (int i = 0; i < 100; i++) {
+					var sender = Valid.GenerateOwnEndpoint(desktopCryptoProvider);
+					var receiver = Valid.GenerateOwnEndpoint(desktopCryptoProvider);
+
+					var cloudStorage = new Mocks.CloudBlobStorageProviderMock();
+					var inboxMock = new Mocks.InboxHttpHandlerMock(new[] { receiver.PublicEndpoint });
+
+					var sentMessage = Valid.Message;
+					await this.SendMessageAsync(cloudStorage, inboxMock, desktopCryptoProvider, sender, receiver.PublicEndpoint, sentMessage);
+
+					// Tamper with the payload itself.
+					ApplyFuzzing(cloudStorage.Blobs.Single().Value, 1);
+
+					Assert.Throws<InvalidMessageException>(() => this.ReceiveMessageAsync(cloudStorage, inboxMock, desktopCryptoProvider, receiver).GetAwaiter().GetResult()); ;
+				}
+			}).GetAwaiter().GetResult();
+		}
+
+		private static void ApplyFuzzing(byte[] buffer, int bytesToChange) {
+			var random = new Random();
+			for (int i = 0; i < bytesToChange; i++) {
+				int index = random.Next(buffer.Length);
+				buffer[index] = (byte)unchecked(buffer[index] + 0x1);
+			}
+		}
+
+		private async Task SendMessageAsync(Mocks.CloudBlobStorageProviderMock cloudBlobStorage, Mocks.InboxHttpHandlerMock inboxMock, ICryptoProvider cryptoProvider, OwnEndpoint sender, Endpoint receiver, Message message) {
 			Requires.NotNull(cloudBlobStorage, "cloudBlobStorage");
 			Requires.NotNull(sender, "sender");
 			Requires.NotNull(message, "message");
@@ -80,7 +137,7 @@
 			var channel = new Channel() {
 				HttpMessageHandler = httpHandler,
 				CloudBlobStorage = cloudBlobStorage,
-				CryptoServices = new Mocks.MockCryptoProvider(),
+				CryptoServices = cryptoProvider,
 				Endpoint = sender,
 				Logger = this.logger,
 			};
@@ -88,7 +145,7 @@
 			await channel.PostAsync(Valid.Message, new[] { receiver }, Valid.ExpirationUtc);
 		}
 
-		private async Task<IReadOnlyCollection<Message>> ReceiveMessageAsync(Mocks.CloudBlobStorageProviderMock cloudBlobStorage, Mocks.InboxHttpHandlerMock inboxMock, OwnEndpoint receiver) {
+		private async Task<IReadOnlyCollection<Message>> ReceiveMessageAsync(Mocks.CloudBlobStorageProviderMock cloudBlobStorage, Mocks.InboxHttpHandlerMock inboxMock, ICryptoProvider cryptoProvider, OwnEndpoint receiver) {
 			Requires.NotNull(cloudBlobStorage, "cloudBlobStorage");
 			Requires.NotNull(receiver, "receiver");
 
@@ -100,7 +157,7 @@
 			var channel = new Channel {
 				HttpMessageHandler = httpHandler,
 				CloudBlobStorage = cloudBlobStorage,
-				CryptoServices = new Mocks.MockCryptoProvider(),
+				CryptoServices = cryptoProvider,
 				Endpoint = receiver,
 				Logger = this.logger,
 			};
