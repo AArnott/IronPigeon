@@ -1,13 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IronPigeon.Tests", "IronPigeon.Tests\IronPigeon.Tests.csproj", "{301BE089-B0A7-4C13-A8A2-3A02FF83999A}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IronPigeon", "IronPigeon\IronPigeon.csproj", "{BEFB82D5-C686-4D50-91C7-419846C8F201}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IronPigeon.Desktop", "IronPigeon.Desktop\IronPigeon.Desktop.csproj", "{2ACABE1A-13DA-4248-B200-8B9D63486E45}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IronPigeon.WinRT", "IronPigeon.WinRT\IronPigeon.WinRT.csproj", "{8BBA7BC0-DE22-4395-A408-9B33365A6280}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IronPigeon.Desktop.Tests", "IronPigeon.Desktop.Tests\IronPigeon.Desktop.Tests.csproj", "{301BE089-B0A7-4C13-A8A2-3A02FF83999A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,16 +21,6 @@ Global
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{301BE089-B0A7-4C13-A8A2-3A02FF83999A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{301BE089-B0A7-4C13-A8A2-3A02FF83999A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{301BE089-B0A7-4C13-A8A2-3A02FF83999A}.Debug|ARM.ActiveCfg = Debug|Any CPU
-		{301BE089-B0A7-4C13-A8A2-3A02FF83999A}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{301BE089-B0A7-4C13-A8A2-3A02FF83999A}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{301BE089-B0A7-4C13-A8A2-3A02FF83999A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{301BE089-B0A7-4C13-A8A2-3A02FF83999A}.Release|Any CPU.Build.0 = Release|Any CPU
-		{301BE089-B0A7-4C13-A8A2-3A02FF83999A}.Release|ARM.ActiveCfg = Release|Any CPU
-		{301BE089-B0A7-4C13-A8A2-3A02FF83999A}.Release|x64.ActiveCfg = Release|Any CPU
-		{301BE089-B0A7-4C13-A8A2-3A02FF83999A}.Release|x86.ActiveCfg = Release|Any CPU
 		{BEFB82D5-C686-4D50-91C7-419846C8F201}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{BEFB82D5-C686-4D50-91C7-419846C8F201}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BEFB82D5-C686-4D50-91C7-419846C8F201}.Debug|ARM.ActiveCfg = Debug|Any CPU
@@ -67,6 +57,16 @@ Global
 		{8BBA7BC0-DE22-4395-A408-9B33365A6280}.Release|x64.Build.0 = Release|x64
 		{8BBA7BC0-DE22-4395-A408-9B33365A6280}.Release|x86.ActiveCfg = Release|x86
 		{8BBA7BC0-DE22-4395-A408-9B33365A6280}.Release|x86.Build.0 = Release|x86
+		{301BE089-B0A7-4C13-A8A2-3A02FF83999A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{301BE089-B0A7-4C13-A8A2-3A02FF83999A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{301BE089-B0A7-4C13-A8A2-3A02FF83999A}.Debug|ARM.ActiveCfg = Debug|Any CPU
+		{301BE089-B0A7-4C13-A8A2-3A02FF83999A}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{301BE089-B0A7-4C13-A8A2-3A02FF83999A}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{301BE089-B0A7-4C13-A8A2-3A02FF83999A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{301BE089-B0A7-4C13-A8A2-3A02FF83999A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{301BE089-B0A7-4C13-A8A2-3A02FF83999A}.Release|ARM.ActiveCfg = Release|Any CPU
+		{301BE089-B0A7-4C13-A8A2-3A02FF83999A}.Release|x64.ActiveCfg = Release|Any CPU
+		{301BE089-B0A7-4C13-A8A2-3A02FF83999A}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
