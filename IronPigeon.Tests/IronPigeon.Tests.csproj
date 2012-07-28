@@ -35,6 +35,8 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -42,9 +44,25 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\IronPigeon\Requires.cs">
+      <Link>Requires.cs</Link>
+    </Compile>
+    <Compile Include="..\IronPigeon\Strings.Designer.cs">
+      <Link>Strings.Designer.cs</Link>
+      <DependentUpon>Strings.resx</DependentUpon>
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+    </Compile>
     <Compile Include="ChannelTests.cs" />
-    <Compile Include="Constants.cs" />
-    <Compile Include="ContactTests.cs" />
+    <Compile Include="Invalid.cs" />
+    <Compile Include="Mocks\CloudBlobStorageProviderMock.cs" />
+    <Compile Include="Mocks\HttpMessageHandlerMock.cs" />
+    <Compile Include="Mocks\InboxHttpHandlerMock.cs" />
+    <Compile Include="Mocks\LoggerMock.cs" />
+    <Compile Include="Mocks\MockCryptoProvider.cs" />
+    <Compile Include="OwnContactTests.cs" />
+    <Compile Include="Valid.cs" />
+    <Compile Include="EndpointTests.cs" />
     <Compile Include="MessageTests.cs" />
     <Compile Include="PayloadReferenceTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -60,7 +78,11 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Mocks\" />
+    <EmbeddedResource Include="..\IronPigeon\Strings.resx">
+      <Link>Strings.resx</Link>
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Strings.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

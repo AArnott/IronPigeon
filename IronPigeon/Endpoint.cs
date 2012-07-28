@@ -13,11 +13,11 @@
 	/// An entity that is capable of receiving messages via the IronPigeon protocol.
 	/// </summary>
 	[DataContract]
-	public class Contact {
+	public class Endpoint {
 		/// <summary>
-		/// Initializes a new instance of the <see cref="Contact"/> class.
+		/// Initializes a new instance of the <see cref="Endpoint"/> class.
 		/// </summary>
-		public Contact() {
+		public Endpoint() {
 		}
 
 		/// <summary>

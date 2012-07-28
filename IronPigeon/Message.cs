@@ -3,23 +3,30 @@
 	using System.Collections.Generic;
 	using System.IO;
 	using System.Linq;
+	using System.Runtime.Serialization;
 	using System.Text;
-
+	
+	[DataContract]
 	public class Message {
-		public Message(Stream content, DateTime expiresUtc, string contentType) {
+		public Message(byte[] content, string contentType) {
 			Requires.NotNull(content, "content");
-			Requires.True(expiresUtc.Kind == DateTimeKind.Utc, "expiresUtc", Strings.UTCTimeRequired);
 			Requires.NotNullOrEmpty(contentType, "contentType");
 
 			this.Content = content;
-			this.ExpiresUtc = expiresUtc;
 			this.ContentType = contentType;
 		}
 
-		public Stream Content { get; private set; }
+		/// <summary>
+		/// Gets the blob that constitutes the payload.
+		/// </summary>
+		[DataMember]
+		public byte[] Content { get; private set; }
 
-		public DateTime ExpiresUtc { get; private set; }
-
+		/// <summary>
+		/// Gets the content-type that describes the type of data that is
+		/// serialized in the <see cref="Content property."/>
+		/// </summary>
+		[DataMember]
 		public string ContentType { get; private set; }
 	}
 }

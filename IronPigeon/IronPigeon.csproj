@@ -34,11 +34,15 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Channel.cs" />
-    <Compile Include="Contact.cs" />
+    <Compile Include="Endpoint.cs" />
     <Compile Include="ICloudBlobStorageProvider.cs" />
     <Compile Include="ICryptoProvider.cs" />
     <Compile Include="IAddressBook.cs" />
+    <Compile Include="ILogger.cs" />
+    <Compile Include="InboxList.cs" />
     <Compile Include="Message.cs" />
+    <Compile Include="MultipartPostPart.cs" />
+    <Compile Include="OwnEndpoint.cs" />
     <Compile Include="PayloadReference.cs">
       <SubType>Code</SubType>
     </Compile>
@@ -50,6 +54,7 @@
       <DependentUpon>Strings.resx</DependentUpon>
     </Compile>
     <Compile Include="SymmetricEncryptionResult.cs" />
+    <Compile Include="Utilities.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Strings.resx">

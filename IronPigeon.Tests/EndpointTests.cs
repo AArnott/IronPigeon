@@ -7,10 +7,10 @@
 	using NUnit.Framework;
 
 	[TestFixture]
-	public class ContactTests {
+	public class EndpointTests {
 		[Test]
 		public void DefaultContactCtor() {
-			var contact = new Contact();
+			var contact = new Endpoint();
 			Assert.That(contact.Identifier, Is.Null);
 			Assert.That(contact.MessageReceivingEndpoint, Is.Null);
 			Assert.That(contact.EncryptionKeyPublicMaterial, Is.Null);

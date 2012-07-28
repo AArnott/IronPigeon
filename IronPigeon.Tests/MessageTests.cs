@@ -10,18 +10,16 @@
 	public class MessageTests {
 		[Test]
 		public void CtorInvalidArgs() {
-			Assert.Throws<ArgumentNullException>(() => new Message(null, Constants.ValidExpirationUtc, Constants.ValidContentType));
-			Assert.Throws<ArgumentException>(() => new Message(Constants.ValidStream, DateTime.Now, Constants.ValidContentType));
-			Assert.Throws<ArgumentNullException>(() => new Message(Constants.ValidStream, Constants.ValidExpirationUtc, null));
-			Assert.Throws<ArgumentException>(() => new Message(Constants.ValidStream, Constants.ValidExpirationUtc, string.Empty));
+			Assert.Throws<ArgumentNullException>(() => new Message(null, Valid.ContentType));
+			Assert.Throws<ArgumentNullException>(() => new Message(Valid.MessageContent, null));
+			Assert.Throws<ArgumentException>(() => new Message(Valid.MessageContent, string.Empty));
 		}
 
 		[Test]
 		public void Ctor() {
-			var message = new Message(Constants.ValidStream, Constants.ValidExpirationUtc, Constants.ValidContentType);
-			Assert.That(message.Content, Is.SameAs(Constants.ValidStream));
-			Assert.That(message.ExpiresUtc, Is.EqualTo(Constants.ValidExpirationUtc));
-			Assert.That(message.ContentType, Is.EqualTo(Constants.ValidContentType));
+			var message = new Message(Valid.MessageContent, Valid.ContentType);
+			Assert.That(message.Content, Is.SameAs(Valid.MessageContent));
+			Assert.That(message.ContentType, Is.EqualTo(Valid.ContentType));
 		}
 	}
 }

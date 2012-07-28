@@ -59,5 +59,17 @@
 				throw new ArgumentException(String.Format(CultureInfo.CurrentCulture, unformattedMessage, args), parameterName);
 			}
 		}
+
+		/// <summary>
+		/// Validates some expression describing the acceptable condition for an argument evaluates to true.
+		/// </summary>
+		/// <param name="condition">The expression that must evaluate to true to avoid an <see cref="InvalidOperationException"/>.</param>
+		/// <param name="message">The message to include with the exception.</param>
+		[DebuggerStepThrough]
+		internal static void ValidState(bool condition, string message) {
+			if (!condition) {
+				throw new InvalidOperationException(message);
+			}
+		}
 	}
 }
