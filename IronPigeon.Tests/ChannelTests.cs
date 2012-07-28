@@ -105,12 +105,13 @@
 				Logger = this.logger,
 			};
 
-			Message progressMessage = null;
-			var progress = new Progress<Message>(m => progressMessage = m);
+			var progressMessage = new TaskCompletionSource<Message>();
+			var progress = new Progress<Message>(m => progressMessage.SetResult(m));
 
 			var messages = await channel.ReceiveAsync(progress);
 			Assert.That(messages.Count, Is.EqualTo(1));
-			Assert.That(progressMessage, Is.SameAs(messages.Single()));
+			await progressMessage.Task;
+			Assert.That(progressMessage.Task.Result, Is.SameAs(messages.Single()));
 			return messages;
 		}
 	}
