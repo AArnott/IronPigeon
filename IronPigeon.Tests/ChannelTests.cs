@@ -98,10 +98,10 @@
 		[Test]
 		public void PayloadTamperingTests() {
 			Task.Run(async delegate {
-				for (int i = 0; i < 100; i++) {
-					var sender = Valid.GenerateOwnEndpoint(desktopCryptoProvider);
-					var receiver = Valid.GenerateOwnEndpoint(desktopCryptoProvider);
+				var sender = Valid.GenerateOwnEndpoint(desktopCryptoProvider);
+				var receiver = Valid.GenerateOwnEndpoint(desktopCryptoProvider);
 
+				for (int i = 0; i < 100; i++) {
 					var cloudStorage = new Mocks.CloudBlobStorageProviderMock();
 					var inboxMock = new Mocks.InboxHttpHandlerMock(new[] { receiver.PublicEndpoint });
 
