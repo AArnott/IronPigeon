@@ -4,6 +4,26 @@
 	/// </summary>
 	public interface ICryptoProvider {
 		/// <summary>
+		/// Gets or sets the name of the hash algorithm to use.
+		/// </summary>
+		string HashAlgorithmName { get; set; }
+
+		/// <summary>
+		/// Gets or sets the size of the key used for asymmetric signatures.
+		/// </summary>
+		int SignatureAsymmetricKeySize { get; set; }
+
+		/// <summary>
+		/// Gets or sets the size of the key used for asymmetric encryption.
+		/// </summary>
+		int EncryptionAsymmetricKeySize { get; set; }
+
+		/// <summary>
+		/// Gets or sets the size of the key used for symmetric blob encryption.
+		/// </summary>
+		int BlobSymmetricKeySize { get; set; }
+
+		/// <summary>
 		/// Asymmetrically signs a data blob.
 		/// </summary>
 		/// <param name="data">The data to sign.</param>

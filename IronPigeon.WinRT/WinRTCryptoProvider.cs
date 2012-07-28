@@ -8,13 +8,7 @@
 	using Windows.Security.Cryptography.Core;
 	using Windows.Storage.Streams;
 
-	public class WinRTCryptoProvider : ICryptoProvider {
-		protected const string HashAlgorithmName = Recommended.HashAlgorithmName;
-
-		protected const int AsymmetricKeySize = Recommended.AsymmetricKeySize;
-
-		protected const int SymmetricKeySize = Recommended.SymmetricKeySize;
-
+	public class WinRTCryptoProvider : CryptoProviderBase {
 		protected static readonly AsymmetricKeyAlgorithmProvider EncryptionProvider = AsymmetricKeyAlgorithmProvider.OpenAlgorithm(AsymmetricAlgorithmNames.RsaOaepSha1);
 
 		protected static readonly AsymmetricKeyAlgorithmProvider SignatureProvider = AsymmetricKeyAlgorithmProvider.OpenAlgorithm(AsymmetricAlgorithmNames.RsaSignPkcs1Sha1);
@@ -23,20 +17,20 @@
 
 		protected static readonly SymmetricKeyAlgorithmProvider SymmetricAlgorithm = SymmetricKeyAlgorithmProvider.OpenAlgorithm(SymmetricAlgorithmNames.AesCbcPkcs7);
 
-		public byte[] Sign(byte[] data, byte[] signingPrivateKey) {
+		public override byte[] Sign(byte[] data, byte[] signingPrivateKey) {
 			var key = SignatureProvider.ImportKeyPair(signingPrivateKey.ToBuffer());
 			var signatureBuffer = CryptographicEngine.Sign(key, data.ToBuffer());
 			return signatureBuffer.ToArray();
 		}
 
-		public bool VerifySignature(byte[] signingPublicKey, byte[] data, byte[] signature) {
+		public override bool VerifySignature(byte[] signingPublicKey, byte[] data, byte[] signature) {
 			var key = SignatureProvider.ImportPublicKey(signingPublicKey.ToBuffer());
 			return CryptographicEngine.VerifySignature(key, data.ToBuffer(), signature.ToBuffer());
 		}
 
-		public SymmetricEncryptionResult Encrypt(byte[] data) {
+		public override SymmetricEncryptionResult Encrypt(byte[] data) {
 			IBuffer plainTextBuffer = CryptographicBuffer.CreateFromByteArray(data);
-			IBuffer symmetricKeyMaterial = CryptographicBuffer.GenerateRandom(SymmetricKeySize / 8);
+			IBuffer symmetricKeyMaterial = CryptographicBuffer.GenerateRandom((uint)BlobSymmetricKeySize / 8);
 			var symmetricKey = SymmetricAlgorithm.CreateSymmetricKey(symmetricKeyMaterial);
 			IBuffer ivBuffer = CryptographicBuffer.GenerateRandom(SymmetricAlgorithm.BlockLength);
 
@@ -47,33 +41,33 @@
 				cipherTextBuffer.ToArray());
 		}
 
-		public byte[] Decrypt(SymmetricEncryptionResult data) {
+		public override byte[] Decrypt(SymmetricEncryptionResult data) {
 			var symmetricKey = SymmetricAlgorithm.CreateSymmetricKey(data.Key.ToBuffer());
 			return CryptographicEngine.Decrypt(symmetricKey, data.Ciphertext.ToBuffer(), data.IV.ToBuffer()).ToArray();
 		}
 
-		public byte[] Encrypt(byte[] encryptionPublicKey, byte[] data) {
+		public override byte[] Encrypt(byte[] encryptionPublicKey, byte[] data) {
 			var key = EncryptionProvider.ImportPublicKey(encryptionPublicKey.ToBuffer());
 			return CryptographicEngine.Encrypt(key, data.ToBuffer(), null).ToArray();
 		}
 
-		public byte[] Decrypt(byte[] decryptionPrivateKey, byte[] data) {
+		public override byte[] Decrypt(byte[] decryptionPrivateKey, byte[] data) {
 			var key = EncryptionProvider.ImportKeyPair(decryptionPrivateKey.ToBuffer());
 			return CryptographicEngine.Decrypt(key, data.ToBuffer(), null).ToArray();
 		}
 
-		public byte[] Hash(byte[] data) {
+		public override byte[] Hash(byte[] data) {
 			return HashProvider.HashData(data.ToBuffer()).ToArray();
 		}
 
-		public void GenerateSigningKeyPair(out byte[] keyPair, out byte[] publicKey) {
-			var key = SignatureProvider.CreateKeyPair(AsymmetricKeySize);
+		public override void GenerateSigningKeyPair(out byte[] keyPair, out byte[] publicKey) {
+			var key = SignatureProvider.CreateKeyPair((uint)this.SignatureAsymmetricKeySize);
 			keyPair = key.Export().ToArray();
 			publicKey = key.ExportPublicKey(CryptographicPublicKeyBlobType.Capi1PublicKey).ToArray();
 		}
 
-		public void GenerateEncryptionKeyPair(out byte[] keyPair, out byte[] publicKey) {
-			var key = EncryptionProvider.CreateKeyPair(AsymmetricKeySize);
+		public override void GenerateEncryptionKeyPair(out byte[] keyPair, out byte[] publicKey) {
+			var key = EncryptionProvider.CreateKeyPair((uint)this.EncryptionAsymmetricKeySize);
 			keyPair = key.Export().ToArray();
 			publicKey = key.ExportPublicKey(CryptographicPublicKeyBlobType.Capi1PublicKey).ToArray();
 		}

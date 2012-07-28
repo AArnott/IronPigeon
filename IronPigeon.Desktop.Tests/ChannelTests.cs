@@ -18,8 +18,9 @@
 		public void Setup() {
 			this.logger = new Mocks.LoggerMock();
 			this.desktopCryptoProvider = new DesktopCryptoProvider {
-				AsymmetricKeySize = 512, // use small key sizes so tests run faster
-				SymmetricKeySize = 128,
+				EncryptionAsymmetricKeySize = 512, // use small key sizes so tests run faster
+				SignatureAsymmetricKeySize = 512,
+				BlobSymmetricKeySize = 128,
 			};
 		}
 

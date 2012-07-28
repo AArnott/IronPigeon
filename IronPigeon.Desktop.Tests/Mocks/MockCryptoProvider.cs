@@ -100,5 +100,25 @@
 				publicKey[i] = (byte)(privateKey[i] ^ 0xff);
 			}
 		}
+
+		string ICryptoProvider.HashAlgorithmName {
+			get { return "mock"; }
+			set { throw new NotSupportedException(); }
+		}
+
+		public int SignatureAsymmetricKeySize {
+			get { return KeyLengthInBytes; }
+			set { throw new NotSupportedException(); }
+		}
+
+		public int EncryptionAsymmetricKeySize {
+			get { return KeyLengthInBytes; }
+			set { throw new NotSupportedException(); }
+		}
+
+		public int BlobSymmetricKeySize {
+			get { return KeyLengthInBytes; }
+			set { throw new NotSupportedException(); }
+		}
 	}
 }

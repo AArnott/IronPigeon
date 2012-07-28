@@ -8,8 +8,10 @@
 	public static class Recommended {
 		public const string HashAlgorithmName = "SHA1";
 
-		public const int AsymmetricKeySize = 4096;
+		public const int EncryptionAsymmetricKeySize = 4096;
 
-		public const int SymmetricKeySize = 256;
+		public const int SignatureAsymmetricKeySize = 4096;
+
+		public const int BlobSymmetricKeySize = 256;
 	}
 }
