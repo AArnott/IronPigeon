@@ -48,6 +48,7 @@
       <Link>Requires.cs</Link>
     </Compile>
     <Compile Include="ChannelTests.cs" />
+    <Compile Include="DesktopCryptoProviderTests.cs" />
     <Compile Include="Invalid.cs" />
     <Compile Include="Mocks\CloudBlobStorageProviderMock.cs" />
     <Compile Include="Mocks\HttpMessageHandlerMock.cs" />
