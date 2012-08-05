@@ -5,6 +5,7 @@
 	using System.Runtime.Serialization;
 	using System.Text;
 	using System.Threading.Tasks;
+	using Microsoft;
 
 	/// <summary>
 	/// The personal contact information for receiving one's own messages.

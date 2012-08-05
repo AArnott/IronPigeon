@@ -3,6 +3,7 @@
 	using System.Collections.Generic;
 	using System.Linq;
 	using System.Text;
+	using Microsoft;
 
 	/// <summary>
 	/// The result of symmetric encryption using a random key, IV.

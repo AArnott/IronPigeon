@@ -11,6 +11,7 @@
 	using System.Text;
 	using System.Threading;
 	using System.Threading.Tasks;
+	using Microsoft;
 
 	public class Channel {
 		private HttpMessageHandler httpMessageHandler = new HttpClientHandler();
@@ -136,7 +137,7 @@
 
 		public async Task PostAsync(Message message, IReadOnlyCollection<Endpoint> recipients, DateTime expiresUtc, CancellationToken cancellationToken = default(CancellationToken)) {
 			Requires.NotNull(message, "message");
-			Requires.True(expiresUtc.Kind == DateTimeKind.Utc, "expiresUtc", Strings.UTCTimeRequired);
+			Requires.That(expiresUtc.Kind == DateTimeKind.Utc, "expiresUtc", Strings.UTCTimeRequired);
 			Requires.NotNullOrEmpty(recipients, "recipients");
 
 			var payloadReference = await this.PostMessageAsync(message, expiresUtc, cancellationToken);
@@ -145,7 +146,7 @@
 
 		protected virtual async Task<PayloadReference> PostMessageAsync(Message message, DateTime expiresUtc, CancellationToken cancellationToken) {
 			Requires.NotNull(message, "message");
-			Requires.True(expiresUtc.Kind == DateTimeKind.Utc, "expiresUtc", Strings.UTCTimeRequired);
+			Requires.That(expiresUtc.Kind == DateTimeKind.Utc, "expiresUtc", Strings.UTCTimeRequired);
 			Requires.ValidState(this.CloudBlobStorage != null, "BlobStorageProvider must not be null");
 
 			cancellationToken.ThrowIfCancellationRequested();

@@ -117,12 +117,6 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="EmptyStringNotAllowed" xml:space="preserve">
-    <value>The empty string is not allowed.</value>
-  </data>
-  <data name="InvalidArgument" xml:space="preserve">
-    <value>The argument has an unexpected value.</value>
-  </data>
   <data name="InvalidMessage" xml:space="preserve">
     <value>Error when reading incoming message.</value>
   </data>
@@ -131,9 +125,6 @@
   </data>
   <data name="MisdirectedMessage" xml:space="preserve">
     <value>Message notification not intended for this recipient.</value>
-  </data>
-  <data name="SequenceContainsNullElement" xml:space="preserve">
-    <value>The list contains a null element.</value>
   </data>
   <data name="UTCTimeRequired" xml:space="preserve">
     <value>The time must be given in UTC.</value>

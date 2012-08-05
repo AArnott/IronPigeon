@@ -5,6 +5,7 @@
 	using System.Net.Http;
 	using System.Text;
 	using System.Threading.Tasks;
+	using Microsoft;
 
 	internal class HttpMessageHandlerMock : HttpMessageHandler {
 		private readonly List<Func<HttpRequestMessage, Task<HttpResponseMessage>>> handlers = new List<Func<HttpRequestMessage, Task<HttpResponseMessage>>>();

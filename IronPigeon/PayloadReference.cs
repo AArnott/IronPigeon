@@ -6,6 +6,7 @@
 	using System.Runtime.Serialization;
 	using System.Text;
 	using System.Threading.Tasks;
+	using Microsoft;
 
 	/// <summary>
 	/// Describes where some encrypted payload is found and how to decrypt it.
@@ -25,7 +26,7 @@
 			Requires.NotNullOrEmpty(hash, "hash");
 			Requires.NotNullOrEmpty(key, "key");
 			Requires.NotNullOrEmpty(iv, "iv");
-			Requires.True(expiresUtc.Kind == DateTimeKind.Utc, "expiresUtc", Strings.UTCTimeRequired);
+			Requires.That(expiresUtc.Kind == DateTimeKind.Utc, "expiresUtc", Strings.UTCTimeRequired);
 			Requires.NotNullOrEmpty(contentType, "contentType");
 
 			this.Location = location;
