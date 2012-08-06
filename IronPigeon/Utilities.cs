@@ -61,6 +61,66 @@
 		}
 
 		/// <summary>
+		/// Converts a byte array to a web-safe base64-encoded string.
+		/// </summary>
+		/// <param name="array">The array of bytes to encode.</param>
+		/// <returns>A base64web encoded string.</returns>
+		public static string ToBase64WebSafe(byte[] array) {
+			Contract.Requires(array != null);
+			Contract.Ensures(Contract.Result<string>() != null);
+
+			return ToBase64WebSafe(Convert.ToBase64String(array));
+		}
+
+		/// <summary>
+		/// Converts a web-safe base64 encoded string to a standard base64 encoded string.
+		/// </summary>
+		/// <param name="base64WebSafe">The base64web encoded string.</param>
+		/// <returns>A standard base64 encoded string.</returns>
+		public static string FromBase64WebSafe(string base64WebSafe) {
+			Contract.Requires(base64WebSafe != null);
+			if (base64WebSafe.IndexOfAny(WebSafeSpecificBase64Characters) < 0 && (base64WebSafe.Length % 4) == 0) {
+				// This web-safe base64 encoded string is equivalent to its standard base64 form.
+				return base64WebSafe;
+			}
+
+			var base64 = new StringBuilder(base64WebSafe);
+			base64.Replace('-', '+');
+			base64.Replace('_', '/');
+
+			// Restore any missing padding.  Base64-encoded strings are always a multiple of 4 in length.
+			if (base64.Length % 4 > 0) {
+				base64.Append('=', 4 - (base64.Length % 4));
+			}
+
+			return base64.ToString();
+		}
+
+		/// <summary>
+		/// Converts a base64-encoded string to a web-safe base64-encoded string.
+		/// </summary>
+		/// <param name="base64">The base64-encoded string.</param>
+		/// <returns>A base64web encoded string.</returns>
+		internal static string ToBase64WebSafe(string base64) {
+			Contract.Requires(base64 != null);
+			Contract.Ensures(Contract.Result<string>() != null);
+
+			if (base64.IndexOfAny(UnsafeBase64Characters) < 0) {
+				// The base64 encoded characters happen to already be web-safe.
+				return base64;
+			}
+
+			var webSafeBase64 = new StringBuilder(base64);
+			webSafeBase64.Replace('+', '-');
+			webSafeBase64.Replace('/', '_');
+			while (webSafeBase64[webSafeBase64.Length - 1] == '=') {
+				webSafeBase64.Length--;
+			}
+
+			return webSafeBase64.ToString();
+		}
+
+		/// <summary>
 		/// Serializes a data contract.
 		/// </summary>
 		/// <param name="serializer">The serializer.</param>
