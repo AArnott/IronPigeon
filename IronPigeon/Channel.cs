@@ -37,15 +37,15 @@
 
 		#region Message receiving methods
 
-		public async Task<IReadOnlyCollection<Message>> ReceiveAsync(IProgress<Message> progress = null, CancellationToken cancellationToken = default(CancellationToken)) {
-			var inboxItems = await this.DownloadInboxItemsAsync(cancellationToken);
+		public async Task<IReadOnlyCollection<Payload>> ReceiveAsync(IProgress<Payload> progress = null, CancellationToken cancellationToken = default(CancellationToken)) {
+			var inboxItems = await this.DownloadIncomingItemsAsync(cancellationToken);
 
-			var messages = new List<Message>();
+			var payloads = new List<Payload>();
 			foreach (var item in inboxItems) {
 				try {
 					var invite = await this.DownloadPayloadReferenceAsync(item, cancellationToken);
-					var message = await this.DownloadMessageAsync(invite, cancellationToken);
-					messages.Add(message);
+					var message = await this.DownloadPayloadAsync(invite, cancellationToken);
+					payloads.Add(message);
 					if (progress != null) {
 						progress.Report(message);
 					}
@@ -62,10 +62,10 @@
 				}
 			}
 
-			return messages;
+			return payloads;
 		}
 
-		protected virtual async Task<PayloadReference> DownloadPayloadReferenceAsync(InboxList.InboxItem inboxItem, CancellationToken cancellationToken) {
+		protected virtual async Task<PayloadReference> DownloadPayloadReferenceAsync(IncomingList.IncomingItem inboxItem, CancellationToken cancellationToken) {
 			Requires.NotNull(inboxItem, "inboxItem");
 
 			var responseMessage = await this.httpClient.GetAsync(inboxItem.Location, cancellationToken);
@@ -107,7 +107,7 @@
 			return messageReference;
 		}
 
-		protected virtual async Task<Message> DownloadMessageAsync(PayloadReference notification, CancellationToken cancellationToken) {
+		protected virtual async Task<Payload> DownloadPayloadAsync(PayloadReference notification, CancellationToken cancellationToken) {
 			Requires.NotNull(notification, "notification");
 
 			var responseMessage = await this.httpClient.GetAsync(notification.Location, cancellationToken);
@@ -127,7 +127,7 @@
 			var plainTextBuffer = this.CryptoServices.Decrypt(encryptedResult);
 			var plainTextStream = new MemoryStream(plainTextBuffer);
 			var plainTextReader = new BinaryReader(plainTextStream);
-			var message = Utilities.DeserializeDataContract<Message>(plainTextReader);
+			var message = Utilities.DeserializeDataContract<Payload>(plainTextReader);
 			return message;
 		}
 
@@ -135,16 +135,16 @@
 
 		#region Message sending methods
 
-		public async Task PostAsync(Message message, IReadOnlyCollection<Endpoint> recipients, DateTime expiresUtc, CancellationToken cancellationToken = default(CancellationToken)) {
+		public async Task PostAsync(Payload message, IReadOnlyCollection<Endpoint> recipients, DateTime expiresUtc, CancellationToken cancellationToken = default(CancellationToken)) {
 			Requires.NotNull(message, "message");
 			Requires.That(expiresUtc.Kind == DateTimeKind.Utc, "expiresUtc", Strings.UTCTimeRequired);
 			Requires.NotNullOrEmpty(recipients, "recipients");
 
-			var payloadReference = await this.PostMessageAsync(message, expiresUtc, cancellationToken);
-			await this.PostMessageAsync(payloadReference, recipients, cancellationToken);
+			var payloadReference = await this.PostPayloadAsync(message, expiresUtc, cancellationToken);
+			await this.PostPayloadReferenceAsync(payloadReference, recipients, cancellationToken);
 		}
 
-		protected virtual async Task<PayloadReference> PostMessageAsync(Message message, DateTime expiresUtc, CancellationToken cancellationToken) {
+		protected virtual async Task<PayloadReference> PostPayloadAsync(Payload message, DateTime expiresUtc, CancellationToken cancellationToken) {
 			Requires.NotNull(message, "message");
 			Requires.That(expiresUtc.Kind == DateTimeKind.Utc, "expiresUtc", Strings.UTCTimeRequired);
 			Requires.ValidState(this.CloudBlobStorage != null, "BlobStorageProvider must not be null");
@@ -172,17 +172,17 @@
 			}
 		}
 
-		protected virtual async Task PostMessageAsync(PayloadReference messageReference, IReadOnlyCollection<Endpoint> recipients, CancellationToken cancellationToken = default(CancellationToken)) {
+		protected virtual async Task PostPayloadReferenceAsync(PayloadReference messageReference, IReadOnlyCollection<Endpoint> recipients, CancellationToken cancellationToken = default(CancellationToken)) {
 			Requires.NotNull(messageReference, "messageReference");
 			Requires.NotNullOrEmpty(recipients, "recipients");
 
 			// Kick off individual tasks concurrently for each recipient.
 			// Each recipient requires cryptography (CPU intensive) to be performed, so don't block the calling thread.
 			await Task.WhenAll(
-				recipients.Select(recipient => Task.Run(() => this.PostMessageInviteAsync(messageReference, recipient, cancellationToken))));
+				recipients.Select(recipient => Task.Run(() => this.PostPayloadReferenceAsync(messageReference, recipient, cancellationToken))));
 		}
 
-		protected virtual async Task PostMessageInviteAsync(PayloadReference messageReference, Endpoint recipient, CancellationToken cancellationToken) {
+		protected virtual async Task PostPayloadReferenceAsync(PayloadReference messageReference, Endpoint recipient, CancellationToken cancellationToken) {
 			Requires.NotNull(recipient, "recipient");
 			Requires.NotNull(messageReference, "messageReference");
 
@@ -238,12 +238,12 @@
 
 		#endregion
 
-		private async Task<IReadOnlyList<InboxList.InboxItem>> DownloadInboxItemsAsync(CancellationToken cancellationToken) {
-			var deserializer = new DataContractJsonSerializer(typeof(InboxList));
-			var messages = new List<Message>();
+		private async Task<IReadOnlyList<IncomingList.IncomingItem>> DownloadIncomingItemsAsync(CancellationToken cancellationToken) {
+			var deserializer = new DataContractJsonSerializer(typeof(IncomingList));
+			var messages = new List<Payload>();
 			var responseMessage = await this.httpClient.GetAsync(this.Endpoint.PublicEndpoint.MessageReceivingEndpoint, cancellationToken);
 			var responseStream = await responseMessage.Content.ReadAsStreamAsync();
-			var inboxResults = (InboxList)deserializer.ReadObject(responseStream);
+			var inboxResults = (IncomingList)deserializer.ReadObject(responseStream);
 			return inboxResults.Items;
 		}
 

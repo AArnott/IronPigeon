@@ -8,8 +8,8 @@
 	using Microsoft;
 	
 	[DataContract]
-	public class Message {
-		public Message(byte[] content, string contentType) {
+	public class Payload {
+		public Payload(byte[] content, string contentType) {
 			Requires.NotNull(content, "content");
 			Requires.NotNullOrEmpty(contentType, "contentType");
 

@@ -6,12 +6,12 @@
 	using System.Text;
 
 	[DataContract]
-	public class InboxList {
+	public class IncomingList {
 		[DataMember]
-		public List<InboxItem> Items { get; set; }
+		public List<IncomingItem> Items { get; set; }
 
 		[DataContract]
-		public class InboxItem {
+		public class IncomingItem {
 			[DataMember]
 			public Uri Location { get; set; }
 

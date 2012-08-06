@@ -42,7 +42,7 @@
     <Compile Include="ILogger.cs" />
     <Compile Include="InboxList.cs" />
     <Compile Include="InvalidMessageException.cs" />
-    <Compile Include="Message.cs" />
+    <Compile Include="Payload.cs" />
     <Compile Include="OwnEndpoint.cs" />
     <Compile Include="PayloadReference.cs">
       <SubType>Code</SubType>

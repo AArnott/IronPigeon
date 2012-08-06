@@ -38,14 +38,14 @@
 				var recipient = this.recipients.Keys.FirstOrDefault(r => r.MessageReceivingEndpoint == request.RequestUri);
 				if (recipient != null) {
 					var inbox = recipients[recipient];
-					var list = new InboxList();
+					var list = new IncomingList();
 					string locationBase = recipient.MessageReceivingEndpoint.AbsoluteUri + "/";
-					list.Items = new List<InboxList.InboxItem>();
+					list.Items = new List<IncomingList.IncomingItem>();
 					for (int i = 0; i < inbox.Count; i++) {
-						list.Items.Add(new InboxList.InboxItem { DatePostedUtc = inbox[i].Item1, Location = new Uri(locationBase + i) });
+						list.Items.Add(new IncomingList.IncomingItem { DatePostedUtc = inbox[i].Item1, Location = new Uri(locationBase + i) });
 					}
 
-					var serializer = new DataContractJsonSerializer(typeof(InboxList));
+					var serializer = new DataContractJsonSerializer(typeof(IncomingList));
 					var contentStream = new MemoryStream();
 					serializer.WriteObject(contentStream, list);
 					contentStream.Position = 0;

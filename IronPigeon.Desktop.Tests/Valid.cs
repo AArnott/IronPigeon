@@ -11,7 +11,7 @@
 		internal static readonly Uri Location = new Uri("http://localhost/");
 		internal static readonly DateTime ExpirationUtc = DateTime.UtcNow.AddDays(1);
 		internal static readonly byte[] MessageContent = new byte[] { 0x11, 0x22, 0x33 };
-		internal static readonly Message Message = new Message(MessageContent, ContentType);
+		internal static readonly Payload Message = new Payload(MessageContent, ContentType);
 
 		internal static readonly string ContactIdentifier = "some identifier";
 		internal static readonly Uri MessageReceivingEndpoint = new Uri("http://localhost/inbox/someone");
