@@ -11,7 +11,6 @@
 		[Test]
 		public void DefaultContactCtor() {
 			var contact = new Endpoint();
-			Assert.That(contact.Identifier, Is.Null);
 			Assert.That(contact.MessageReceivingEndpoint, Is.Null);
 			Assert.That(contact.EncryptionKeyPublicMaterial, Is.Null);
 			Assert.That(contact.SigningKeyPublicMaterial, Is.Null);

@@ -32,7 +32,6 @@
 			var contact = new Endpoint() {
 				EncryptionKeyPublicMaterial = publicEncryptionKey,
 				SigningKeyPublicMaterial = publicSigningKey,
-				Identifier = ContactIdentifier,
 				MessageReceivingEndpoint = MessageReceivingEndpoint,
 				SigningKeyThumbprint = Mocks.MockCryptoProvider.GeneratePublicKeyThumbprint(publicSigningKey),
 			};

@@ -27,13 +27,6 @@
 		public Uri MessageReceivingEndpoint { get; set; }
 
 		/// <summary>
-		/// Gets or sets the identifier on which discovery resulted in this instance.
-		/// </summary>
-		/// <value>A human-recognizable identifier (typically an email address or public key thumbprint).</value>
-		[DataMember]
-		public string Identifier { get; set; }
-
-		/// <summary>
 		/// Gets or sets the key material for the public key this contact uses for signing messages.
 		/// </summary>
 		[DataMember]

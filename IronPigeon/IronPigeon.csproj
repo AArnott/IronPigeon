@@ -33,6 +33,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="AddressBookEntry.cs" />
     <Compile Include="Channel.cs" />
     <Compile Include="CryptoProviderBase.cs" />
     <Compile Include="Endpoint.cs" />

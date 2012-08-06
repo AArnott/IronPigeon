@@ -4,8 +4,12 @@
 	using System.Threading.Tasks;
 
 	/// <summary>
-	/// Stores and retrieves contacts from some public store.
+	/// Retrieves contacts from some public store.
 	/// </summary>
+	/// <remarks>
+	/// This interface does not describe a method for publishing to an address book because
+	/// each address book may have different authentication requirements.
+	/// </remarks>
 	public interface IAddressBook {
 		/// <summary>
 		/// Retrieves a contact with some user supplied identifier.
@@ -14,14 +18,6 @@
 		/// <param name="cancellationToken">A cancellation token.</param>
 		/// <returns>A task whose result is the contact.</returns>
 		/// <exception cref="KeyNotFoundException">Faults the task if no contact can be found for the given identifier.</exception>
-		Task<Endpoint> LookupAsync(string identifier, CancellationToken cancellationToken = default(CancellationToken));
-
-		/// <summary>
-		/// Publishes the specified contact for public retrieval.
-		/// </summary>
-		/// <param name="recipient">The contact to store.</param>
-		/// <param name="cancellationToken">A cancellation token.</param>
-		/// <returns>A task whose completion signals a successfully published contact.</returns>
-		Task PublishAsync(Endpoint recipient, CancellationToken cancellationToken = default(CancellationToken));
+		Task<AddressBookEntry> LookupAsync(string identifier, CancellationToken cancellationToken = default(CancellationToken));
 	}
 }
