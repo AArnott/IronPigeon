@@ -14,17 +14,18 @@
 
 	[TestFixture]
 	public class AzureBlobStorageTests {
-		private readonly string TestContainerName = "unittests" + Guid.NewGuid().ToString();
+		private string testContainerName;
 		private AzureBlobStorage blobStorage;
 		private CloudBlobContainer container;
 
 		[SetUp]
 		public void Initialize() {
+			this.testContainerName = "unittests" + Guid.NewGuid().ToString();
 			CloudStorageAccount.SetConfigurationSettingPublisher(ConfigSetter);
 			var account = CloudStorageAccount.FromConfigurationSetting("StorageConnectionString");
 			var blobClient = account.CreateCloudBlobClient();
-			this.container = blobClient.GetContainerReference(TestContainerName);
-			this.blobStorage = AzureBlobStorage.CreateWithContainerAsync(account, TestContainerName).Result;
+			this.container = blobClient.GetContainerReference(this.testContainerName);
+			this.blobStorage = AzureBlobStorage.CreateWithContainerAsync(account, this.testContainerName).Result;
 		}
 
 		[TearDown]
