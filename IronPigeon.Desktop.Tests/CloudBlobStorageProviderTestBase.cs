@@ -14,11 +14,16 @@
 
 		[Test]
 		public void UploadMessageAsync() {
-			var body = new MemoryStream(Valid.MessageContent);
-			var uri = this.Provider.UploadMessageAsync(body, Valid.ExpirationUtc).Result;
+			var uri = this.UploadMessageHelperAsync().Result;
 			var client = new HttpClient();
 			var downloadedBody = client.GetByteArrayAsync(uri).Result;
 			Assert.That(downloadedBody, Is.EqualTo(Valid.MessageContent));
+		}
+
+		protected async Task<Uri> UploadMessageHelperAsync() {
+			var body = new MemoryStream(Valid.MessageContent);
+			var uri = await this.Provider.UploadMessageAsync(body, Valid.ExpirationUtc);
+			return uri;
 		}
 	}
 }

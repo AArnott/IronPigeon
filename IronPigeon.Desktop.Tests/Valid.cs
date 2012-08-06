@@ -9,7 +9,7 @@
 
 		internal const string ContentType = "some type";
 		internal static readonly Uri Location = new Uri("http://localhost/");
-		internal static readonly DateTime ExpirationUtc = DateTime.UtcNow;
+		internal static readonly DateTime ExpirationUtc = DateTime.UtcNow.AddDays(1);
 		internal static readonly byte[] MessageContent = new byte[] { 0x11, 0x22, 0x33 };
 		internal static readonly Message Message = new Message(MessageContent, ContentType);
 
