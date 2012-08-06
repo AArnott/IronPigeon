@@ -13,9 +13,8 @@
 	using NUnit.Framework;
 
 	[TestFixture]
-	public class AzureBlobStorageTests {
+	public class AzureBlobStorageTests : CloudBlobStorageProviderTestBase {
 		private string testContainerName;
-		private AzureBlobStorage blobStorage;
 		private CloudBlobContainer container;
 
 		[SetUp]
@@ -25,7 +24,7 @@
 			var account = CloudStorageAccount.FromConfigurationSetting("StorageConnectionString");
 			var blobClient = account.CreateCloudBlobClient();
 			this.container = blobClient.GetContainerReference(this.testContainerName);
-			this.blobStorage = AzureBlobStorage.CreateWithContainerAsync(account, this.testContainerName).Result;
+			this.Provider = AzureBlobStorage.CreateWithContainerAsync(account, this.testContainerName).Result;
 		}
 
 		[TearDown]
@@ -38,15 +37,6 @@
 			// The SetUp method already called the method, so this tests the results of it.
 			var permissions = this.container.GetPermissions();
 			Assert.That(permissions.PublicAccess, Is.EqualTo(BlobContainerPublicAccessType.Blob));
-		}
-
-		[Test]
-		public void UploadMessageAsync() {
-			var body = new MemoryStream(Valid.MessageContent);
-			var uri = this.blobStorage.UploadMessageAsync(body, Valid.ExpirationUtc).Result;
-			var client = new HttpClient();
-			var downloadedBody = client.GetByteArrayAsync(uri).Result;
-			Assert.That(downloadedBody, Is.EqualTo(Valid.MessageContent));
 		}
 
 		private static void ConfigSetter(string configName, Func<string, bool> configSetter) {

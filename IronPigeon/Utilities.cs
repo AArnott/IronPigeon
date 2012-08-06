@@ -96,6 +96,14 @@
 			return base64.ToString();
 		}
 
+		public static string CreateRandomWebSafeName(int length) {
+			Requires.Range(length > 0, "length");
+			var random = new Random();
+			var buffer = new byte[length];
+			random.NextBytes(buffer);
+			return Utilities.ToBase64WebSafe(buffer).Substring(0, length);
+		}
+
 		/// <summary>
 		/// Converts a base64-encoded string to a web-safe base64-encoded string.
 		/// </summary>

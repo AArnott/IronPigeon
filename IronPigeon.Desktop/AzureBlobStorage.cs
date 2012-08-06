@@ -38,7 +38,7 @@
 		public async Task<Uri> UploadMessageAsync(Stream content, DateTime expirationUtc, CancellationToken cancellationToken = default(CancellationToken)) {
 			Requires.NotNull(content, "content");
 
-			var blob = this.container.GetBlobReference(CreateRandomBlobName());
+			var blob = this.container.GetBlobReference(Utilities.CreateRandomWebSafeName(DesktopUtilities.BlobNameLength));
 			await blob.UploadFromStreamAsync(content);
 			blob.Metadata["DeleteAfter"] = expirationUtc.ToString();
 			await blob.SetMetadataAsync();
@@ -56,13 +56,6 @@
 				};
 				await this.container.SetPermissionsAsync(permissions, null);
 			}
-		}
-
-		private static string CreateRandomBlobName() {
-			var random = new Random();
-			var buffer = new byte[16];
-			random.NextBytes(buffer);
-			return Utilities.ToBase64WebSafe(buffer);
 		}
 	}
 }

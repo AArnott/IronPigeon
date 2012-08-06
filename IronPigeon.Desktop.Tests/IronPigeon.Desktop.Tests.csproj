@@ -59,6 +59,7 @@
   <ItemGroup>
     <Compile Include="AzureBlobStorageTests.cs" />
     <Compile Include="ChannelTests.cs" />
+    <Compile Include="CloudBlobStorageProviderTestBase.cs" />
     <Compile Include="DesktopCryptoProviderTests.cs" />
     <Compile Include="Invalid.cs" />
     <Compile Include="Mocks\CloudBlobStorageProviderMock.cs" />
