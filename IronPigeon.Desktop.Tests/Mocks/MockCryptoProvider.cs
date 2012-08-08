@@ -85,12 +85,6 @@
 
 		#endregion
 
-		internal static byte[] GeneratePublicKeyThumbprint(byte[] publicKey) {
-			var hash = new byte[4];
-			Array.Copy(publicKey, hash, Math.Min(4, publicKey.Length));
-			return hash;
-		}
-
 		private static void GenerateKeyPair(out byte[] privateKey, out byte[] publicKey) {
 			var rng = new Random();
 			privateKey = new byte[KeyLengthInBytes];

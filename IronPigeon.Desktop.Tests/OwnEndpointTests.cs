@@ -31,11 +31,11 @@
 
 		[Test]
 		public void CreateAddressBookEntry() {
-			var ownContact = new OwnEndpoint(Valid.ReceivingEndpoint.PublicEndpoint, Valid.ReceivingEndpoint.SigningKeyPrivateMaterial, Valid.ReceivingEndpoint.EncryptionKeyPrivateMaterial);
-			var cryptoServices = new Mocks.MockCryptoProvider();
+			var ownContact = Valid.ReceivingEndpoint;
+			ICryptoProvider cryptoServices = new Mocks.MockCryptoProvider();
 			var entry = ownContact.CreateAddressBookEntry(cryptoServices);
-			Assert.That(entry.Signature, Is.Not.Null);
-			Assert.That(entry.SerializedEndpoint, Is.Not.Null);
+			Assert.That(entry.Signature, Is.Not.Null.And.Not.Empty);
+			Assert.That(entry.SerializedEndpoint, Is.Not.Null.And.Not.Empty);
 		}
 	}
 }
