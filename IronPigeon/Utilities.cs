@@ -104,6 +104,14 @@
 			return Utilities.ToBase64WebSafe(buffer).Substring(0, length);
 		}
 
+		public static string CreateWebSafeBase64Thumbprint(this ICryptoProvider cryptoProvider, byte[] buffer) {
+			Requires.NotNull(cryptoProvider, "cryptoProvider");
+			Requires.NotNull(buffer, "buffer");
+
+			var hash = cryptoProvider.Hash(buffer);
+			return ToBase64WebSafe(hash);
+		}
+
 		/// <summary>
 		/// Converts a base64-encoded string to a web-safe base64-encoded string.
 		/// </summary>

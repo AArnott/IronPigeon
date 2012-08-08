@@ -75,20 +75,20 @@
 		[Test]
 		public void PayloadReferenceTamperingTests() {
 			Task.Run(async delegate {
-				var sender = Valid.GenerateOwnEndpoint(desktopCryptoProvider);
-				var receiver = Valid.GenerateOwnEndpoint(desktopCryptoProvider);
+				var sender = Valid.GenerateOwnEndpoint(this.desktopCryptoProvider);
+				var receiver = Valid.GenerateOwnEndpoint(this.desktopCryptoProvider);
 
 				for (int i = 0; i < 100; i++) {
 					var cloudStorage = new Mocks.CloudBlobStorageProviderMock();
 					var inboxMock = new Mocks.InboxHttpHandlerMock(new[] { receiver.PublicEndpoint });
 
 					var sentMessage = Valid.Message;
-					await this.SendMessageAsync(cloudStorage, inboxMock, desktopCryptoProvider, sender, receiver.PublicEndpoint, sentMessage);
+					await this.SendMessageAsync(cloudStorage, inboxMock, this.desktopCryptoProvider, sender, receiver.PublicEndpoint, sentMessage);
 
 					// Tamper with the payload reference.
 					TestUtilities.ApplyFuzzing(inboxMock.Inboxes[receiver.PublicEndpoint][0].Item2, 1);
 
-					Assert.Throws<InvalidMessageException>(() => this.ReceiveMessageAsync(cloudStorage, inboxMock, desktopCryptoProvider, receiver).GetAwaiter().GetResult()); ;
+					Assert.Throws<InvalidMessageException>(() => this.ReceiveMessageAsync(cloudStorage, inboxMock, this.desktopCryptoProvider, receiver).GetAwaiter().GetResult()); ;
 				}
 			}).GetAwaiter().GetResult();
 		}
