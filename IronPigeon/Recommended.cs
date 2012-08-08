@@ -6,7 +6,7 @@
 	using System.Threading.Tasks;
 
 	public static class Recommended {
-		public const string HashAlgorithmName = "SHA1";
+		public const string HashAlgorithmName = "SHA256";
 
 		public const int EncryptionAsymmetricKeySize = 4096;
 

@@ -11,9 +11,9 @@
 		[Test]
 		public void HashAlgorithmName() {
 			var provider = new DesktopCryptoProvider();
-			Assert.That(provider.HashAlgorithmName, Is.EqualTo("SHA1")); // default
-			provider.HashAlgorithmName = "SHA256";
-			Assert.That(provider.HashAlgorithmName, Is.EqualTo("SHA256"));
+			Assert.That(provider.HashAlgorithmName, Is.EqualTo("SHA256")); // default
+			provider.HashAlgorithmName = "SHA111";
+			Assert.That(provider.HashAlgorithmName, Is.EqualTo("SHA111"));
 		}
 	}
 }
