@@ -59,6 +59,7 @@ local.properties
 *.tli
 *.tlh
 *.tmp
+*.log
 *.vspscc
 .builds
 *.dotCover
@@ -76,6 +77,7 @@ ipch/
 # Visual Studio profiler
 *.psess
 *.vsp
+*.vspx
 
 # ReSharper is a .NET coding add-in
 _ReSharper*

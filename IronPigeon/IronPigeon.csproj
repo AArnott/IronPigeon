@@ -34,12 +34,13 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="AddressBookEntry.cs" />
+    <Compile Include="BadAddressBookEntryException.cs" />
     <Compile Include="Channel.cs" />
     <Compile Include="CryptoProviderBase.cs" />
     <Compile Include="Endpoint.cs" />
     <Compile Include="ICloudBlobStorageProvider.cs" />
     <Compile Include="ICryptoProvider.cs" />
-    <Compile Include="IAddressBook.cs" />
+    <Compile Include="AddressBook.cs" />
     <Compile Include="ILogger.cs" />
     <Compile Include="InboxList.cs" />
     <Compile Include="InvalidMessageException.cs" />

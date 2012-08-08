@@ -13,16 +13,12 @@
 	public class ChannelTests {
 		private Mocks.LoggerMock logger;
 
-		private DesktopCryptoProvider desktopCryptoProvider;
+		private ICryptoProvider desktopCryptoProvider;
 
 		[SetUp]
 		public void Setup() {
 			this.logger = new Mocks.LoggerMock();
-			this.desktopCryptoProvider = new DesktopCryptoProvider {
-				EncryptionAsymmetricKeySize = 512, // use small key sizes so tests run faster
-				SignatureAsymmetricKeySize = 512,
-				BlobSymmetricKeySize = 128,
-			};
+			this.desktopCryptoProvider = TestUtilities.CreateAuthenticCryptoProvider();
 		}
 
 		[TearDown]
@@ -90,7 +86,7 @@
 					await this.SendMessageAsync(cloudStorage, inboxMock, desktopCryptoProvider, sender, receiver.PublicEndpoint, sentMessage);
 
 					// Tamper with the payload reference.
-					ApplyFuzzing(inboxMock.Inboxes[receiver.PublicEndpoint][0].Item2, 1);
+					TestUtilities.ApplyFuzzing(inboxMock.Inboxes[receiver.PublicEndpoint][0].Item2, 1);
 
 					Assert.Throws<InvalidMessageException>(() => this.ReceiveMessageAsync(cloudStorage, inboxMock, desktopCryptoProvider, receiver).GetAwaiter().GetResult()); ;
 				}
@@ -111,19 +107,11 @@
 					await this.SendMessageAsync(cloudStorage, inboxMock, desktopCryptoProvider, sender, receiver.PublicEndpoint, sentMessage);
 
 					// Tamper with the payload itself.
-					ApplyFuzzing(cloudStorage.Blobs.Single().Value, 1);
+					TestUtilities.ApplyFuzzing(cloudStorage.Blobs.Single().Value, 1);
 
 					Assert.Throws<InvalidMessageException>(() => this.ReceiveMessageAsync(cloudStorage, inboxMock, desktopCryptoProvider, receiver).GetAwaiter().GetResult()); ;
 				}
 			}).GetAwaiter().GetResult();
-		}
-
-		private static void ApplyFuzzing(byte[] buffer, int bytesToChange) {
-			var random = new Random();
-			for (int i = 0; i < bytesToChange; i++) {
-				int index = random.Next(buffer.Length);
-				buffer[index] = (byte)unchecked(buffer[index] + 0x1);
-			}
 		}
 
 		private async Task SendMessageAsync(Mocks.CloudBlobStorageProviderMock cloudBlobStorage, Mocks.InboxHttpHandlerMock inboxMock, ICryptoProvider cryptoProvider, OwnEndpoint sender, Endpoint receiver, Payload message) {

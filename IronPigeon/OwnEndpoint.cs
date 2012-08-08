@@ -1,6 +1,7 @@
 ﻿namespace IronPigeon {
 	using System;
 	using System.Collections.Generic;
+	using System.IO;
 	using System.Linq;
 	using System.Runtime.Serialization;
 	using System.Text;
@@ -45,5 +46,23 @@
 		/// </summary>
 		[DataMember]
 		public byte[] EncryptionKeyPrivateMaterial { get; private set; }
+
+		/// <summary>
+		/// Creates a signed address book entry that describes the public information in this endpoint.
+		/// </summary>
+		/// <param name="cryptoServices">The crypto services to use for signing the address book entry.</param>
+		/// <returns>The address book entry.</returns>
+		public AddressBookEntry CreateAddressBookEntry(ICryptoProvider cryptoServices) {
+			Requires.NotNull(cryptoServices, "cryptoServices");
+
+			var ms = new MemoryStream();
+			var writer = new BinaryWriter(ms);
+			var entry = new AddressBookEntry();
+			Utilities.SerializeDataContract<Endpoint>(writer, this.PublicEndpoint);
+			writer.Flush();
+			entry.SerializedEndpoint = ms.ToArray();
+			entry.Signature = cryptoServices.Sign(entry.SerializedEndpoint, this.SigningKeyPrivateMaterial);
+			return entry;
+		}
 	}
 }

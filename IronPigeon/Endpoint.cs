@@ -39,9 +39,24 @@
 		public byte[] EncryptionKeyPublicMaterial { get; set; }
 
 		/// <summary>
-		/// Gets or sets the signing public key's thumbprint.
+		/// Checks equality between this and another instance.
 		/// </summary>
-		[DataMember]
-		public byte[] SigningKeyThumbprint { get; set; }
+		public override bool Equals(object obj) {
+			var other = obj as Endpoint;
+			if (other == null) {
+				return false;
+			}
+
+			return this.MessageReceivingEndpoint == other.MessageReceivingEndpoint
+				&& Utilities.AreEquivalent(this.SigningKeyPublicMaterial, other.SigningKeyPublicMaterial)
+				&& Utilities.AreEquivalent(this.EncryptionKeyPublicMaterial, other.EncryptionKeyPublicMaterial);
+		}
+
+		/// <summary>
+		/// Gets a hash code for this instance.
+		/// </summary>
+		public override int GetHashCode() {
+			return this.MessageReceivingEndpoint != null ? this.MessageReceivingEndpoint.GetHashCode() : 0;
+		}
 	}
 }

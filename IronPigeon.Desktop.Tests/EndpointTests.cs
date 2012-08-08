@@ -14,7 +14,31 @@
 			Assert.That(contact.MessageReceivingEndpoint, Is.Null);
 			Assert.That(contact.EncryptionKeyPublicMaterial, Is.Null);
 			Assert.That(contact.SigningKeyPublicMaterial, Is.Null);
-			Assert.That(contact.SigningKeyThumbprint, Is.Null);
+		}
+
+		[Test]
+		public void Equals() {
+			var contact1 = new Endpoint();
+			Assert.That(contact1.Equals(null), Is.False);
+			Assert.That(contact1.Equals(contact1), Is.True);
+			Assert.That(contact1.Equals(Valid.PublicEndpoint), Is.False);
+
+			contact1.MessageReceivingEndpoint = Valid.PublicEndpoint.MessageReceivingEndpoint;
+			contact1.SigningKeyPublicMaterial = Valid.PublicEndpoint.SigningKeyPublicMaterial;
+			contact1.EncryptionKeyPublicMaterial = Valid.PublicEndpoint.EncryptionKeyPublicMaterial;
+			Assert.That(contact1, Is.EqualTo(Valid.PublicEndpoint));
+
+			contact1.MessageReceivingEndpoint = null;
+			Assert.That(contact1, Is.Not.EqualTo(Valid.PublicEndpoint));
+			contact1.MessageReceivingEndpoint = Valid.PublicEndpoint.MessageReceivingEndpoint;
+
+			contact1.SigningKeyPublicMaterial = null;
+			Assert.That(contact1, Is.Not.EqualTo(Valid.PublicEndpoint));
+			contact1.SigningKeyPublicMaterial = Valid.PublicEndpoint.SigningKeyPublicMaterial;
+
+			contact1.EncryptionKeyPublicMaterial = null;
+			Assert.That(contact1, Is.Not.EqualTo(Valid.PublicEndpoint));
+			contact1.EncryptionKeyPublicMaterial = Valid.PublicEndpoint.EncryptionKeyPublicMaterial;
 		}
 	}
 }

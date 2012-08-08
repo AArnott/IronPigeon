@@ -33,7 +33,6 @@
 				EncryptionKeyPublicMaterial = publicEncryptionKey,
 				SigningKeyPublicMaterial = publicSigningKey,
 				MessageReceivingEndpoint = MessageReceivingEndpoint,
-				SigningKeyThumbprint = Mocks.MockCryptoProvider.GeneratePublicKeyThumbprint(publicSigningKey),
 			};
 
 			var ownContact = new OwnEndpoint(contact, privateSigningKey, privateEncryptionKey);

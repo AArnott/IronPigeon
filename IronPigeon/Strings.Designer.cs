@@ -62,6 +62,24 @@ namespace IronPigeon {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The signature on the address book entry is invalid..
+        /// </summary>
+        internal static string AddressBookEntrySignatureDoesNotMatch {
+            get {
+                return ResourceManager.GetString("AddressBookEntrySignatureDoesNotMatch", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to An instance of ICryptoServices must be supplied first..
+        /// </summary>
+        internal static string CryptoServicesRequired {
+            get {
+                return ResourceManager.GetString("CryptoServicesRequired", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Error when reading incoming message..
         /// </summary>
         internal static string InvalidMessage {
