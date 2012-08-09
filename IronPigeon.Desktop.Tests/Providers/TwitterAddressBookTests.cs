@@ -11,9 +11,7 @@
 		public void SetUp() {
 			this.twitter = new TwitterAddressBook();
 			this.twitter.CryptoServices = TestUtilities.CreateAuthenticCryptoProvider();
-
-			var httpHandlerMock = Mocks.HttpMessageHandlerRecorder.CreatePlayback();
-			this.twitter.HttpMessageHandler = httpHandlerMock;
+			this.twitter.HttpMessageHandler = Mocks.HttpMessageHandlerRecorder.CreatePlayback();
 		}
 
 		[Test]
