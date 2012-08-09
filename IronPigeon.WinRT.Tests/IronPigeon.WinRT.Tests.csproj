@@ -9,7 +9,7 @@
     <ProjectGuid>{32379451-9B62-4D2E-9F04-50CDB2465381}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>IronPigeon.WinRT.Tests</RootNamespace>
+    <RootNamespace>IronPigeon.Tests</RootNamespace>
     <AssemblyName>IronPigeon.WinRT.Tests</AssemblyName>
     <DefaultLanguage>en-US</DefaultLanguage>
     <FileAlignment>512</FileAlignment>

@@ -8,7 +8,7 @@
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>IronPigeon.Tests</RootNamespace>
-    <AssemblyName>IronPigeon.Tests</AssemblyName>
+    <AssemblyName>IronPigeon.Desktop.Tests</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
