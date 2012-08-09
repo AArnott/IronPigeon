@@ -1,4 +1,4 @@
-﻿namespace IronPigeon.Tests {
+﻿namespace IronPigeon.Tests.Providers {
 	using System;
 	using System.Collections.Generic;
 	using System.Configuration;
@@ -8,6 +8,7 @@
 	using System.Net.Http;
 	using System.Text;
 	using System.Threading.Tasks;
+	using IronPigeon.Providers;
 	using Microsoft.WindowsAzure;
 	using Microsoft.WindowsAzure.StorageClient;
 	using NUnit.Framework;

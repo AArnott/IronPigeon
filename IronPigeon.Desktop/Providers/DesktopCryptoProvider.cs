@@ -1,4 +1,4 @@
-﻿namespace IronPigeon {
+﻿namespace IronPigeon.Providers {
 	using System;
 	using System.Collections.Generic;
 	using System.IO;

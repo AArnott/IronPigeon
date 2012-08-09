@@ -5,6 +5,7 @@
 	using System.Linq;
 	using System.Text;
 	using System.Threading.Tasks;
+	using IronPigeon.Providers;
 	using Microsoft;
 
 	internal static class TestUtilities {
@@ -41,7 +42,7 @@
 		}
 
 		internal static void GetUnitTestInfo(out Type testFixture, out string testMethod) {
-			string testFullName =NUnit.Framework.TestContext.CurrentContext.Test.FullName;
+			string testFullName = NUnit.Framework.TestContext.CurrentContext.Test.FullName;
 			int methodStartIndex = testFullName.LastIndexOf('.');
 			string testClassName = testFullName.Substring(0, methodStartIndex);
 			string testMethodName = testFullName.Substring(methodStartIndex + 1);
