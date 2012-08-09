@@ -1,0 +1,13 @@
+OK
+X-RateLimit-Limit:150
+X-RateLimit-Remaining:143
+X-RateLimit-Reset:1344555421
+X-RateLimit-Class:api
+Pragma:no-cache
+Status:200 OK
+X-Transaction:6656ff97688bffa9
+X-Frame-Options:SAMEORIGIN
+Cache-Control:no-store, must-revalidate, no-cache, pre-check=0, post-check=0
+Date:Thu, 09 Aug 2012 23:10:18 GMT
+Set-Cookie:guest_id="v1:134455381817168744"; Expires=Sat, 9-Aug-2014 23:10:18 GMT; Path=/; Domain=.twitter.com
+Server:tfe

@@ -145,7 +145,7 @@
 		/// <remarks>
 		/// Useful when a data contract is serialized to a stream but is not the only member of that stream.
 		/// </remarks>
-		internal static void SerializeDataContract<T>(this BinaryWriter writer, T graph) where T : class {
+		public static void SerializeDataContract<T>(this BinaryWriter writer, T graph) where T : class {
 			Requires.NotNull(writer, "writer");
 			Requires.NotNull(graph, "graph");
 
@@ -165,13 +165,45 @@
 		/// <remarks>
 		/// Useful when a data contract is serialized to a stream but is not the only member of that stream.
 		/// </remarks>
-		internal static T DeserializeDataContract<T>(this BinaryReader binaryReader) {
+		public static T DeserializeDataContract<T>(this BinaryReader binaryReader) {
 			Requires.NotNull(binaryReader, "binaryReader");
 
 			var serializer = new DataContractSerializer(typeof(T));
 			int length = binaryReader.ReadInt32();
 			var ms = new MemoryStream(binaryReader.ReadBytes(length));
 			return (T)serializer.ReadObject(ms);
+		}
+
+		public static async Task SerializeDataContractAsBase64Async<T>(TextWriter writer, T graph) where T : class {
+			Requires.NotNull(writer, "writer");
+			Requires.NotNull(graph, "graph");
+
+			var ms = new MemoryStream();
+			var binaryWriter = new BinaryWriter(ms);
+			SerializeDataContract<T>(binaryWriter, graph);
+			binaryWriter.Flush();
+			ms.Position = 0;
+
+			const int MaxLineLength = 80;
+			string entireBase64 = Convert.ToBase64String(ms.ToArray());
+			for (int i = 0; i < entireBase64.Length; i += MaxLineLength) {
+				await writer.WriteLineAsync(entireBase64.Substring(i, Math.Min(MaxLineLength, entireBase64.Length - i)));
+			}
+		}
+
+		public static async Task<T> DeserializeDataContractFromBase64Async<T>(TextReader reader) where T : class {
+			Requires.NotNull(reader, "reader");
+
+			var builder = new StringBuilder();
+			string line;
+			while ((line = await reader.ReadLineAsync()) != null) {
+				builder.Append(line);
+			}
+
+			var ms = new MemoryStream(Convert.FromBase64String(builder.ToString()));
+			var binaryReader = new BinaryReader(ms);
+			var value = DeserializeDataContract<T>(binaryReader);
+			return value;
 		}
 
 		public static byte[] ReadSizeAndBuffer(this BinaryReader reader) {
@@ -211,6 +243,26 @@
 			byte[] buffer = new byte[size];
 			await stream.ReadAsync(buffer, 0, size, cancellationToken);
 			return buffer;
+		}
+
+		internal static async Task<Stream> GetBufferedStreamAsync(this HttpClient client, Uri location, CancellationToken cancellationToken) {
+			Requires.NotNull(client, "client");
+
+			var response = await client.GetAsync(location, cancellationToken);
+			response.EnsureSuccessStatusCode();
+			return await response.Content.ReadAsBufferedStreamAsync(cancellationToken);
+		}
+
+		internal static async Task<Stream> ReadAsBufferedStreamAsync(this HttpContent content, CancellationToken cancellationToken) {
+			Requires.NotNull(content, "content");
+
+			cancellationToken.ThrowIfCancellationRequested();
+			using (var stream = await content.ReadAsStreamAsync()) {
+				var memoryStream = new MemoryStream();
+				await stream.CopyToAsync(memoryStream, 4096, cancellationToken);
+				memoryStream.Position = 0;
+				return memoryStream;
+			}
 		}
 	}
 }

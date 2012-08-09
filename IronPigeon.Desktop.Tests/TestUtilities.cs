@@ -1,6 +1,7 @@
 ﻿namespace IronPigeon.Tests {
 	using System;
 	using System.Collections.Generic;
+	using System.IO;
 	using System.Linq;
 	using System.Text;
 	using System.Threading.Tasks;
@@ -37,6 +38,15 @@
 				SignatureAsymmetricKeySize = 512,
 				BlobSymmetricKeySize = 128,
 			};
+		}
+
+		internal static void GetUnitTestInfo(out Type testFixture, out string testMethod) {
+			string testFullName =NUnit.Framework.TestContext.CurrentContext.Test.FullName;
+			int methodStartIndex = testFullName.LastIndexOf('.');
+			string testClassName = testFullName.Substring(0, methodStartIndex);
+			string testMethodName = testFullName.Substring(methodStartIndex + 1);
+			testFixture = Type.GetType(testClassName);
+			testMethod = testMethodName;
 		}
 	}
 }

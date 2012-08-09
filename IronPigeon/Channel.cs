@@ -24,6 +24,7 @@
 		public HttpMessageHandler HttpMessageHandler {
 			get { return this.httpMessageHandler; }
 			set {
+				Requires.NotNull(value, "value");
 				this.httpMessageHandler = value;
 				this.httpClient = new HttpClient(value);
 			}

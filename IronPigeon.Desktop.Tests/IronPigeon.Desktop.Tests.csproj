@@ -71,11 +71,13 @@
     <Compile Include="Mocks\AddressBookMock.cs" />
     <Compile Include="Mocks\CloudBlobStorageProviderMock.cs" />
     <Compile Include="Mocks\HttpMessageHandlerMock.cs" />
+    <Compile Include="Mocks\HttpMessageHandlerRecorder.cs" />
     <Compile Include="Mocks\InboxHttpHandlerMock.cs" />
     <Compile Include="Mocks\LoggerMock.cs" />
     <Compile Include="Mocks\MockCryptoProvider.cs" />
     <Compile Include="OwnEndpointTests.cs" />
     <Compile Include="TestUtilities.cs" />
+    <Compile Include="Providers\TwitterAddressBookTests.cs" />
     <Compile Include="UtilitiesTests.cs" />
     <Compile Include="Valid.cs" />
     <Compile Include="EndpointTests.cs" />
@@ -87,6 +89,18 @@
   <ItemGroup>
     <None Include="App.config" />
     <None Include="packages.config" />
+    <EmbeddedResource Include="Providers\TwitterAddressBookTests.LookupEntryAsyncExistingUserReplacedEndpoint\GET%2520http%253A%252F%252Fpastebin.com%252Fraw.php%253Fi%253DCQ1PWqLh.body" />
+    <EmbeddedResource Include="Providers\TwitterAddressBookTests.LookupEntryAsyncExistingUserReplacedEndpoint\GET%2520http%253A%252F%252Fpastebin.com%252Fraw.php%253Fi%253DCQ1PWqLh.headers" />
+    <EmbeddedResource Include="Providers\TwitterAddressBookTests.LookupEntryAsyncExistingUserReplacedEndpoint\GET%2520https%253A%252F%252Fapi.twitter.com%252F1%252Fusers%252Fshow.json%253Fscreen_name%253DPrivacyNotFound.body" />
+    <EmbeddedResource Include="Providers\TwitterAddressBookTests.LookupEntryAsyncExistingUserReplacedEndpoint\GET%2520https%253A%252F%252Fapi.twitter.com%252F1%252Fusers%252Fshow.json%253Fscreen_name%253DPrivacyNotFound.headers" />
+    <EmbeddedResource Include="Providers\TwitterAddressBookTests.LookupEntryAsyncExistingUser\GET%2520http%253A%252F%252Fpastebin.com%252Fraw.php%253Fi%253DCQ1PWqLh.body" />
+    <EmbeddedResource Include="Providers\TwitterAddressBookTests.LookupEntryAsyncExistingUser\GET%2520http%253A%252F%252Fpastebin.com%252Fraw.php%253Fi%253DCQ1PWqLh.headers" />
+    <EmbeddedResource Include="Providers\TwitterAddressBookTests.LookupEntryAsyncExistingUser\GET%2520https%253A%252F%252Fapi.twitter.com%252F1%252Fusers%252Fshow.json%253Fscreen_name%253DPrivacyNotFound.body" />
+    <EmbeddedResource Include="Providers\TwitterAddressBookTests.LookupEntryAsyncExistingUser\GET%2520https%253A%252F%252Fapi.twitter.com%252F1%252Fusers%252Fshow.json%253Fscreen_name%253DPrivacyNotFound.headers" />
+    <EmbeddedResource Include="Providers\TwitterAddressBookTests.LookupEntryAsyncNonExistentUser\GET%2520https%253A%252F%252Fapi.twitter.com%252F1%252Fusers%252Fshow.json%253Fscreen_name%253DNonExistentUser2394872352.body" />
+    <EmbeddedResource Include="Providers\TwitterAddressBookTests.LookupEntryAsyncNonExistentUser\GET%2520https%253A%252F%252Fapi.twitter.com%252F1%252Fusers%252Fshow.json%253Fscreen_name%253DNonExistentUser2394872352.headers" />
+    <EmbeddedResource Include="Providers\TwitterAddressBookTests.LookupEntryAsyncValidUserWithNoEntry\GET%2520https%253A%252F%252Fapi.twitter.com%252F1%252Fusers%252Fshow.json%253Fscreen_name%253Dshanselman.body" />
+    <EmbeddedResource Include="Providers\TwitterAddressBookTests.LookupEntryAsyncValidUserWithNoEntry\GET%2520https%253A%252F%252Fapi.twitter.com%252F1%252Fusers%252Fshow.json%253Fscreen_name%253Dshanselman.headers" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\IronPigeon.Desktop\IronPigeon.Desktop.csproj">

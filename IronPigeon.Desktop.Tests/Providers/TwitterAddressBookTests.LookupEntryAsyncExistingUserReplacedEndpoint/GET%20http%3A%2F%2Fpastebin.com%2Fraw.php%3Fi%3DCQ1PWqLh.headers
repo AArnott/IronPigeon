@@ -1,0 +1,7 @@
+OK
+Transfer-Encoding:chunked
+Connection:keep-alive
+Vary:Accept-Encoding
+Date:Thu, 09 Aug 2012 23:10:17 GMT
+Set-Cookie:cookie_key=1; expires=Thu, 06-Sep-2012 23:10:17 GMT; path=/; domain=.pastebin.com	realuser=1; expires=Fri, 10-Aug-2012 23:10:17 GMT; path=/
+Server:nginx

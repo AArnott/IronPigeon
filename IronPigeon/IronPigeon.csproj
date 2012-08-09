@@ -44,6 +44,7 @@
     <Compile Include="ILogger.cs" />
     <Compile Include="InboxList.cs" />
     <Compile Include="InvalidMessageException.cs" />
+    <Compile Include="OnlineAddressBook.cs" />
     <Compile Include="Payload.cs" />
     <Compile Include="OwnEndpoint.cs" />
     <Compile Include="PayloadReference.cs">
@@ -57,6 +58,7 @@
       <DependentUpon>Strings.resx</DependentUpon>
     </Compile>
     <Compile Include="SymmetricEncryptionResult.cs" />
+    <Compile Include="Providers\TwitterAddressBook.cs" />
     <Compile Include="Utilities.cs" />
   </ItemGroup>
   <ItemGroup>
