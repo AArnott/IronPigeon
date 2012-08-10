@@ -96,6 +96,14 @@
 			return base64.ToString();
 		}
 
+		/// <summary>
+		/// Creates a random string of characters that can appear without escaping in URIs.
+		/// </summary>
+		/// <param name="length">The desired length of the random string.</param>
+		/// <returns>The random string</returns>
+		/// <remarks>
+		/// The randomization is not cryptographically strong.
+		/// </remarks>
 		public static string CreateRandomWebSafeName(int length) {
 			Requires.Range(length > 0, "length");
 			var random = new Random();
@@ -110,30 +118,6 @@
 
 			var hash = cryptoProvider.Hash(buffer);
 			return ToBase64WebSafe(hash);
-		}
-
-		/// <summary>
-		/// Converts a base64-encoded string to a web-safe base64-encoded string.
-		/// </summary>
-		/// <param name="base64">The base64-encoded string.</param>
-		/// <returns>A base64web encoded string.</returns>
-		internal static string ToBase64WebSafe(string base64) {
-			Contract.Requires(base64 != null);
-			Contract.Ensures(Contract.Result<string>() != null);
-
-			if (base64.IndexOfAny(UnsafeBase64Characters) < 0) {
-				// The base64 encoded characters happen to already be web-safe.
-				return base64;
-			}
-
-			var webSafeBase64 = new StringBuilder(base64);
-			webSafeBase64.Replace('+', '-');
-			webSafeBase64.Replace('/', '_');
-			while (webSafeBase64[webSafeBase64.Length - 1] == '=') {
-				webSafeBase64.Length--;
-			}
-
-			return webSafeBase64.ToString();
 		}
 
 		/// <summary>
@@ -243,6 +227,30 @@
 			byte[] buffer = new byte[size];
 			await stream.ReadAsync(buffer, 0, size, cancellationToken);
 			return buffer;
+		}
+
+		/// <summary>
+		/// Converts a base64-encoded string to a web-safe base64-encoded string.
+		/// </summary>
+		/// <param name="base64">The base64-encoded string.</param>
+		/// <returns>A base64web encoded string.</returns>
+		internal static string ToBase64WebSafe(string base64) {
+			Contract.Requires(base64 != null);
+			Contract.Ensures(Contract.Result<string>() != null);
+
+			if (base64.IndexOfAny(UnsafeBase64Characters) < 0) {
+				// The base64 encoded characters happen to already be web-safe.
+				return base64;
+			}
+
+			var webSafeBase64 = new StringBuilder(base64);
+			webSafeBase64.Replace('+', '-');
+			webSafeBase64.Replace('/', '_');
+			while (webSafeBase64[webSafeBase64.Length - 1] == '=') {
+				webSafeBase64.Length--;
+			}
+
+			return webSafeBase64.ToString();
 		}
 
 		internal static async Task<Stream> GetBufferedStreamAsync(this HttpClient client, Uri location, CancellationToken cancellationToken) {

@@ -13,16 +13,38 @@
 	using System.Threading.Tasks;
 	using Microsoft;
 
+	/// <summary>
+	/// A channel for sending or receiving secure messages.
+	/// </summary>
 	public class Channel {
+		/// <summary>
+		/// The message handler to use for sending/receiving HTTP messages.
+		/// </summary>
 		private HttpMessageHandler httpMessageHandler = new HttpClientHandler();
+
+		/// <summary>
+		/// The HTTP client to use for sending/receiving HTTP messages.
+		/// </summary>
 		private HttpClient httpClient;
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="Channel" /> class.
+		/// </summary>
 		public Channel() {
 			this.httpClient = new HttpClient(this.httpMessageHandler);
 		}
 
+		/// <summary>
+		/// Gets or sets the HTTP message handler.
+		/// </summary>
+		/// <value>
+		/// The HTTP message handler.
+		/// </value>
 		public HttpMessageHandler HttpMessageHandler {
-			get { return this.httpMessageHandler; }
+			get {
+				return this.httpMessageHandler;
+			}
+
 			set {
 				Requires.NotNull(value, "value");
 				this.httpMessageHandler = value;
@@ -30,11 +52,31 @@
 			}
 		}
 
+		/// <summary>
+		/// Gets or sets the provider of blob storage.
+		/// </summary>
 		public ICloudBlobStorageProvider CloudBlobStorage { get; set; }
 
+		/// <summary>
+		/// Gets or sets the provider for cryptographic operations.
+		/// </summary>
+		/// <value>
+		/// The crypto services.
+		/// </value>
 		public ICryptoProvider CryptoServices { get; set; }
 
+		/// <summary>
+		/// Gets or sets the endpoint used to receive messages.
+		/// </summary>
+		/// <value>
+		/// The endpoint.
+		/// </value>
 		public OwnEndpoint Endpoint { get; set; }
+
+		/// <summary>
+		/// Gets or sets the logger.
+		/// </summary>
+		public ILogger Logger { get; set; }
 
 		#region Message receiving methods
 
@@ -230,7 +272,6 @@
 			await postContent.WriteSizeAndBufferAsync(encryptedPayload.Ciphertext, cancellationToken);
 			await postContent.FlushAsync();
 			postContent.Position = 0;
-			//string base64HashOfInvite = Utilities.ToBase64WebSafe(this.Hash(postContent.ToArray()));
 
 			using (var response = await this.httpClient.PostAsync(builder.Uri, new StreamContent(postContent), cancellationToken)) {
 				response.EnsureSuccessStatusCode();
@@ -248,8 +289,9 @@
 			return inboxResults.Items;
 		}
 
-		public ILogger Logger { get; set; }
-
+		/// <summary>Logs a message.</summary>
+		/// <param name="caption">A description of what the contents of the <paramref name="buffer"/> are.</param>
+		/// <param name="buffer">The buffer.</param>
 		private void Log(string caption, byte[] buffer) {
 			var logger = this.Logger;
 			if (logger != null) {

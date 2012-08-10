@@ -37,7 +37,7 @@
 			} else if (request.Method == HttpMethod.Get) {
 				var recipient = this.recipients.Keys.FirstOrDefault(r => r.MessageReceivingEndpoint == request.RequestUri);
 				if (recipient != null) {
-					var inbox = recipients[recipient];
+					var inbox = this.recipients[recipient];
 					var list = new IncomingList();
 					string locationBase = recipient.MessageReceivingEndpoint.AbsoluteUri + "/";
 					list.Items = new List<IncomingList.IncomingItem>();
@@ -52,7 +52,7 @@
 					return new HttpResponseMessage { Content = new StreamContent(contentStream) };
 				}
 
-				recipient = recipients.Keys.FirstOrDefault(r => request.RequestUri.AbsolutePath.StartsWith(r.MessageReceivingEndpoint.AbsolutePath + "/"));
+				recipient = this.recipients.Keys.FirstOrDefault(r => request.RequestUri.AbsolutePath.StartsWith(r.MessageReceivingEndpoint.AbsolutePath + "/"));
 				if (recipient != null) {
 					var messageIndex = int.Parse(request.RequestUri.Segments[request.RequestUri.Segments.Length - 1]);
 					var message = this.recipients[recipient][messageIndex];

@@ -1,7 +1,9 @@
 ﻿namespace IronPigeon.Tests {
 	using System;
+	using System.Diagnostics.CodeAnalysis;
 	using System.IO;
 
+	[SuppressMessage("Microsoft.StyleCop.CSharp.OrderingRules", "SA1202:ElementsMustBeOrderedByAccess", Justification = "Declaration order impacts execution order.")]
 	internal static class Invalid {
 		private static readonly byte[] EmptyBuffer = new byte[0];
 

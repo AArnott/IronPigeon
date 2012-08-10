@@ -3,11 +3,11 @@
 	using System.IO;
 
 	internal static class Valid {
+		internal const string ContentType = "some type";
 		internal static readonly byte[] Hash = new byte[1];
 		internal static readonly byte[] Key = new byte[1];
 		internal static readonly byte[] IV = new byte[1];
 
-		internal const string ContentType = "some type";
 		internal static readonly Uri Location = new Uri("http://localhost/");
 		internal static readonly DateTime ExpirationUtc = DateTime.UtcNow.AddDays(1);
 		internal static readonly byte[] MessageContent = new byte[] { 0x11, 0x22, 0x33 };

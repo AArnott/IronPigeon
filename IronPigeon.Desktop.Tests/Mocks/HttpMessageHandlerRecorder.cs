@@ -23,6 +23,12 @@
 			this.mode = mode;
 		}
 
+		private enum Mode {
+			Live,
+			Recording,
+			Playback,
+		}
+
 		internal static HttpMessageHandlerRecorder CreateRecorder() {
 			Type testClass;
 			string testName;
@@ -48,12 +54,6 @@
 			string scenario = testClass.Name + "." + testName;
 
 			return new HttpMessageHandlerRecorder(testClass.Namespace + "." + scenario, Mode.Playback);
-		}
-
-		internal enum Mode {
-			Live,
-			Recording,
-			Playback,
 		}
 
 		protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) {
@@ -94,7 +94,7 @@
 				using (var writer = new StreamWriter(file)) {
 					await writer.WriteLineAsync(response.StatusCode.ToString());
 					foreach (var header in response.Headers) {
-						await writer.WriteLineAsync(String.Format(CultureInfo.InvariantCulture, "{0}:{1}", header.Key, String.Join("\t", header.Value)));
+						await writer.WriteLineAsync(string.Format(CultureInfo.InvariantCulture, "{0}:{1}", header.Key, string.Join("\t", header.Value)));
 					}
 				}
 			}

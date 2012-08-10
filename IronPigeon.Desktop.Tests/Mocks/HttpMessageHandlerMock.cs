@@ -18,12 +18,12 @@
 		}
 
 		internal void RegisterHandler(Func<HttpRequestMessage, Task<HttpResponseMessage>> handler) {
-			Requires.NotNull(handlers, "handlers");
+			Requires.NotNull(handler, "handler");
 			this.handlers.Add(handler);
 		}
 
 		protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, System.Threading.CancellationToken cancellationToken) {
-			foreach (var handler in handlers) {
+			foreach (var handler in this.handlers) {
 				var result = await handler(request);
 				if (result != null) {
 					return result;

@@ -51,7 +51,7 @@
 
 		private static void ConfigSetter(string configName, Func<string, bool> configSetter) {
 			string value = ConfigurationManager.AppSettings[configName];
-			if (String.IsNullOrEmpty(value)) {
+			if (string.IsNullOrEmpty(value)) {
 				value = ConfigurationManager.ConnectionStrings[configName].ConnectionString;
 			}
 

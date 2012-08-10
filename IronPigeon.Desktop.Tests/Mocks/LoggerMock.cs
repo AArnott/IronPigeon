@@ -16,7 +16,7 @@
 		}
 
 		public void WriteLine(string unformattedMessage, byte[] buffer) {
-			string message = String.Format(CultureInfo.CurrentCulture, "{0}: {1}", unformattedMessage, BitConverter.ToString(buffer).Replace("-", "").ToLowerInvariant());
+			string message = string.Format(CultureInfo.CurrentCulture, "{0}: {1}", unformattedMessage, BitConverter.ToString(buffer).Replace("-", string.Empty).ToLowerInvariant());
 
 			this.messages.Add(message);
 			Trace.WriteLine(message);

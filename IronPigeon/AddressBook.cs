@@ -55,6 +55,7 @@
 			} catch (Exception ex) { // all those platform-specific exceptions that aren't available to portable libraries.
 				throw new BadAddressBookEntryException(Strings.AddressBookEntrySignatureDoesNotMatch, ex);
 			}
+
 			return endpoint;
 		}
 	}

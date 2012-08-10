@@ -14,13 +14,14 @@
 	[DataContract]
 	public class PayloadReference {
 		/// <summary>
-		/// Initializes a new instance of the <see cref="PayloadReference"/> class.
+		/// Initializes a new instance of the <see cref="PayloadReference" /> class.
 		/// </summary>
 		/// <param name="location">The URL where the payload of the message may be downloaded.</param>
 		/// <param name="hash">The hash of the encrypted bytes of the payload.</param>
 		/// <param name="key">The symmetric key used to encrypt the payload.</param>
 		/// <param name="iv">The initialization vector used to encrypt the payload.</param>
 		/// <param name="expiresUtc">The time beyond which the payload is expected to be deleted.</param>
+		/// <param name="contentType">Type of the content.</param>
 		public PayloadReference(Uri location, byte[] hash, byte[] key, byte[] iv, DateTime expiresUtc, string contentType) {
 			Requires.NotNull(location, "location");
 			Requires.NotNullOrEmpty(hash, "hash");

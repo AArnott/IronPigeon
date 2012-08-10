@@ -8,16 +8,19 @@
 	using System.Threading.Tasks;
 	using Microsoft;
 
+	/// <summary>
+	/// A self-signed description of an endpoint including public signing and encryption keys.
+	/// </summary>
 	[DataContract]
 	public class AddressBookEntry {
 		/// <summary>
-		/// The serialized <see cref="Endpoint"/>.
+		/// Gets or sets the serialized <see cref="Endpoint"/>.
 		/// </summary>
 		[DataMember]
 		public byte[] SerializedEndpoint { get; set; }
 
 		/// <summary>
-		/// The signature of the <see cref="SerializedEndpoint"/> bytes,
+		/// Gets or sets the signature of the <see cref="SerializedEndpoint"/> bytes,
 		/// as signed by the private counterpart to the 
 		/// public key stored in <see cref="Endpoint.SigningKeyPublicMaterial"/>.
 		/// </summary>

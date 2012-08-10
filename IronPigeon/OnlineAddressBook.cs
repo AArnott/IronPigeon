@@ -16,7 +16,7 @@
 		/// <summary>
 		/// Initializes a new instance of the <see cref="OnlineAddressBook"/> class.
 		/// </summary>
-		public OnlineAddressBook() {
+		protected OnlineAddressBook() {
 			this.HttpClient = new HttpClient(this.httpMessageHandler);
 		}
 
@@ -24,7 +24,10 @@
 		/// Gets or sets the message handler to use for outbound HTTP requests.
 		/// </summary>
 		public HttpMessageHandler HttpMessageHandler {
-			get { return this.httpMessageHandler; }
+			get {
+				return this.httpMessageHandler;
+			}
+
 			set {
 				Requires.NotNull(value, "value");
 				this.httpMessageHandler = value;
