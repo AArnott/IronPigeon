@@ -1,6 +1,8 @@
 ﻿namespace IronPigeon.Relay.Controllers {
 	using System;
 	using System.Collections.Generic;
+	using System.Configuration;
+	using System.IO;
 	using System.Linq;
 	using System.Text.RegularExpressions;
 	using System.Threading.Tasks;
@@ -11,9 +13,46 @@
 	using Microsoft.WindowsAzure.StorageClient;
 
 	public class InboxController : Controller {
-		private const string InboxContainerName = "inbox";
-		private static bool ContainerInitialized;
-		private static readonly CloudStorageAccount storage = CloudStorageAccount.FromConfigurationSetting("StorageConnectionString");
+		private static readonly char[] DisallowedThumbprintCharacters = new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar };
+
+		/// <summary>
+		/// The default name for the container used to store posted messages.
+		/// </summary>
+		private const string DefaultInboxContainerName = "inbox";
+
+		/// <summary>
+		/// The key to the Azure account configuration information.
+		/// </summary>
+		private const string DefaultCloudConfigurationName = "StorageConnectionString";
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="InboxController" /> class.
+		/// </summary>
+		public InboxController()
+			: this(DefaultInboxContainerName, DefaultCloudConfigurationName) {
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="InboxController" /> class.
+		/// </summary>
+		/// <param name="containerName">Name of the container.</param>
+		/// <param name="cloudConfigurationName">Name of the cloud configuration.</param>
+		public InboxController(string containerName, string cloudConfigurationName) {
+			Requires.NotNullOrEmpty(containerName, "containerName");
+			Requires.NotNullOrEmpty(cloudConfigurationName, "cloudConfigurationName");
+
+			var storage = CloudStorageAccount.FromConfigurationSetting(cloudConfigurationName);
+			var client = storage.CreateCloudBlobClient();
+			this.InboxContainer = client.GetContainerReference(containerName);
+		}
+
+		/// <summary>
+		/// Gets or sets the inbox container.
+		/// </summary>
+		/// <value>
+		/// The inbox container.
+		/// </value>
+		public CloudBlobContainer InboxContainer { get; set; }
 
 		[HttpPost]
 		public async Task<ActionResult> Create() {
@@ -22,12 +61,10 @@
 
 		[HttpGet, ActionName("Index")]
 		public async Task<ActionResult> GetInboxItemsAsync(string thumbprint) {
-			Requires.NotNullOrEmpty(thumbprint, "thumbprint");
-			EnsureContainerInitializedAsync();
+			VerifyValidThumbprint(thumbprint);
+			await this.EnsureContainerInitializedAsync();
 
-			var blobClient = storage.CreateCloudBlobClient();
-			var container = blobClient.GetContainerReference(InboxContainerName);
-			var directory = container.GetDirectoryReference(thumbprint);
+			var directory = this.InboxContainer.GetDirectoryReference(thumbprint);
 			var blobs = new List<IncomingList.IncomingItem>();
 			try {
 				blobs.AddRange(
@@ -46,28 +83,17 @@
 		[HttpPost, ActionName("Index")]
 		public async Task<ActionResult> PostNotification(string thumbprint) {
 			VerifyValidThumbprint(thumbprint);
-			EnsureContainerInitializedAsync();
-			
-			var blobClient = storage.CreateCloudBlobClient();
-			var container = blobClient.GetContainerReference(InboxContainerName);
-			var directory = container.GetDirectoryReference(thumbprint);
+			await this.EnsureContainerInitializedAsync();
+
+			var directory = this.InboxContainer.GetDirectoryReference(thumbprint);
 			var blob = directory.GetBlobReference(Utilities.CreateRandomWebSafeName(24));
 			await blob.UploadFromStreamAsync(this.Request.InputStream);
 			return new EmptyResult();
 		}
 
-		private static async Task EnsureContainerInitializedAsync() {
-			if (!ContainerInitialized) {
-				var blobClient = storage.CreateCloudBlobClient();
-				var container = blobClient.GetContainerReference(InboxContainerName);
-				await container.CreateIfNotExistAsync();
-			}
-		}
-
 		private static void VerifyValidThumbprint(string thumbprint) {
 			Requires.NotNullOrEmpty(thumbprint, "thumbprint");
-			Requires.Argument(Regex.IsMatch(thumbprint, "^[a-f0-9]+$"), "thumbprint", "Disallowed characters.");
-			Requires.Argument(IsValidBlobContainerName(thumbprint), "thumbprint", "Illegal blob container name.");
+			Requires.Argument(thumbprint.IndexOfAny(DisallowedThumbprintCharacters) < 0, "thumbprint", "Disallowed characters.");
 		}
 
 		private static bool IsValidBlobContainerName(string containerName) {
@@ -96,6 +122,13 @@
 			}
 
 			return true;
+		}
+
+		private async Task EnsureContainerInitializedAsync() {
+			await this.InboxContainer.CreateIfNotExistAsync();
+
+			var permissions = new BlobContainerPermissions { PublicAccess = BlobContainerPublicAccessType.Blob };
+			await this.InboxContainer.SetPermissionsAsync(permissions);
 		}
 	}
 }
