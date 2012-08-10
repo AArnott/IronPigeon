@@ -42,7 +42,7 @@
     <Compile Include="ICryptoProvider.cs" />
     <Compile Include="AddressBook.cs" />
     <Compile Include="ILogger.cs" />
-    <Compile Include="InboxList.cs" />
+    <Compile Include="IncomingList.cs" />
     <Compile Include="InvalidMessageException.cs" />
     <Compile Include="OnlineAddressBook.cs" />
     <Compile Include="Payload.cs" />
