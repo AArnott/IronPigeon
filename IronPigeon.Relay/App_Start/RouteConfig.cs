@@ -18,14 +18,9 @@
 			routes.IgnoreRoute("{resource}.axd/{*pathInfo}");
 
 			routes.MapRoute(
-				name: "inbox",
-				url: "inbox/{thumbprint}",
-				defaults: new { controller = "Inbox", action = "Index" });
-
-			routes.MapRoute(
 				name: "inboxNotification",
-				url: "inbox/{thumbprint}/{notificationId}",
-				defaults: new { controller = "Inbox", action = "Notification" });
+				url: "inbox/{thumbprint}/{action}",
+				defaults: new { controller = "Inbox", action = "Index" });
 
 			routes.MapRoute(
 				name: "Default",

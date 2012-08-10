@@ -8,11 +8,22 @@
 
 	[TestFixture]
 	public class InboxControllerTest {
+		private InboxController controller;
+
+		[SetUp]
+		public void SetUp() {
+			AzureStorageConfig.RegisterConfiguration();
+			this.controller = new InboxController();
+		}
+
+		[Test, Ignore("Not yet implemented")]
+		public void CreateAction() {
+		}
+
 		[Test]
-		public void List() {
-			var controller = new InboxController();
-			string thumbprint = null;
-			ActionResult result = controller.List(thumbprint).Result;
+		public void GetInboxItemsAsyncAction() {
+			const string Thumbprint = "someThumbprint";
+			ActionResult result = this.controller.GetInboxItemsAsync(Thumbprint).Result;
 
 			Assert.That(result, Is.InstanceOf<JsonResult>());
 			var jsonResult = (JsonResult)result;
@@ -22,17 +33,17 @@
 		}
 
 		[Test, Ignore("Not yet implemented")]
-		public void PostNotification() {
+		public void PostNotificationAction() {
 
 		}
 
 		[Test, Ignore("Not yet implemented")]
-		public void GetNotification() {
+		public void GetNotificationAction() {
 
 		}
 
 		[Test, Ignore("Not yet implemented")]
-		public void DeleteNotification() {
+		public void DeleteNotificationAction() {
 
 		}
 	}
