@@ -39,10 +39,6 @@
 			container.Delete();
 		}
 
-		[Test, Ignore("Not yet implemented")]
-		public void CreateAction() {
-		}
-
 		[Test]
 		public void GetInboxItemsAsyncAction() {
 			var data = this.GetInboxItemsAsyncHelper("emptyThumbprint").Result;
@@ -79,16 +75,6 @@
 			var blobMemoryStream = new MemoryStream();
 			blobStream.CopyTo(blobMemoryStream);
 			Assert.That(blobMemoryStream.ToArray(), Is.EqualTo(inputStream.ToArray()));
-		}
-
-		[Test, Ignore("Not yet implemented")]
-		public void GetNotificationAction() {
-
-		}
-
-		[Test, Ignore("Not yet implemented")]
-		public void DeleteNotificationAction() {
-
 		}
 
 		private async Task<IncomingList> GetInboxItemsAsyncHelper(string thumbprint) {
