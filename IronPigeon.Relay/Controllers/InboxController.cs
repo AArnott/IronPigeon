@@ -22,8 +22,6 @@
 		/// </summary>
 		public const string ExpirationDateMetadataKey = "expiration_date";
 
-		private static readonly char[] DisallowedThumbprintCharacters = new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar };
-
 		/// <summary>
 		/// The default name for the container used to store posted messages.
 		/// </summary>
@@ -33,6 +31,8 @@
 		/// The key to the Azure account configuration information.
 		/// </summary>
 		private const string DefaultCloudConfigurationName = "StorageConnectionString";
+
+		private static readonly char[] DisallowedThumbprintCharacters = new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar };
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="InboxController" /> class.
