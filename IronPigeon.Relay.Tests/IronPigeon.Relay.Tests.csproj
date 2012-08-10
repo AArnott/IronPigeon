@@ -110,9 +110,17 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\IronPigeon.Desktop\IronPigeon.Desktop.csproj">
+      <Project>{2acabe1a-13da-4248-b200-8b9d63486e45}</Project>
+      <Name>IronPigeon.Desktop</Name>
+    </ProjectReference>
     <ProjectReference Include="..\IronPigeon.Relay\IronPigeon.Relay.csproj">
       <Project>{20A8E55E-40A3-45FB-88EA-5F9671E86B7B}</Project>
       <Name>IronPigeon.Relay</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\IronPigeon\IronPigeon.csproj">
+      <Project>{befb82d5-c686-4d50-91c7-419846c8f201}</Project>
+      <Name>IronPigeon</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
