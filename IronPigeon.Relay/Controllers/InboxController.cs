@@ -67,8 +67,9 @@
 			var directory = this.InboxContainer.GetDirectoryReference(thumbprint);
 			var blobs = new List<IncomingList.IncomingItem>();
 			try {
+				var directoryListing = await directory.ListBlobsSegmentedAsync(50);
 				blobs.AddRange(
-					from blob in (await directory.ListBlobsSegmentedAsync(50)).OfType<CloudBlob>()
+					from blob in directoryListing.OfType<CloudBlob>()
 					select new IncomingList.IncomingItem { Location = blob.Uri, DatePostedUtc = blob.Properties.LastModifiedUtc });
 			} catch (StorageClientException) {
 			}
