@@ -72,6 +72,9 @@
 			// Confirm that retrieving the inbox now includes the posted message.
 			var getResult = this.GetInboxItemsAsyncHelper(Thumbprint).Result;
 			Assert.That(getResult.Items.Count, Is.EqualTo(1));
+			Assert.That(getResult.Items[0].Location, Is.Not.Null);
+			Assert.That(getResult.Items[0].DatePostedUtc, Is.EqualTo(DateTime.UtcNow).Within(TimeSpan.FromMinutes(1)));
+
 			var blobStream = this.httpClient.GetStreamAsync(getResult.Items[0].Location).Result;
 			var blobMemoryStream = new MemoryStream();
 			blobStream.CopyTo(blobMemoryStream);

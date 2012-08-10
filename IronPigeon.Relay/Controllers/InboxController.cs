@@ -69,7 +69,7 @@
 			try {
 				blobs.AddRange(
 					from blob in (await directory.ListBlobsSegmentedAsync(50)).OfType<CloudBlob>()
-					select new IncomingList.IncomingItem { Location = blob.Uri });
+					select new IncomingList.IncomingItem { Location = blob.Uri, DatePostedUtc = blob.Properties.LastModifiedUtc });
 			} catch (StorageClientException) {
 			}
 
