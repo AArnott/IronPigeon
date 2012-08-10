@@ -101,7 +101,7 @@
 			searchExpiredDirectoriesBlock.LinkTo(deleteDirectoryBlock, new DataflowLinkOptions { PropagateCompletion = true });
 			deleteDirectoryBlock.LinkTo(deleteBlobBlock, new DataflowLinkOptions { PropagateCompletion = true });
 
-			searchExpiredDirectoriesBlock.Post(container);
+			searchExpiredDirectoriesBlock.Post(this.container);
 			searchExpiredDirectoriesBlock.Complete();
 			return deleteBlobBlock.Completion;
 		}

@@ -2,17 +2,26 @@
 	using System;
 	using System.Collections.Generic;
 	using System.Configuration;
+	using System.Globalization;
 	using System.IO;
 	using System.Linq;
+	using System.Net;
 	using System.Text.RegularExpressions;
 	using System.Threading.Tasks;
+	using System.Threading.Tasks.Dataflow;
 	using System.Web;
 	using System.Web.Mvc;
+
 	using Microsoft;
 	using Microsoft.WindowsAzure;
 	using Microsoft.WindowsAzure.StorageClient;
 
 	public class InboxController : Controller {
+		/// <summary>
+		/// The key into a blob's metadata that stores the blob's expiration date.
+		/// </summary>
+		public const string ExpirationDateMetadataKey = "expiration_date";
+
 		private static readonly char[] DisallowedThumbprintCharacters = new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar };
 
 		/// <summary>
@@ -82,14 +91,59 @@
 		}
 
 		[HttpPost, ActionName("Index")]
-		public async Task<ActionResult> PostNotification(string thumbprint) {
+		public async Task<ActionResult> PostNotification(string thumbprint, int lifetimeInMinutes) {
 			VerifyValidThumbprint(thumbprint);
+			Requires.Range(lifetimeInMinutes > 0, "lifetimeInMinutes");
 			await this.EnsureContainerInitializedAsync();
 
 			var directory = this.InboxContainer.GetDirectoryReference(thumbprint);
 			var blob = directory.GetBlobReference(Utilities.CreateRandomWebSafeName(24));
 			await blob.UploadFromStreamAsync(this.Request.InputStream);
+			var expirationDate = DateTime.UtcNow + TimeSpan.FromMinutes(lifetimeInMinutes);
+			blob.Metadata[ExpirationDateMetadataKey] = expirationDate.ToString(CultureInfo.InvariantCulture);
+			await blob.SetMetadataAsync();
 			return new EmptyResult();
+		}
+
+		[NonAction]
+		public Task PurgeExpiredAsync() {
+			var deleteBlobsExpiringBefore = DateTime.UtcNow;
+			var searchExpiredBlobs = new TransformManyBlock<CloudBlobContainer, CloudBlob>(
+				async c => {
+					try {
+						var results = await c.ListBlobsSegmentedAsync(10);
+						return from blob in results.OfType<CloudBlob>()
+							   let expires = DateTime.Parse(blob.Metadata[ExpirationDateMetadataKey])
+							   where expires < deleteBlobsExpiringBefore
+							   select blob;
+					} catch (StorageClientException ex) {
+						var webException = ex.InnerException as WebException;
+						if (webException != null) {
+							var httpResponse = (HttpWebResponse)webException.Response;
+							if (httpResponse.StatusCode == HttpStatusCode.NotFound) {
+								// it's legit that some tests never created the container to begin with.
+								return Enumerable.Empty<CloudBlob>();
+							}
+						}
+
+						throw;
+					}
+				},
+				new ExecutionDataflowBlockOptions {
+					BoundedCapacity = 4,
+				});
+			var deleteBlobBlock = new ActionBlock<CloudBlob>(
+				blob => blob.DeleteAsync(),
+				new ExecutionDataflowBlockOptions {
+					MaxDegreeOfParallelism = 4,
+					BoundedCapacity = 100,
+				});
+
+			searchExpiredBlobs.LinkTo(deleteBlobBlock, new DataflowLinkOptions { PropagateCompletion = true });
+
+			searchExpiredBlobs.Post(this.InboxContainer);
+			searchExpiredBlobs.Complete();
+			return deleteBlobBlock.Completion;
 		}
 
 		private static void VerifyValidThumbprint(string thumbprint) {

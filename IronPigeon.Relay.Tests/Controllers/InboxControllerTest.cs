@@ -1,6 +1,7 @@
 ﻿namespace IronPigeon.Relay.Tests.Controllers {
 	using System;
 	using System.IO;
+	using System.Net;
 	using System.Net.Http;
 	using System.Threading.Tasks;
 	using System.Web;
@@ -19,7 +20,7 @@
 
 		private readonly HttpClient httpClient = new HttpClient();
 
-		private string testContainerName;
+		private CloudBlobContainer container;
 
 		private InboxController controller;
 
@@ -27,22 +28,43 @@
 		public void SetUp() {
 			AzureStorageConfig.RegisterConfiguration();
 
-			this.testContainerName = "unittests" + Guid.NewGuid().ToString();
-			this.controller = new InboxController(this.testContainerName, CloudConfigurationName);
+			var testContainerName = "unittests" + Guid.NewGuid().ToString();
+			var account = CloudStorageAccount.FromConfigurationSetting(CloudConfigurationName);
+			var client = account.CreateCloudBlobClient();
+			this.container = client.GetContainerReference(testContainerName);
+			this.controller = new InboxController(this.container.Name, CloudConfigurationName);
 		}
 
 		[TearDown]
 		public void TearDown() {
-			var account = CloudStorageAccount.FromConfigurationSetting(CloudConfigurationName);
-			var client = account.CreateCloudBlobClient();
-			var container = client.GetContainerReference(this.testContainerName);
-			container.Delete();
+			try {
+				this.container.Delete();
+			} catch (StorageClientException ex) {
+				bool handled = false;
+				var webException = ex.InnerException as WebException;
+				if (webException != null) {
+					var httpResponse = (HttpWebResponse)webException.Response;
+					if (httpResponse.StatusCode == HttpStatusCode.NotFound) {
+						handled = true; // it's legit that some tests never created the container to begin with.
+					}
+				}
+
+				if (!handled) {
+					throw;
+				}
+			}
 		}
 
 		[Test]
 		public void GetInboxItemsAsyncAction() {
 			var data = this.GetInboxItemsAsyncHelper("emptyThumbprint").Result;
 			Assert.That(data.Items, Is.Empty);
+		}
+
+		[Test]
+		public void PostNotificationActionRejectsNonPositiveLifetime() {
+			Assert.Throws<ArgumentOutOfRangeException>(() => this.controller.PostNotification("thumbprint", 0).GetAwaiter().GetResult());
+			Assert.Throws<ArgumentOutOfRangeException>(() => this.controller.PostNotification("thumbprint", -1).GetAwaiter().GetResult());
 		}
 
 		[Test]
@@ -62,7 +84,8 @@
 			this.controller.ControllerContext = controllerContext.Object;
 
 			const string Thumbprint = "nonEmptyThumbprint";
-			var result = this.controller.PostNotification(Thumbprint).Result;
+			const int LifetimeInMinutes = 2;
+			var result = this.controller.PostNotification(Thumbprint, LifetimeInMinutes).Result;
 			Assert.That(result, Is.InstanceOf<EmptyResult>());
 
 			// Confirm that retrieving the inbox now includes the posted message.
@@ -75,6 +98,26 @@
 			var blobMemoryStream = new MemoryStream();
 			blobStream.CopyTo(blobMemoryStream);
 			Assert.That(blobMemoryStream.ToArray(), Is.EqualTo(inputStream.ToArray()));
+		}
+
+		[Test]
+		public void PurgeExpiredAsync() {
+			this.container.CreateIfNotExist();
+
+			var expiredBlob = this.container.GetBlobReference(Utilities.CreateRandomWebSafeName(5));
+			expiredBlob.UploadText("some content");
+			expiredBlob.Metadata[InboxController.ExpirationDateMetadataKey] = (DateTime.UtcNow - TimeSpan.FromDays(1)).ToString();
+			expiredBlob.SetMetadata();
+
+			var freshBlob = this.container.GetBlobReference(Utilities.CreateRandomWebSafeName(5));
+			freshBlob.UploadText("some more content");
+			freshBlob.Metadata[InboxController.ExpirationDateMetadataKey] = (DateTime.UtcNow + TimeSpan.FromDays(1)).ToString();
+			freshBlob.SetMetadata();
+
+			this.controller.PurgeExpiredAsync().GetAwaiter().GetResult();
+
+			Assert.That(expiredBlob.DeleteIfExists(), Is.False);
+			Assert.That(freshBlob.DeleteIfExists(), Is.True);
 		}
 
 		private async Task<IncomingList> GetInboxItemsAsyncHelper(string thumbprint) {
