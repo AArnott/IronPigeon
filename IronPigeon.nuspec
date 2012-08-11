@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<package >
+	<metadata>
+		<id>IronPigeon</id>
+		<version>$version$</version>
+		<title>IronPigeon secure messaging protocol</title>
+		<authors>Privacy Not Found</authors>
+		<owners>Privacy Not Found</owners>
+		<!--<licenseUrl>http://LICENSE_URL_HERE_OR_DELETE_THIS_LINE</licenseUrl>
+    <projectUrl>http://PROJECT_URL_HERE_OR_DELETE_THIS_LINE</projectUrl>
+    <iconUrl>http://ICON_URL_HERE_OR_DELETE_THIS_LINE</iconUrl>-->
+		<requireLicenseAcceptance>false</requireLicenseAcceptance>
+		<description>
+			A generic message passing protocol which is tuned for confidentiality and authentication.
+		</description>
+		<releaseNotes>Basic message passing protocol implemented.</releaseNotes>
+		<copyright>Copyright 2012</copyright>
+		<tags>crypto cryptography mail email privacy</tags>
+	</metadata>
+	<files>
+		<file src="IronPigeon\bin\release\IronPigeon.dll" target="lib\net45" />
+		<file src="IronPigeon\bin\release\IronPigeon.xml" target="lib\net45" />
+		<file src="IronPigeon.Desktop\bin\release\IronPigeon.Desktop.dll" target="lib\net45" />
+		<file src="IronPigeon.Desktop\bin\release\IronPigeon.Desktop.xml" target="lib\net45" />
+
+		<file src="IronPigeon\bin\release\IronPigeon.dll" target="lib\winrt45" />
+		<file src="IronPigeon\bin\release\IronPigeon.xml" target="lib\winrt45" />
+		<file src="IronPigeon.WinRT\bin\release\IronPigeon.WinRT.dll" target="lib\winrt45" />
+		<file src="IronPigeon.WinRT\bin\release\IronPigeon.WinRT.xml" target="lib\winrt45" />
+	</files>
+</package>
