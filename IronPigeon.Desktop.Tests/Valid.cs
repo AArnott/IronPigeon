@@ -23,20 +23,8 @@
 		internal static OwnEndpoint GenerateOwnEndpoint(ICryptoProvider cryptoProvider = null) {
 			cryptoProvider = cryptoProvider ?? new Mocks.MockCryptoProvider();
 
-			byte[] privateEncryptionKey, publicEncryptionKey;
-			byte[] privateSigningKey, publicSigningKey;
-
-			cryptoProvider.GenerateEncryptionKeyPair(out privateEncryptionKey, out publicEncryptionKey);
-			cryptoProvider.GenerateSigningKeyPair(out privateSigningKey, out publicSigningKey);
-			
-			var contact = new Endpoint() {
-				EncryptionKeyPublicMaterial = publicEncryptionKey,
-				SigningKeyPublicMaterial = publicSigningKey,
-				MessageReceivingEndpoint = MessageReceivingEndpoint,
-			};
-
-			var ownContact = new OwnEndpoint(contact, privateSigningKey, privateEncryptionKey);
-
+			var ownContact = cryptoProvider.GenerateNewEndpoint();
+			ownContact.PublicEndpoint.MessageReceivingEndpoint = MessageReceivingEndpoint;
 			return ownContact;
 		}
 	}
