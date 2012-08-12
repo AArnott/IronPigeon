@@ -26,8 +26,10 @@
 		/// </summary>
 		/// <param name="identifier">The user-supplied identifier for the contact.</param>
 		/// <param name="cancellationToken">A cancellation token.</param>
-		/// <returns>A task whose result is the contact.</returns>
-		/// <exception cref="KeyNotFoundException">Faults the task if no contact can be found for the given identifier.</exception>
+		/// <returns>
+		/// A task whose result is the contact, or null if no match is found.
+		/// </returns>
+		/// <exception cref="BadAddressBookEntryException">Thrown when a validation error occurs while reading the address book entry.</exception>
 		public abstract Task<Endpoint> LookupAsync(string identifier, CancellationToken cancellationToken = default(CancellationToken));
 	}
 }

@@ -11,8 +11,6 @@
 	using System.Text.RegularExpressions;
 	using System.Threading;
 	using System.Threading.Tasks;
-	using System.Xml;
-	using System.Xml.Linq;
 	using Microsoft;
 
 	/// <summary>
@@ -30,6 +28,15 @@
 		/// </summary>
 		private static readonly Regex AddressBookEntryWithThumbprintFragmentRegex = new Regex(@"\b(http|https|ftp)\://[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,3}(:[a-zA-Z0-9]*)?/?([a-zA-Z0-9\-\._\?\,\'/\\\+&amp;%\$\=~])*#([a-zA-Z0-9\-_]{43})(\b|$)", RegexOptions.IgnoreCase);
 
+		/// <summary>
+		/// Retrieves a contact with some user supplied identifier.
+		/// </summary>
+		/// <param name="identifier">The user-supplied identifier for the contact.</param>
+		/// <param name="cancellationToken">A cancellation token.</param>
+		/// <returns>
+		/// A task whose result is the contact, or null if no match is found.
+		/// </returns>
+		/// <exception cref="IronPigeon.BadAddressBookEntryException">Thrown when a validation error occurs while reading the address book entry.</exception>
 		public override async Task<Endpoint> LookupAsync(string identifier, CancellationToken cancellationToken = default(CancellationToken)) {
 			Requires.NotNullOrEmpty(identifier, "identifier");
 			if (!identifier.StartsWith("@")) {
