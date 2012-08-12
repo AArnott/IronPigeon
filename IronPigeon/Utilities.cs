@@ -160,7 +160,7 @@
 			binaryWriter.Flush();
 			ms.Position = 0;
 
-			const int MaxLineLength = 80;
+			const int MaxLineLength = 79;
 			string entireBase64 = Convert.ToBase64String(ms.ToArray());
 			for (int i = 0; i < entireBase64.Length; i += MaxLineLength) {
 				await writer.WriteLineAsync(entireBase64.Substring(i, Math.Min(MaxLineLength, entireBase64.Length - i)));

@@ -32,7 +32,7 @@
 		/// <param name="messageReceivingEndpointBaseUrl">The URL of the message relay service to use for the new endpoint.</param>
 		/// <returns>The newly generated endpoint.</returns>
 		/// <remarks>
-		/// Depending on the length of the keys set in the provider,
+		/// Depending on the length of the keys set in the provider and the amount of buffered entropy in the operating system,
 		/// this method can take an extended period (several seconds) to complete.
 		/// </remarks>
 		public static OwnEndpoint GenerateNewEndpoint(this ICryptoProvider cryptoProvider, Uri messageReceivingEndpointBaseUrl = null) {
