@@ -19,6 +19,7 @@
 		public AzureBlobStorage(CloudStorageAccount account, string containerAddress) {
 			Requires.NotNull(account, "account");
 			Requires.NotNullOrEmpty(containerAddress, "containerAddress");
+			Requires.Argument(DesktopUtilities.IsValidBlobContainerName(containerAddress), "containerAddress", "Invalid container name.");
 
 			this.account = account;
 			this.client = this.account.CreateCloudBlobClient();
