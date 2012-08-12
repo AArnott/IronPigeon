@@ -91,15 +91,15 @@
 		}
 
 		[HttpPost, ActionName("Index")]
-		public async Task<ActionResult> PostNotification(string thumbprint, int lifetimeInMinutes) {
+		public async Task<ActionResult> PostNotification(string thumbprint, int lifetime) {
 			VerifyValidThumbprint(thumbprint);
-			Requires.Range(lifetimeInMinutes > 0, "lifetimeInMinutes");
+			Requires.Range(lifetime > 0, "lifetime");
 			await this.EnsureContainerInitializedAsync();
 
 			var directory = this.InboxContainer.GetDirectoryReference(thumbprint);
 			var blob = directory.GetBlobReference(Utilities.CreateRandomWebSafeName(24));
 			await blob.UploadFromStreamAsync(this.Request.InputStream);
-			var expirationDate = DateTime.UtcNow + TimeSpan.FromMinutes(lifetimeInMinutes);
+			var expirationDate = DateTime.UtcNow + TimeSpan.FromMinutes(lifetime);
 			blob.Metadata[ExpirationDateMetadataKey] = expirationDate.ToString(CultureInfo.InvariantCulture);
 			await blob.SetMetadataAsync();
 			return new EmptyResult();
