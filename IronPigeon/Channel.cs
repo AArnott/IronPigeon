@@ -80,7 +80,7 @@
 
 		#region Message receiving methods
 
-		public async Task<IReadOnlyCollection<Payload>> ReceiveAsync(IProgress<Payload> progress = null, CancellationToken cancellationToken = default(CancellationToken)) {
+		public async Task<IReadOnlyList<Payload>> ReceiveAsync(IProgress<Payload> progress = null, CancellationToken cancellationToken = default(CancellationToken)) {
 			var inboxItems = await this.DownloadIncomingItemsAsync(cancellationToken);
 
 			var payloads = new List<Payload>();
