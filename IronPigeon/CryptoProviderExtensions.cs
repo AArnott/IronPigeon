@@ -12,6 +12,20 @@
 	/// </summary>
 	public static class CryptoProviderExtensions {
 		/// <summary>
+		/// Creates a web safe base64 thumbprint of some buffer.
+		/// </summary>
+		/// <param name="cryptoProvider">The crypto provider.</param>
+		/// <param name="buffer">The buffer.</param>
+		/// <returns>A string representation of a hash of the <paramref name="buffer"/>.</returns>
+		public static string CreateWebSafeBase64Thumbprint(this ICryptoProvider cryptoProvider, byte[] buffer) {
+			Requires.NotNull(cryptoProvider, "cryptoProvider");
+			Requires.NotNull(buffer, "buffer");
+
+			var hash = cryptoProvider.Hash(buffer);
+			return Utilities.ToBase64WebSafe(hash);
+		}
+
+		/// <summary>
 		/// Generates a new receiving endpoint.
 		/// </summary>
 		/// <param name="cryptoProvider">The crypto provider.</param>

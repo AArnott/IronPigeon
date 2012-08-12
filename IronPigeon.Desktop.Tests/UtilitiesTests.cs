@@ -28,10 +28,10 @@
 		public void CreateWebSafeBase64Thumbprint() {
 			var buffer = new byte[] { 0x1 };
 			var mockCrypto = new Mocks.MockCryptoProvider();
-			Assert.Throws<ArgumentNullException>(() => Utilities.CreateWebSafeBase64Thumbprint(null, buffer));
-			Assert.Throws<ArgumentNullException>(() => Utilities.CreateWebSafeBase64Thumbprint(mockCrypto, null));
+			Assert.Throws<ArgumentNullException>(() => CryptoProviderExtensions.CreateWebSafeBase64Thumbprint(null, buffer));
+			Assert.Throws<ArgumentNullException>(() => CryptoProviderExtensions.CreateWebSafeBase64Thumbprint(mockCrypto, null));
 
-			string thumbprint = Utilities.CreateWebSafeBase64Thumbprint(mockCrypto, buffer);
+			string thumbprint = CryptoProviderExtensions.CreateWebSafeBase64Thumbprint(mockCrypto, buffer);
 			Assert.That(thumbprint, Is.EqualTo(Utilities.ToBase64WebSafe(mockCrypto.Hash(buffer))));
 		}
 	}
