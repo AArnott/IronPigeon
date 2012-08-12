@@ -58,7 +58,7 @@
 			var ms = new MemoryStream();
 			var writer = new BinaryWriter(ms);
 			var entry = new AddressBookEntry();
-			Utilities.SerializeDataContract<Endpoint>(writer, this.PublicEndpoint);
+			writer.SerializeDataContract(this.PublicEndpoint);
 			writer.Flush();
 			entry.SerializedEndpoint = ms.ToArray();
 			entry.Signature = cryptoServices.Sign(entry.SerializedEndpoint, this.SigningKeyPrivateMaterial);

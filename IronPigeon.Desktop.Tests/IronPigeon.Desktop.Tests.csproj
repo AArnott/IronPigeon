@@ -62,13 +62,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AddressBookEntryTest.cs" />
-    <Compile Include="AddressBookTests.cs" />
     <Compile Include="Providers\AzureBlobStorageTests.cs" />
     <Compile Include="ChannelTests.cs" />
     <Compile Include="CloudBlobStorageProviderTestBase.cs" />
     <Compile Include="Providers\DesktopCryptoProviderTests.cs" />
     <Compile Include="Invalid.cs" />
-    <Compile Include="Mocks\AddressBookMock.cs" />
     <Compile Include="Mocks\CloudBlobStorageProviderMock.cs" />
     <Compile Include="Mocks\HttpMessageHandlerMock.cs" />
     <Compile Include="Mocks\HttpMessageHandlerRecorder.cs" />

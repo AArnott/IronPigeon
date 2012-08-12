@@ -10,6 +10,13 @@
 
 	[TestFixture]
 	public class AddressBookEntryTest {
+		private ICryptoProvider desktopCryptoProvider;
+
+		[SetUp]
+		public void Setup() {
+			this.desktopCryptoProvider = TestUtilities.CreateAuthenticCryptoProvider();
+		}
+
 		[Test]
 		public void Ctor() {
 			var entry = new AddressBookEntry();
@@ -44,6 +51,35 @@
 
 			Assert.That(deserializedEntry.SerializedEndpoint, Is.EqualTo(entry.SerializedEndpoint));
 			Assert.That(deserializedEntry.Signature, Is.EqualTo(entry.Signature));
+		}
+
+		[Test]
+		public void ExtractEndpointWithoutCrypto() {
+			var entry = new AddressBookEntry();
+			Assert.Throws<ArgumentNullException>(() => entry.ExtractEndpoint(null));
+		}
+
+		[Test]
+		public void ExtractEndpoint() {
+			var ownContact = new OwnEndpoint(Valid.ReceivingEndpoint.PublicEndpoint, Valid.ReceivingEndpoint.SigningKeyPrivateMaterial, Valid.ReceivingEndpoint.EncryptionKeyPrivateMaterial);
+			var cryptoServices = new Mocks.MockCryptoProvider();
+			var entry = ownContact.CreateAddressBookEntry(cryptoServices);
+
+			var endpoint = entry.ExtractEndpoint(cryptoServices);
+			Assert.That(endpoint, Is.EqualTo(ownContact.PublicEndpoint));
+		}
+
+		[Test]
+		public void ExtractEndpointDetectsTampering() {
+			var ownContact = Valid.GenerateOwnEndpoint(this.desktopCryptoProvider);
+			var entry = ownContact.CreateAddressBookEntry(this.desktopCryptoProvider);
+
+			var untamperedEndpoint = entry.SerializedEndpoint.CopyBuffer();
+			for (int i = 0; i < 100; i++) {
+				TestUtilities.ApplyFuzzing(entry.SerializedEndpoint, 1);
+				Assert.Throws<BadAddressBookEntryException>(() => entry.ExtractEndpoint(this.desktopCryptoProvider));
+				untamperedEndpoint.CopyBuffer(entry.SerializedEndpoint);
+			}
 		}
 	}
 }

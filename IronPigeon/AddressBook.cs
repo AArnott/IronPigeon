@@ -29,34 +29,5 @@
 		/// <returns>A task whose result is the contact.</returns>
 		/// <exception cref="KeyNotFoundException">Faults the task if no contact can be found for the given identifier.</exception>
 		public abstract Task<Endpoint> LookupAsync(string identifier, CancellationToken cancellationToken = default(CancellationToken));
-
-		/// <summary>
-		/// Deserializes an endpoint from an address book entry and validates that the signatures are correct.
-		/// </summary>
-		/// <param name="entry">The address book entry to deserialize and validate.</param>
-		/// <returns>The deserialized endpoint.</returns>
-		/// <exception cref="BadAddressBookEntryException">Thrown if the signatures are invalid.</exception>
-		protected Endpoint ExtractEndpoint(AddressBookEntry entry) {
-			Requires.NotNull(entry, "entry");
-			Verify.Operation(this.CryptoServices != null, Strings.CryptoServicesRequired);
-
-			var reader = new BinaryReader(new MemoryStream(entry.SerializedEndpoint));
-			Endpoint endpoint;
-			try {
-				endpoint = Utilities.DeserializeDataContract<Endpoint>(reader);
-			} catch (SerializationException ex) {
-				throw new BadAddressBookEntryException(ex.Message, ex);
-			}
-
-			try {
-				if (!this.CryptoServices.VerifySignature(endpoint.SigningKeyPublicMaterial, entry.SerializedEndpoint, entry.Signature)) {
-					throw new BadAddressBookEntryException(Strings.AddressBookEntrySignatureDoesNotMatch);
-				}
-			} catch (Exception ex) { // all those platform-specific exceptions that aren't available to portable libraries.
-				throw new BadAddressBookEntryException(Strings.AddressBookEntrySignatureDoesNotMatch, ex);
-			}
-
-			return endpoint;
-		}
 	}
 }

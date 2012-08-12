@@ -43,7 +43,7 @@
 				}
 
 				var entry = await this.DownloadAddressBookEntryAsync(entryLocation, cancellationToken);
-				var endpoint = this.ExtractEndpoint(entry);
+				var endpoint = entry.ExtractEndpoint(this.CryptoServices);
 
 				if (!string.IsNullOrEmpty(entryLocation.Fragment)) {
 					if (this.CryptoServices.CreateWebSafeBase64Thumbprint(endpoint.SigningKeyPublicMaterial) != entryLocation.Fragment.Substring(1)) {
