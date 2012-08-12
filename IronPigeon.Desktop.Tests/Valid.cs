@@ -23,7 +23,7 @@
 		internal static OwnEndpoint GenerateOwnEndpoint(ICryptoProvider cryptoProvider = null) {
 			cryptoProvider = cryptoProvider ?? new Mocks.MockCryptoProvider();
 
-			var ownContact = cryptoProvider.GenerateNewEndpoint();
+			var ownContact = OwnEndpoint.Create(cryptoProvider);
 			ownContact.PublicEndpoint.MessageReceivingEndpoint = MessageReceivingEndpoint;
 			return ownContact;
 		}

@@ -48,6 +48,40 @@
 		public byte[] EncryptionKeyPrivateMaterial { get; private set; }
 
 		/// <summary>
+		/// Generates a new receiving endpoint.
+		/// </summary>
+		/// <param name="cryptoProvider">The crypto provider.</param>
+		/// <param name="messageReceivingEndpointBaseUrl">The URL of the message relay service to use for the new endpoint.</param>
+		/// <returns>The newly generated endpoint.</returns>
+		/// <remarks>
+		/// Depending on the length of the keys set in the provider and the amount of buffered entropy in the operating system,
+		/// this method can take an extended period (several seconds) to complete.
+		/// </remarks>
+		public static OwnEndpoint Create(ICryptoProvider cryptoProvider, Uri messageReceivingEndpointBaseUrl = null) {
+			Requires.NotNull(cryptoProvider, "cryptoProvider");
+
+			byte[] privateEncryptionKey, publicEncryptionKey;
+			byte[] privateSigningKey, publicSigningKey;
+
+			cryptoProvider.GenerateEncryptionKeyPair(out privateEncryptionKey, out publicEncryptionKey);
+			cryptoProvider.GenerateSigningKeyPair(out privateSigningKey, out publicSigningKey);
+
+			var contact = new Endpoint() {
+				EncryptionKeyPublicMaterial = publicEncryptionKey,
+				SigningKeyPublicMaterial = publicSigningKey,
+			};
+
+			if (messageReceivingEndpointBaseUrl != null) {
+				contact.MessageReceivingEndpoint = new Uri(
+					messageReceivingEndpointBaseUrl,
+					cryptoProvider.CreateWebSafeBase64Thumbprint(contact.EncryptionKeyPublicMaterial));
+			}
+
+			var ownContact = new OwnEndpoint(contact, privateSigningKey, privateEncryptionKey);
+			return ownContact;
+		}
+
+		/// <summary>
 		/// Creates a signed address book entry that describes the public information in this endpoint.
 		/// </summary>
 		/// <param name="cryptoServices">The crypto services to use for signing the address book entry.</param>
