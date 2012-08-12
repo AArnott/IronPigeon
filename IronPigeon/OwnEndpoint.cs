@@ -16,6 +16,12 @@
 		/// <summary>
 		/// Initializes a new instance of the <see cref="OwnEndpoint"/> class.
 		/// </summary>
+		public OwnEndpoint() {
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="OwnEndpoint"/> class.
+		/// </summary>
 		/// <param name="contact">The public information for this contact.</param>
 		/// <param name="signingPrivateKeyMaterial">The private signing key.</param>
 		/// <param name="encryptionPrivateKeyMaterial">The private encryption key.</param>
@@ -33,19 +39,19 @@
 		/// Gets or sets the public information associated with this endpoint.
 		/// </summary>
 		[DataMember]
-		public Endpoint PublicEndpoint { get; private set; }
+		public Endpoint PublicEndpoint { get; set; }
 
 		/// <summary>
-		/// Gets the key material for the private key this personality uses for signing messages.
+		/// Gets or sets the key material for the private key this personality uses for signing messages.
 		/// </summary>
 		[DataMember]
-		public byte[] SigningKeyPrivateMaterial { get; private set; }
+		public byte[] SigningKeyPrivateMaterial { get; set; }
 
 		/// <summary>
-		/// Gets the key material for the private key used to decrypt messages.
+		/// Gets or sets the key material for the private key used to decrypt messages.
 		/// </summary>
 		[DataMember]
-		public byte[] EncryptionKeyPrivateMaterial { get; private set; }
+		public byte[] EncryptionKeyPrivateMaterial { get; set; }
 
 		/// <summary>
 		/// Generates a new receiving endpoint.
