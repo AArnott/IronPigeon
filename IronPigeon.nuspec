@@ -16,6 +16,9 @@
 		<releaseNotes>Basic message passing protocol implemented.</releaseNotes>
 		<copyright>Copyright 2012</copyright>
 		<tags>crypto cryptography mail email privacy</tags>
+		<dependencies>
+			<dependency id="Microsoft.Validation" version="[1.0.16, 2.0)" />
+		</dependencies>
 	</metadata>
 	<files>
 		<file src="IronPigeon\bin\release\IronPigeon.dll" target="lib\net45" />
