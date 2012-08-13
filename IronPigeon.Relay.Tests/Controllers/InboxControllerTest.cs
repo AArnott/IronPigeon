@@ -1,5 +1,6 @@
 ﻿namespace IronPigeon.Relay.Tests.Controllers {
 	using System;
+	using System.Globalization;
 	using System.IO;
 	using System.Net;
 	using System.Net.Http;
@@ -10,7 +11,6 @@
 	using Microsoft;
 	using Microsoft.WindowsAzure;
 	using Microsoft.WindowsAzure.StorageClient;
-
 	using Moq;
 	using NUnit.Framework;
 
@@ -68,6 +68,29 @@
 		}
 
 		[Test]
+		/// <summary>
+		/// Verifies that even before a purge removes an expired inbox entry,
+		/// those entries are not returned in query results.
+		/// </summary>
+		[Test]
+		public void GetInboxItemsOnlyReturnsUnexpiredItems() {
+			const string Thumbprint = "someThumbprint";
+			this.container.CreateIfNotExist();
+			var dir = this.container.GetDirectoryReference(Thumbprint);
+			var expiredBlob = dir.GetBlobReference("expiredBlob");
+			var freshBlob = dir.GetBlobReference("freshBlob");
+			expiredBlob.UploadText("content");
+			expiredBlob.Metadata[InboxController.ExpirationDateMetadataKey] = (DateTime.UtcNow - TimeSpan.FromDays(1)).ToString(CultureInfo.InvariantCulture);
+			expiredBlob.SetMetadata();
+			freshBlob.UploadText("content");
+			freshBlob.Metadata[InboxController.ExpirationDateMetadataKey] = (DateTime.UtcNow + TimeSpan.FromDays(1)).ToString(CultureInfo.InvariantCulture);
+			freshBlob.SetMetadata();
+
+			var results = this.GetInboxItemsAsyncHelper(Thumbprint).Result;
+			Assert.That(results.Items.Count, Is.EqualTo(1));
+			Assert.That(results.Items[0].Location, Is.EqualTo(freshBlob.Uri));
+		}
+
 		public void PostNotificationAction() {
 			var inputStream = new MemoryStream(new byte[] { 0x1, 0x3, 0x2 });
 

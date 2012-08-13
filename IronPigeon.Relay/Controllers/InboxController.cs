@@ -77,8 +77,10 @@
 			var blobs = new List<IncomingList.IncomingItem>();
 			try {
 				var directoryListing = await directory.ListBlobsSegmentedAsync(50);
+				var notExpiringBefore = DateTime.UtcNow;
 				blobs.AddRange(
 					from blob in directoryListing.OfType<CloudBlob>()
+					where DateTime.Parse(blob.Metadata[ExpirationDateMetadataKey]) > notExpiringBefore
 					select new IncomingList.IncomingItem { Location = blob.Uri, DatePostedUtc = blob.Properties.LastModifiedUtc });
 			} catch (StorageClientException) {
 			}
