@@ -124,6 +124,34 @@
 		}
 
 		[Test]
+		public void PostNotificationActionHasExpirationCeiling() {
+			var inputStream = new MemoryStream(new byte[] { 0x1, 0x3, 0x2 });
+
+			var request = new Mock<HttpRequestBase>();
+			request.SetupGet(r => r.InputStream).Returns(inputStream);
+			request.SetupGet(r => r.HttpMethod).Returns("POST");
+
+			var httpContext = new Mock<HttpContextBase>();
+			httpContext.SetupGet(c => c.Request).Returns(request.Object);
+
+			var controllerContext = new Mock<ControllerContext>();
+			controllerContext.SetupGet(cc => cc.HttpContext).Returns(httpContext.Object);
+
+			this.controller.ControllerContext = controllerContext.Object;
+
+			const string Thumbprint = "nonEmptyThumbprint";
+			int lifetimeInMinutes = (int)InboxController.MaxLifetimeCeiling.TotalMinutes + 5;
+			this.controller.PostNotification(Thumbprint, lifetimeInMinutes).Wait();
+
+			var results = this.GetInboxItemsAsyncHelper(Thumbprint).Result;
+			var blob = this.container.GetBlobReference(results.Items[0].Location.AbsoluteUri);
+			blob.FetchAttributes();
+			Assert.That(
+				DateTime.Parse(blob.Metadata[InboxController.ExpirationDateMetadataKey]),
+				Is.EqualTo(DateTime.UtcNow + InboxController.MaxLifetimeCeiling).Within(TimeSpan.FromMinutes(1)));
+		}
+
+		[Test]
 		public void PurgeExpiredAsync() {
 			this.container.CreateIfNotExist();
 
