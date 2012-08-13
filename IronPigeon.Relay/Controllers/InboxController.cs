@@ -114,6 +114,17 @@
 			return new EmptyResult();
 		}
 
+		[HttpPost]
+		public async Task<ActionResult> Delete(string thumbprint, string notification) {
+			Requires.NotNullOrEmpty(thumbprint, "thumbprint");
+			Requires.NotNullOrEmpty(notification, "notification");
+
+			// TODO: Add authentication to delete so attackers can't delete others' notifications.
+			var blob = this.InboxContainer.GetBlobReference(notification);
+			await blob.DeleteAsync();
+			return new EmptyResult();
+		}
+
 		[NonAction]
 		public Task PurgeExpiredAsync() {
 			var deleteBlobsExpiringBefore = DateTime.UtcNow;

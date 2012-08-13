@@ -69,7 +69,6 @@
 			Assert.Throws<ArgumentOutOfRangeException>(() => this.controller.PostNotification("thumbprint", -1).GetAwaiter().GetResult());
 		}
 
-		[Test]
 		/// <summary>
 		/// Verifies that even before a purge removes an expired inbox entry,
 		/// those entries are not returned in query results.
@@ -91,6 +90,18 @@
 			var results = this.GetInboxItemsAsyncHelper(Thumbprint).Result;
 			Assert.That(results.Items.Count, Is.EqualTo(1));
 			Assert.That(results.Items[0].Location, Is.EqualTo(freshBlob.Uri));
+		}
+
+		[Test]
+		public void DeleteNotificationAction() {
+			this.PostNotificationHelper().Wait();
+			var inbox = this.GetInboxItemsAsyncHelper().Result;
+			this.controller.Delete(DefaultThumbprint, inbox.Items[0].Location.AbsoluteUri).GetAwaiter().GetResult();
+
+			var blobReference = this.container.GetBlobReference(inbox.Items[0].Location.AbsoluteUri);
+			Assert.That(blobReference.DeleteIfExists(), Is.False, "The blob should have already been deleted.");
+			inbox = this.GetInboxItemsAsyncHelper().Result;
+			Assert.That(inbox.Items, Is.Empty);
 		}
 
 		[Test]
