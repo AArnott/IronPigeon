@@ -18,6 +18,8 @@
 	public class InboxControllerTest {
 		private const string CloudConfigurationName = "StorageConnectionString";
 
+		private const string DefaultThumbprint = "SomeThumbprint";
+
 		private readonly HttpClient httpClient = new HttpClient();
 
 		private CloudBlobContainer container;
@@ -91,28 +93,13 @@
 			Assert.That(results.Items[0].Location, Is.EqualTo(freshBlob.Uri));
 		}
 
+		[Test]
 		public void PostNotificationAction() {
 			var inputStream = new MemoryStream(new byte[] { 0x1, 0x3, 0x2 });
-
-			var request = new Mock<HttpRequestBase>();
-			request.SetupGet(r => r.InputStream).Returns(inputStream);
-			request.SetupGet(r => r.HttpMethod).Returns("POST");
-
-			var httpContext = new Mock<HttpContextBase>();
-			httpContext.SetupGet(c => c.Request).Returns(request.Object);
-
-			var controllerContext = new Mock<ControllerContext>();
-			controllerContext.SetupGet(cc => cc.HttpContext).Returns(httpContext.Object);
-
-			this.controller.ControllerContext = controllerContext.Object;
-
-			const string Thumbprint = "nonEmptyThumbprint";
-			const int LifetimeInMinutes = 2;
-			var result = this.controller.PostNotification(Thumbprint, LifetimeInMinutes).Result;
-			Assert.That(result, Is.InstanceOf<EmptyResult>());
+			this.PostNotificationHelper(inputStream: inputStream).Wait();
 
 			// Confirm that retrieving the inbox now includes the posted message.
-			var getResult = this.GetInboxItemsAsyncHelper(Thumbprint).Result;
+			var getResult = this.GetInboxItemsAsyncHelper(DefaultThumbprint).Result;
 			Assert.That(getResult.Items.Count, Is.EqualTo(1));
 			Assert.That(getResult.Items[0].Location, Is.Not.Null);
 			Assert.That(getResult.Items[0].DatePostedUtc, Is.EqualTo(DateTime.UtcNow).Within(TimeSpan.FromMinutes(1)));
@@ -125,25 +112,9 @@
 
 		[Test]
 		public void PostNotificationActionHasExpirationCeiling() {
-			var inputStream = new MemoryStream(new byte[] { 0x1, 0x3, 0x2 });
+			this.PostNotificationHelper(lifetimeInMinutes: (int)InboxController.MaxLifetimeCeiling.TotalMinutes + 5).Wait();
 
-			var request = new Mock<HttpRequestBase>();
-			request.SetupGet(r => r.InputStream).Returns(inputStream);
-			request.SetupGet(r => r.HttpMethod).Returns("POST");
-
-			var httpContext = new Mock<HttpContextBase>();
-			httpContext.SetupGet(c => c.Request).Returns(request.Object);
-
-			var controllerContext = new Mock<ControllerContext>();
-			controllerContext.SetupGet(cc => cc.HttpContext).Returns(httpContext.Object);
-
-			this.controller.ControllerContext = controllerContext.Object;
-
-			const string Thumbprint = "nonEmptyThumbprint";
-			int lifetimeInMinutes = (int)InboxController.MaxLifetimeCeiling.TotalMinutes + 5;
-			this.controller.PostNotification(Thumbprint, lifetimeInMinutes).Wait();
-
-			var results = this.GetInboxItemsAsyncHelper(Thumbprint).Result;
+			var results = this.GetInboxItemsAsyncHelper(DefaultThumbprint).Result;
 			var blob = this.container.GetBlobReference(results.Items[0].Location.AbsoluteUri);
 			blob.FetchAttributes();
 			Assert.That(
@@ -171,7 +142,26 @@
 			Assert.That(freshBlob.DeleteIfExists(), Is.True);
 		}
 
-		private async Task<IncomingList> GetInboxItemsAsyncHelper(string thumbprint) {
+		private async Task PostNotificationHelper(string thumbprint = DefaultThumbprint, Stream inputStream = null, int lifetimeInMinutes = 2) {
+			inputStream = inputStream ?? new MemoryStream(new byte[] { 0x1, 0x3, 0x2 });
+
+			var request = new Mock<HttpRequestBase>();
+			request.SetupGet(r => r.InputStream).Returns(inputStream);
+			request.SetupGet(r => r.HttpMethod).Returns("POST");
+
+			var httpContext = new Mock<HttpContextBase>();
+			httpContext.SetupGet(c => c.Request).Returns(request.Object);
+
+			var controllerContext = new Mock<ControllerContext>();
+			controllerContext.SetupGet(cc => cc.HttpContext).Returns(httpContext.Object);
+
+			this.controller.ControllerContext = controllerContext.Object;
+
+			var result = await this.controller.PostNotification(thumbprint, lifetimeInMinutes);
+			Assert.That(result, Is.InstanceOf<EmptyResult>());
+		}
+
+		private async Task<IncomingList> GetInboxItemsAsyncHelper(string thumbprint = DefaultThumbprint) {
 			Requires.NotNullOrEmpty(thumbprint, "thumbprint");
 			ActionResult result = await this.controller.GetInboxItemsAsync(thumbprint);
 
