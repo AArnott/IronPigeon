@@ -134,6 +134,13 @@
 		}
 
 		[Test]
+		public void PostNotificationActionRejectsLargePayloads() {
+			var inputStream = new MemoryStream(new byte[InboxController.MaxNotificationSize + 1]);
+			Assert.Throws<ArgumentException>(
+				() => this.PostNotificationHelper(inputStream: inputStream).GetAwaiter().GetResult());
+		}
+
+		[Test]
 		public void PurgeExpiredAsync() {
 			this.container.CreateIfNotExist();
 
@@ -159,6 +166,7 @@
 			var request = new Mock<HttpRequestBase>();
 			request.SetupGet(r => r.InputStream).Returns(inputStream);
 			request.SetupGet(r => r.HttpMethod).Returns("POST");
+			request.SetupGet(r => r.ContentLength).Returns((int)inputStream.Length);
 
 			var httpContext = new Mock<HttpContextBase>();
 			httpContext.SetupGet(c => c.Request).Returns(request.Object);

@@ -23,6 +23,11 @@
 		public const string ExpirationDateMetadataKey = "expiration_date";
 
 		/// <summary>
+		/// The maximum allowable size for a notification.
+		/// </summary>
+		public const int MaxNotificationSize = 10 * 1024;
+
+		/// <summary>
 		/// The maximum lifetime an inbox will retain a posted message.
 		/// </summary>
 		public static readonly TimeSpan MaxLifetimeCeiling = TimeSpan.FromDays(14);
@@ -103,9 +108,21 @@
 			Requires.Range(lifetime > 0, "lifetime");
 			await this.EnsureContainerInitializedAsync();
 
+			if (this.Request.ContentLength > MaxNotificationSize) {
+				throw new ArgumentException("Maximum message notification size exceeded.");
+			}
+
 			var directory = this.InboxContainer.GetDirectoryReference(thumbprint);
 			var blob = directory.GetBlobReference(Utilities.CreateRandomWebSafeName(24));
 			await blob.UploadFromStreamAsync(this.Request.InputStream);
+
+			// One more last ditch check that the max size was not exceeded, in case
+			// the client is lying in the HTTP headers.
+			if (blob.Properties.Length > MaxNotificationSize) {
+				await blob.DeleteAsync();
+				throw new ArgumentException("Maximum message notification size exceeded.");
+			}
+
 			var requestedLifeSpan = TimeSpan.FromMinutes(lifetime);
 			var actualLifespan = requestedLifeSpan > MaxLifetimeCeiling ? MaxLifetimeCeiling : requestedLifeSpan;
 			var expirationDate = DateTime.UtcNow + actualLifespan;
