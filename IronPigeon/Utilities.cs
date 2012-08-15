@@ -7,6 +7,7 @@
 	using System.Linq;
 	using System.Net;
 	using System.Net.Http;
+	using System.Net.Http.Headers;
 	using System.Runtime.Serialization;
 	using System.ServiceModel.Security;
 	using System.Text;
@@ -263,6 +264,26 @@
 				memoryStream.Position = 0;
 				return memoryStream;
 			}
+		}
+
+		internal static Task<HttpResponseMessage> GetAsync(this HttpClient httpClient, Uri location, string bearerToken, CancellationToken cancellationToken) {
+			Requires.NotNull(httpClient, "httpClient");
+			Requires.NotNull(location, "location");
+			Requires.NotNullOrEmpty(bearerToken, "bearerToken");
+
+			var request = new HttpRequestMessage(HttpMethod.Get, location);
+			request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", bearerToken);
+			return httpClient.SendAsync(request, cancellationToken);
+		}
+
+		internal static Task<HttpResponseMessage> DeleteAsync(this HttpClient httpClient, Uri location, string bearerToken, CancellationToken cancellationToken) {
+			Requires.NotNull(httpClient, "httpClient");
+			Requires.NotNull(location, "location");
+			Requires.NotNullOrEmpty(bearerToken, "bearerToken");
+
+			var request = new HttpRequestMessage(HttpMethod.Delete, location);
+			request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", bearerToken);
+			return httpClient.SendAsync(request, cancellationToken);
 		}
 	}
 }

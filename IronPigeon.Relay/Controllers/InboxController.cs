@@ -11,11 +11,12 @@
 	using System.Threading.Tasks.Dataflow;
 	using System.Web;
 	using System.Web.Mvc;
-
+	using IronPigeon.Relay.Models;
 	using Microsoft;
 	using Microsoft.WindowsAzure;
 	using Microsoft.WindowsAzure.StorageClient;
 
+	////[RequireHttps]
 	public class InboxController : Controller {
 		/// <summary>
 		/// The key into a blob's metadata that stores the blob's expiration date.
@@ -37,32 +38,35 @@
 		/// </summary>
 		private const string DefaultInboxContainerName = "inbox";
 
+		private const string DefaultInboxTableName = "inbox";
+
 		/// <summary>
 		/// The key to the Azure account configuration information.
 		/// </summary>
 		private const string DefaultCloudConfigurationName = "StorageConnectionString";
 
-		private static readonly char[] DisallowedThumbprintCharacters = new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar };
-
 		/// <summary>
 		/// Initializes a new instance of the <see cref="InboxController" /> class.
 		/// </summary>
 		public InboxController()
-			: this(DefaultInboxContainerName, DefaultCloudConfigurationName) {
+			: this(DefaultInboxContainerName, DefaultInboxTableName, DefaultCloudConfigurationName) {
 		}
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="InboxController" /> class.
 		/// </summary>
-		/// <param name="containerName">Name of the container.</param>
+		/// <param name="containerName">Name of the blob container.</param>
+		/// <param name="tableName">Name of the table.</param>
 		/// <param name="cloudConfigurationName">Name of the cloud configuration.</param>
-		public InboxController(string containerName, string cloudConfigurationName) {
+		public InboxController(string containerName, string tableName, string cloudConfigurationName) {
 			Requires.NotNullOrEmpty(containerName, "containerName");
 			Requires.NotNullOrEmpty(cloudConfigurationName, "cloudConfigurationName");
 
 			var storage = CloudStorageAccount.FromConfigurationSetting(cloudConfigurationName);
-			var client = storage.CreateCloudBlobClient();
-			this.InboxContainer = client.GetContainerReference(containerName);
+			var blobClient = storage.CreateCloudBlobClient();
+			this.InboxContainer = blobClient.GetContainerReference(containerName);
+			var tableClient = storage.CreateCloudTableClient();
+			this.InboxTable = new InboxContext(tableClient, tableName);
 		}
 
 		/// <summary>
@@ -73,17 +77,32 @@
 		/// </value>
 		public CloudBlobContainer InboxContainer { get; set; }
 
-		[HttpPost]
-		public async Task<ActionResult> Create() {
-			return new EmptyResult();
+		public InboxContext InboxTable { get; set; }
+
+		[HttpPost, ActionName("Create")]
+		public async Task<JsonResult> CreateAsync() {
+			var inbox = InboxEntity.Create();
+			this.InboxTable.AddObject(inbox);
+			await this.InboxTable.SaveChangesAsync();
+
+			string messageReceivingEndpoint = this.GetAbsoluteUrlForAction("Slot", new { id = inbox.RowKey }).AbsoluteUri;
+			var result = new InboxCreationResponse {
+				MessageReceivingEndpoint = messageReceivingEndpoint,
+				InboxOwnerCode = inbox.InboxOwnerCode,
+			};
+			return new JsonResult { Data = result };
 		}
 
-		[HttpGet, ActionName("Index")]
-		public async Task<ActionResult> GetInboxItemsAsync(string thumbprint) {
-			VerifyValidThumbprint(thumbprint);
+		[HttpGet, ActionName("Slot"), InboxOwnerAuthorize]
+		public async Task<ActionResult> GetInboxItemsAsync(string id) {
 			await this.EnsureContainerInitializedAsync();
 
-			var directory = this.InboxContainer.GetDirectoryReference(thumbprint);
+			InboxEntity inbox = await this.GetInboxAsync(id);
+			if (inbox == null) {
+				return new HttpNotFoundResult();
+			}
+
+			var directory = this.InboxContainer.GetDirectoryReference(id);
 			var blobs = new List<IncomingList.IncomingItem>();
 			try {
 				var directoryListing = await directory.ListBlobsSegmentedAsync(50);
@@ -102,9 +121,9 @@
 			};
 		}
 
-		[HttpPost, ActionName("Index")]
-		public async Task<ActionResult> PostNotification(string thumbprint, int lifetime) {
-			VerifyValidThumbprint(thumbprint);
+		[HttpPost, ActionName("Slot")]
+		public async Task<ActionResult> PostNotificationAsync(string id, int lifetime) {
+			Requires.NotNullOrEmpty(id, "id");
 			Requires.Range(lifetime > 0, "lifetime");
 			await this.EnsureContainerInitializedAsync();
 
@@ -112,7 +131,12 @@
 				throw new ArgumentException("Maximum message notification size exceeded.");
 			}
 
-			var directory = this.InboxContainer.GetDirectoryReference(thumbprint);
+			InboxEntity inbox = await this.GetInboxAsync(id);
+			if (inbox == null) {
+				return new HttpNotFoundResult();
+			}
+
+			var directory = this.InboxContainer.GetDirectoryReference(id);
 			var blob = directory.GetBlobReference(Utilities.CreateRandomWebSafeName(24));
 			await blob.UploadFromStreamAsync(this.Request.InputStream);
 
@@ -131,18 +155,42 @@
 			return new EmptyResult();
 		}
 
-		[HttpPost]
-		public async Task<ActionResult> Delete(string thumbprint, string notification) {
-			Requires.NotNullOrEmpty(thumbprint, "thumbprint");
-			Requires.NotNullOrEmpty(notification, "notification");
-
-			// TODO: Add authentication to delete so attackers can't delete others' notifications.
-			var blob = this.InboxContainer.GetBlobReference(notification);
-			await blob.DeleteAsync();
-			return new EmptyResult();
+		/// <summary>
+		/// Deletes an inbox entirely.
+		/// </summary>
+		[NonAction] // to avoid ambiguity with the other overload.
+		public async Task<ActionResult> DeleteAsync(string id) {
+			Requires.NotNullOrEmpty(id, "id");
+			throw new NotImplementedException();
 		}
 
-		[NonAction]
+		/// <summary>
+		/// Deletes an individual notification from an inbox.
+		/// </summary>
+		[HttpDelete, ActionName("Slot"), InboxOwnerAuthorize]
+		public async Task<ActionResult> DeleteAsync(string id, string notification) {
+			Requires.NotNullOrEmpty(id, "id");
+
+			if (notification == null) {
+				return await DeleteAsync(id);
+			}
+
+			Requires.NotNullOrEmpty(notification, "notification");
+
+			// The if check verifies that the notification URL is a blob that
+			// belongs to the id'd container, thus ensuring that one valid user
+			// can't delete another user's notifications.
+			var directory = this.InboxContainer.GetDirectoryReference(id);
+			if (directory.Uri.IsBaseOf(new Uri(notification, UriKind.Absolute))) {
+				var blob = this.InboxContainer.GetBlobReference(notification);
+				await blob.DeleteAsync();
+				return new EmptyResult();
+			} else {
+				return new HttpUnauthorizedResult("Notification URL does not match owner id.");
+			}
+		}
+
+		[NonAction, ActionName("Purge"), Authorize(Roles = "admin")]
 		public Task PurgeExpiredAsync() {
 			var deleteBlobsExpiringBefore = DateTime.UtcNow;
 			var searchExpiredBlobs = new TransformManyBlock<CloudBlobContainer, CloudBlob>(
@@ -183,9 +231,13 @@
 			return deleteBlobBlock.Completion;
 		}
 
-		private static void VerifyValidThumbprint(string thumbprint) {
-			Requires.NotNullOrEmpty(thumbprint, "thumbprint");
-			Requires.Argument(thumbprint.IndexOfAny(DisallowedThumbprintCharacters) < 0, "thumbprint", "Disallowed characters.");
+		protected virtual Uri GetAbsoluteUrlForAction(string action, dynamic routeValues) {
+			return new Uri(this.Request.Url, this.Url.Action(action, routeValues));
+		}
+
+		private async Task<InboxEntity> GetInboxAsync(string id) {
+			var queryResults = await this.InboxTable.Get(id).ExecuteAsync();
+			return queryResults.FirstOrDefault();
 		}
 
 		private async Task EnsureContainerInitializedAsync() {

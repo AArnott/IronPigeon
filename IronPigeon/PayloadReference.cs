@@ -39,7 +39,7 @@
 		}
 
 		/// <summary>
-		/// Gets the Internet location from which the message content can be downloaded.
+		/// Gets the Internet location from which the payload can be downloaded.
 		/// </summary>
 		[DataMember]
 		public Uri Location { get; private set; }
@@ -86,5 +86,10 @@
 		/// </summary>
 		[DataMember]
 		public string ContentType { get; private set; }
+
+		/// <summary>
+		/// Gets or sets the URI from which this instance was downloaded.
+		/// </summary>
+		internal Uri ReferenceLocation { get; set; }
 	}
 }

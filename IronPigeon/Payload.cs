@@ -6,9 +6,18 @@
 	using System.Runtime.Serialization;
 	using System.Text;
 	using Microsoft;
-	
+
+	/// <summary>
+	/// The payload in a securely transmitted message, before encryptions and signatures are applied
+	/// or after they are removed.
+	/// </summary>
 	[DataContract]
 	public class Payload {
+		/// <summary>
+		/// Initializes a new instance of the <see cref="Payload" /> class.
+		/// </summary>
+		/// <param name="content">The content.</param>
+		/// <param name="contentType">Type of the content.</param>
 		public Payload(byte[] content, string contentType) {
 			Requires.NotNull(content, "content");
 			Requires.NotNullOrEmpty(contentType, "contentType");
@@ -29,5 +38,10 @@
 		/// </summary>
 		[DataMember]
 		public string ContentType { get; private set; }
+
+		/// <summary>
+		/// Gets or sets the location of the payload reference that led to the discovery of this payload.
+		/// </summary>
+		internal Uri PayloadReferenceUri { get; set; }
 	}
 }

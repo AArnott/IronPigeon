@@ -20,12 +20,13 @@
 		}
 
 		/// <summary>
-		/// Initializes a new instance of the <see cref="OwnEndpoint"/> class.
+		/// Initializes a new instance of the <see cref="OwnEndpoint" /> class.
 		/// </summary>
 		/// <param name="contact">The public information for this contact.</param>
 		/// <param name="signingPrivateKeyMaterial">The private signing key.</param>
 		/// <param name="encryptionPrivateKeyMaterial">The private encryption key.</param>
-		public OwnEndpoint(Endpoint contact, byte[] signingPrivateKeyMaterial, byte[] encryptionPrivateKeyMaterial) {
+		/// <param name="inboxOwnerCode">The secret that proves ownership of the inbox at the <see cref="Endpoint.MessageReceivingEndpoint"/>.</param>
+		public OwnEndpoint(Endpoint contact, byte[] signingPrivateKeyMaterial, byte[] encryptionPrivateKeyMaterial, string inboxOwnerCode = null) {
 			Requires.NotNull(contact, "contact");
 			Requires.NotNull(signingPrivateKeyMaterial, "signingPrivateKeyMaterial");
 			Requires.NotNull(encryptionPrivateKeyMaterial, "encryptionPrivateKeyMaterial");
@@ -33,6 +34,7 @@
 			this.PublicEndpoint = contact;
 			this.SigningKeyPrivateMaterial = signingPrivateKeyMaterial;
 			this.EncryptionKeyPrivateMaterial = encryptionPrivateKeyMaterial;
+			this.InboxOwnerCode = inboxOwnerCode;
 		}
 
 		/// <summary>
@@ -54,16 +56,21 @@
 		public byte[] EncryptionKeyPrivateMaterial { get; set; }
 
 		/// <summary>
+		/// Gets or sets the secret that proves ownership of the inbox at the <see cref="Endpoint.MessageReceivingEndpoint"/>.
+		/// </summary>
+		[DataMember]
+		public string InboxOwnerCode { get; set; }
+
+		/// <summary>
 		/// Generates a new receiving endpoint.
 		/// </summary>
 		/// <param name="cryptoProvider">The crypto provider.</param>
-		/// <param name="messageReceivingEndpointBaseUrl">The URL of the message relay service to use for the new endpoint.</param>
 		/// <returns>The newly generated endpoint.</returns>
 		/// <remarks>
 		/// Depending on the length of the keys set in the provider and the amount of buffered entropy in the operating system,
 		/// this method can take an extended period (several seconds) to complete.
 		/// </remarks>
-		public static OwnEndpoint Create(ICryptoProvider cryptoProvider, Uri messageReceivingEndpointBaseUrl = null) {
+		public static OwnEndpoint Create(ICryptoProvider cryptoProvider) {
 			Requires.NotNull(cryptoProvider, "cryptoProvider");
 
 			byte[] privateEncryptionKey, publicEncryptionKey;
@@ -76,12 +83,6 @@
 				EncryptionKeyPublicMaterial = publicEncryptionKey,
 				SigningKeyPublicMaterial = publicSigningKey,
 			};
-
-			if (messageReceivingEndpointBaseUrl != null) {
-				contact.MessageReceivingEndpoint = new Uri(
-					messageReceivingEndpointBaseUrl,
-					cryptoProvider.CreateWebSafeBase64Thumbprint(contact.EncryptionKeyPublicMaterial));
-			}
 
 			var ownContact = new OwnEndpoint(contact, privateSigningKey, privateEncryptionKey);
 			return ownContact;

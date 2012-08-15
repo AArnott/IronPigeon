@@ -25,6 +25,7 @@
 
 			var ownContact = OwnEndpoint.Create(cryptoProvider);
 			ownContact.PublicEndpoint.MessageReceivingEndpoint = MessageReceivingEndpoint;
+			ownContact.InboxOwnerCode = "some owner code";
 			return ownContact;
 		}
 	}

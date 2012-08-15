@@ -6,11 +6,15 @@
 	using System.IO;
 	using System.Linq;
 	using System.Net.Http;
+	using System.Net.Http.Headers;
 	using System.Runtime.Serialization;
 	using System.Runtime.Serialization.Json;
 	using System.Text;
 	using System.Threading;
 	using System.Threading.Tasks;
+
+	using IronPigeon.Relay;
+
 	using Microsoft;
 
 	/// <summary>
@@ -78,6 +82,34 @@
 		/// </summary>
 		public ILogger Logger { get; set; }
 
+		/// <summary>
+		/// Registers the endpoint this channel uses to receive messages with a relay service.
+		/// </summary>
+		/// <param name="messageReceivingEndpointBaseUrl">The URL of the message relay service to use for the new endpoint.</param>
+		/// <param name="cancellationToken">The cancellation token.</param>
+		/// <returns>A task whose completion signals the registration result.</returns>
+		public async Task RegisterRelayAsync(Uri messageReceivingEndpointBaseUrl, CancellationToken cancellationToken = default(CancellationToken)) {
+			Requires.NotNull(messageReceivingEndpointBaseUrl, "messageReceivingEndpointBaseUrl");
+
+			var abe = this.Endpoint.CreateAddressBookEntry(this.CryptoServices);
+			var ms = new MemoryStream();
+			var addressBookEntryWriter = new BinaryWriter(ms);
+			addressBookEntryWriter.SerializeDataContract(abe);
+			addressBookEntryWriter.Flush();
+
+			var registerUrl = new Uri(messageReceivingEndpointBaseUrl, "create");
+
+			var responseMessage =
+				await this.httpClient.PostAsync(registerUrl, null, cancellationToken);
+			responseMessage.EnsureSuccessStatusCode();
+			using (var responseStream = await responseMessage.Content.ReadAsStreamAsync()) {
+				var deserializer = new DataContractJsonSerializer(typeof(InboxCreationResponse));
+				var creationResponse = (InboxCreationResponse)deserializer.ReadObject(responseStream);
+				this.Endpoint.PublicEndpoint.MessageReceivingEndpoint = new Uri(creationResponse.MessageReceivingEndpoint, UriKind.Absolute);
+				this.Endpoint.InboxOwnerCode = creationResponse.InboxOwnerCode;
+			}
+		}
+
 		#region Message receiving methods
 
 		public async Task<IReadOnlyList<Payload>> ReceiveAsync(IProgress<Payload> progress = null, CancellationToken cancellationToken = default(CancellationToken)) {
@@ -112,6 +144,7 @@
 			Requires.NotNull(inboxItem, "inboxItem");
 
 			var responseMessage = await this.httpClient.GetAsync(inboxItem.Location, cancellationToken);
+			responseMessage.EnsureSuccessStatusCode();
 			var responseStream = await responseMessage.Content.ReadAsStreamAsync();
 			var responseStreamCopy = new MemoryStream();
 			await responseStream.CopyToAsync(responseStreamCopy, 4096, cancellationToken);
@@ -138,6 +171,7 @@
 			var creationDateUtc = DateTime.FromBinary(plainTextPayloadReader.ReadInt64());
 			var notificationAuthor = Utilities.DeserializeDataContract<Endpoint>(plainTextPayloadReader);
 			var messageReference = Utilities.DeserializeDataContract<PayloadReference>(plainTextPayloadReader);
+			messageReference.ReferenceLocation = inboxItem.Location;
 
 			if (!this.CryptoServices.VerifySignature(notificationAuthor.SigningKeyPublicMaterial, signedBytes, signature)) {
 				throw new InvalidMessageException();
@@ -171,6 +205,7 @@
 			var plainTextStream = new MemoryStream(plainTextBuffer);
 			var plainTextReader = new BinaryReader(plainTextStream);
 			var message = Utilities.DeserializeDataContract<Payload>(plainTextReader);
+			message.PayloadReferenceUri = notification.ReferenceLocation;
 			return message;
 		}
 
@@ -280,10 +315,31 @@
 
 		#endregion
 
+		/// <summary>
+		/// Deletes the online inbox item that points to a previously downloaded payload.
+		/// </summary>
+		/// <param name="payload"></param>
+		/// <returns></returns>
+		/// <remarks>
+		/// This method should be called after the client application has saved the
+		/// downloaded payload to persistent storage.
+		/// </remarks>
+		public async Task DeleteInboxItem(Payload payload, CancellationToken cancellationToken = default(CancellationToken)) {
+			Requires.NotNull(payload, "payload");
+			Requires.Argument(payload.PayloadReferenceUri != null, "payload", "Original payload reference URI no longer available.");
+
+			var deleteEndpoint = new UriBuilder(this.Endpoint.PublicEndpoint.MessageReceivingEndpoint);
+			deleteEndpoint.Query = "notification=" + Uri.EscapeDataString(payload.PayloadReferenceUri.AbsoluteUri);
+			using (var response = await this.httpClient.DeleteAsync(deleteEndpoint.Uri, this.Endpoint.InboxOwnerCode, cancellationToken)) {
+				response.EnsureSuccessStatusCode();
+			}
+		}
+
 		private async Task<IReadOnlyList<IncomingList.IncomingItem>> DownloadIncomingItemsAsync(CancellationToken cancellationToken) {
 			var deserializer = new DataContractJsonSerializer(typeof(IncomingList));
 			var messages = new List<Payload>();
-			var responseMessage = await this.httpClient.GetAsync(this.Endpoint.PublicEndpoint.MessageReceivingEndpoint, cancellationToken);
+			var responseMessage = await this.httpClient.GetAsync(this.Endpoint.PublicEndpoint.MessageReceivingEndpoint, this.Endpoint.InboxOwnerCode, cancellationToken);
+			responseMessage.EnsureSuccessStatusCode();
 			var responseStream = await responseMessage.Content.ReadAsStreamAsync();
 			var inboxResults = (IncomingList)deserializer.ReadObject(responseStream);
 			return inboxResults.Items;

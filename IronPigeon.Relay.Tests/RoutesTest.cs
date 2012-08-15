@@ -26,53 +26,38 @@
 		public void InboxCreateRoute() {
 			var httpContextMock = new Mock<HttpContextBase>();
 			httpContextMock.Setup(c => c.Request.AppRelativeCurrentExecutionFilePath)
-				.Returns("~/inbox/somethumbprint/Create"); // POST
+				.Returns("~/Inbox/create"); // POST
 
 			RouteData routeData = this.routes.GetRouteData(httpContextMock.Object);
 			Assert.NotNull(routeData);
 			Assert.That(routeData.Values["controller"], Is.EqualTo("Inbox"));
-			Assert.That(routeData.Values["action"], Is.EqualTo("Create"));
-			Assert.That(routeData.Values["thumbprint"], Is.EqualTo("somethumbprint"));
+			Assert.That(routeData.Values["action"], Is.EqualTo("create"));
 		}
 
 		[Test]
 		public void InboxPushRoute() {
 			var httpContextMock = new Mock<HttpContextBase>();
 			httpContextMock.Setup(c => c.Request.AppRelativeCurrentExecutionFilePath)
-				.Returns("~/inbox/somethumbprint/Push"); // PUT
+				.Returns("~/Inbox/Push/somethumbprint"); // PUT
 
 			RouteData routeData = this.routes.GetRouteData(httpContextMock.Object);
 			Assert.NotNull(routeData);
 			Assert.That(routeData.Values["controller"], Is.EqualTo("Inbox"));
 			Assert.That(routeData.Values["action"], Is.EqualTo("Push"));
-			Assert.That(routeData.Values["thumbprint"], Is.EqualTo("somethumbprint"));
+			Assert.That(routeData.Values["id"], Is.EqualTo("somethumbprint"));
 		}
 
 		[Test]
-		public void InboxIndexRoute() {
+		public void InboxSlotRoute() {
 			var httpContextMock = new Mock<HttpContextBase>();
 			httpContextMock.Setup(c => c.Request.AppRelativeCurrentExecutionFilePath)
-				.Returns("~/inbox/somethumbprint"); // GET, POST, DELETE
+				.Returns("~/Inbox/slot/somethumbprint"); // GET, POST, DELETE
 
 			RouteData routeData = this.routes.GetRouteData(httpContextMock.Object);
 			Assert.NotNull(routeData);
 			Assert.That(routeData.Values["controller"], Is.EqualTo("Inbox"));
-			Assert.That(routeData.Values["action"], Is.EqualTo("Index"));
-			Assert.That(routeData.Values["thumbprint"], Is.EqualTo("somethumbprint"));
-		}
-
-		[Test]
-		public void InboxItemRoute() {
-			var httpContextMock = new Mock<HttpContextBase>();
-			httpContextMock.Setup(c => c.Request.AppRelativeCurrentExecutionFilePath)
-				.Returns("~/inbox/somethumbprint"); // GET, DELETE // ?item=someId
-
-			RouteData routeData = this.routes.GetRouteData(httpContextMock.Object);
-			Assert.NotNull(routeData);
-			Assert.That(routeData.Values["controller"], Is.EqualTo("Inbox"));
-			Assert.That(routeData.Values["action"], Is.EqualTo("Index"));
-			Assert.That(routeData.Values["thumbprint"], Is.EqualTo("somethumbprint"));
-			////Assert.That(routeData.Values["item"], Is.EqualTo("someId"));
+			Assert.That(routeData.Values["action"], Is.EqualTo("slot"));
+			Assert.That(routeData.Values["id"], Is.EqualTo("somethumbprint"));
 		}
 	}
 }

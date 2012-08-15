@@ -7,40 +7,50 @@
 	using System.Threading.Tasks;
 	using System.Web;
 	using System.Web.Mvc;
+	using System.Web.Routing;
 	using IronPigeon.Relay.Controllers;
 	using Microsoft;
 	using Microsoft.WindowsAzure;
 	using Microsoft.WindowsAzure.StorageClient;
 	using Moq;
+	using Newtonsoft.Json;
 	using NUnit.Framework;
 
 	[TestFixture]
 	public class InboxControllerTest {
 		private const string CloudConfigurationName = "StorageConnectionString";
 
-		private const string DefaultThumbprint = "SomeThumbprint";
-
 		private readonly HttpClient httpClient = new HttpClient();
 
 		private CloudBlobContainer container;
 
+		private CloudTableClient tableClient;
+
 		private InboxController controller;
+
+		private InboxCreationResponse inbox;
+
+		private string inboxId;
 
 		[SetUp]
 		public void SetUp() {
 			AzureStorageConfig.RegisterConfiguration();
 
 			var testContainerName = "unittests" + Guid.NewGuid().ToString();
+			var testTableName = "unittests" + Guid.NewGuid().ToString().Replace("-", "");
 			var account = CloudStorageAccount.FromConfigurationSetting(CloudConfigurationName);
 			var client = account.CreateCloudBlobClient();
+			this.tableClient = account.CreateCloudTableClient();
+			this.tableClient.CreateTableIfNotExist(testTableName);
 			this.container = client.GetContainerReference(testContainerName);
-			this.controller = new InboxController(this.container.Name, CloudConfigurationName);
+			this.controller = new InboxControllerForTest(this.container.Name, testTableName, CloudConfigurationName);
 		}
 
 		[TearDown]
 		public void TearDown() {
 			try {
 				this.container.Delete();
+				this.tableClient.DeleteTableIfExist(this.controller.InboxTable.TableName);
 			} catch (StorageClientException ex) {
 				bool handled = false;
 				var webException = ex.InnerException as WebException;
@@ -59,14 +69,15 @@
 
 		[Test]
 		public void GetInboxItemsAsyncAction() {
-			var data = this.GetInboxItemsAsyncHelper("emptyThumbprint").Result;
+			this.CreateInboxHelperAsync().Wait();
+			var data = this.GetInboxItemsAsyncHelper().Result;
 			Assert.That(data.Items, Is.Empty);
 		}
 
 		[Test]
 		public void PostNotificationActionRejectsNonPositiveLifetime() {
-			Assert.Throws<ArgumentOutOfRangeException>(() => this.controller.PostNotification("thumbprint", 0).GetAwaiter().GetResult());
-			Assert.Throws<ArgumentOutOfRangeException>(() => this.controller.PostNotification("thumbprint", -1).GetAwaiter().GetResult());
+			Assert.Throws<ArgumentOutOfRangeException>(() => this.controller.PostNotificationAsync("thumbprint", 0).GetAwaiter().GetResult());
+			Assert.Throws<ArgumentOutOfRangeException>(() => this.controller.PostNotificationAsync("thumbprint", -1).GetAwaiter().GetResult());
 		}
 
 		/// <summary>
@@ -75,9 +86,8 @@
 		/// </summary>
 		[Test]
 		public void GetInboxItemsOnlyReturnsUnexpiredItems() {
-			const string Thumbprint = "someThumbprint";
-			this.container.CreateIfNotExist();
-			var dir = this.container.GetDirectoryReference(Thumbprint);
+			this.CreateInboxHelperAsync().Wait();
+			var dir = this.container.GetDirectoryReference(this.inboxId);
 			var expiredBlob = dir.GetBlobReference("expiredBlob");
 			var freshBlob = dir.GetBlobReference("freshBlob");
 			expiredBlob.UploadText("content");
@@ -87,16 +97,17 @@
 			freshBlob.Metadata[InboxController.ExpirationDateMetadataKey] = (DateTime.UtcNow + TimeSpan.FromDays(1)).ToString(CultureInfo.InvariantCulture);
 			freshBlob.SetMetadata();
 
-			var results = this.GetInboxItemsAsyncHelper(Thumbprint).Result;
+			var results = this.GetInboxItemsAsyncHelper().Result;
 			Assert.That(results.Items.Count, Is.EqualTo(1));
 			Assert.That(results.Items[0].Location, Is.EqualTo(freshBlob.Uri));
 		}
 
 		[Test]
 		public void DeleteNotificationAction() {
+			this.CreateInboxHelperAsync().Wait();
 			this.PostNotificationHelper().Wait();
 			var inbox = this.GetInboxItemsAsyncHelper().Result;
-			this.controller.Delete(DefaultThumbprint, inbox.Items[0].Location.AbsoluteUri).GetAwaiter().GetResult();
+			this.controller.DeleteAsync(this.inboxId, inbox.Items[0].Location.AbsoluteUri).GetAwaiter().GetResult();
 
 			var blobReference = this.container.GetBlobReference(inbox.Items[0].Location.AbsoluteUri);
 			Assert.That(blobReference.DeleteIfExists(), Is.False, "The blob should have already been deleted.");
@@ -106,11 +117,12 @@
 
 		[Test]
 		public void PostNotificationAction() {
+			this.CreateInboxHelperAsync().Wait();
 			var inputStream = new MemoryStream(new byte[] { 0x1, 0x3, 0x2 });
 			this.PostNotificationHelper(inputStream: inputStream).Wait();
 
 			// Confirm that retrieving the inbox now includes the posted message.
-			var getResult = this.GetInboxItemsAsyncHelper(DefaultThumbprint).Result;
+			var getResult = this.GetInboxItemsAsyncHelper().Result;
 			Assert.That(getResult.Items.Count, Is.EqualTo(1));
 			Assert.That(getResult.Items[0].Location, Is.Not.Null);
 			Assert.That(getResult.Items[0].DatePostedUtc, Is.EqualTo(DateTime.UtcNow).Within(TimeSpan.FromMinutes(1)));
@@ -123,9 +135,10 @@
 
 		[Test]
 		public void PostNotificationActionHasExpirationCeiling() {
+			this.CreateInboxHelperAsync().Wait();
 			this.PostNotificationHelper(lifetimeInMinutes: (int)InboxController.MaxLifetimeCeiling.TotalMinutes + 5).Wait();
 
-			var results = this.GetInboxItemsAsyncHelper(DefaultThumbprint).Result;
+			var results = this.GetInboxItemsAsyncHelper().Result;
 			var blob = this.container.GetBlobReference(results.Items[0].Location.AbsoluteUri);
 			blob.FetchAttributes();
 			Assert.That(
@@ -160,7 +173,23 @@
 			Assert.That(freshBlob.DeleteIfExists(), Is.True);
 		}
 
-		private async Task PostNotificationHelper(string thumbprint = DefaultThumbprint, Stream inputStream = null, int lifetimeInMinutes = 2) {
+		private async Task CreateInboxHelperAsync() {
+			this.container.CreateIfNotExist();
+
+			var jsonResult = await this.controller.CreateAsync();
+			var result = (InboxCreationResponse)jsonResult.Data;
+			this.inbox = result;
+
+			var routes = new RouteCollection();
+			RouteConfig.RegisterRoutes(routes);
+			var httpContextMock = new Mock<HttpContextBase>();
+			httpContextMock.Setup(c => c.Request.AppRelativeCurrentExecutionFilePath)
+				.Returns("~" + new Uri(result.MessageReceivingEndpoint).PathAndQuery); // POST
+			var routeData = routes.GetRouteData(httpContextMock.Object);
+			this.inboxId = (string)routeData.Values["id"];
+		}
+
+		private async Task PostNotificationHelper(Stream inputStream = null, int lifetimeInMinutes = 2) {
 			inputStream = inputStream ?? new MemoryStream(new byte[] { 0x1, 0x3, 0x2 });
 
 			var request = new Mock<HttpRequestBase>();
@@ -176,13 +205,12 @@
 
 			this.controller.ControllerContext = controllerContext.Object;
 
-			var result = await this.controller.PostNotification(thumbprint, lifetimeInMinutes);
+			var result = await this.controller.PostNotificationAsync(this.inboxId, lifetimeInMinutes);
 			Assert.That(result, Is.InstanceOf<EmptyResult>());
 		}
 
-		private async Task<IncomingList> GetInboxItemsAsyncHelper(string thumbprint = DefaultThumbprint) {
-			Requires.NotNullOrEmpty(thumbprint, "thumbprint");
-			ActionResult result = await this.controller.GetInboxItemsAsync(thumbprint);
+		private async Task<IncomingList> GetInboxItemsAsyncHelper() {
+			ActionResult result = await this.controller.GetInboxItemsAsync(this.inboxId);
 
 			Assert.That(result, Is.InstanceOf<JsonResult>());
 			var jsonResult = (JsonResult)result;
@@ -190,6 +218,18 @@
 			var data = (IncomingList)jsonResult.Data;
 			Assert.That(data, Is.Not.Null);
 			return data;
+		}
+
+		public class InboxControllerForTest : InboxController {
+			public InboxControllerForTest(string containerName, string tableName, string cloudConfigurationName)
+				: base(containerName, tableName, cloudConfigurationName) {
+			}
+
+			protected override Uri GetAbsoluteUrlForAction(string action, dynamic routeValues) {
+				routeValues = new ReflectionDynamicObject(routeValues);
+				return new Uri(
+					string.Format(CultureInfo.InvariantCulture, "http://localhost/inbox/{0}/{1}", action, routeValues.id));
+			}
 		}
 	}
 }
