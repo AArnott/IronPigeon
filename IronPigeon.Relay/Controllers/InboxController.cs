@@ -83,7 +83,9 @@
 		public async Task<JsonResult> CreateAsync() {
 			var inbox = InboxEntity.Create();
 			this.InboxTable.AddObject(inbox);
-			await this.InboxTable.SaveChangesAsync();
+			await Task.WhenAll(
+				this.InboxTable.SaveChangesAsync(),
+				this.EnsureContainerInitializedAsync());
 
 			string messageReceivingEndpoint = this.GetAbsoluteUrlForAction("Slot", new { id = inbox.RowKey }).AbsoluteUri;
 			var result = new InboxCreationResponse {
@@ -95,8 +97,6 @@
 
 		[HttpGet, ActionName("Slot"), InboxOwnerAuthorize]
 		public async Task<ActionResult> GetInboxItemsAsync(string id) {
-			await this.EnsureContainerInitializedAsync();
-
 			InboxEntity inbox = await this.GetInboxAsync(id);
 			if (inbox == null) {
 				return new HttpNotFoundResult();
@@ -125,7 +125,6 @@
 		public async Task<ActionResult> PostNotificationAsync(string id, int lifetime) {
 			Requires.NotNullOrEmpty(id, "id");
 			Requires.Range(lifetime > 0, "lifetime");
-			await this.EnsureContainerInitializedAsync();
 
 			if (this.Request.ContentLength > MaxNotificationSize) {
 				throw new ArgumentException("Maximum message notification size exceeded.");
@@ -241,10 +240,10 @@
 		}
 
 		private async Task EnsureContainerInitializedAsync() {
-			await this.InboxContainer.CreateIfNotExistAsync();
-
-			var permissions = new BlobContainerPermissions { PublicAccess = BlobContainerPublicAccessType.Blob };
-			await this.InboxContainer.SetPermissionsAsync(permissions);
+			if (await this.InboxContainer.CreateIfNotExistAsync()) {
+				var permissions = new BlobContainerPermissions { PublicAccess = BlobContainerPublicAccessType.Blob };
+				await this.InboxContainer.SetPermissionsAsync(permissions);
+			}
 		}
 	}
 }

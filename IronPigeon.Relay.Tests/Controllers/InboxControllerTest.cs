@@ -174,8 +174,6 @@
 		}
 
 		private async Task CreateInboxHelperAsync() {
-			this.container.CreateIfNotExist();
-
 			var jsonResult = await this.controller.CreateAsync();
 			var result = (InboxCreationResponse)jsonResult.Data;
 			this.inbox = result;
