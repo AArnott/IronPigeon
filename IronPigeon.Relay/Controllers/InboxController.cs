@@ -132,6 +132,12 @@
 
 			var directory = this.InboxContainer.GetDirectoryReference(id);
 			var blob = directory.GetBlobReference(Utilities.CreateRandomWebSafeName(24));
+
+			var requestedLifeSpan = TimeSpan.FromMinutes(lifetime);
+			var actualLifespan = requestedLifeSpan > MaxLifetimeCeiling ? MaxLifetimeCeiling : requestedLifeSpan;
+			var expirationDate = DateTime.UtcNow + actualLifespan;
+			blob.Metadata[ExpirationDateMetadataKey] = expirationDate.ToString(CultureInfo.InvariantCulture);
+
 			await blob.UploadFromStreamAsync(this.Request.InputStream);
 
 			// One more last ditch check that the max size was not exceeded, in case
@@ -141,11 +147,6 @@
 				throw new ArgumentException("Maximum message notification size exceeded.");
 			}
 
-			var requestedLifeSpan = TimeSpan.FromMinutes(lifetime);
-			var actualLifespan = requestedLifeSpan > MaxLifetimeCeiling ? MaxLifetimeCeiling : requestedLifeSpan;
-			var expirationDate = DateTime.UtcNow + actualLifespan;
-			blob.Metadata[ExpirationDateMetadataKey] = expirationDate.ToString(CultureInfo.InvariantCulture);
-			await blob.SetMetadataAsync();
 			return new EmptyResult();
 		}
 

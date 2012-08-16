@@ -37,9 +37,8 @@
 			blobName = roundedUp.ToString("yyyy.MM.dd") + "/" + blobName;
 
 			var blob = this.container.GetBlobReference(blobName);
-			await blob.UploadFromStreamAsync(content);
 			blob.Metadata["DeleteAfter"] = expirationUtc.ToString();
-			await blob.SetMetadataAsync();
+			await blob.UploadFromStreamAsync(content);
 			return blob.Uri;
 		}
 
