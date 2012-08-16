@@ -21,7 +21,7 @@
 		/// <summary>
 		/// The key into a blob's metadata that stores the blob's expiration date.
 		/// </summary>
-		public const string ExpirationDateMetadataKey = "expiration_date";
+		public const string ExpirationDateMetadataKey = "DeleteAfter";
 
 		/// <summary>
 		/// The maximum allowable size for a notification.

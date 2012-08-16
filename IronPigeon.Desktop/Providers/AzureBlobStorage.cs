@@ -1,6 +1,7 @@
 ﻿namespace IronPigeon.Providers {
 	using System;
 	using System.Collections.Generic;
+	using System.Globalization;
 	using System.IO;
 	using System.Linq;
 	using System.Text;
@@ -37,7 +38,11 @@
 			blobName = roundedUp.ToString("yyyy.MM.dd") + "/" + blobName;
 
 			var blob = this.container.GetBlobReference(blobName);
-			blob.Metadata["DeleteAfter"] = expirationUtc.ToString();
+
+			// Set metadata with the precise expiration time, although for efficiency we also put the blob into a directory
+			// for efficient deletion based on approximate expiration date.
+			blob.Metadata["DeleteAfter"] = expirationUtc.ToString(CultureInfo.InvariantCulture);
+
 			await blob.UploadFromStreamAsync(content);
 			return blob.Uri;
 		}
