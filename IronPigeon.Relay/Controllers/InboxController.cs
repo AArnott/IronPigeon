@@ -97,11 +97,6 @@
 
 		[HttpGet, ActionName("Slot"), InboxOwnerAuthorize]
 		public async Task<ActionResult> GetInboxItemsAsync(string id) {
-			InboxEntity inbox = await this.GetInboxAsync(id);
-			if (inbox == null) {
-				return new HttpNotFoundResult();
-			}
-
 			var directory = this.InboxContainer.GetDirectoryReference(id);
 			var blobs = new List<IncomingList.IncomingItem>();
 			try {
