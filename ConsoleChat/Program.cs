@@ -33,25 +33,16 @@
 			await tableStorage.CreateTableIfNotExistAsync("inbox");
 			await blobStorage.CreateContainerIfNotExistAsync();
 
-			await channel.RegisterRelayAsync(new Uri("http://localhost:39472/Inbox/"));
+			await channel.CreateInboxAsync(new Uri("http://localhost:39472/Inbox/"));
 
 			string privateFilePath = Path.GetTempFileName();
 			using (var writer = new BinaryWriter(File.OpenWrite(privateFilePath))) {
 				writer.SerializeDataContract(channel.Endpoint);
 			}
 
-			Console.WriteLine("Saved full receiving endpoint data to: \"{0}\".", privateFilePath);
-
-			var abe = channel.Endpoint.CreateAddressBookEntry(cryptoServices);
-			var abeWriter = new StringWriter();
-			await Utilities.SerializeDataContractAsBase64Async(abeWriter, abe);
-			Console.WriteLine("Your address book entry is:\n{0}\n", abeWriter);
-			string abeFileName = Path.GetTempFileName();
-			File.WriteAllText(abeFileName, abeWriter.ToString());
-			Console.WriteLine("This has been copied to \"{0}\".", abeFileName);
-			Console.WriteLine(
-				"If you upload this file to the web, append this fragment to the URL you share out: #{0}",
-				cryptoServices.CreateWebSafeBase64Thumbprint(channel.Endpoint.PublicEndpoint.SigningKeyPublicMaterial));
+			var shareableAddress = await channel.PublishAddressBookEntryAsync();
+			Console.WriteLine("Public receiving endpoint: {0}", shareableAddress.AbsoluteUri);
+			Console.WriteLine("Private receiving endpoint: \"{0}\".", privateFilePath);
 
 			Endpoint friend = channel.Endpoint.PublicEndpoint;
 

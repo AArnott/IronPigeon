@@ -95,14 +95,17 @@
 		/// </summary>
 		public ILogger Logger { get; set; }
 
+		#region Initialization methods
+
 		/// <summary>
-		/// Registers the endpoint this channel uses to receive messages with a relay service.
+		/// Contacts a message relay services to request the creation of a new inbox to receive messages.
 		/// </summary>
 		/// <param name="messageReceivingEndpointBaseUrl">The URL of the message relay service to use for the new endpoint.</param>
 		/// <param name="cancellationToken">The cancellation token.</param>
 		/// <returns>A task whose completion signals the registration result.</returns>
-		public async Task RegisterRelayAsync(Uri messageReceivingEndpointBaseUrl, CancellationToken cancellationToken = default(CancellationToken)) {
+		public async Task CreateInboxAsync(Uri messageReceivingEndpointBaseUrl, CancellationToken cancellationToken = default(CancellationToken)) {
 			Requires.NotNull(messageReceivingEndpointBaseUrl, "messageReceivingEndpointBaseUrl");
+			Verify.Operation(this.Endpoint.PublicEndpoint.MessageReceivingEndpoint == null, "Inbox already created.");
 
 			var abe = this.Endpoint.CreateAddressBookEntry(this.CryptoServices);
 			var ms = new MemoryStream();
@@ -122,6 +125,26 @@
 				this.Endpoint.InboxOwnerCode = creationResponse.InboxOwnerCode;
 			}
 		}
+
+		/// <summary>
+		/// Saves the information required to send this channel messages to the blob store,
+		/// and returns the URL to share with senders.
+		/// </summary>
+		/// <param name="cancellationToken">A cancellation token to abort the publish.</param>
+		/// <returns>A task whose result is the absolute URI to the address book entry.</returns>
+		public async Task<Uri> PublishAddressBookEntryAsync(CancellationToken cancellationToken = default(CancellationToken)) {
+			var abe = this.Endpoint.CreateAddressBookEntry(this.CryptoServices);
+			var abeWriter = new StringWriter();
+			await Utilities.SerializeDataContractAsBase64Async(abeWriter, abe);
+			var ms = new MemoryStream(Encoding.UTF8.GetBytes(abeWriter.ToString()));
+			var location = await this.CloudBlobStorage.UploadMessageAsync(ms, DateTime.MaxValue, cancellationToken);
+			var fullLocationWithFragment = new Uri(
+				location,
+				"#" + this.CryptoServices.CreateWebSafeBase64Thumbprint(this.Endpoint.PublicEndpoint.SigningKeyPublicMaterial));
+			return fullLocationWithFragment;
+		}
+
+		#endregion
 
 		#region Message receiving methods
 

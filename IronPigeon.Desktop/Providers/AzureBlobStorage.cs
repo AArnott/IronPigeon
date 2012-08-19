@@ -34,14 +34,18 @@
 			Requires.Range(expirationUtc > DateTime.UtcNow, "expirationUtc");
 
 			string blobName = Utilities.CreateRandomWebSafeName(DesktopUtilities.BlobNameLength);
-			DateTime roundedUp = expirationUtc - expirationUtc.TimeOfDay + TimeSpan.FromDays(1);
-			blobName = roundedUp.ToString("yyyy.MM.dd") + "/" + blobName;
+			if (expirationUtc < DateTime.MaxValue) {
+				DateTime roundedUp = expirationUtc - expirationUtc.TimeOfDay + TimeSpan.FromDays(1);
+				blobName = roundedUp.ToString("yyyy.MM.dd") + "/" + blobName;
+			}
 
 			var blob = this.container.GetBlobReference(blobName);
 
 			// Set metadata with the precise expiration time, although for efficiency we also put the blob into a directory
 			// for efficient deletion based on approximate expiration date.
-			blob.Metadata["DeleteAfter"] = expirationUtc.ToString(CultureInfo.InvariantCulture);
+			if (expirationUtc < DateTime.MaxValue) {
+				blob.Metadata["DeleteAfter"] = expirationUtc.ToString(CultureInfo.InvariantCulture);
+			}
 
 			await blob.UploadFromStreamAsync(content);
 			return blob.Uri;
