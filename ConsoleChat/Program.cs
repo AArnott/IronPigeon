@@ -25,19 +25,14 @@
 			var azureAccount = CloudStorageAccount.FromConfigurationSetting("StorageConnectionString");
 
 			var blobStorage = new AzureBlobStorage(azureAccount, "consoleapptest");
-			await blobStorage.CreateContainerIfNotExistAsync();
+			var cryptoServices = new DesktopCryptoProvider(SecurityLevel.Minimal);
+			var ownEndpoint = OwnEndpoint.Create(cryptoServices);
+			var channel = new Channel(blobStorage, cryptoServices, ownEndpoint);
 
 			var tableStorage = azureAccount.CreateCloudTableClient();
 			await tableStorage.CreateTableIfNotExistAsync("inbox");
+			await blobStorage.CreateContainerIfNotExistAsync();
 
-			var cryptoServices = new DesktopCryptoProvider(SecurityLevel.Minimal);
-
-			var channel = new Channel() {
-				CloudBlobStorage = blobStorage,
-				CryptoServices = cryptoServices,
-			};
-
-			channel.Endpoint = OwnEndpoint.Create(channel.CryptoServices);
 			await channel.RegisterRelayAsync(new Uri("http://localhost:39472/Inbox/"));
 
 			string privateFilePath = Path.GetTempFileName();

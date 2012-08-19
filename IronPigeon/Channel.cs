@@ -39,6 +39,19 @@
 		}
 
 		/// <summary>
+		/// Initializes a new instance of the <see cref="Channel" /> class.
+		/// </summary>
+		/// <param name="blobStorageProvider">The blob storage provider.</param>
+		/// <param name="cryptoProvider">The crypto provider.</param>
+		/// <param name="endpoint">The receiving endpoint.</param>
+		public Channel(ICloudBlobStorageProvider blobStorageProvider, ICryptoProvider cryptoProvider, OwnEndpoint endpoint)
+			: this() {
+			this.CloudBlobStorage = blobStorageProvider;
+			this.CryptoServices = cryptoProvider;
+			this.Endpoint = endpoint;
+		}
+
+		/// <summary>
 		/// Gets or sets the HTTP message handler.
 		/// </summary>
 		/// <value>

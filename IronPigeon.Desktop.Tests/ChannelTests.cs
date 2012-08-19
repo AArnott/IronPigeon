@@ -7,6 +7,9 @@
 	using System.Text;
 	using System.Threading.Tasks;
 	using Microsoft;
+
+	using Moq;
+
 	using NUnit.Framework;
 
 	[TestFixture]
@@ -29,8 +32,22 @@
 		}
 
 		[Test]
-		public void Ctor() {
-			new Channel();
+		public void DefaultCtor() {
+			var channel = new Channel();
+			Assert.That(channel.CloudBlobStorage, Is.Null);
+			Assert.That(channel.CryptoServices, Is.Null);
+			Assert.That(channel.Endpoint, Is.Null);
+		}
+
+		[Test]
+		public void CtorParameters() {
+			var blobProvider = new Mock<ICloudBlobStorageProvider>();
+			var cryptoProvider = new Mock<ICryptoProvider>();
+			var endpoint = new Mock<OwnEndpoint>();
+			var channel = new Channel(blobProvider.Object, cryptoProvider.Object, endpoint.Object);
+			Assert.That(channel.CloudBlobStorage, Is.SameAs(blobProvider.Object));
+			Assert.That(channel.CryptoServices, Is.SameAs(cryptoProvider.Object));
+			Assert.That(channel.Endpoint, Is.SameAs(endpoint.Object));
 		}
 
 		[Test]
