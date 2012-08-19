@@ -15,6 +15,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IronPigeon.Relay", "IronPig
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IronPigeon.Relay.Tests", "IronPigeon.Relay.Tests\IronPigeon.Relay.Tests.csproj", "{D45FBFB7-36AD-4905-9B71-93E54926B08C}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Clients", "Clients", "{17B52026-93A9-48B1-B7F0-ACAA68C3C664}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleChat", "ConsoleChat\ConsoleChat.csproj", "{98AFB63C-821F-491F-B8CF-394201693F2A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -117,9 +121,22 @@ Global
 		{D45FBFB7-36AD-4905-9B71-93E54926B08C}.Release|ARM.ActiveCfg = Release|Any CPU
 		{D45FBFB7-36AD-4905-9B71-93E54926B08C}.Release|x64.ActiveCfg = Release|Any CPU
 		{D45FBFB7-36AD-4905-9B71-93E54926B08C}.Release|x86.ActiveCfg = Release|Any CPU
+		{98AFB63C-821F-491F-B8CF-394201693F2A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{98AFB63C-821F-491F-B8CF-394201693F2A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{98AFB63C-821F-491F-B8CF-394201693F2A}.Debug|ARM.ActiveCfg = Debug|Any CPU
+		{98AFB63C-821F-491F-B8CF-394201693F2A}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{98AFB63C-821F-491F-B8CF-394201693F2A}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{98AFB63C-821F-491F-B8CF-394201693F2A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{98AFB63C-821F-491F-B8CF-394201693F2A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{98AFB63C-821F-491F-B8CF-394201693F2A}.Release|ARM.ActiveCfg = Release|Any CPU
+		{98AFB63C-821F-491F-B8CF-394201693F2A}.Release|x64.ActiveCfg = Release|Any CPU
+		{98AFB63C-821F-491F-B8CF-394201693F2A}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{98AFB63C-821F-491F-B8CF-394201693F2A} = {17B52026-93A9-48B1-B7F0-ACAA68C3C664}
 	EndGlobalSection
 	GlobalSection(Performance) = preSolution
 		HasPerformanceSessions = true
