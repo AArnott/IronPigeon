@@ -5,6 +5,7 @@
 	using System.Linq;
 	using System.Runtime.Serialization;
 	using System.Text;
+	using System.Threading;
 	using System.Threading.Tasks;
 	using Microsoft;
 
@@ -104,6 +105,24 @@
 			entry.SerializedEndpoint = ms.ToArray();
 			entry.Signature = cryptoServices.Sign(entry.SerializedEndpoint, this.SigningKeyPrivateMaterial);
 			return entry;
+		}
+
+		/// <summary>
+		/// Saves the receiving endpoint including private data to the specified stream.
+		/// </summary>
+		/// <param name="target">The stream to write to.</param>
+		/// <param name="cancellationToken">The cancellation token.</param>
+		/// <returns>A task whose completion signals the save is complete.</returns>
+		public Task SaveAsync(Stream target, CancellationToken cancellationToken = default(CancellationToken)) {
+			Requires.NotNull(target, "target");
+
+			var ms = new MemoryStream();
+			using (var writer = new BinaryWriter(ms)) {
+				writer.SerializeDataContract(this);
+			}
+
+			ms.Position = 0;
+			return ms.CopyToAsync(target, 4096, cancellationToken);
 		}
 	}
 }

@@ -36,8 +36,8 @@
 			await channel.CreateInboxAsync(new Uri(ConfigurationManager.ConnectionStrings["RelayService"].ConnectionString));
 
 			string privateFilePath = Path.GetTempFileName();
-			using (var writer = new BinaryWriter(File.OpenWrite(privateFilePath))) {
-				writer.SerializeDataContract(channel.Endpoint);
+			using (var stream = File.OpenWrite(privateFilePath)) {
+				await channel.Endpoint.SaveAsync(stream);
 			}
 
 			var shareableAddress = await channel.PublishAddressBookEntryAsync();
