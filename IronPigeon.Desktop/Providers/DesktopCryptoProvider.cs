@@ -45,7 +45,7 @@
 
 		public override SymmetricEncryptionResult Encrypt(byte[] data) {
 			using (var alg = SymmetricAlgorithm.Create()) {
-				alg.KeySize = BlobSymmetricKeySize;
+				alg.KeySize = this.BlobSymmetricKeySize;
 				using (var encryptor = alg.CreateEncryptor()) {
 					using (var memoryStream = new MemoryStream()) {
 						using (var cryptoStream = new CryptoStream(memoryStream, encryptor, CryptoStreamMode.Write)) {

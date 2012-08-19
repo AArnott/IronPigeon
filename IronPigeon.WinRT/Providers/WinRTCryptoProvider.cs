@@ -13,8 +13,6 @@
 
 		protected static readonly AsymmetricKeyAlgorithmProvider SignatureProvider = AsymmetricKeyAlgorithmProvider.OpenAlgorithm(AsymmetricAlgorithmNames.RsaSignPkcs1Sha1);
 
-		protected static readonly HashAlgorithmProvider HashProvider = HashAlgorithmProvider.OpenAlgorithm(HashAlgorithmNames.Sha1);
-
 		protected static readonly SymmetricKeyAlgorithmProvider SymmetricAlgorithm = SymmetricKeyAlgorithmProvider.OpenAlgorithm(SymmetricAlgorithmNames.AesCbcPkcs7);
 
 		public override byte[] Sign(byte[] data, byte[] signingPrivateKey) {
@@ -30,7 +28,7 @@
 
 		public override SymmetricEncryptionResult Encrypt(byte[] data) {
 			IBuffer plainTextBuffer = CryptographicBuffer.CreateFromByteArray(data);
-			IBuffer symmetricKeyMaterial = CryptographicBuffer.GenerateRandom((uint)BlobSymmetricKeySize / 8);
+			IBuffer symmetricKeyMaterial = CryptographicBuffer.GenerateRandom((uint)this.BlobSymmetricKeySize / 8);
 			var symmetricKey = SymmetricAlgorithm.CreateSymmetricKey(symmetricKeyMaterial);
 			IBuffer ivBuffer = CryptographicBuffer.GenerateRandom(SymmetricAlgorithm.BlockLength);
 
@@ -57,7 +55,9 @@
 		}
 
 		public override byte[] Hash(byte[] data) {
-			return HashProvider.HashData(data.ToBuffer()).ToArray();
+			var hashAlgorithm = HashAlgorithmProvider.OpenAlgorithm(this.HashAlgorithmName);
+			var hash = hashAlgorithm.HashData(data.ToBuffer()).ToArray();
+			return hash;
 		}
 
 		public override void GenerateSigningKeyPair(out byte[] keyPair, out byte[] publicKey) {
