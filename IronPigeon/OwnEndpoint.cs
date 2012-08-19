@@ -90,6 +90,22 @@
 		}
 
 		/// <summary>
+		/// Loads endpoint information including private data from the specified stream.
+		/// </summary>
+		/// <param name="stream">A stream, previously serialized to using <see cref="SaveAsync"/>.</param>
+		/// <returns>A task whose result is the deserialized instance of <see cref="OwnEndpoint"/>.</returns>
+		public static async Task<OwnEndpoint> OpenAsync(Stream stream) {
+			Requires.NotNull(stream, "stream");
+
+			var ms = new MemoryStream();
+			await stream.CopyToAsync(ms); // relies on the input stream containing only the endpoint.
+			ms.Position = 0;
+			using (var reader = new BinaryReader(ms)) {
+				return reader.DeserializeDataContract<OwnEndpoint>();
+			}
+		}
+
+		/// <summary>
 		/// Creates a signed address book entry that describes the public information in this endpoint.
 		/// </summary>
 		/// <param name="cryptoServices">The crypto services to use for signing the address book entry.</param>
@@ -119,10 +135,9 @@
 			var ms = new MemoryStream();
 			using (var writer = new BinaryWriter(ms)) {
 				writer.SerializeDataContract(this);
+				ms.Position = 0;
+				return ms.CopyToAsync(target, 4096, cancellationToken);
 			}
-
-			ms.Position = 0;
-			return ms.CopyToAsync(target, 4096, cancellationToken);
 		}
 	}
 }
