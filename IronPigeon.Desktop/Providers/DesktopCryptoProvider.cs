@@ -6,8 +6,29 @@
 	using System.Security.Cryptography;
 	using System.Text;
 	using System.Threading.Tasks;
+	using Microsoft;
 
+	/// <summary>
+	/// The (full) .NET Framework implementation of cryptography.
+	/// </summary>
 	public class DesktopCryptoProvider : CryptoProviderBase {
+		/// <summary>
+		/// Initializes a new instance of the <see cref="DesktopCryptoProvider" /> class
+		/// with the default security level.
+		/// </summary>
+		public DesktopCryptoProvider()
+			: this(SecurityLevel.Recommended) {
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="DesktopCryptoProvider" /> class.
+		/// </summary>
+		/// <param name="securityLevel">The security level to apply to this instance.  The default is <see cref="SecurityLevel.Recommended"/>.</param>
+		public DesktopCryptoProvider(SecurityLevel securityLevel) {
+			Requires.NotNull(securityLevel, "securityLevel");
+			securityLevel.Apply(this);
+		}
+
 		public override byte[] Sign(byte[] data, byte[] signingPrivateKey) {
 			using (var rsa = new RSACryptoServiceProvider()) {
 				rsa.ImportCspBlob(signingPrivateKey);
@@ -66,20 +87,20 @@
 		}
 
 		public override byte[] Hash(byte[] data) {
-			using (var hasher = HashAlgorithm.Create(HashAlgorithmName)) {
+			using (var hasher = HashAlgorithm.Create(this.HashAlgorithmName)) {
 				return hasher.ComputeHash(data);
 			}
 		}
 
 		public override void GenerateSigningKeyPair(out byte[] keyPair, out byte[] publicKey) {
-			using (var rsa = new RSACryptoServiceProvider(SignatureAsymmetricKeySize)) {
+			using (var rsa = new RSACryptoServiceProvider(this.SignatureAsymmetricKeySize)) {
 				keyPair = rsa.ExportCspBlob(true);
 				publicKey = rsa.ExportCspBlob(false);
 			}
 		}
 
 		public override void GenerateEncryptionKeyPair(out byte[] keyPair, out byte[] publicKey) {
-			using (var rsa = new RSACryptoServiceProvider(EncryptionAsymmetricKeySize)) {
+			using (var rsa = new RSACryptoServiceProvider(this.EncryptionAsymmetricKeySize)) {
 				keyPair = rsa.ExportCspBlob(true);
 				publicKey = rsa.ExportCspBlob(false);
 			}

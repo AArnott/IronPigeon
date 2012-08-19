@@ -28,6 +28,7 @@
 
 		[Test]
 		public void LookupEntryAsyncExistingUser() {
+			this.twitter.CryptoServices.ApplySecurityLevel(SecurityLevel.Recommended);
 			var endpoint = this.twitter.LookupAsync("@PrivacyNotFound").Result;
 			Assert.That(endpoint, Is.Not.Null);
 		}

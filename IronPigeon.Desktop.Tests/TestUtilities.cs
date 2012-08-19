@@ -34,11 +34,7 @@
 		}
 
 		internal static ICryptoProvider CreateAuthenticCryptoProvider() {
-			return new DesktopCryptoProvider {
-				EncryptionAsymmetricKeySize = 512, // use small key sizes so tests run faster
-				SignatureAsymmetricKeySize = 512,
-				BlobSymmetricKeySize = 128,
-			};
+			return new DesktopCryptoProvider(SecurityLevel.Minimal);
 		}
 
 		internal static void GetUnitTestInfo(out Type testFixture, out string testMethod) {

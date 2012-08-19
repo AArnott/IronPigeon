@@ -12,22 +12,22 @@
 		/// <summary>
 		/// Backing field for the <see cref="HashAlgorithmName"/> property.
 		/// </summary>
-		private string hashAlgorithmName = Recommended.HashAlgorithmName;
+		private string hashAlgorithmName = SecurityLevel.Recommended.HashAlgorithmName;
 
 		/// <summary>
 		/// Backing field for the <see cref="EncryptionAsymmetricKeySize"/> property.
 		/// </summary>
-		private int encryptionAsymmetricKeySize = Recommended.EncryptionAsymmetricKeySize;
+		private int encryptionAsymmetricKeySize = SecurityLevel.Recommended.EncryptionAsymmetricKeySize;
 
 		/// <summary>
 		/// Backing field for the <see cref="SignatureAsymmetricKeySize"/> property.
 		/// </summary>
-		private int signatureAsymmetricKeySize = Recommended.SignatureAsymmetricKeySize;
+		private int signatureAsymmetricKeySize = SecurityLevel.Recommended.SignatureAsymmetricKeySize;
 
 		/// <summary>
 		/// Backing field for the <see cref="BlobSymmetricKeySize"/> property.
 		/// </summary>
-		private int blobSymmetricKeySize = Recommended.BlobSymmetricKeySize;
+		private int blobSymmetricKeySize = SecurityLevel.Recommended.BlobSymmetricKeySize;
 
 		/// <summary>
 		/// Gets or sets the name of the hash algorithm to use.

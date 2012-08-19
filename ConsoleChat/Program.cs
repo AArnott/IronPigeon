@@ -30,11 +30,7 @@
 			var tableStorage = azureAccount.CreateCloudTableClient();
 			await tableStorage.CreateTableIfNotExistAsync("inbox");
 
-			var cryptoServices = new DesktopCryptoProvider() {
-				EncryptionAsymmetricKeySize = 512, // use small key sizes so tests run faster
-				SignatureAsymmetricKeySize = 512,
-				BlobSymmetricKeySize = 128,
-			};
+			var cryptoServices = new DesktopCryptoProvider(SecurityLevel.Minimal);
 
 			var channel = new Channel() {
 				CloudBlobStorage = blobStorage,

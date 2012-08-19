@@ -223,6 +223,15 @@
 		}
 
 		/// <summary>
+		/// Sets the specified security level's key lengths to the specified crypto provider.
+		/// </summary>
+		/// <param name="cryptoProvider">The crypto provider.</param>
+		/// <param name="level">The level of security to apply.</param>
+		public static void ApplySecurityLevel(this ICryptoProvider cryptoProvider, SecurityLevel level) {
+			level.Apply(cryptoProvider);
+		}
+
+		/// <summary>
 		/// Converts a base64-encoded string to a web-safe base64-encoded string.
 		/// </summary>
 		/// <param name="base64">The base64-encoded string.</param>
