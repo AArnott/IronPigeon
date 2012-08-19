@@ -50,5 +50,21 @@
 				}
 			}
 		}
+
+		protected async Task<Endpoint> DownloadEndpointAsync(Uri entryLocation, CancellationToken cancellationToken) {
+			Requires.NotNull(entryLocation, "entryLocation");
+			Verify.Operation(this.CryptoServices != null, Strings.CryptoServicesRequired);
+
+			var entry = await this.DownloadAddressBookEntryAsync(entryLocation, cancellationToken);
+			var endpoint = entry.ExtractEndpoint(this.CryptoServices);
+
+			if (!string.IsNullOrEmpty(entryLocation.Fragment)) {
+				if (this.CryptoServices.CreateWebSafeBase64Thumbprint(endpoint.SigningKeyPublicMaterial) != entryLocation.Fragment.Substring(1)) {
+					throw new BadAddressBookEntryException("Fragment thumbprint mismatch.");
+				}
+			}
+
+			return endpoint;
+		}
 	}
 }

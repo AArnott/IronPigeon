@@ -7,10 +7,9 @@
 	using System.Text;
 	using System.Threading.Tasks;
 	using System.Windows.Forms;
-
 	using IronPigeon;
 	using IronPigeon.Providers;
-
+	using Microsoft;
 	using Microsoft.WindowsAzure;
 	using Microsoft.WindowsAzure.StorageClient;
 
@@ -41,7 +40,31 @@
 			await channel.CreateInboxAsync(new Uri(ConfigurationManager.ConnectionStrings["RelayService"].ConnectionString));
 			var shareableAddress = await channel.PublishAddressBookEntryAsync();
 			Console.WriteLine("Public receiving endpoint: {0}", shareableAddress.AbsoluteUri);
-			await ChatLoopAsync(channel, friend: channel.Endpoint.PublicEndpoint);
+
+			Endpoint friend = await GetFriendEndpointAsync(cryptoServices, channel.Endpoint.PublicEndpoint);
+
+			await ChatLoopAsync(channel, friend);
+		}
+
+		private static async Task<Endpoint> GetFriendEndpointAsync(ICryptoProvider cryptoProvider, Endpoint defaultEndpoint) {
+			Requires.NotNull(cryptoProvider, "cryptoProvider");
+
+			do {
+				Console.Write("Enter your friend's public endpoint URL (leave blank for loopback): ");
+				string url = Console.ReadLine();
+				if (string.IsNullOrWhiteSpace(url)) {
+					return defaultEndpoint;
+				}
+
+				var addressBook = new DirectEntryAddressBook(cryptoProvider);
+				var endpoint = await addressBook.LookupAsync(url);
+				if (endpoint != null) {
+					return endpoint;
+				} else {
+					Console.WriteLine("Unable to find endpoint.");
+					continue;
+				}
+			} while (true);
 		}
 
 		private static async Task<OwnEndpoint> CreateOrOpenEndpointAsync(DesktopCryptoProvider cryptoServices) {
