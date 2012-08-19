@@ -33,7 +33,7 @@
 			await tableStorage.CreateTableIfNotExistAsync("inbox");
 			await blobStorage.CreateContainerIfNotExistAsync();
 
-			await channel.CreateInboxAsync(new Uri("http://localhost:39472/Inbox/"));
+			await channel.CreateInboxAsync(new Uri(ConfigurationManager.ConnectionStrings["RelayService"].ConnectionString));
 
 			string privateFilePath = Path.GetTempFileName();
 			using (var writer = new BinaryWriter(File.OpenWrite(privateFilePath))) {
