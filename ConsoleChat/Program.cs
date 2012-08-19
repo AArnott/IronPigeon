@@ -15,6 +15,11 @@
 	using Microsoft.WindowsAzure.StorageClient;
 
 	class Program {
+		private const string AzureTableStorageName = "inbox";
+
+		private const string AzureBlobStorageContainerName = "consoleapptest";
+
+		[STAThread]
 		static void Main(string[] args) {
 			DoAsync().GetAwaiter().GetResult();
 		}
@@ -24,28 +29,54 @@
 				(name, func) => func(ConfigurationManager.ConnectionStrings[name].ConnectionString));
 			var azureAccount = CloudStorageAccount.FromConfigurationSetting("StorageConnectionString");
 
-			var blobStorage = new AzureBlobStorage(azureAccount, "consoleapptest");
+			var blobStorage = new AzureBlobStorage(azureAccount, AzureBlobStorageContainerName);
 			var cryptoServices = new DesktopCryptoProvider(SecurityLevel.Minimal);
-			var ownEndpoint = OwnEndpoint.Create(cryptoServices);
-			var channel = new Channel(blobStorage, cryptoServices, ownEndpoint);
-
-			var tableStorage = azureAccount.CreateCloudTableClient();
-			await tableStorage.CreateTableIfNotExistAsync("inbox");
-			await blobStorage.CreateContainerIfNotExistAsync();
-
-			await channel.CreateInboxAsync(new Uri(ConfigurationManager.ConnectionStrings["RelayService"].ConnectionString));
-
-			string privateFilePath = Path.GetTempFileName();
-			using (var stream = File.OpenWrite(privateFilePath)) {
-				await channel.Endpoint.SaveAsync(stream);
+			var ownEndpoint = await CreateOrOpenEndpointAsync(cryptoServices);
+			if (ownEndpoint == null) {
+				return;
 			}
 
+			await InitializeLocalCloudAsync(azureAccount, blobStorage);
+			var channel = new Channel(blobStorage, cryptoServices, ownEndpoint);
+			await channel.CreateInboxAsync(new Uri(ConfigurationManager.ConnectionStrings["RelayService"].ConnectionString));
 			var shareableAddress = await channel.PublishAddressBookEntryAsync();
 			Console.WriteLine("Public receiving endpoint: {0}", shareableAddress.AbsoluteUri);
-			Console.WriteLine("Private receiving endpoint: \"{0}\".", privateFilePath);
+			await ChatLoopAsync(channel, friend: channel.Endpoint.PublicEndpoint);
+		}
 
-			Endpoint friend = channel.Endpoint.PublicEndpoint;
+		private static async Task<OwnEndpoint> CreateOrOpenEndpointAsync(DesktopCryptoProvider cryptoServices) {
+			OwnEndpoint result;
+			switch (MessageBox.Show("Do you have an existing endpoint you want to open?", "Endpoint selection", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question)) {
+				case DialogResult.Yes:
+					var openFile = new OpenFileDialog();
+					if (openFile.ShowDialog() == DialogResult.Cancel) {
+						result = null;
+						break;
+					}
 
+					using (var fileStream = openFile.OpenFile()) {
+						result = await OwnEndpoint.OpenAsync(fileStream);
+					}
+
+					break;
+				case DialogResult.No:
+					result = OwnEndpoint.Create(cryptoServices);
+					string privateFilePath = Path.GetTempFileName();
+					using (var stream = File.OpenWrite(privateFilePath)) {
+						await result.SaveAsync(stream);
+					}
+
+					Console.WriteLine("Private receiving endpoint: \"{0}\"", privateFilePath);
+					break;
+				default:
+					result = null;
+					break;
+			}
+
+			return result;
+		}
+
+		private static async Task ChatLoopAsync(Channel channel, Endpoint friend) {
 			while (true) {
 				Console.Write("> ");
 				var line = Console.ReadLine();
@@ -66,6 +97,13 @@
 
 				await Task.WhenAll(incoming.Select(payload => channel.DeleteInboxItem(payload)));
 			}
+		}
+
+		private static async Task InitializeLocalCloudAsync(CloudStorageAccount azureAccount, AzureBlobStorage blobStorage) {
+			var tableStorage = azureAccount.CreateCloudTableClient();
+			await Task.WhenAll(
+				tableStorage.CreateTableIfNotExistAsync(AzureTableStorageName),
+				blobStorage.CreateContainerIfNotExistAsync());
 		}
 	}
 }
