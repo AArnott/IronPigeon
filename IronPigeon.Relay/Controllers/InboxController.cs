@@ -8,7 +8,10 @@
 	using System.Net;
 	using System.Text.RegularExpressions;
 	using System.Threading.Tasks;
+#if !NET40
 	using System.Threading.Tasks.Dataflow;
+	using TaskEx = System.Threading.Tasks.Task;
+#endif
 	using System.Web;
 	using System.Web.Mvc;
 	using IronPigeon.Relay.Models;
@@ -83,7 +86,7 @@
 		public async Task<JsonResult> CreateAsync() {
 			var inbox = InboxEntity.Create();
 			this.InboxTable.AddObject(inbox);
-			await Task.WhenAll(
+			await TaskEx.WhenAll(
 				this.InboxTable.SaveChangesAsync(),
 				this.EnsureContainerInitializedAsync());
 
@@ -185,6 +188,7 @@
 			}
 		}
 
+#if !NET40
 		[NonAction, ActionName("Purge"), Authorize(Roles = "admin")]
 		public Task PurgeExpiredAsync() {
 			var deleteBlobsExpiringBefore = DateTime.UtcNow;
@@ -225,6 +229,7 @@
 			searchExpiredBlobs.Complete();
 			return deleteBlobBlock.Completion;
 		}
+#endif
 
 		protected virtual Uri GetAbsoluteUrlForAction(string action, dynamic routeValues) {
 			return new Uri(this.Request.Url, this.Url.Action(action, routeValues));

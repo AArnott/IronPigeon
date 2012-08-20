@@ -27,6 +27,11 @@
 		<file src="IronPigeon.Desktop\bin\release\IronPigeon.Desktop.dll" target="lib\net45" />
 		<file src="IronPigeon.Desktop\bin\release\IronPigeon.Desktop.xml" target="lib\net45" />
 
+		<file src="IronPigeon\bin\releaseNET40\IronPigeon.dll" target="lib\net40" />
+		<file src="IronPigeon\bin\releaseNET40\IronPigeon.xml" target="lib\net40" />
+		<file src="IronPigeon.Desktop\bin\releaseNET40\IronPigeon.Desktop.dll" target="lib\net40" />
+		<file src="IronPigeon.Desktop\bin\releaseNET40\IronPigeon.Desktop.xml" target="lib\net40" />
+
 		<file src="IronPigeon\bin\release\IronPigeon.dll" target="lib\winrt45" />
 		<file src="IronPigeon\bin\release\IronPigeon.xml" target="lib\winrt45" />
 		<file src="IronPigeon.WinRT\bin\release\IronPigeon.WinRT.dll" target="lib\winrt45" />

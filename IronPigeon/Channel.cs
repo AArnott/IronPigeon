@@ -1,6 +1,7 @@
 ﻿namespace IronPigeon {
 	using System;
 	using System.Collections.Generic;
+	using System.Collections.ObjectModel;
 	using System.Diagnostics;
 	using System.Globalization;
 	using System.IO;
@@ -16,6 +17,16 @@
 	using IronPigeon.Relay;
 
 	using Microsoft;
+#if NET40
+	using ReadOnlyCollectionOfEndpoint = System.Collections.Generic.IEnumerable<Endpoint>;
+	using ReadOnlyListOfInboxItem = System.Collections.ObjectModel.ReadOnlyCollection<IncomingList.IncomingItem>;
+	using ReadOnlyListOfPayload = System.Collections.ObjectModel.ReadOnlyCollection<Payload>;
+#else
+	using ReadOnlyCollectionOfEndpoint = System.Collections.Generic.IReadOnlyCollection<Endpoint>;
+	using ReadOnlyListOfInboxItem = System.Collections.Generic.IReadOnlyList<IncomingList.IncomingItem>;
+	using ReadOnlyListOfPayload = System.Collections.Generic.IReadOnlyList<Payload>;
+	using TaskEx = System.Threading.Tasks.Task;
+#endif
 
 	/// <summary>
 	/// A channel for sending or receiving secure messages.
@@ -148,7 +159,7 @@
 
 		#region Message receiving methods
 
-		public async Task<IReadOnlyList<Payload>> ReceiveAsync(IProgress<Payload> progress = null, CancellationToken cancellationToken = default(CancellationToken)) {
+		public async Task<ReadOnlyListOfPayload> ReceiveAsync(IProgress<Payload> progress = null, CancellationToken cancellationToken = default(CancellationToken)) {
 			var inboxItems = await this.DownloadIncomingItemsAsync(cancellationToken);
 
 			var payloads = new List<Payload>();
@@ -173,7 +184,11 @@
 				}
 			}
 
+#if NET40
+			return new ReadOnlyCollection<Payload>(payloads);
+#else
 			return payloads;
+#endif
 		}
 
 		protected virtual async Task<PayloadReference> DownloadPayloadReferenceAsync(IncomingList.IncomingItem inboxItem, CancellationToken cancellationToken) {
@@ -249,7 +264,7 @@
 
 		#region Message sending methods
 
-		public async Task PostAsync(Payload message, IReadOnlyCollection<Endpoint> recipients, DateTime expiresUtc, CancellationToken cancellationToken = default(CancellationToken)) {
+		public async Task PostAsync(Payload message, ReadOnlyCollectionOfEndpoint recipients, DateTime expiresUtc, CancellationToken cancellationToken = default(CancellationToken)) {
 			Requires.NotNull(message, "message");
 			Requires.That(expiresUtc.Kind == DateTimeKind.Utc, "expiresUtc", Strings.UTCTimeRequired);
 			Requires.NotNullOrEmpty(recipients, "recipients");
@@ -286,14 +301,14 @@
 			}
 		}
 
-		protected virtual async Task PostPayloadReferenceAsync(PayloadReference messageReference, IReadOnlyCollection<Endpoint> recipients, CancellationToken cancellationToken = default(CancellationToken)) {
+		protected virtual async Task PostPayloadReferenceAsync(PayloadReference messageReference, ReadOnlyCollectionOfEndpoint recipients, CancellationToken cancellationToken = default(CancellationToken)) {
 			Requires.NotNull(messageReference, "messageReference");
 			Requires.NotNullOrEmpty(recipients, "recipients");
 
 			// Kick off individual tasks concurrently for each recipient.
 			// Each recipient requires cryptography (CPU intensive) to be performed, so don't block the calling thread.
-			await Task.WhenAll(
-				recipients.Select(recipient => Task.Run(() => this.PostPayloadReferenceAsync(messageReference, recipient, cancellationToken))));
+			await TaskEx.WhenAll(
+				recipients.Select(recipient => TaskEx.Run(() => this.PostPayloadReferenceAsync(messageReference, recipient, cancellationToken))));
 		}
 
 		protected virtual async Task PostPayloadReferenceAsync(PayloadReference messageReference, Endpoint recipient, CancellationToken cancellationToken) {
@@ -371,14 +386,19 @@
 			}
 		}
 
-		private async Task<IReadOnlyList<IncomingList.IncomingItem>> DownloadIncomingItemsAsync(CancellationToken cancellationToken) {
+		private async Task<ReadOnlyListOfInboxItem> DownloadIncomingItemsAsync(CancellationToken cancellationToken) {
 			var deserializer = new DataContractJsonSerializer(typeof(IncomingList));
 			var messages = new List<Payload>();
 			var responseMessage = await this.httpClient.GetAsync(this.Endpoint.PublicEndpoint.MessageReceivingEndpoint, this.Endpoint.InboxOwnerCode, cancellationToken);
 			responseMessage.EnsureSuccessStatusCode();
 			var responseStream = await responseMessage.Content.ReadAsStreamAsync();
 			var inboxResults = (IncomingList)deserializer.ReadObject(responseStream);
+
+#if NET40
+			return new ReadOnlyCollection<IncomingList.IncomingItem>(inboxResults.Items);
+#else
 			return inboxResults.Items;
+#endif
 		}
 
 		/// <summary>Logs a message.</summary>
