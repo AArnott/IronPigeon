@@ -34,7 +34,7 @@
 
 		/// <summary>
 		/// Gets the content-type that describes the type of data that is
-		/// serialized in the <see cref="Content property."/>
+		/// serialized in the <see cref="Content"/> property.
 		/// </summary>
 		[DataMember]
 		public string ContentType { get; private set; }
