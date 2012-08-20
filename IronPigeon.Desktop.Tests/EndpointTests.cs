@@ -14,6 +14,7 @@
 			Assert.That(contact.MessageReceivingEndpoint, Is.Null);
 			Assert.That(contact.EncryptionKeyPublicMaterial, Is.Null);
 			Assert.That(contact.SigningKeyPublicMaterial, Is.Null);
+			Assert.That(contact.CreatedOnUtc, Is.EqualTo(DateTime.UtcNow).Within(TimeSpan.FromMinutes(1)));
 		}
 
 		[Test]

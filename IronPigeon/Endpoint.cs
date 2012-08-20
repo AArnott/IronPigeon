@@ -18,6 +18,7 @@
 		/// Initializes a new instance of the <see cref="Endpoint"/> class.
 		/// </summary>
 		public Endpoint() {
+			this.CreatedOnUtc = DateTime.UtcNow;
 		}
 
 		/// <summary>
@@ -39,8 +40,21 @@
 		public byte[] EncryptionKeyPublicMaterial { get; set; }
 
 		/// <summary>
+		/// Gets or sets the date this endpoint was created.
+		/// </summary>
+		/// <value>
+		/// The datetime in UTC.
+		/// </value>
+		[DataMember]
+		public DateTime CreatedOnUtc { get; set; }
+
+		/// <summary>
 		/// Checks equality between this and another instance.
 		/// </summary>
+		/// <param name="obj">The <see cref="System.Object" /> to compare with this instance.</param>
+		/// <returns>
+		///   <c>true</c> if the specified <see cref="System.Object" /> is equal to this instance; otherwise, <c>false</c>.
+		/// </returns>
 		public override bool Equals(object obj) {
 			var other = obj as Endpoint;
 			if (other == null) {
@@ -55,6 +69,9 @@
 		/// <summary>
 		/// Gets a hash code for this instance.
 		/// </summary>
+		/// <returns>
+		/// A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table. 
+		/// </returns>
 		public override int GetHashCode() {
 			return this.MessageReceivingEndpoint != null ? this.MessageReceivingEndpoint.GetHashCode() : 0;
 		}
