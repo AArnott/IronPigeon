@@ -7,6 +7,7 @@
 	using System.Linq;
 	using System.Net;
 	using System.Text.RegularExpressions;
+	using System.Threading;
 	using System.Threading.Tasks;
 #if !NET40
 	using System.Threading.Tasks.Dataflow;
@@ -188,10 +189,32 @@
 			}
 		}
 
-#if !NET40
-		[NonAction, ActionName("Purge"), Authorize(Roles = "admin")]
-		public Task PurgeExpiredAsync() {
+		[ActionName("Purge")]
+		public async Task<ActionResult> PurgeExpiredAsync() {
 			var deleteBlobsExpiringBefore = DateTime.UtcNow;
+#if NET40
+			try {
+				var items = await this.InboxContainer.ListBlobsSegmentedAsync(50);
+				var blobs = (from blob in items.OfType<CloudBlob>()
+				             let expires = DateTime.Parse(blob.Metadata[ExpirationDateMetadataKey])
+				             where expires < deleteBlobsExpiringBefore
+				             select blob).ToArray();
+				await TaskEx.WhenAll(blobs.Select(blob => blob.DeleteAsync()));
+				return new ContentResult() { Content = "Deleted " + blobs.Length + " expired blobs." };
+			} catch (StorageClientException ex) {
+				var webException = ex.InnerException as WebException;
+				if (webException != null) {
+					var httpResponse = (HttpWebResponse)webException.Response;
+					if (httpResponse.StatusCode == HttpStatusCode.NotFound) {
+						// it's legit that some tests never created the container to begin with.
+						return new ContentResult() { Content = "Missing container" };
+					}
+				}
+
+				throw;
+			}
+#else
+			int purgedBlobCount = 0;
 			var searchExpiredBlobs = new TransformManyBlock<CloudBlobContainer, CloudBlob>(
 				async c => {
 					try {
@@ -217,7 +240,10 @@
 					BoundedCapacity = 4,
 				});
 			var deleteBlobBlock = new ActionBlock<CloudBlob>(
-				blob => blob.DeleteAsync(),
+				blob => {
+					Interlocked.Increment(ref purgedBlobCount);
+					return blob.DeleteAsync();
+				},
 				new ExecutionDataflowBlockOptions {
 					MaxDegreeOfParallelism = 4,
 					BoundedCapacity = 100,
@@ -227,9 +253,10 @@
 
 			searchExpiredBlobs.Post(this.InboxContainer);
 			searchExpiredBlobs.Complete();
-			return deleteBlobBlock.Completion;
-		}
+			await deleteBlobBlock.Completion;
+			return new ContentResult() { Content = "Deleted " + purgedBlobCount + " expired blobs." };
 #endif
+		}
 
 		protected virtual Uri GetAbsoluteUrlForAction(string action, dynamic routeValues) {
 			return new Uri(this.Request.Url, this.Url.Action(action, routeValues));
