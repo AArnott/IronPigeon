@@ -218,7 +218,11 @@
 			var searchExpiredBlobs = new TransformManyBlock<CloudBlobContainer, CloudBlob>(
 				async c => {
 					try {
-						var results = await c.ListBlobsSegmentedAsync(10);
+						var options = new BlobRequestOptions {
+							UseFlatBlobListing = true,
+							BlobListingDetails = BlobListingDetails.Metadata,
+						};
+						var results = await c.ListBlobsSegmentedAsync(10, options);
 						return from blob in results.OfType<CloudBlob>()
 							   let expires = DateTime.Parse(blob.Metadata[ExpirationDateMetadataKey])
 							   where expires < deleteBlobsExpiringBefore
