@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<package >
+	<metadata>
+		<id>IronPigeon.Dart</id>
+		<version>$version$</version>
+		<title>Dart secure email protocol</title>
+		<authors>Privacy Not Found</authors>
+		<owners>Privacy Not Found</owners>
+		<!--<licenseUrl>http://LICENSE_URL_HERE_OR_DELETE_THIS_LINE</licenseUrl>
+		<projectUrl>http://PROJECT_URL_HERE_OR_DELETE_THIS_LINE</projectUrl>
+		<iconUrl>http://ICON_URL_HERE_OR_DELETE_THIS_LINE</iconUrl>-->
+		<requireLicenseAcceptance>false</requireLicenseAcceptance>
+		<description>
+			A generic message passing protocol which is tuned for confidentiality and authentication.
+		</description>
+		<releaseNotes>Basic message passing protocol implemented.</releaseNotes>
+		<copyright>Copyright 2012</copyright>
+		<tags>crypto cryptography mail email privacy</tags>
+		<dependencies>
+			<dependency id="IronPigeon" version="$version$" />
+			<dependency id="Microsoft.Validation" version="[1.0.16, 2.0)" />
+			<dependency id="Microsoft.WindowsAzure.StorageClient.Async" version="0.1.2-preview" />
+		</dependencies>
+	</metadata>
+	<files>
+		<file src="IronPigeon.Dart\bin\release\IronPigeon.Dart.dll" target="lib\net45" />
+		<file src="IronPigeon.Dart\bin\release\IronPigeon.Dart.xml" target="lib\net45" />
+
+		<file src="IronPigeon.Dart\bin\releaseNET40\IronPigeon.Dart.dll" target="lib\net40" />
+		<file src="IronPigeon.Dart\bin\releaseNET40\IronPigeon.Dart.xml" target="lib\net40" />
+
+		<file src="IronPigeon.Dart\bin\release\IronPigeon.Dart.dll" target="lib\winrt45" />
+		<file src="IronPigeon.Dart\bin\release\IronPigeon.Dart.xml" target="lib\winrt45" />
+	</files>
+</package>

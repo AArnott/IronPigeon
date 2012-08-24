@@ -8,6 +8,11 @@
 	using System.Threading.Tasks;
 
 	using Microsoft;
+#if NET40
+	using ReadOnlyListOfEndpoint = System.Collections.ObjectModel.ReadOnlyCollection<Endpoint>;
+#else
+	using ReadOnlyListOfEndpoint = System.Collections.Generic.IReadOnlyList<Endpoint>;
+#endif
 
 	[DataContract]
 	public class Message {
@@ -15,11 +20,11 @@
 			this.CreationDateUtc = DateTime.UtcNow;
 		}
 
-		public Message(OwnEndpoint author, IReadOnlyList<Endpoint> recipients, string subject, string body)
+		public Message(OwnEndpoint author, ReadOnlyListOfEndpoint recipients, string subject, string body)
 			: this(author.PublicEndpoint, recipients, subject, body) {
 		}
 
-		internal Message(Endpoint author, IReadOnlyList<Endpoint> recipients, string subject, string body)
+		internal Message(Endpoint author, ReadOnlyListOfEndpoint recipients, string subject, string body)
 			: this() {
 			Requires.NotNull(author, "author");
 			Requires.NotNull(recipients, "recipients");
