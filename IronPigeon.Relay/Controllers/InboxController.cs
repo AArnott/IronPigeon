@@ -6,19 +6,23 @@
 	using System.IO;
 	using System.Linq;
 	using System.Net;
+	using System.Net.Http;
+	using System.Net.Http.Headers;
 	using System.Text.RegularExpressions;
 	using System.Threading;
 	using System.Threading.Tasks;
-#if !NET40
-	using System.Threading.Tasks.Dataflow;
-	using TaskEx = System.Threading.Tasks.Task;
-#endif
 	using System.Web;
 	using System.Web.Mvc;
 	using IronPigeon.Relay.Models;
 	using Microsoft;
 	using Microsoft.WindowsAzure;
 	using Microsoft.WindowsAzure.StorageClient;
+	using Newtonsoft.Json;
+	using Newtonsoft.Json.Linq;
+#if !NET40
+	using System.Threading.Tasks.Dataflow;
+	using TaskEx = System.Threading.Tasks.Task;
+#endif
 
 	////[RequireHttps]
 	public class InboxController : Controller {
@@ -49,6 +53,8 @@
 		/// </summary>
 		private const string DefaultCloudConfigurationName = "StorageConnectionString";
 
+		private string wnsBearerToken;
+
 		/// <summary>
 		/// Initializes a new instance of the <see cref="InboxController" /> class.
 		/// </summary>
@@ -71,6 +77,7 @@
 			this.InboxContainer = blobClient.GetContainerReference(containerName);
 			var tableClient = storage.CreateCloudTableClient();
 			this.InboxTable = new InboxContext(tableClient, tableName);
+			this.HttpClient = new HttpClient();
 		}
 
 		/// <summary>
@@ -82,6 +89,8 @@
 		public CloudBlobContainer InboxContainer { get; set; }
 
 		public InboxContext InboxTable { get; set; }
+
+		public HttpClient HttpClient { get; set; }
 
 		[HttpPost, ActionName("Create")]
 		public async Task<JsonResult> CreateAsync() {
@@ -151,7 +160,50 @@
 				throw new ArgumentException("Maximum message notification size exceeded.");
 			}
 
+			if (inbox.PushChannelUri != null) {
+				await this.PushNotifyInboxMessageAsync(inbox);
+			}
+
 			return new EmptyResult();
+		}
+
+		private async Task PushNotifyInboxMessageAsync(InboxEntity inbox, int failedAttempts = 0) {
+			string bearerToken = await this.AcquireWnsPushBearerTokenAsync();
+			var pushNotifyRequest = new HttpRequestMessage(HttpMethod.Put, inbox.PushChannelUri);
+			pushNotifyRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", bearerToken);
+			pushNotifyRequest.Headers.Add("X-WNS-Type", "wns/raw");
+			pushNotifyRequest.Content = new StringContent(inbox.PushChannelContent ?? string.Empty);
+			pushNotifyRequest.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream"); // yes, it's a string, but we must claim it's an octet-stream
+
+			var response = await this.HttpClient.SendAsync(pushNotifyRequest);
+			if (!response.IsSuccessStatusCode) {
+				if (failedAttempts == 0) {
+					var authHeader = response.Headers.WwwAuthenticate.FirstOrDefault();
+					if (authHeader != null) {
+						if (authHeader.Parameter.Contains("Token expired")) {
+							this.wnsBearerToken = null; // clear out the expired token.
+							await this.PushNotifyInboxMessageAsync(inbox, failedAttempts + 1);
+							return;
+						}
+					}
+				}
+
+				// Log a failure.
+				// TODO: code here.
+			}
+		}
+
+		[HttpPut, ActionName("Slot"), InboxOwnerAuthorize]
+		public async Task<ActionResult> PushChannelAsync(string id) {
+			var channelUri = new Uri(this.Request.Form["channel_uri"], UriKind.Absolute);
+			var content = this.Request.Form["channel_content"];
+			Requires.Argument(content == null || content.Length <= 4096, "content", "Push content too large");
+
+			var inbox = await this.GetInboxAsync(id);
+			inbox.PushChannelUri = channelUri.AbsoluteUri;
+			inbox.PushChannelContent = content;
+			this.InboxTable.UpdateObject(inbox);
+			this.InboxTable.SaveChangesAsync();
 		}
 
 		/// <summary>
@@ -276,6 +328,30 @@
 				var permissions = new BlobContainerPermissions { PublicAccess = BlobContainerPublicAccessType.Blob };
 				await this.InboxContainer.SetPermissionsAsync(permissions);
 			}
+		}
+
+		private async Task<string> AcquireWnsPushBearerTokenAsync() {
+			if (this.wnsBearerToken == null) {
+				var tokenEndpoint = new Uri("https://login.live.com/accesstoken.srf");
+				var clientId = ConfigurationManager.AppSettings["WNSClientID"];
+				var clientSecret = ConfigurationManager.AppSettings["WNSClientSecret"];
+				const string Scope = "notify.windows.com";
+
+				var formData = new Dictionary<string, string> {
+					                                              { "grant_type", "client_credentials" },
+					                                              { "client_id", clientId },
+					                                              { "client_secret", clientSecret },
+					                                              { "scope", Scope },
+				                                              };
+				var content = new FormUrlEncodedContent(formData);
+				var response = await this.HttpClient.PostAsync(tokenEndpoint, content);
+				response.EnsureSuccessStatusCode();
+				var json = await response.Content.ReadAsStringAsync();
+				var responseObj = JObject.Parse(json);
+				this.wnsBearerToken = (string)responseObj["access_token"];
+			}
+
+			return this.wnsBearerToken;
 		}
 	}
 }
