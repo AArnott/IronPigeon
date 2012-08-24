@@ -35,7 +35,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'ReleaseNET40|AnyCPU'">
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
-    <TargetFrameworkProfile></TargetFrameworkProfile>
+    <TargetFrameworkProfile>
+    </TargetFrameworkProfile>
     <OutputPath>bin\ReleaseNET40\</OutputPath>
     <DefineConstants>TRACE;NET40</DefineConstants>
     <DocumentationFile>bin\ReleaseNET40\IronPigeon.Desktop.XML</DocumentationFile>
