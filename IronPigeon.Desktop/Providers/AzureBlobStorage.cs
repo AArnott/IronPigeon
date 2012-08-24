@@ -7,7 +7,9 @@
 	using System.Text;
 	using System.Threading;
 	using System.Threading.Tasks;
+#if !NET40
 	using System.Threading.Tasks.Dataflow;
+#endif
 	using Microsoft;
 	using Microsoft.WindowsAzure;
 	using Microsoft.WindowsAzure.StorageClient;
@@ -74,6 +76,9 @@
 		/// is interpreted as <see cref="DateTime.UtcNow"/>.
 		/// </param>
 		public Task PurgeBlobsExpiringBeforeAsync(DateTime deleteBlobsExpiringBefore = default(DateTime)) {
+#if NET40
+			throw new NotImplementedException();
+#else
 			Requires.Argument(deleteBlobsExpiringBefore.Kind == DateTimeKind.Utc, "expirationUtc", "UTC required.");
 
 			if (deleteBlobsExpiringBefore == default(DateTime)) {
@@ -113,6 +118,7 @@
 			searchExpiredDirectoriesBlock.Post(this.container);
 			searchExpiredDirectoriesBlock.Complete();
 			return deleteBlobBlock.Completion;
+#endif
 		}
 	}
 }

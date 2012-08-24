@@ -4,12 +4,10 @@
 	using System.Diagnostics.Contracts;
 	using System.Globalization;
 	using System.IO;
-	using System.Linq;
 	using System.Net;
 	using System.Net.Http;
 	using System.Net.Http.Headers;
 	using System.Runtime.Serialization;
-	using System.ServiceModel.Security;
 	using System.Text;
 	using System.Threading;
 	using System.Threading.Tasks;
@@ -294,5 +292,11 @@
 			request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", bearerToken);
 			return httpClient.SendAsync(request, cancellationToken);
 		}
+
+#if NET40
+		internal static Type GetTypeInfo(this Type type) {
+			return type;
+		}
+#endif
 	}
 }
