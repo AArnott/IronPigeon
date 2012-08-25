@@ -35,6 +35,9 @@
 			}
 		}
 
+		/// <summary>
+		/// Gets the HTTP client to use for outbound HTTP requests.
+		/// </summary>
 		protected HttpClient HttpClient { get; private set; }
 
 		protected async Task<AddressBookEntry> DownloadAddressBookEntryAsync(Uri entryLocation, CancellationToken cancellationToken) {
