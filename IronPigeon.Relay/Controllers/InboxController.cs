@@ -104,11 +104,13 @@
 			var directory = this.InboxContainer.GetDirectoryReference(id);
 			var blobs = new List<IncomingList.IncomingItem>();
 			try {
-				var directoryListing = await directory.ListBlobsSegmentedAsync(50);
+				var blobRequestOptions = new BlobRequestOptions { BlobListingDetails = BlobListingDetails.Metadata };
+				var directoryListing = await directory.ListBlobsSegmentedAsync(50, blobRequestOptions);
 				var notExpiringBefore = DateTime.UtcNow;
 				blobs.AddRange(
 					from blob in directoryListing.OfType<CloudBlob>()
-					where DateTime.Parse(blob.Metadata[ExpirationDateMetadataKey]) > notExpiringBefore
+					let expirationString = blob.Metadata[ExpirationDateMetadataKey]
+					where expirationString != null && DateTime.Parse(expirationString) > notExpiringBefore
 					select new IncomingList.IncomingItem { Location = blob.Uri, DatePostedUtc = blob.Properties.LastModifiedUtc });
 			} catch (StorageClientException) {
 			}
