@@ -31,7 +31,7 @@
 		/// Initializes a new instance of the <see cref="BlobController" /> class.
 		/// </summary>
 		/// <param name="cloudConfigurationName">Name of the cloud configuration.</param>
-		/// <parparam name="containerName">The name of the Azure blob container to upload to.</parparam>
+		/// <param name="containerName">The name of the Azure blob container to upload to.</param>
 		public BlobController(string cloudConfigurationName, string containerName = DefaultContainerName) {
 			Requires.NotNullOrEmpty(cloudConfigurationName, "cloudConfigurationName");
 
