@@ -38,16 +38,16 @@
 		public static readonly TimeSpan MaxLifetimeCeiling = TimeSpan.FromDays(14);
 
 		/// <summary>
+		/// The key to the Azure account configuration information.
+		/// </summary>
+		internal const string DefaultCloudConfigurationName = "StorageConnectionString";
+
+		/// <summary>
 		/// The default name for the container used to store posted messages.
 		/// </summary>
 		private const string DefaultInboxContainerName = "inbox";
 
 		private const string DefaultInboxTableName = "inbox";
-
-		/// <summary>
-		/// The key to the Azure account configuration information.
-		/// </summary>
-		private const string DefaultCloudConfigurationName = "StorageConnectionString";
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="InboxController" /> class.

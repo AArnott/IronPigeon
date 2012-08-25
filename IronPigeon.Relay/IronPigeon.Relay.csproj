@@ -157,6 +157,7 @@
   <ItemGroup>
     <Compile Include="App_Code\InboxOwnerAuthorize.cs" />
     <Compile Include="App_Start\AzureStorageConfig.cs" />
+    <Compile Include="Controllers\BlobController.cs" />
     <Compile Include="Controllers\InboxController.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
