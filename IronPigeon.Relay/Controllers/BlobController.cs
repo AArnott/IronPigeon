@@ -51,7 +51,7 @@
 		public ICloudBlobStorageProvider CloudBlobStorageProvider { get; set; }
 
 		// POST api/blob
-		public async Task<Uri> Post([FromUri]int lifetimeInMinutes) {
+		public async Task<string> Post([FromUri]int lifetimeInMinutes) {
 			Requires.Range(lifetimeInMinutes > 0, "lifetimeInMinutes");
 
 			DateTime expirationUtc = DateTime.UtcNow + TimeSpan.FromMinutes(lifetimeInMinutes);
@@ -59,7 +59,7 @@
 			string contentEncoding = this.Request.Content.Headers.ContentEncoding.FirstOrDefault();
 			var content = await this.Request.Content.ReadAsStreamAsync();
 			var location = await this.CloudBlobStorageProvider.UploadMessageAsync(content, expirationUtc, contentType, contentEncoding);
-			return location;
+			return location.AbsoluteUri;
 		}
 	}
 }
