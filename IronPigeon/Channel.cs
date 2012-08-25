@@ -148,7 +148,7 @@
 			var abeWriter = new StringWriter();
 			await Utilities.SerializeDataContractAsBase64Async(abeWriter, abe);
 			var ms = new MemoryStream(Encoding.UTF8.GetBytes(abeWriter.ToString()));
-			var location = await this.CloudBlobStorage.UploadMessageAsync(ms, DateTime.MaxValue, cancellationToken);
+			var location = await this.CloudBlobStorage.UploadMessageAsync(ms, DateTime.MaxValue, cancellationToken: cancellationToken);
 			var fullLocationWithFragment = new Uri(
 				location,
 				"#" + this.CryptoServices.CreateWebSafeBase64Thumbprint(this.Endpoint.PublicEndpoint.SigningKeyPublicMaterial));
@@ -296,7 +296,7 @@
 			this.Log("Encrypted message hash", messageHash);
 
 			using (MemoryStream cipherTextStream = new MemoryStream(encryptionResult.Ciphertext)) {
-				Uri blobUri = await this.CloudBlobStorage.UploadMessageAsync(cipherTextStream, expiresUtc, cancellationToken);
+				Uri blobUri = await this.CloudBlobStorage.UploadMessageAsync(cipherTextStream, expiresUtc, cancellationToken: cancellationToken);
 				return new PayloadReference(blobUri, messageHash, encryptionResult.Key, encryptionResult.IV, expiresUtc);
 			}
 		}
