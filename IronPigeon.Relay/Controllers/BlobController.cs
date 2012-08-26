@@ -13,6 +13,9 @@
 	using Microsoft;
 	using Microsoft.WindowsAzure;
 	using Microsoft.WindowsAzure.StorageClient;
+#if !NET40
+	using TaskEx = System.Threading.Tasks.Task;
+#endif
 
 	public class BlobController : ApiController {
 		/// <summary>
@@ -42,7 +45,7 @@
 			var container = client.GetContainerReference(containerName);
 			container.Delete();
 			var p = new AzureBlobStorage(storage, containerName);
-			Task.Run(async delegate { await p.CreateContainerIfNotExistAsync(); });
+			TaskEx.Run(async delegate { await p.CreateContainerIfNotExistAsync(); });
 		}
 
 		/// <summary>
