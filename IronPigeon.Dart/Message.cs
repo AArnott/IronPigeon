@@ -29,6 +29,7 @@
 		/// </summary>
 		public Message() {
 			this.CreationDateUtc = DateTime.UtcNow;
+			this.ExpirationUtc = DateTime.UtcNow + TimeSpan.FromDays(7);
 		}
 
 		/// <summary>
@@ -112,6 +113,12 @@
 		/// <value>The attachments.</value>
 		[DataMember]
 		public PayloadReference[] Attachments { get; set; }
+
+		/// <summary>
+		/// Gets or sets the date after which the sender no longer wishes to recommend receipt of this message.
+		/// </summary>
+		[DataMember]
+		public DateTime ExpirationUtc { get; set; }
 
 		/// <summary>
 		/// Gets or sets the originating payload.

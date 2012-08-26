@@ -51,12 +51,10 @@
 		/// Sends the specified dart to the recipients specified in the message.
 		/// </summary>
 		/// <param name="message">The dart to send.</param>
-		/// <param name="expirationUtc">The UTC expiration date of the message.</param>
 		/// <param name="cancellationToken">The cancellation token.</param>
 		/// <returns>The asynchronous result.</returns>
-		public Task PostAsync(Message message, DateTime expirationUtc, CancellationToken cancellationToken = default(CancellationToken)) {
+		public Task PostAsync(Message message, CancellationToken cancellationToken = default(CancellationToken)) {
 			Requires.NotNull(message, "message");
-			Requires.Argument(expirationUtc.Kind == DateTimeKind.Utc, "expirationUtc", Strings.UTCTimeRequired);
 
 			var ms = new MemoryStream();
 			var writer = new BinaryWriter(ms);
@@ -67,7 +65,7 @@
 			var payload = new Payload(ms.ToArray(), Message.ContentType);
 			var allRecipients = new List<Endpoint>(message.Recipients);
 			allRecipients.AddRange(message.CarbonCopyRecipients);
-			return this.Channel.PostAsync(payload, allRecipients, expirationUtc, cancellationToken);
+			return this.Channel.PostAsync(payload, allRecipients, message.ExpirationUtc, cancellationToken);
 		}
 
 		/// <summary>
