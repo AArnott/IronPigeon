@@ -1,4 +1,4 @@
-﻿namespace IronPigeon.Dart{
+﻿namespace IronPigeon.Dart {
 	using System;
 	using System.Collections.Generic;
 	using System.IO;
@@ -14,16 +14,41 @@
 	using ReadOnlyListOfEndpoint = System.Collections.Generic.IReadOnlyList<Endpoint>;
 #endif
 
+	/// <summary>
+	/// A "Dart", or secure email message.
+	/// </summary>
 	[DataContract]
 	public class Message {
+		/// <summary>
+		/// The content-type that identifies darts as the payload to an IronPigeon message.
+		/// </summary>
+		public const string ContentType = "application/dart";
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="Message" /> class.
+		/// </summary>
 		public Message() {
 			this.CreationDateUtc = DateTime.UtcNow;
 		}
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="Message" /> class.
+		/// </summary>
+		/// <param name="author">The author.</param>
+		/// <param name="recipients">The recipients.</param>
+		/// <param name="subject">The subject.</param>
+		/// <param name="body">The body.</param>
 		public Message(OwnEndpoint author, ReadOnlyListOfEndpoint recipients, string subject, string body)
 			: this(author.PublicEndpoint, recipients, subject, body) {
 		}
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="Message" /> class.
+		/// </summary>
+		/// <param name="author">The author.</param>
+		/// <param name="recipients">The recipients.</param>
+		/// <param name="subject">The subject.</param>
+		/// <param name="body">The body.</param>
 		internal Message(Endpoint author, ReadOnlyListOfEndpoint recipients, string subject, string body)
 			: this() {
 			Requires.NotNull(author, "author");
@@ -45,13 +70,13 @@
 		public DateTime CreationDateUtc { get; set; }
 
 		/// <summary>
-		/// Gets the author of this message.
+		/// Gets or sets the author of this message.
 		/// </summary>
 		[DataMember]
 		public Endpoint Author { get; set; }
 
 		/// <summary>
-		/// Gets the set of recipients this message claims to have received this message.
+		/// Gets or sets the set of recipients this message claims to have received this message.
 		/// </summary>
 		[DataMember]
 		public Endpoint[] Recipients { get; set; }
@@ -63,7 +88,7 @@
 		public Endpoint[] CarbonCopyRecipients { get; set; }
 
 		/// <summary>
-		/// Gets the subject of this message.
+		/// Gets or sets the subject of this message.
 		/// </summary>
 		[DataMember]
 		public string Subject { get; set; }
@@ -76,7 +101,7 @@
 		public PayloadReference InReplyTo { get; set; }
 
 		/// <summary>
-		/// Gets the body of this message.
+		/// Gets or sets the body of this message.
 		/// </summary>
 		[DataMember]
 		public string Body { get; set; }
@@ -87,5 +112,10 @@
 		/// <value>The attachments.</value>
 		[DataMember]
 		public PayloadReference[] Attachments { get; set; }
+
+		/// <summary>
+		/// Gets or sets the originating payload.
+		/// </summary>
+		internal Payload OriginatingPayload { get; set; }
 	}
 }
