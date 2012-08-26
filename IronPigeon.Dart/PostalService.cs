@@ -119,6 +119,7 @@
 		/// <returns>The asynchronous result.</returns>
 		public Task DeleteAsync(Message message, CancellationToken cancellationToken = default(CancellationToken)) {
 			Requires.NotNull(message, "message");
+			Requires.Argument(message.OriginatingPayload != null, "message", "Original message payload no longer available.");
 			return this.Channel.DeleteInboxItem(message.OriginatingPayload, cancellationToken);
 		}
 
