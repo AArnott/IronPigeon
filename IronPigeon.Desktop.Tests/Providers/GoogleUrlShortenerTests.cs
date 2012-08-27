@@ -28,5 +28,19 @@
 			Uri shortUrl = this.shortener.ShortenAsync(new Uri("http://www.google.com/")).GetAwaiter().GetResult();
 			Assert.AreEqual("http://goo.gl/fbsS", shortUrl.AbsoluteUri);
 		}
+
+		[Test]
+		public void ShortenExcludeFragmentAsync() {
+			var shortUrl =
+				this.shortener.ShortenExcludeFragmentAsync(new Uri("http://www.google.com/#hashtest")).GetAwaiter().GetResult();
+			Assert.AreEqual("http://goo.gl/fbsS#hashtest", shortUrl.AbsoluteUri);
+		}
+
+		[Test]
+		public void ShortenExcludeFragmentAsyncNoFragment() {
+			var shortUrl =
+				this.shortener.ShortenExcludeFragmentAsync(new Uri("http://www.google.com/")).GetAwaiter().GetResult();
+			Assert.AreEqual("http://goo.gl/fbsS", shortUrl.AbsoluteUri);
+		}
 	}
 }

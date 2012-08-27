@@ -230,6 +230,34 @@
 		}
 
 		/// <summary>
+		/// Shortens the specified long URL, but leaves the fragment part (if present) visibly applied to the shortened URL.
+		/// </summary>
+		/// <param name="longUrl">The long URL.</param>
+		/// <returns>The short URL.</returns>
+		public static async Task<Uri> ShortenExcludeFragmentAsync(this IUrlShortener shortener, Uri longUrl) {
+			Requires.NotNull(shortener, "shortener");
+
+			Uri longUriWithoutFragment;
+			if (longUrl.Fragment.Length == 0) {
+				longUriWithoutFragment = longUrl;
+			} else {
+				var removeFragmentBuilder = new UriBuilder(longUrl);
+				removeFragmentBuilder.Fragment = null;
+				longUriWithoutFragment = removeFragmentBuilder.Uri;
+			}
+
+			var shortUrl = await shortener.ShortenAsync(longUriWithoutFragment);
+
+			if (longUrl.Fragment.Length > 0) {
+				var addFragmentBuilder = new UriBuilder(shortUrl);
+				addFragmentBuilder.Fragment = longUrl.Fragment.Substring(1);
+				shortUrl = addFragmentBuilder.Uri;
+			}
+
+			return shortUrl;
+		}
+
+		/// <summary>
 		/// Converts a base64-encoded string to a web-safe base64-encoded string.
 		/// </summary>
 		/// <param name="base64">The base64-encoded string.</param>

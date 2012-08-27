@@ -107,6 +107,10 @@
     <EmbeddedResource Include="Providers\RelayCloudBlobStorageProviderTests.UploadTest\POST%2520http%253A%252F%252Flocalhost%253A39472%252Fapi%252Fblob%253FlifetimeInMinutes%253D5.headers" />
     <EmbeddedResource Include="Providers\GoogleUrlShortenerTests.ShortenAsync\POST%2520https%253A%252F%252Fwww.googleapis.com%252Furlshortener%252Fv1%252Furl.body" />
     <EmbeddedResource Include="Providers\GoogleUrlShortenerTests.ShortenAsync\POST%2520https%253A%252F%252Fwww.googleapis.com%252Furlshortener%252Fv1%252Furl.headers" />
+    <EmbeddedResource Include="Providers\GoogleUrlShortenerTests.ShortenExcludeFragmentAsyncNoFragment\POST%2520https%253A%252F%252Fwww.googleapis.com%252Furlshortener%252Fv1%252Furl.body" />
+    <EmbeddedResource Include="Providers\GoogleUrlShortenerTests.ShortenExcludeFragmentAsyncNoFragment\POST%2520https%253A%252F%252Fwww.googleapis.com%252Furlshortener%252Fv1%252Furl.headers" />
+    <EmbeddedResource Include="Providers\GoogleUrlShortenerTests.ShortenExcludeFragmentAsync\POST%2520https%253A%252F%252Fwww.googleapis.com%252Furlshortener%252Fv1%252Furl.body" />
+    <EmbeddedResource Include="Providers\GoogleUrlShortenerTests.ShortenExcludeFragmentAsync\POST%2520https%253A%252F%252Fwww.googleapis.com%252Furlshortener%252Fv1%252Furl.headers" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\IronPigeon.Desktop\IronPigeon.Desktop.csproj">
