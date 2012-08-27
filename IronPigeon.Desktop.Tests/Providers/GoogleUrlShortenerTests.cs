@@ -1,0 +1,32 @@
+﻿namespace IronPigeon.Tests.Providers {
+	using System;
+	using System.Collections.Generic;
+	using System.Linq;
+	using System.Text;
+	using System.Threading.Tasks;
+	using IronPigeon.Providers;
+	using NUnit.Framework;
+
+	[TestFixture]
+	public class GoogleUrlShortenerTests {
+		private IUrlShortener shortener;
+
+		[SetUp]
+		public void SetUp() {
+			var shortener = new GoogleUrlShortener();
+			this.shortener = shortener;
+			shortener.HttpMessageHandler = Mocks.HttpMessageHandlerRecorder.CreatePlayback();
+		}
+
+		[Test]
+		public void ShortenAsyncNull() {
+			Assert.Throws<ArgumentNullException>(() => this.shortener.ShortenAsync(null).GetAwaiter().GetResult());
+		}
+
+		[Test]
+		public void ShortenAsync() {
+			Uri shortUrl = this.shortener.ShortenAsync(new Uri("http://www.google.com/")).GetAwaiter().GetResult();
+			Assert.AreEqual("http://goo.gl/fbsS", shortUrl.AbsoluteUri);
+		}
+	}
+}
