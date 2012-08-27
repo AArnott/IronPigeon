@@ -14,6 +14,7 @@
 	using System.Threading;
 	using System.Threading.Tasks;
 
+	using IronPigeon.Providers;
 	using IronPigeon.Relay;
 
 	using Microsoft;
@@ -47,6 +48,7 @@
 		/// </summary>
 		public Channel() {
 			this.httpClient = new HttpClient(this.httpMessageHandler);
+			this.UrlShortener = new GoogleUrlShortener();
 		}
 
 		/// <summary>
@@ -102,6 +104,11 @@
 		public OwnEndpoint Endpoint { get; set; }
 
 		/// <summary>
+		/// Gets or sets the URL shortener.
+		/// </summary>
+		public IUrlShortener UrlShortener { get; set; }
+
+		/// <summary>
 		/// Gets or sets the logger.
 		/// </summary>
 		public ILogger Logger { get; set; }
@@ -149,6 +156,10 @@
 			await Utilities.SerializeDataContractAsBase64Async(abeWriter, abe);
 			var ms = new MemoryStream(Encoding.UTF8.GetBytes(abeWriter.ToString()));
 			var location = await this.CloudBlobStorage.UploadMessageAsync(ms, DateTime.MaxValue, cancellationToken: cancellationToken);
+			if (this.UrlShortener != null) {
+				location = await this.UrlShortener.ShortenAsync(location);
+			}
+
 			var fullLocationWithFragment = new Uri(
 				location,
 				"#" + this.CryptoServices.CreateWebSafeBase64Thumbprint(this.Endpoint.PublicEndpoint.SigningKeyPublicMaterial));
