@@ -37,6 +37,8 @@
 		/// </summary>
 		public static readonly TimeSpan MaxLifetimeCeiling = TimeSpan.FromDays(14);
 
+		private static readonly Dictionary<string, TaskCompletionSource<object>> longPollWaiters = new Dictionary<string, TaskCompletionSource<object>>();
+
 		/// <summary>
 		/// The key to the Azure account configuration information.
 		/// </summary>
@@ -100,20 +102,26 @@
 		}
 
 		[HttpGet, ActionName("Slot"), InboxOwnerAuthorize]
-		public async Task<ActionResult> GetInboxItemsAsync(string id) {
+		public async Task<ActionResult> GetInboxItemsAsync(string id, bool longPoll = false) {
 			var directory = this.InboxContainer.GetDirectoryReference(id);
 			var blobs = new List<IncomingList.IncomingItem>();
-			try {
-				var blobRequestOptions = new BlobRequestOptions { BlobListingDetails = BlobListingDetails.Metadata };
-				var directoryListing = await directory.ListBlobsSegmentedAsync(50, blobRequestOptions);
-				var notExpiringBefore = DateTime.UtcNow;
-				blobs.AddRange(
-					from blob in directoryListing.OfType<CloudBlob>()
-					let expirationString = blob.Metadata[ExpirationDateMetadataKey]
-					where expirationString != null && DateTime.Parse(expirationString) > notExpiringBefore
-					select new IncomingList.IncomingItem { Location = blob.Uri, DatePostedUtc = blob.Properties.LastModifiedUtc });
-			} catch (StorageClientException) {
-			}
+			do {
+				try {
+					var blobRequestOptions = new BlobRequestOptions { BlobListingDetails = BlobListingDetails.Metadata };
+					var directoryListing = await directory.ListBlobsSegmentedAsync(50, blobRequestOptions);
+					var notExpiringBefore = DateTime.UtcNow;
+					blobs.AddRange(
+						from blob in directoryListing.OfType<CloudBlob>()
+						let expirationString = blob.Metadata[ExpirationDateMetadataKey]
+						where expirationString != null && DateTime.Parse(expirationString) > notExpiringBefore
+						select new IncomingList.IncomingItem { Location = blob.Uri, DatePostedUtc = blob.Properties.LastModifiedUtc });
+				} catch (StorageClientException) {
+				}
+
+				if (longPoll && blobs.Count == 0) {
+					await WaitIncomingMessageAsync(id);
+				}
+			} while (longPoll && blobs.Count == 0);
 
 			var list = new IncomingList() { Items = blobs };
 			return new JsonResult() {
@@ -152,6 +160,8 @@
 				await blob.DeleteAsync();
 				throw new ArgumentException("Maximum message notification size exceeded.");
 			}
+
+			AlertLongPollWaiter(id);
 
 			return new EmptyResult();
 		}
@@ -266,6 +276,28 @@
 
 		protected virtual Uri GetAbsoluteUrlForAction(string action, dynamic routeValues) {
 			return new Uri(this.Request.Url, this.Url.Action(action, routeValues));
+		}
+
+		private static Task WaitIncomingMessageAsync(string id) {
+			TaskCompletionSource<object> tcs;
+			lock (longPollWaiters) {
+				if (!longPollWaiters.TryGetValue(id, out tcs)) {
+					longPollWaiters[id] = tcs = new TaskCompletionSource<object>();
+				}
+			}
+
+			return tcs.Task;
+		}
+
+		private static void AlertLongPollWaiter(string id) {
+			TaskCompletionSource<object> tcs;
+			lock (longPollWaiters) {
+				longPollWaiters.TryGetValue(id, out tcs);
+			}
+
+			if (tcs != null) {
+				tcs.TrySetResult(null);
+			}
 		}
 
 		private async Task<InboxEntity> GetInboxAsync(string id) {

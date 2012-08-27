@@ -74,7 +74,7 @@
 		/// <param name="progress">A callback to invoke for each downloaded message as it arrives.</param>
 		/// <param name="cancellationToken">The cancellation token.</param>
 		/// <returns>A task whose result is the complete list of received messages.</returns>
-		public async Task<ReadOnlyListOfMessage> ReceiveAsync(IProgress<Message> progress = null, CancellationToken cancellationToken = default(CancellationToken)) {
+		public async Task<ReadOnlyListOfMessage> ReceiveAsync(bool longPoll = false, IProgress<Message> progress = null, CancellationToken cancellationToken = default(CancellationToken)) {
 			var messages = new List<Message>();
 			var payloadProgress = new Progress<Payload>(
 				payload => {
@@ -91,7 +91,7 @@
 					}
 				});
 
-			var payloads = await this.Channel.ReceiveAsync(payloadProgress, cancellationToken);
+			var payloads = await this.Channel.ReceiveAsync(longPoll, payloadProgress, cancellationToken);
 
 			// Ensure that we've receives the asynchronous progress notifications for all the payloads
 			// so we don't return a partial result.

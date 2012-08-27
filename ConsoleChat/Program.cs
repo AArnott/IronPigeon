@@ -135,7 +135,8 @@
 					await channel.PostAsync(payload, new[] { friend }, DateTime.UtcNow + TimeSpan.FromMinutes(5));
 				}
 
-				var incoming = await channel.ReceiveAsync();
+				Console.WriteLine("Awaiting friend's reply...");
+				var incoming = await channel.ReceiveAsync(longPoll: true);
 				foreach (var payload in incoming) {
 					var message = Encoding.UTF8.GetString(payload.Content);
 					Console.WriteLine("< {0}", message);

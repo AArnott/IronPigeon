@@ -172,7 +172,7 @@
 			var progressMessage = new TaskCompletionSource<Payload>();
 			var progress = new Progress<Payload>(m => progressMessage.SetResult(m));
 
-			var messages = await channel.ReceiveAsync(progress);
+			var messages = await channel.ReceiveAsync(progress: progress);
 			Assert.That(messages.Count, Is.EqualTo(1));
 			await progressMessage.Task;
 			Assert.That(progressMessage.Task.Result, Is.SameAs(messages.Single()));

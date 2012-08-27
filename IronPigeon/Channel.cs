@@ -159,8 +159,8 @@
 
 		#region Message receiving methods
 
-		public async Task<ReadOnlyListOfPayload> ReceiveAsync(IProgress<Payload> progress = null, CancellationToken cancellationToken = default(CancellationToken)) {
-			var inboxItems = await this.DownloadIncomingItemsAsync(cancellationToken);
+		public async Task<ReadOnlyListOfPayload> ReceiveAsync(bool longPoll = false, IProgress<Payload> progress = null, CancellationToken cancellationToken = default(CancellationToken)) {
+			var inboxItems = await this.DownloadIncomingItemsAsync(longPoll, cancellationToken);
 
 			var payloads = new List<Payload>();
 			foreach (var item in inboxItems) {
@@ -386,10 +386,14 @@
 			}
 		}
 
-		private async Task<ReadOnlyListOfInboxItem> DownloadIncomingItemsAsync(CancellationToken cancellationToken) {
+		private async Task<ReadOnlyListOfInboxItem> DownloadIncomingItemsAsync(bool longPoll, CancellationToken cancellationToken) {
 			var deserializer = new DataContractJsonSerializer(typeof(IncomingList));
-			var messages = new List<Payload>();
-			var responseMessage = await this.httpClient.GetAsync(this.Endpoint.PublicEndpoint.MessageReceivingEndpoint, this.Endpoint.InboxOwnerCode, cancellationToken);
+			var requestUri = this.Endpoint.PublicEndpoint.MessageReceivingEndpoint;
+			if (longPoll) {
+				requestUri = new Uri(requestUri.AbsoluteUri + "?longPoll=true");
+			}
+
+			var responseMessage = await this.httpClient.GetAsync(requestUri, this.Endpoint.InboxOwnerCode, cancellationToken);
 			responseMessage.EnsureSuccessStatusCode();
 			var responseStream = await responseMessage.Content.ReadAsStreamAsync();
 			var inboxResults = (IncomingList)deserializer.ReadObject(responseStream);
