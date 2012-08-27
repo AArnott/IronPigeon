@@ -58,8 +58,16 @@
 
 		public async Task<Uri> UploadMessageAsync(Stream content, DateTime expirationUtc, string contentType = null, string contentEncoding = null, CancellationToken cancellationToken = default(CancellationToken)) {
 			var httpContent = new StreamContent(content);
-			httpContent.Headers.ContentType = new MediaTypeHeaderValue("image/png");
-			var response = await this.HttpClient.PostAsync(this.PostUrl.AbsoluteUri + "?lifetimeInMinutes=5", httpContent);
+			if (contentType != null) {
+				httpContent.Headers.ContentType = new MediaTypeHeaderValue(contentType);
+			}
+
+			if (contentEncoding != null) {
+				httpContent.Headers.ContentEncoding.Add(contentEncoding);
+			}
+
+			int lifetime = expirationUtc == DateTime.MaxValue ? int.MaxValue : (int)(expirationUtc - DateTime.UtcNow).TotalMinutes;
+			var response = await this.HttpClient.PostAsync(this.PostUrl.AbsoluteUri + "?lifetimeInMinutes=" + lifetime, httpContent);
 			response.EnsureSuccessStatusCode();
 
 			var serializer = new DataContractJsonSerializer(typeof(string));

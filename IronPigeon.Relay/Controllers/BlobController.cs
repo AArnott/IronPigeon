@@ -58,7 +58,9 @@
 			Requires.Range(lifetimeInMinutes > 0, "lifetimeInMinutes");
 
 			DateTime expirationUtc = DateTime.UtcNow + TimeSpan.FromMinutes(lifetimeInMinutes);
-			string contentType = this.Request.Content.Headers.ContentType.ToString();
+			string contentType = this.Request.Content.Headers.ContentType != null
+				                     ? this.Request.Content.Headers.ContentType.ToString()
+				                     : null;
 			string contentEncoding = this.Request.Content.Headers.ContentEncoding.FirstOrDefault();
 			var content = await this.Request.Content.ReadAsStreamAsync();
 			var location = await this.CloudBlobStorageProvider.UploadMessageAsync(content, expirationUtc, contentType, contentEncoding);
