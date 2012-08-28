@@ -41,11 +41,8 @@
 			var storage = CloudStorageAccount.FromConfigurationSetting(cloudConfigurationName);
 			this.CloudBlobStorageProvider = new AzureBlobStorage(storage, containerName);
 
-			var client = storage.CreateCloudBlobClient();
-			var container = client.GetContainerReference(containerName);
-			container.Delete();
-			var p = new AzureBlobStorage(storage, containerName);
-			TaskEx.Run(async delegate { await p.CreateContainerIfNotExistAsync(); });
+			////var p = new AzureBlobStorage(storage, containerName);
+			////TaskEx.Run(async delegate { await p.CreateContainerIfNotExistAsync(); });
 		}
 
 		/// <summary>
