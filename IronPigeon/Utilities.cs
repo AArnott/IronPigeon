@@ -4,6 +4,7 @@
 	using System.Diagnostics.Contracts;
 	using System.Globalization;
 	using System.IO;
+	using System.Linq;
 	using System.Net;
 	using System.Net.Http;
 	using System.Net.Http.Headers;
@@ -12,6 +13,9 @@
 	using System.Threading;
 	using System.Threading.Tasks;
 	using Microsoft;
+#if !NET40
+	using TaskEx = System.Threading.Tasks.Task;
+#endif
 
 	public static class Utilities {
 		/// <summary>
@@ -255,6 +259,26 @@
 			}
 
 			return shortUrl;
+		}
+
+		/// <summary>
+		/// Retrieves a contact with some user supplied identifier.
+		/// </summary>
+		/// <param name="addressBooks">The address books to lookup an identifier in.</param>
+		/// <param name="identifier">The user-supplied identifier for the contact.</param>
+		/// <param name="cancellationToken">A cancellation token.</param>
+		/// <returns>
+		/// A task whose result is the contact, or null if no match is found.
+		/// </returns>
+		/// <exception cref="BadAddressBookEntryException">Thrown when a validation error occurs while reading the address book entry.</exception>
+		public static async Task<Endpoint> LookupAsync(this IEnumerable<AddressBook> addressBooks, string identifier, CancellationToken cancellationToken = default(CancellationToken)) {
+			Requires.NotNull(addressBooks, "addressBooks");
+
+			// NOTE: we could optimize this to return as soon as the *first* address book
+			// returned a non-null result, and cancel the rest, rather than wait for
+			// results from all of them.
+			var results = await TaskEx.WhenAll(addressBooks.Select(ab => ab.LookupAsync(identifier, cancellationToken)));
+			return results.FirstOrDefault(result => result != null);
 		}
 
 		/// <summary>

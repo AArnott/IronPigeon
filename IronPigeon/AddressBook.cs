@@ -14,6 +14,7 @@
 	/// <remarks>
 	/// This class does not describe a method for publishing to an address book because
 	/// each address book may have different authentication requirements.
+	/// Derived types are expected to be thread-safe.
 	/// </remarks>
 	public abstract class AddressBook {
 		/// <summary>

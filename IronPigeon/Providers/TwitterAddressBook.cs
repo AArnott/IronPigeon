@@ -29,6 +29,20 @@
 		private static readonly Regex AddressBookEntryWithThumbprintFragmentRegex = new Regex(@"\b(http|https|ftp)\://[a-zA-Z0-9\-\.]+(:[a-zA-Z0-9]*)?/?([a-zA-Z0-9\-\._\?\,\'/\\\+&amp;%\$\=~])*#([a-zA-Z0-9\-_]{27,43})(\b|$)", RegexOptions.IgnoreCase);
 
 		/// <summary>
+		/// Initializes a new instance of the <see cref="TwitterAddressBook" /> class.
+		/// </summary>
+		public TwitterAddressBook() {
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="TwitterAddressBook" /> class.
+		/// </summary>
+		/// <param name="cryptoProvider">The crypto provider.</param>
+		public TwitterAddressBook(ICryptoProvider cryptoProvider) {
+			this.CryptoServices = cryptoProvider;
+		}
+
+		/// <summary>
 		/// Retrieves a contact with some user supplied identifier.
 		/// </summary>
 		/// <param name="identifier">The user-supplied identifier for the contact.</param>
