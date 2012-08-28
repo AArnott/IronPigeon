@@ -64,7 +64,10 @@
 
 			var payload = new Payload(ms.ToArray(), Message.ContentType);
 			var allRecipients = new List<Endpoint>(message.Recipients);
-			allRecipients.AddRange(message.CarbonCopyRecipients);
+			if (message.CarbonCopyRecipients != null) {
+				allRecipients.AddRange(message.CarbonCopyRecipients);
+			}
+
 			return this.Channel.PostAsync(payload, allRecipients, message.ExpirationUtc, cancellationToken);
 		}
 
