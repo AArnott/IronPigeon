@@ -6,6 +6,7 @@
 	using System.Globalization;
 	using System.IO;
 	using System.Linq;
+	using System.Net;
 	using System.Net.Http;
 	using System.Net.Http.Headers;
 	using System.Runtime.Serialization;
@@ -177,6 +178,10 @@
 			foreach (var item in inboxItems) {
 				try {
 					var invite = await this.DownloadPayloadReferenceAsync(item, cancellationToken);
+					if (invite == null) {
+						continue;
+					}
+
 					var message = await this.DownloadPayloadAsync(invite, cancellationToken);
 					payloads.Add(message);
 					if (progress != null) {
@@ -206,6 +211,13 @@
 			Requires.NotNull(inboxItem, "inboxItem");
 
 			var responseMessage = await this.httpClient.GetAsync(inboxItem.Location, cancellationToken);
+			if (responseMessage.StatusCode == HttpStatusCode.NotFound) {
+				// delete inbox item and move on.
+				await this.DeletePayloadReference(inboxItem.Location, cancellationToken);
+				this.Log("Missing payload reference.", null);
+				return null;
+			}
+
 			responseMessage.EnsureSuccessStatusCode();
 			var responseStream = await responseMessage.Content.ReadAsStreamAsync();
 			var responseStreamCopy = new MemoryStream();
@@ -381,17 +393,22 @@
 		/// Deletes the online inbox item that points to a previously downloaded payload.
 		/// </summary>
 		/// <param name="payload"></param>
-		/// <returns></returns>
 		/// <remarks>
 		/// This method should be called after the client application has saved the
 		/// downloaded payload to persistent storage.
 		/// </remarks>
-		public async Task DeleteInboxItem(Payload payload, CancellationToken cancellationToken = default(CancellationToken)) {
+		public Task DeleteInboxItem(Payload payload, CancellationToken cancellationToken = default(CancellationToken)) {
 			Requires.NotNull(payload, "payload");
 			Requires.Argument(payload.PayloadReferenceUri != null, "payload", "Original payload reference URI no longer available.");
 
+			return DeletePayloadReference(payload.PayloadReferenceUri, cancellationToken);
+		}
+
+		private async Task DeletePayloadReference(Uri payloadReferenceLocation, CancellationToken cancellationToken) {
+			Requires.NotNull(payloadReferenceLocation, "payloadReferenceLocation");
+
 			var deleteEndpoint = new UriBuilder(this.Endpoint.PublicEndpoint.MessageReceivingEndpoint);
-			deleteEndpoint.Query = "notification=" + Uri.EscapeDataString(payload.PayloadReferenceUri.AbsoluteUri);
+			deleteEndpoint.Query = "notification=" + Uri.EscapeDataString(payloadReferenceLocation.AbsoluteUri);
 			using (var response = await this.httpClient.DeleteAsync(deleteEndpoint.Uri, this.Endpoint.InboxOwnerCode, cancellationToken)) {
 				response.EnsureSuccessStatusCode();
 			}
