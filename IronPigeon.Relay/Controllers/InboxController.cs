@@ -183,7 +183,7 @@
 			Requires.NotNullOrEmpty(id, "id");
 
 			if (notification == null) {
-				return await DeleteAsync(id);
+				return await this.DeleteAsync(id);
 			}
 
 			Requires.NotNullOrEmpty(notification, "notification");
@@ -300,7 +300,9 @@
 		private static void AlertLongPollWaiter(string id) {
 			TaskCompletionSource<object> tcs;
 			lock (longPollWaiters) {
-				longPollWaiters.TryGetValue(id, out tcs);
+				if (longPollWaiters.TryGetValue(id, out tcs)) {
+					longPollWaiters.Remove(id);
+				}
 			}
 
 			if (tcs != null) {
