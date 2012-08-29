@@ -401,7 +401,7 @@
 			Requires.NotNull(payload, "payload");
 			Requires.Argument(payload.PayloadReferenceUri != null, "payload", "Original payload reference URI no longer available.");
 
-			return DeletePayloadReference(payload.PayloadReferenceUri, cancellationToken);
+			return this.DeletePayloadReference(payload.PayloadReferenceUri, cancellationToken);
 		}
 
 		private async Task DeletePayloadReference(Uri payloadReferenceLocation, CancellationToken cancellationToken) {
@@ -410,6 +410,11 @@
 			var deleteEndpoint = new UriBuilder(this.Endpoint.PublicEndpoint.MessageReceivingEndpoint);
 			deleteEndpoint.Query = "notification=" + Uri.EscapeDataString(payloadReferenceLocation.AbsoluteUri);
 			using (var response = await this.httpClient.DeleteAsync(deleteEndpoint.Uri, this.Endpoint.InboxOwnerCode, cancellationToken)) {
+				if (response.StatusCode == HttpStatusCode.NotFound) {
+					// Good enough.
+					return;
+				}
+
 				response.EnsureSuccessStatusCode();
 			}
 		}

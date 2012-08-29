@@ -194,7 +194,15 @@
 			var directory = this.InboxContainer.GetDirectoryReference(id);
 			if (directory.Uri.IsBaseOf(new Uri(notification, UriKind.Absolute))) {
 				var blob = this.InboxContainer.GetBlobReference(notification);
-				await blob.DeleteAsync();
+				try {
+					await blob.DeleteAsync();
+				} catch (StorageClientException ex) {
+					if (ex.StatusCode == HttpStatusCode.NotFound) {
+						return new HttpNotFoundResult(ex.Message);
+					}
+
+					throw;
+				}
 				return new EmptyResult();
 			} else {
 				return new HttpUnauthorizedResult("Notification URL does not match owner id.");
