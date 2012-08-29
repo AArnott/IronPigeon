@@ -156,7 +156,7 @@
 			var abeWriter = new StringWriter();
 			await Utilities.SerializeDataContractAsBase64Async(abeWriter, abe);
 			var ms = new MemoryStream(Encoding.UTF8.GetBytes(abeWriter.ToString()));
-			var location = await this.CloudBlobStorage.UploadMessageAsync(ms, DateTime.MaxValue, cancellationToken: cancellationToken);
+			var location = await this.CloudBlobStorage.UploadMessageAsync(ms, DateTime.MaxValue, AddressBookEntry.ContentType, cancellationToken: cancellationToken);
 			if (this.UrlShortener != null) {
 				location = await this.UrlShortener.ShortenAsync(location);
 			}

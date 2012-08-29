@@ -4,6 +4,7 @@
 	using System.IO;
 	using System.Linq;
 	using System.Net.Http;
+	using System.Net.Http.Headers;
 	using System.Runtime.Serialization;
 	using System.Text;
 	using System.Threading;
@@ -43,7 +44,10 @@
 		protected async Task<AddressBookEntry> DownloadAddressBookEntryAsync(Uri entryLocation, CancellationToken cancellationToken) {
 			Requires.NotNull(entryLocation, "entryLocation");
 
-			using (var stream = await this.HttpClient.GetBufferedStreamAsync(entryLocation, cancellationToken)) {
+			var request = new HttpRequestMessage(HttpMethod.Get, entryLocation);
+			request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(AddressBookEntry.ContentType));
+			var response = await this.HttpClient.SendAsync(request, cancellationToken);
+			using (var stream = await response.Content.ReadAsStreamAsync()) {
 				var reader = new StreamReader(stream);
 				try {
 					var entry = await Utilities.DeserializeDataContractFromBase64Async<AddressBookEntry>(reader);
