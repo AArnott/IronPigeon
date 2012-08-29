@@ -273,6 +273,7 @@
 		/// <exception cref="BadAddressBookEntryException">Thrown when a validation error occurs while reading the address book entry.</exception>
 		public static async Task<Endpoint> LookupAsync(this IEnumerable<AddressBook> addressBooks, string identifier, CancellationToken cancellationToken = default(CancellationToken)) {
 			Requires.NotNull(addressBooks, "addressBooks");
+			Requires.NotNullOrEmpty(identifier, "identifier");
 
 			// NOTE: we could optimize this to return as soon as the *first* address book
 			// returned a non-null result, and cancel the rest, rather than wait for
