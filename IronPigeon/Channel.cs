@@ -171,6 +171,14 @@
 
 		#region Message receiving methods
 
+		/// <summary>
+		/// Downloads messages from the server.
+		/// </summary>
+		/// <param name="longPoll"><c>true</c> to asynchronously wait for messages if there are none immediately available for download.</param>
+		/// <param name="progress">A callback that receives messages as they are retrieved.</param>
+		/// <param name="cancellationToken">A token whose cancellation signals lost interest in the result of this method.</param>
+		/// <returns>A collection of all messages that were waiting at the time this method was invoked.</returns>
+		/// <exception cref="HttpRequestException">Thrown when a connection to the server could not be established, or was terminated.</exception>
 		public async Task<ReadOnlyListOfPayload> ReceiveAsync(bool longPoll = false, IProgress<Payload> progress = null, CancellationToken cancellationToken = default(CancellationToken)) {
 			var inboxItems = await this.DownloadIncomingItemsAsync(longPoll, cancellationToken);
 
@@ -426,16 +434,26 @@
 				requestUri = new Uri(requestUri.AbsoluteUri + "?longPoll=true");
 			}
 
-			var responseMessage = await this.httpClient.GetAsync(requestUri, this.Endpoint.InboxOwnerCode, cancellationToken);
-			responseMessage.EnsureSuccessStatusCode();
-			var responseStream = await responseMessage.Content.ReadAsStreamAsync();
-			var inboxResults = (IncomingList)deserializer.ReadObject(responseStream);
+			while (true) {
+				try {
+					var responseMessage = await this.httpClient.GetAsync(requestUri, this.Endpoint.InboxOwnerCode, cancellationToken);
+					responseMessage.EnsureSuccessStatusCode();
+					var responseStream = await responseMessage.Content.ReadAsStreamAsync();
+					var inboxResults = (IncomingList)deserializer.ReadObject(responseStream);
 
 #if NET40
-			return new ReadOnlyCollection<IncomingList.IncomingItem>(inboxResults.Items);
+					return new ReadOnlyCollection<IncomingList.IncomingItem>(inboxResults.Items);
 #else
-			return inboxResults.Items;
+					return inboxResults.Items;
 #endif
+				} catch (OperationCanceledException) {
+					// This can occur if the caller cancelled or if our HTTP client timed out.
+					// On time-outs, we want to re-establish.  For caller cancellation, propagate it out.
+					if (cancellationToken.IsCancellationRequested) {
+						throw;
+					}
+				}
+			}
 		}
 
 		/// <summary>Logs a message.</summary>
