@@ -7,8 +7,8 @@
 		<authors>Privacy Not Found</authors>
 		<owners>Privacy Not Found</owners>
 		<!--<licenseUrl>http://LICENSE_URL_HERE_OR_DELETE_THIS_LINE</licenseUrl>
-    <projectUrl>http://PROJECT_URL_HERE_OR_DELETE_THIS_LINE</projectUrl>
-    <iconUrl>http://ICON_URL_HERE_OR_DELETE_THIS_LINE</iconUrl>-->
+		<projectUrl>http://PROJECT_URL_HERE_OR_DELETE_THIS_LINE</projectUrl>
+		<iconUrl>http://ICON_URL_HERE_OR_DELETE_THIS_LINE</iconUrl>-->
 		<requireLicenseAcceptance>false</requireLicenseAcceptance>
 		<description>
 			A generic message passing protocol which is tuned for confidentiality and authentication.
@@ -17,8 +17,13 @@
 		<copyright>Copyright 2012</copyright>
 		<tags>crypto cryptography mail email privacy</tags>
 		<dependencies>
-			<dependency id="Microsoft.Validation" version="[1.0.16, 2.0)" />
-			<dependency id="Microsoft.WindowsAzure.StorageClient.Async" version="0.1.1-preview" />
+			<group>
+				<dependency id="Microsoft.Validation" version="[1.0.16, 2.0)" />
+			</group>
+			<group targetFramework="net40">
+				<dependency id="Microsoft.Validation" version="[1.0.16, 2.0)" />
+				<dependency id="Microsoft.WindowsAzure.StorageClient.Async" version="0.1.3-preview" />
+			</group>
 		</dependencies>
 	</metadata>
 	<files>

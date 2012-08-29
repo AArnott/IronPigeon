@@ -13,10 +13,14 @@ msbuild "%~dp0IronPigeon.sln" /v:minimal /p:Configuration=ReleaseNET40
 IF ERRORLEVEL 1 GOTO END
 
 setlocal
-SET OUTDIR=%~dp0IronPigeon\bin\Release
+SET OUTDIR=%~dp0Release
+md "%OUTDIR%"
 NuGet.exe pack "%~dp0IronPigeon.nuspec" -OutputDirectory "%OUTDIR%" -Version %1 -Symbols
 IF ERRORLEVEL 1 GOTO END
-
 @echo Package built: "%OUTDIR%\IronPigeon.%1.nupkg"
+
+NuGet.exe pack "%~dp0IronPigeon.Dart.nuspec" -OutputDirectory "%OUTDIR%" -Version %1 -Symbols
+IF ERRORLEVEL 1 GOTO END
+@echo Package built: "%OUTDIR%\IronPigeon.Dart.%1.nupkg"
 
 :END

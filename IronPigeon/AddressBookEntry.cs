@@ -14,6 +14,11 @@
 	[DataContract]
 	public class AddressBookEntry {
 		/// <summary>
+		/// The Content-Type that identifies a blob containing a serialized instance of this type.
+		/// </summary>
+		public const string ContentType = "ironpigeon/addressbookentry";
+
+		/// <summary>
 		/// Gets or sets the serialized <see cref="Endpoint"/>.
 		/// </summary>
 		[DataMember]

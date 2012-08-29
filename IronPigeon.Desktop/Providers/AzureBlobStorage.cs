@@ -31,7 +31,7 @@
 
 		#region ICloudBlobStorageProvider Members
 
-		public async Task<Uri> UploadMessageAsync(Stream content, DateTime expirationUtc, CancellationToken cancellationToken = default(CancellationToken)) {
+		public async Task<Uri> UploadMessageAsync(Stream content, DateTime expirationUtc, string contentType, string contentEncoding, CancellationToken cancellationToken = default(CancellationToken)) {
 			Requires.NotNull(content, "content");
 			Requires.Range(expirationUtc > DateTime.UtcNow, "expirationUtc");
 
@@ -48,6 +48,9 @@
 			if (expirationUtc < DateTime.MaxValue) {
 				blob.Metadata["DeleteAfter"] = expirationUtc.ToString(CultureInfo.InvariantCulture);
 			}
+
+			blob.Properties.ContentType = contentType;
+			blob.Properties.ContentEncoding = contentEncoding;
 
 			await blob.UploadFromStreamAsync(content);
 			return blob.Uri;

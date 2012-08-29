@@ -5,11 +5,11 @@
     <MinimumVisualStudioVersion>11.0</MinimumVisualStudioVersion>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{BEFB82D5-C686-4D50-91C7-419846C8F201}</ProjectGuid>
+    <ProjectGuid>{7413FF6F-DC39-4B86-AD14-EAC145F5C3B7}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>IronPigeon</RootNamespace>
-    <AssemblyName>IronPigeon</AssemblyName>
+    <RootNamespace>IronPigeon.Dart</RootNamespace>
+    <AssemblyName>IronPigeon.Dart</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <TargetFrameworkProfile>Profile7</TargetFrameworkProfile>
     <FileAlignment>512</FileAlignment>
@@ -25,7 +25,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <DocumentationFile>bin\Debug\IronPigeon.XML</DocumentationFile>
+    <DocumentationFile>bin\Debug\IronPigeon.Dart.XML</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -34,15 +34,15 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <DocumentationFile>bin\Release\IronPigeon.XML</DocumentationFile>
+    <DocumentationFile>bin\Release\IronPigeon.Dart.XML</DocumentationFile>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'ReleaseNET40|AnyCPU'">
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'ReleaseNET40|AnyCPU' ">
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <TargetFrameworkProfile>
     </TargetFrameworkProfile>
-    <OutputPath>bin\ReleaseNET40\</OutputPath>
+    <OutputPath>bin\ReleaseNet40\</OutputPath>
     <DefineConstants>TRACE;NET40</DefineConstants>
-    <DocumentationFile>bin\ReleaseNET40\IronPigeon.XML</DocumentationFile>
+    <DocumentationFile>bin\ReleaseNet40\IronPigeon.Dart.XML</DocumentationFile>
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -50,45 +50,22 @@
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="AddressBookEntry.cs" />
-    <Compile Include="BadAddressBookEntryException.cs" />
-    <Compile Include="Channel.cs" />
-    <Compile Include="CryptoProviderBase.cs" />
-    <Compile Include="CryptoProviderExtensions.cs" />
-    <Compile Include="Endpoint.cs" />
-    <Compile Include="ICloudBlobStorageProvider.cs" />
-    <Compile Include="ICryptoProvider.cs" />
-    <Compile Include="AddressBook.cs" />
-    <Compile Include="ILogger.cs" />
-    <Compile Include="IncomingList.cs" />
-    <Compile Include="InvalidMessageException.cs" />
-    <Compile Include="IUrlShortener.cs" />
-    <Compile Include="OnlineAddressBook.cs" />
-    <Compile Include="Payload.cs" />
-    <Compile Include="OwnEndpoint.cs" />
-    <Compile Include="PayloadReference.cs">
-      <SubType>Code</SubType>
-    </Compile>
+    <!-- A reference to the entire .NET Framework is automatically included -->
+    <ProjectReference Include="..\IronPigeon\IronPigeon.csproj">
+      <Project>{befb82d5-c686-4d50-91c7-419846c8f201}</Project>
+      <Name>IronPigeon</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="DartUtilities.cs" />
+    <Compile Include="Message.cs" />
+    <Compile Include="PostalService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Providers\DirectEntryAddressBook.cs" />
-    <Compile Include="Providers\GoogleUrlShortener.cs" />
-    <Compile Include="Providers\RelayCloudBlobStorageProvider.cs" />
-    <Compile Include="SecurityLevel.cs" />
-    <Compile Include="Relay\InboxCreationResponse.cs" />
     <Compile Include="Strings.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Strings.resx</DependentUpon>
     </Compile>
-    <Compile Include="SymmetricEncryptionResult.cs" />
-    <Compile Include="Providers\TwitterAddressBook.cs" />
-    <Compile Include="Utilities.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <EmbeddedResource Include="Strings.resx">
-      <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>Strings.Designer.cs</LastGenOutput>
-    </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Microsoft.Validation">
@@ -106,13 +83,16 @@
     <Reference Include="System.XML" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\buildpkg.bat">
-      <Link>buildpkg.bat</Link>
-    </None>
-    <None Include="..\IronPigeon.nuspec">
-      <Link>IronPigeon.nuspec</Link>
+    <None Include="..\IronPigeon.Dart.nuspec">
+      <Link>IronPigeon.Dart.nuspec</Link>
     </None>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Strings.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Strings.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" Condition=" '$(TargetFrameworkVersion)' != 'v4.0' " />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" Condition=" '$(TargetFrameworkVersion)' == 'v4.0' " />

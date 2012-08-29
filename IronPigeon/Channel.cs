@@ -6,6 +6,7 @@
 	using System.Globalization;
 	using System.IO;
 	using System.Linq;
+	using System.Net;
 	using System.Net.Http;
 	using System.Net.Http.Headers;
 	using System.Runtime.Serialization;
@@ -14,6 +15,7 @@
 	using System.Threading;
 	using System.Threading.Tasks;
 
+	using IronPigeon.Providers;
 	using IronPigeon.Relay;
 
 	using Microsoft;
@@ -47,6 +49,7 @@
 		/// </summary>
 		public Channel() {
 			this.httpClient = new HttpClient(this.httpMessageHandler);
+			this.UrlShortener = new GoogleUrlShortener();
 		}
 
 		/// <summary>
@@ -102,6 +105,11 @@
 		public OwnEndpoint Endpoint { get; set; }
 
 		/// <summary>
+		/// Gets or sets the URL shortener.
+		/// </summary>
+		public IUrlShortener UrlShortener { get; set; }
+
+		/// <summary>
 		/// Gets or sets the logger.
 		/// </summary>
 		public ILogger Logger { get; set; }
@@ -148,7 +156,11 @@
 			var abeWriter = new StringWriter();
 			await Utilities.SerializeDataContractAsBase64Async(abeWriter, abe);
 			var ms = new MemoryStream(Encoding.UTF8.GetBytes(abeWriter.ToString()));
-			var location = await this.CloudBlobStorage.UploadMessageAsync(ms, DateTime.MaxValue, cancellationToken);
+			var location = await this.CloudBlobStorage.UploadMessageAsync(ms, DateTime.MaxValue, AddressBookEntry.ContentType, cancellationToken: cancellationToken);
+			if (this.UrlShortener != null) {
+				location = await this.UrlShortener.ShortenAsync(location);
+			}
+
 			var fullLocationWithFragment = new Uri(
 				location,
 				"#" + this.CryptoServices.CreateWebSafeBase64Thumbprint(this.Endpoint.PublicEndpoint.SigningKeyPublicMaterial));
@@ -159,13 +171,17 @@
 
 		#region Message receiving methods
 
-		public async Task<ReadOnlyListOfPayload> ReceiveAsync(IProgress<Payload> progress = null, CancellationToken cancellationToken = default(CancellationToken)) {
-			var inboxItems = await this.DownloadIncomingItemsAsync(cancellationToken);
+		public async Task<ReadOnlyListOfPayload> ReceiveAsync(bool longPoll = false, IProgress<Payload> progress = null, CancellationToken cancellationToken = default(CancellationToken)) {
+			var inboxItems = await this.DownloadIncomingItemsAsync(longPoll, cancellationToken);
 
 			var payloads = new List<Payload>();
 			foreach (var item in inboxItems) {
 				try {
 					var invite = await this.DownloadPayloadReferenceAsync(item, cancellationToken);
+					if (invite == null) {
+						continue;
+					}
+
 					var message = await this.DownloadPayloadAsync(invite, cancellationToken);
 					payloads.Add(message);
 					if (progress != null) {
@@ -195,6 +211,13 @@
 			Requires.NotNull(inboxItem, "inboxItem");
 
 			var responseMessage = await this.httpClient.GetAsync(inboxItem.Location, cancellationToken);
+			if (responseMessage.StatusCode == HttpStatusCode.NotFound) {
+				// delete inbox item and move on.
+				await this.DeletePayloadReference(inboxItem.Location, cancellationToken);
+				this.Log("Missing payload reference.", null);
+				return null;
+			}
+
 			responseMessage.EnsureSuccessStatusCode();
 			var responseStream = await responseMessage.Content.ReadAsStreamAsync();
 			var responseStreamCopy = new MemoryStream();
@@ -296,7 +319,7 @@
 			this.Log("Encrypted message hash", messageHash);
 
 			using (MemoryStream cipherTextStream = new MemoryStream(encryptionResult.Ciphertext)) {
-				Uri blobUri = await this.CloudBlobStorage.UploadMessageAsync(cipherTextStream, expiresUtc, cancellationToken);
+				Uri blobUri = await this.CloudBlobStorage.UploadMessageAsync(cipherTextStream, expiresUtc, cancellationToken: cancellationToken);
 				return new PayloadReference(blobUri, messageHash, encryptionResult.Key, encryptionResult.IV, expiresUtc);
 			}
 		}
@@ -370,26 +393,40 @@
 		/// Deletes the online inbox item that points to a previously downloaded payload.
 		/// </summary>
 		/// <param name="payload"></param>
-		/// <returns></returns>
 		/// <remarks>
 		/// This method should be called after the client application has saved the
 		/// downloaded payload to persistent storage.
 		/// </remarks>
-		public async Task DeleteInboxItem(Payload payload, CancellationToken cancellationToken = default(CancellationToken)) {
+		public Task DeleteInboxItem(Payload payload, CancellationToken cancellationToken = default(CancellationToken)) {
 			Requires.NotNull(payload, "payload");
 			Requires.Argument(payload.PayloadReferenceUri != null, "payload", "Original payload reference URI no longer available.");
 
+			return this.DeletePayloadReference(payload.PayloadReferenceUri, cancellationToken);
+		}
+
+		private async Task DeletePayloadReference(Uri payloadReferenceLocation, CancellationToken cancellationToken) {
+			Requires.NotNull(payloadReferenceLocation, "payloadReferenceLocation");
+
 			var deleteEndpoint = new UriBuilder(this.Endpoint.PublicEndpoint.MessageReceivingEndpoint);
-			deleteEndpoint.Query = "notification=" + Uri.EscapeDataString(payload.PayloadReferenceUri.AbsoluteUri);
+			deleteEndpoint.Query = "notification=" + Uri.EscapeDataString(payloadReferenceLocation.AbsoluteUri);
 			using (var response = await this.httpClient.DeleteAsync(deleteEndpoint.Uri, this.Endpoint.InboxOwnerCode, cancellationToken)) {
+				if (response.StatusCode == HttpStatusCode.NotFound) {
+					// Good enough.
+					return;
+				}
+
 				response.EnsureSuccessStatusCode();
 			}
 		}
 
-		private async Task<ReadOnlyListOfInboxItem> DownloadIncomingItemsAsync(CancellationToken cancellationToken) {
+		private async Task<ReadOnlyListOfInboxItem> DownloadIncomingItemsAsync(bool longPoll, CancellationToken cancellationToken) {
 			var deserializer = new DataContractJsonSerializer(typeof(IncomingList));
-			var messages = new List<Payload>();
-			var responseMessage = await this.httpClient.GetAsync(this.Endpoint.PublicEndpoint.MessageReceivingEndpoint, this.Endpoint.InboxOwnerCode, cancellationToken);
+			var requestUri = this.Endpoint.PublicEndpoint.MessageReceivingEndpoint;
+			if (longPoll) {
+				requestUri = new Uri(requestUri.AbsoluteUri + "?longPoll=true");
+			}
+
+			var responseMessage = await this.httpClient.GetAsync(requestUri, this.Endpoint.InboxOwnerCode, cancellationToken);
 			responseMessage.EnsureSuccessStatusCode();
 			var responseStream = await responseMessage.Content.ReadAsStreamAsync();
 			var inboxResults = (IncomingList)deserializer.ReadObject(responseStream);

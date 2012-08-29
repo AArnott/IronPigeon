@@ -7,6 +7,7 @@
 	using System.Linq;
 	using System.Net;
 	using System.Text.RegularExpressions;
+	using System.Threading;
 	using System.Threading.Tasks;
 #if !NET40
 	using System.Threading.Tasks.Dataflow;
@@ -36,17 +37,19 @@
 		/// </summary>
 		public static readonly TimeSpan MaxLifetimeCeiling = TimeSpan.FromDays(14);
 
+		private static readonly Dictionary<string, TaskCompletionSource<object>> longPollWaiters = new Dictionary<string, TaskCompletionSource<object>>();
+
+		/// <summary>
+		/// The key to the Azure account configuration information.
+		/// </summary>
+		internal const string DefaultCloudConfigurationName = "StorageConnectionString";
+
 		/// <summary>
 		/// The default name for the container used to store posted messages.
 		/// </summary>
 		private const string DefaultInboxContainerName = "inbox";
 
 		private const string DefaultInboxTableName = "inbox";
-
-		/// <summary>
-		/// The key to the Azure account configuration information.
-		/// </summary>
-		private const string DefaultCloudConfigurationName = "StorageConnectionString";
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="InboxController" /> class.
@@ -99,18 +102,26 @@
 		}
 
 		[HttpGet, ActionName("Slot"), InboxOwnerAuthorize]
-		public async Task<ActionResult> GetInboxItemsAsync(string id) {
+		public async Task<ActionResult> GetInboxItemsAsync(string id, bool longPoll = false) {
 			var directory = this.InboxContainer.GetDirectoryReference(id);
 			var blobs = new List<IncomingList.IncomingItem>();
-			try {
-				var directoryListing = await directory.ListBlobsSegmentedAsync(50);
-				var notExpiringBefore = DateTime.UtcNow;
-				blobs.AddRange(
-					from blob in directoryListing.OfType<CloudBlob>()
-					where DateTime.Parse(blob.Metadata[ExpirationDateMetadataKey]) > notExpiringBefore
-					select new IncomingList.IncomingItem { Location = blob.Uri, DatePostedUtc = blob.Properties.LastModifiedUtc });
-			} catch (StorageClientException) {
-			}
+			do {
+				try {
+					var blobRequestOptions = new BlobRequestOptions { BlobListingDetails = BlobListingDetails.Metadata };
+					var directoryListing = await directory.ListBlobsSegmentedAsync(50, blobRequestOptions);
+					var notExpiringBefore = DateTime.UtcNow;
+					blobs.AddRange(
+						from blob in directoryListing.OfType<CloudBlob>()
+						let expirationString = blob.Metadata[ExpirationDateMetadataKey]
+						where expirationString != null && DateTime.Parse(expirationString) > notExpiringBefore
+						select new IncomingList.IncomingItem { Location = blob.Uri, DatePostedUtc = blob.Properties.LastModifiedUtc });
+				} catch (StorageClientException) {
+				}
+
+				if (longPoll && blobs.Count == 0) {
+					await WaitIncomingMessageAsync(id);
+				}
+			} while (longPoll && blobs.Count == 0);
 
 			var list = new IncomingList() { Items = blobs };
 			return new JsonResult() {
@@ -150,6 +161,8 @@
 				throw new ArgumentException("Maximum message notification size exceeded.");
 			}
 
+			AlertLongPollWaiter(id);
+
 			return new EmptyResult();
 		}
 
@@ -170,7 +183,7 @@
 			Requires.NotNullOrEmpty(id, "id");
 
 			if (notification == null) {
-				return await DeleteAsync(id);
+				return await this.DeleteAsync(id);
 			}
 
 			Requires.NotNullOrEmpty(notification, "notification");
@@ -181,21 +194,55 @@
 			var directory = this.InboxContainer.GetDirectoryReference(id);
 			if (directory.Uri.IsBaseOf(new Uri(notification, UriKind.Absolute))) {
 				var blob = this.InboxContainer.GetBlobReference(notification);
-				await blob.DeleteAsync();
+				try {
+					await blob.DeleteAsync();
+				} catch (StorageClientException ex) {
+					if (ex.StatusCode == HttpStatusCode.NotFound) {
+						return new HttpNotFoundResult(ex.Message);
+					}
+
+					throw;
+				}
 				return new EmptyResult();
 			} else {
 				return new HttpUnauthorizedResult("Notification URL does not match owner id.");
 			}
 		}
 
-#if !NET40
-		[NonAction, ActionName("Purge"), Authorize(Roles = "admin")]
-		public Task PurgeExpiredAsync() {
+		[ActionName("Purge")]
+		public async Task<ActionResult> PurgeExpiredAsync() {
 			var deleteBlobsExpiringBefore = DateTime.UtcNow;
+#if NET40
+			try {
+				var items = await this.InboxContainer.ListBlobsSegmentedAsync(50);
+				var blobs = (from blob in items.OfType<CloudBlob>()
+				             let expires = DateTime.Parse(blob.Metadata[ExpirationDateMetadataKey])
+				             where expires < deleteBlobsExpiringBefore
+				             select blob).ToArray();
+				await TaskEx.WhenAll(blobs.Select(blob => blob.DeleteAsync()));
+				return new ContentResult() { Content = "Deleted " + blobs.Length + " expired blobs." };
+			} catch (StorageClientException ex) {
+				var webException = ex.InnerException as WebException;
+				if (webException != null) {
+					var httpResponse = (HttpWebResponse)webException.Response;
+					if (httpResponse.StatusCode == HttpStatusCode.NotFound) {
+						// it's legit that some tests never created the container to begin with.
+						return new ContentResult() { Content = "Missing container" };
+					}
+				}
+
+				throw;
+			}
+#else
+			int purgedBlobCount = 0;
 			var searchExpiredBlobs = new TransformManyBlock<CloudBlobContainer, CloudBlob>(
 				async c => {
 					try {
-						var results = await c.ListBlobsSegmentedAsync(10);
+						var options = new BlobRequestOptions {
+							UseFlatBlobListing = true,
+							BlobListingDetails = BlobListingDetails.Metadata,
+						};
+						var results = await c.ListBlobsSegmentedAsync(10, options);
 						return from blob in results.OfType<CloudBlob>()
 							   let expires = DateTime.Parse(blob.Metadata[ExpirationDateMetadataKey])
 							   where expires < deleteBlobsExpiringBefore
@@ -217,7 +264,10 @@
 					BoundedCapacity = 4,
 				});
 			var deleteBlobBlock = new ActionBlock<CloudBlob>(
-				blob => blob.DeleteAsync(),
+				blob => {
+					Interlocked.Increment(ref purgedBlobCount);
+					return blob.DeleteAsync();
+				},
 				new ExecutionDataflowBlockOptions {
 					MaxDegreeOfParallelism = 4,
 					BoundedCapacity = 100,
@@ -227,12 +277,37 @@
 
 			searchExpiredBlobs.Post(this.InboxContainer);
 			searchExpiredBlobs.Complete();
-			return deleteBlobBlock.Completion;
-		}
+			await deleteBlobBlock.Completion;
+			return new ContentResult() { Content = "Deleted " + purgedBlobCount + " expired blobs." };
 #endif
+		}
 
 		protected virtual Uri GetAbsoluteUrlForAction(string action, dynamic routeValues) {
 			return new Uri(this.Request.Url, this.Url.Action(action, routeValues));
+		}
+
+		private static Task WaitIncomingMessageAsync(string id) {
+			TaskCompletionSource<object> tcs;
+			lock (longPollWaiters) {
+				if (!longPollWaiters.TryGetValue(id, out tcs)) {
+					longPollWaiters[id] = tcs = new TaskCompletionSource<object>();
+				}
+			}
+
+			return tcs.Task;
+		}
+
+		private static void AlertLongPollWaiter(string id) {
+			TaskCompletionSource<object> tcs;
+			lock (longPollWaiters) {
+				if (longPollWaiters.TryGetValue(id, out tcs)) {
+					longPollWaiters.Remove(id);
+				}
+			}
+
+			if (tcs != null) {
+				tcs.TrySetResult(null);
+			}
 		}
 
 		private async Task<InboxEntity> GetInboxAsync(string id) {

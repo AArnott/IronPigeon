@@ -46,6 +46,29 @@
 			await ChatLoopAsync(channel, friend);
 		}
 
+		private static async Task PurgeAllAsync(CloudStorageAccount azureAccount) {
+			Requires.NotNull(azureAccount, "azureAccount");
+
+			var blobClient = azureAccount.CreateCloudBlobClient();
+			foreach (var container in blobClient.ListContainers()) {
+				if (container.Name != "wad-control-container") {
+					Console.WriteLine("\nContainer: {0}", container.Name);
+					if (container.Name.StartsWith("unittests")) {
+						container.Delete();
+					} else {
+						var options = new BlobRequestOptions
+						{ UseFlatBlobListing = true, BlobListingDetails = BlobListingDetails.Metadata, };
+						var blobs = container.ListBlobs(options).OfType<CloudBlob>().ToList();
+						foreach (var blob in blobs) {
+							Console.WriteLine("\tBlob: {0} {1}", blob.Uri, blob.Metadata["DeleteAfter"]);
+						}
+
+						await Task.WhenAll(blobs.Select(b => b.DeleteAsync()));
+					}
+				}
+			}
+		}
+
 		private static async Task<Endpoint> GetFriendEndpointAsync(ICryptoProvider cryptoProvider, Endpoint defaultEndpoint) {
 			Requires.NotNull(cryptoProvider, "cryptoProvider");
 
@@ -112,7 +135,8 @@
 					await channel.PostAsync(payload, new[] { friend }, DateTime.UtcNow + TimeSpan.FromMinutes(5));
 				}
 
-				var incoming = await channel.ReceiveAsync();
+				Console.WriteLine("Awaiting friend's reply...");
+				var incoming = await channel.ReceiveAsync(longPoll: true);
 				foreach (var payload in incoming) {
 					var message = Encoding.UTF8.GetString(payload.Content);
 					Console.WriteLine("< {0}", message);
