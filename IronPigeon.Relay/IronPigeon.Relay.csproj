@@ -157,6 +157,7 @@
   <ItemGroup>
     <Compile Include="App_Code\InboxOwnerAuthorize.cs" />
     <Compile Include="App_Start\AzureStorageConfig.cs" />
+    <Compile Include="Controllers\AddressBookController.cs" />
     <Compile Include="Controllers\BlobController.cs" />
     <Compile Include="Controllers\InboxController.cs" />
     <Compile Include="Global.asax.cs">
@@ -199,6 +200,9 @@
       <Project>{befb82d5-c686-4d50-91c7-419846c8f201}</Project>
       <Name>IronPigeon</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Views\AddressBook\Index.cshtml" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

@@ -56,12 +56,17 @@
 
 			DateTime expirationUtc = DateTime.UtcNow + TimeSpan.FromMinutes(lifetimeInMinutes);
 			string contentType = this.Request.Content.Headers.ContentType != null
-				                     ? this.Request.Content.Headers.ContentType.ToString()
-				                     : null;
+									 ? this.Request.Content.Headers.ContentType.ToString()
+									 : null;
 			string contentEncoding = this.Request.Content.Headers.ContentEncoding.FirstOrDefault();
 			var content = await this.Request.Content.ReadAsStreamAsync();
-			var location = await this.CloudBlobStorageProvider.UploadMessageAsync(content, expirationUtc, contentType, contentEncoding);
-			return location.AbsoluteUri;
+			var blobLocation = await this.CloudBlobStorageProvider.UploadMessageAsync(content, expirationUtc, contentType, contentEncoding);
+
+			Uri resultLocation = contentType == AddressBookEntry.ContentType
+				? new Uri(this.Url.Link("Default", new { controller = "AddressBook", blob = blobLocation.AbsoluteUri }))
+				: blobLocation;
+
+			return resultLocation.AbsoluteUri;
 		}
 	}
 }
