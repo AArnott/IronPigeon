@@ -19,7 +19,7 @@
 
 		/// <summary>
 		/// The maximum security level allowed by the Bureau of Industry and Security, U.S. Department of Commerce
-		/// without a requirement to file an encryption registration.
+		/// without a requirement to file an encryption registration using ECCN number 5D992.
 		/// This is actually even less security than <see cref="Minimum"/>.
 		/// </summary>
 		/// <remarks>
@@ -138,7 +138,7 @@
 
 		/// <summary>
 		/// The maximum security level allowed by the Bureau of Industry and Security, U.S. Department of Commerce
-		/// without a requirement to file an encryption registration.
+		/// without a requirement to file an encryption registration using ECCN number 5D992.
 		/// This is actually quite minimal strength encryption.
 		/// </summary>
 		private class UnitedStatesExportableMaximumLevel : SecurityLevel {
