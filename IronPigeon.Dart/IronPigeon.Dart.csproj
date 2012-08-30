@@ -49,6 +49,12 @@
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
+  <PropertyGroup>
+    <SignAssembly>true</SignAssembly>
+  </PropertyGroup>
+  <PropertyGroup>
+    <AssemblyOriginatorKeyFile>Release.pfx</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
   <ItemGroup>
     <!-- A reference to the entire .NET Framework is automatically included -->
     <ProjectReference Include="..\IronPigeon\IronPigeon.csproj">
@@ -87,6 +93,7 @@
       <Link>IronPigeon.Dart.nuspec</Link>
     </None>
     <None Include="packages.config" />
+    <None Include="Release.pfx" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Strings.resx">
