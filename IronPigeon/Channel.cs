@@ -45,10 +45,16 @@
 		private HttpClient httpClient;
 
 		/// <summary>
+		/// The HTTP client to use for long poll HTTP requests.
+		/// </summary>
+		private HttpClient httpClientLongPoll;
+
+		/// <summary>
 		/// Initializes a new instance of the <see cref="Channel" /> class.
 		/// </summary>
 		public Channel() {
 			this.httpClient = new HttpClient(this.httpMessageHandler);
+			this.httpClientLongPoll = new HttpClient(this.httpMessageHandler) { Timeout = TimeSpan.FromMilliseconds(Timeout.Infinite) };
 			this.UrlShortener = new GoogleUrlShortener();
 		}
 
@@ -80,6 +86,7 @@
 				Requires.NotNull(value, "value");
 				this.httpMessageHandler = value;
 				this.httpClient = new HttpClient(value);
+				this.httpClientLongPoll = new HttpClient(value) { Timeout = TimeSpan.FromMilliseconds(Timeout.Infinite) };
 			}
 		}
 
@@ -430,13 +437,15 @@
 		private async Task<ReadOnlyListOfInboxItem> DownloadIncomingItemsAsync(bool longPoll, CancellationToken cancellationToken) {
 			var deserializer = new DataContractJsonSerializer(typeof(IncomingList));
 			var requestUri = this.Endpoint.PublicEndpoint.MessageReceivingEndpoint;
+			var httpClient = this.httpClient;
 			if (longPoll) {
 				requestUri = new Uri(requestUri.AbsoluteUri + "?longPoll=true");
+				httpClient = this.httpClientLongPoll;
 			}
 
 			while (true) {
 				try {
-					var responseMessage = await this.httpClient.GetAsync(requestUri, this.Endpoint.InboxOwnerCode, cancellationToken);
+					var responseMessage = await httpClient.GetAsync(requestUri, this.Endpoint.InboxOwnerCode, cancellationToken);
 					responseMessage.EnsureSuccessStatusCode();
 					var responseStream = await responseMessage.Content.ReadAsStreamAsync();
 					var inboxResults = (IncomingList)deserializer.ReadObject(responseStream);
