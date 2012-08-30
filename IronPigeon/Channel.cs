@@ -45,10 +45,16 @@
 		private HttpClient httpClient;
 
 		/// <summary>
+		/// The HTTP client to use for long poll HTTP requests.
+		/// </summary>
+		private HttpClient httpClientLongPoll;
+
+		/// <summary>
 		/// Initializes a new instance of the <see cref="Channel" /> class.
 		/// </summary>
 		public Channel() {
 			this.httpClient = new HttpClient(this.httpMessageHandler);
+			this.httpClientLongPoll = new HttpClient(this.httpMessageHandler) { Timeout = TimeSpan.FromMilliseconds(Timeout.Infinite) };
 			this.UrlShortener = new GoogleUrlShortener();
 		}
 
@@ -80,6 +86,7 @@
 				Requires.NotNull(value, "value");
 				this.httpMessageHandler = value;
 				this.httpClient = new HttpClient(value);
+				this.httpClientLongPoll = new HttpClient(value) { Timeout = TimeSpan.FromMilliseconds(Timeout.Infinite) };
 			}
 		}
 
@@ -171,6 +178,14 @@
 
 		#region Message receiving methods
 
+		/// <summary>
+		/// Downloads messages from the server.
+		/// </summary>
+		/// <param name="longPoll"><c>true</c> to asynchronously wait for messages if there are none immediately available for download.</param>
+		/// <param name="progress">A callback that receives messages as they are retrieved.</param>
+		/// <param name="cancellationToken">A token whose cancellation signals lost interest in the result of this method.</param>
+		/// <returns>A collection of all messages that were waiting at the time this method was invoked.</returns>
+		/// <exception cref="HttpRequestException">Thrown when a connection to the server could not be established, or was terminated.</exception>
 		public async Task<ReadOnlyListOfPayload> ReceiveAsync(bool longPoll = false, IProgress<Payload> progress = null, CancellationToken cancellationToken = default(CancellationToken)) {
 			var inboxItems = await this.DownloadIncomingItemsAsync(longPoll, cancellationToken);
 
@@ -422,20 +437,32 @@
 		private async Task<ReadOnlyListOfInboxItem> DownloadIncomingItemsAsync(bool longPoll, CancellationToken cancellationToken) {
 			var deserializer = new DataContractJsonSerializer(typeof(IncomingList));
 			var requestUri = this.Endpoint.PublicEndpoint.MessageReceivingEndpoint;
+			var httpClient = this.httpClient;
 			if (longPoll) {
 				requestUri = new Uri(requestUri.AbsoluteUri + "?longPoll=true");
+				httpClient = this.httpClientLongPoll;
 			}
 
-			var responseMessage = await this.httpClient.GetAsync(requestUri, this.Endpoint.InboxOwnerCode, cancellationToken);
-			responseMessage.EnsureSuccessStatusCode();
-			var responseStream = await responseMessage.Content.ReadAsStreamAsync();
-			var inboxResults = (IncomingList)deserializer.ReadObject(responseStream);
+			while (true) {
+				try {
+					var responseMessage = await httpClient.GetAsync(requestUri, this.Endpoint.InboxOwnerCode, cancellationToken);
+					responseMessage.EnsureSuccessStatusCode();
+					var responseStream = await responseMessage.Content.ReadAsStreamAsync();
+					var inboxResults = (IncomingList)deserializer.ReadObject(responseStream);
 
 #if NET40
-			return new ReadOnlyCollection<IncomingList.IncomingItem>(inboxResults.Items);
+					return new ReadOnlyCollection<IncomingList.IncomingItem>(inboxResults.Items);
 #else
-			return inboxResults.Items;
+					return inboxResults.Items;
 #endif
+				} catch (OperationCanceledException) {
+					// This can occur if the caller cancelled or if our HTTP client timed out.
+					// On time-outs, we want to re-establish.  For caller cancellation, propagate it out.
+					if (cancellationToken.IsCancellationRequested) {
+						throw;
+					}
+				}
+			}
 		}
 
 		/// <summary>Logs a message.</summary>

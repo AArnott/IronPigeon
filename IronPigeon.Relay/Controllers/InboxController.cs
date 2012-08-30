@@ -119,7 +119,7 @@
 				}
 
 				if (longPoll && blobs.Count == 0) {
-					await WaitIncomingMessageAsync(id);
+					await WaitIncomingMessageAsync(id).WithCancellation(this.Response.GetClientDisconnectedToken());
 				}
 			} while (longPoll && blobs.Count == 0);
 
