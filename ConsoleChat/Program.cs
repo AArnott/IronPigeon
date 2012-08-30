@@ -29,7 +29,7 @@
 			var azureAccount = CloudStorageAccount.FromConfigurationSetting("StorageConnectionString");
 
 			var blobStorage = new AzureBlobStorage(azureAccount, AzureBlobStorageContainerName);
-			var cryptoServices = new DesktopCryptoProvider(SecurityLevel.Minimal);
+			var cryptoServices = new DesktopCryptoProvider(SecurityLevel.Minimum);
 			var ownEndpoint = await CreateOrOpenEndpointAsync(cryptoServices);
 			if (ownEndpoint == null) {
 				return;

@@ -17,6 +17,11 @@
 			set { throw new NotSupportedException(); }
 		}
 
+		string ICryptoProvider.SymmetricAlgorithmName {
+			get { return "mock"; }
+			set { throw new NotSupportedException(); }
+		}
+
 		public int SignatureAsymmetricKeySize {
 			get { return KeyLengthInBytes; }
 			set { throw new NotSupportedException(); }
