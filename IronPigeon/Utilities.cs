@@ -294,7 +294,7 @@
 			if (cancellationToken.CanBeCanceled) {
 				var tcs = new TaskCompletionSource<bool>();
 				using (cancellationToken.Register(s => ((TaskCompletionSource<bool>)s).TrySetResult(true), tcs)) {
-					if (task != await Task.WhenAny(task, tcs.Task)) {
+					if (task != await TaskEx.WhenAny(task, tcs.Task)) {
 						cancellationToken.ThrowIfCancellationRequested();
 					}
 				}
@@ -315,7 +315,7 @@
 			if (cancellationToken.CanBeCanceled) {
 				var tcs = new TaskCompletionSource<bool>();
 				using (cancellationToken.Register(s => ((TaskCompletionSource<bool>)s).TrySetResult(true), tcs)) {
-					if (task != await Task.WhenAny(task, tcs.Task)) {
+					if (task != await TaskEx.WhenAny(task, tcs.Task)) {
 						cancellationToken.ThrowIfCancellationRequested();
 					}
 				}
