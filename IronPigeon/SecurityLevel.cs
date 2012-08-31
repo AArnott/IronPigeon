@@ -18,16 +18,6 @@
 		public static readonly SecurityLevel Maximum = new MaximumLevel();
 
 		/// <summary>
-		/// The maximum security level allowed by the Bureau of Industry and Security, U.S. Department of Commerce
-		/// without a requirement to file an encryption registration using ECCN number 5D992.
-		/// This is actually even less security than <see cref="Minimum"/>.
-		/// </summary>
-		/// <remarks>
-		/// See http://www.bis.doc.gov/encryption/question2.htm for details.
-		/// </remarks>
-		public static readonly SecurityLevel UnitedStatesExportableMaximum = new UnitedStatesExportableMaximumLevel();
-
-		/// <summary>
 		/// The minimal security level that still includes encryption and signatures.
 		/// Keys are generated much faster, but provide less protection.
 		/// </summary>
@@ -133,60 +123,6 @@
 			/// </value>
 			public override int BlobSymmetricKeySize {
 				get { return 128; }
-			}
-		}
-
-		/// <summary>
-		/// The maximum security level allowed by the Bureau of Industry and Security, U.S. Department of Commerce
-		/// without a requirement to file an encryption registration using ECCN number 5D992.
-		/// This is actually quite minimal strength encryption.
-		/// </summary>
-		private class UnitedStatesExportableMaximumLevel : SecurityLevel {
-			/// <summary>
-			/// Gets the name of the hash algorithm.
-			/// </summary>
-			/// <value>
-			/// The name of the hash algorithm.
-			/// </value>
-			public override string HashAlgorithmName {
-				get { return "SHA1"; }
-			}
-
-			/// <summary>
-			/// Gets the name of the symmetric algorithm to use.
-			/// </summary>
-			public override string SymmetricAlgorithmName {
-				get { return "RC2"; } // the only symmetric algorithm in .NET that allows less than 64-bit key sizes
-			}
-
-			/// <summary>
-			/// Gets the size of the encryption asymmetric key.
-			/// </summary>
-			/// <value>
-			/// The size of the encryption asymmetric key.
-			/// </value>
-			public override int EncryptionAsymmetricKeySize {
-				get { return 512; }
-			}
-
-			/// <summary>
-			/// Gets the size of the signature asymmetric key.
-			/// </summary>
-			/// <value>
-			/// The size of the signature asymmetric key.
-			/// </value>
-			public override int SignatureAsymmetricKeySize {
-				get { return 512; }
-			}
-
-			/// <summary>
-			/// Gets the size of the BLOB symmetric key.
-			/// </summary>
-			/// <value>
-			/// The size of the BLOB symmetric key.
-			/// </value>
-			public override int BlobSymmetricKeySize {
-				get { return 56; }
 			}
 		}
 
