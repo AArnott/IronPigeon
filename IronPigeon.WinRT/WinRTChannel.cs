@@ -44,7 +44,7 @@
 			request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", this.Endpoint.InboxOwnerCode);
 			request.Content = new FormUrlEncodedContent(new Dictionary<string, string> {
 				{ "channel_uri", pushNotificationChannel.Uri },
-				{ "channel_content", pushContent },
+				{ "channel_content", pushContent ?? string.Empty },
 				{ "expiration", pushNotificationChannel.ExpirationTime.ToString(CultureInfo.InvariantCulture) },
 			});
 			var response = await this.HttpClient.SendAsync(request, cancellationToken);
