@@ -31,11 +31,17 @@
 			: base(blobStorageProvider, cryptoProvider, endpoint) {
 		}
 
+		/// <summary>
+		/// Registers a Windows 8 application to receive push notifications for incoming messages.
+		/// </summary>
+		/// <param name="pushNotificationChannel">The push notification channel.</param>
+		/// <param name="pushContent">Content of the push.</param>
+		/// <param name="cancellationToken">The cancellation token.</param>
 		public async Task RegisterPushNotificationChannelAsync(PushNotificationChannel pushNotificationChannel, string pushContent, CancellationToken cancellationToken = default(CancellationToken)) {
 			Requires.NotNull(pushNotificationChannel, "pushNotificationChannel");
 
 			var request = new HttpRequestMessage(HttpMethod.Put, this.Endpoint.PublicEndpoint.MessageReceivingEndpoint);
-			request.Headers.Authorization =  new AuthenticationHeaderValue("Bearer", this.Endpoint.InboxOwnerCode);
+			request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", this.Endpoint.InboxOwnerCode);
 			request.Content = new FormUrlEncodedContent(new Dictionary<string, string> {
 				{ "channel_uri", pushNotificationChannel.Uri },
 				{ "channel_content", pushContent },
