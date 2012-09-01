@@ -37,6 +37,7 @@
 		/// <param name="pushNotificationChannel">The push notification channel.</param>
 		/// <param name="pushContent">Content of the push.</param>
 		/// <param name="cancellationToken">The cancellation token.</param>
+		/// <returns>A task representing the async operation.</returns>
 		public async Task RegisterPushNotificationChannelAsync(PushNotificationChannel pushNotificationChannel, string pushContent, CancellationToken cancellationToken = default(CancellationToken)) {
 			Requires.NotNull(pushNotificationChannel, "pushNotificationChannel");
 
