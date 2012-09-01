@@ -175,32 +175,6 @@
 			return new EmptyResult();
 		}
 
-		private async Task PushNotifyInboxMessageAsync(InboxEntity inbox, int failedAttempts = 0) {
-			string bearerToken = await this.AcquireWnsPushBearerTokenAsync();
-			var pushNotifyRequest = new HttpRequestMessage(HttpMethod.Put, inbox.PushChannelUri);
-			pushNotifyRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", bearerToken);
-			pushNotifyRequest.Headers.Add("X-WNS-Type", "wns/raw");
-			pushNotifyRequest.Content = new StringContent(inbox.PushChannelContent ?? string.Empty);
-			pushNotifyRequest.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream"); // yes, it's a string, but we must claim it's an octet-stream
-
-			var response = await this.HttpClient.SendAsync(pushNotifyRequest);
-			if (!response.IsSuccessStatusCode) {
-				if (failedAttempts == 0) {
-					var authHeader = response.Headers.WwwAuthenticate.FirstOrDefault();
-					if (authHeader != null) {
-						if (authHeader.Parameter.Contains("Token expired")) {
-							this.wnsBearerToken = null; // clear out the expired token.
-							await this.PushNotifyInboxMessageAsync(inbox, failedAttempts + 1);
-							return;
-						}
-					}
-				}
-
-				// Log a failure.
-				// TODO: code here.
-			}
-		}
-
 		[HttpPut, ActionName("Slot"), InboxOwnerAuthorize]
 		public async Task<ActionResult> PushChannelAsync(string id) {
 			var channelUri = new Uri(this.Request.Form["channel_uri"], UriKind.Absolute);
@@ -211,7 +185,8 @@
 			inbox.PushChannelUri = channelUri.AbsoluteUri;
 			inbox.PushChannelContent = content;
 			this.InboxTable.UpdateObject(inbox);
-			this.InboxTable.SaveChangesAsync();
+			await this.InboxTable.SaveChangesAsync();
+			return new EmptyResult();
 		}
 
 		/// <summary>
@@ -343,6 +318,34 @@
 			}
 
 			return tcs.Task;
+		}
+
+		private async Task PushNotifyInboxMessageAsync(InboxEntity inbox, int failedAttempts = 0) {
+			Requires.NotNull(inbox, "inbox");
+
+			string bearerToken = await this.AcquireWnsPushBearerTokenAsync();
+			var pushNotifyRequest = new HttpRequestMessage(HttpMethod.Post, inbox.PushChannelUri);
+			pushNotifyRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", bearerToken);
+			pushNotifyRequest.Headers.Add("X-WNS-Type", "wns/raw");
+			pushNotifyRequest.Content = new StringContent(inbox.PushChannelContent ?? string.Empty);
+			pushNotifyRequest.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream"); // yes, it's a string, but we must claim it's an octet-stream
+
+			var response = await this.HttpClient.SendAsync(pushNotifyRequest);
+			if (!response.IsSuccessStatusCode) {
+				if (failedAttempts == 0) {
+					var authHeader = response.Headers.WwwAuthenticate.FirstOrDefault();
+					if (authHeader != null) {
+						if (authHeader.Parameter.Contains("Token expired")) {
+							this.wnsBearerToken = null; // clear out the expired token.
+							await this.PushNotifyInboxMessageAsync(inbox, failedAttempts + 1);
+							return;
+						}
+					}
+				}
+
+				// Log a failure.
+				// TODO: code here.
+			}
 		}
 
 		private async Task AlertLongPollWaiterAsync(InboxEntity inbox) {
