@@ -22,7 +22,7 @@
 		}
 
 		public override bool VerifySignature(byte[] signingPublicKey, byte[] data, byte[] signature) {
-			var key = SignatureProvider.ImportPublicKey(signingPublicKey.ToBuffer());
+			var key = SignatureProvider.ImportPublicKey(signingPublicKey.ToBuffer(), CryptographicPublicKeyBlobType.Capi1PublicKey);
 			return CryptographicEngine.VerifySignature(key, data.ToBuffer(), signature.ToBuffer());
 		}
 
@@ -45,7 +45,7 @@
 		}
 
 		public override byte[] Encrypt(byte[] encryptionPublicKey, byte[] data) {
-			var key = EncryptionProvider.ImportPublicKey(encryptionPublicKey.ToBuffer());
+			var key = EncryptionProvider.ImportPublicKey(encryptionPublicKey.ToBuffer(), CryptographicPublicKeyBlobType.Capi1PublicKey);
 			return CryptographicEngine.Encrypt(key, data.ToBuffer(), null).ToArray();
 		}
 

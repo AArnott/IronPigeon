@@ -20,6 +20,8 @@
     <IISExpressAnonymousAuthentication />
     <IISExpressWindowsAuthentication />
     <IISExpressUseClassicPipelineMode />
+    <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
+    <RestorePackages>true</RestorePackages>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -40,7 +42,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'ReleaseNET40|AnyCPU'">
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
-    <TargetFrameworkProfile></TargetFrameworkProfile>
+    <TargetFrameworkProfile>
+    </TargetFrameworkProfile>
     <OutputPath>bin\</OutputPath>
     <DefineConstants>TRACE;NET40</DefineConstants>
     <Optimize>true</Optimize>
@@ -55,18 +58,22 @@
     <Reference Include="Microsoft.CompilerServices.AsyncTargetingPack.Net4">
       <HintPath>..\packages\Microsoft.CompilerServices.AsyncTargetingPack.1.0.0\lib\net40\Microsoft.CompilerServices.AsyncTargetingPack.Net4.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.WindowsAzure.StorageClient.Async, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="Microsoft.WindowsAzure.StorageClient.Async, Version=1.0.0.0, Culture=neutral, PublicKeyToken=3042ba97c5930d49, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\Microsoft.WindowsAzure.StorageClient.Async.0.1.2-preview\lib\net40\Microsoft.WindowsAzure.StorageClient.Async.dll</HintPath>
+      <HintPath>..\packages\Microsoft.WindowsAzure.StorageClient.Async.0.1.4-preview\lib\net40\Microsoft.WindowsAzure.StorageClient.Async.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFrameworkVersion)' != 'v4.0' ">
     <Reference Include="Microsoft.CompilerServices.AsyncTargetingPack.Net45">
       <HintPath>..\packages\Microsoft.CompilerServices.AsyncTargetingPack.1.0.0\lib\net45\Microsoft.CompilerServices.AsyncTargetingPack.Net45.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.WindowsAzure.StorageClient.Async, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="System.Threading.Tasks.Dataflow, Version=4.5.5.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\Microsoft.WindowsAzure.StorageClient.Async.0.1.2-preview\lib\net45\Microsoft.WindowsAzure.StorageClient.Async.dll</HintPath>
+      <HintPath>..\packages\Microsoft.Tpl.Dataflow.4.5.5-rc\lib\net45\System.Threading.Tasks.Dataflow.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.WindowsAzure.StorageClient.Async, Version=1.0.0.0, Culture=neutral, PublicKeyToken=3042ba97c5930d49, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\Microsoft.WindowsAzure.StorageClient.Async.0.1.4-preview\lib\net45\Microsoft.WindowsAzure.StorageClient.Async.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -87,10 +94,6 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Data.Services.Client" />
     <Reference Include="System.Drawing" />
-    <Reference Include="System.Threading.Tasks.Dataflow, Version=4.5.5.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\Microsoft.Tpl.Dataflow.4.5.5-rc\lib\net45\System.Threading.Tasks.Dataflow.dll</HintPath>
-    </Reference>
     <Reference Include="System.Web.DynamicData" />
     <Reference Include="System.Web.Entity" />
     <Reference Include="System.Web.ApplicationServices" />
@@ -152,8 +155,11 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="App_Code\ExtensionMethods.cs" />
     <Compile Include="App_Code\InboxOwnerAuthorize.cs" />
     <Compile Include="App_Start\AzureStorageConfig.cs" />
+    <Compile Include="Controllers\AddressBookController.cs" />
+    <Compile Include="Controllers\BlobController.cs" />
     <Compile Include="Controllers\InboxController.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
@@ -195,6 +201,9 @@
       <Project>{befb82d5-c686-4d50-91c7-419846c8f201}</Project>
       <Name>IronPigeon</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Views\AddressBook\Index.cshtml" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

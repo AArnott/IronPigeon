@@ -11,6 +11,8 @@
     <AssemblyName>IronPigeon.Desktop</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
+    <RestorePackages>true</RestorePackages>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -33,7 +35,8 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'ReleaseNET40|AnyCPU'">
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
-    <TargetFrameworkProfile></TargetFrameworkProfile>
+    <TargetFrameworkProfile>
+    </TargetFrameworkProfile>
     <OutputPath>bin\ReleaseNET40\</OutputPath>
     <DefineConstants>TRACE;NET40</DefineConstants>
     <DocumentationFile>bin\ReleaseNET40\IronPigeon.Desktop.XML</DocumentationFile>
@@ -43,22 +46,32 @@
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
+  <PropertyGroup>
+    <SignAssembly>true</SignAssembly>
+  </PropertyGroup>
+  <PropertyGroup>
+    <AssemblyOriginatorKeyFile>Release.pfx</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
   <ItemGroup Condition=" '$(TargetFrameworkVersion)' == 'v4.0' ">
     <Reference Include="Microsoft.CompilerServices.AsyncTargetingPack.Net4">
       <HintPath>..\packages\Microsoft.CompilerServices.AsyncTargetingPack.1.0.0\lib\net40\Microsoft.CompilerServices.AsyncTargetingPack.Net4.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.WindowsAzure.StorageClient.Async, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="Microsoft.WindowsAzure.StorageClient.Async, Version=1.0.0.0, Culture=neutral, PublicKeyToken=3042ba97c5930d49, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\Microsoft.WindowsAzure.StorageClient.Async.0.1.2-preview\lib\net40\Microsoft.WindowsAzure.StorageClient.Async.dll</HintPath>
+      <HintPath>..\packages\Microsoft.WindowsAzure.StorageClient.Async.0.1.4-preview\lib\net40\Microsoft.WindowsAzure.StorageClient.Async.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFrameworkVersion)' != 'v4.0' ">
     <Reference Include="Microsoft.CompilerServices.AsyncTargetingPack.Net45">
       <HintPath>..\packages\Microsoft.CompilerServices.AsyncTargetingPack.1.0.0\lib\net45\Microsoft.CompilerServices.AsyncTargetingPack.Net45.dll</HintPath>
     </Reference>
-    <Reference Include="Microsoft.WindowsAzure.StorageClient.Async, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="Microsoft.WindowsAzure.StorageClient.Async, Version=1.0.0.0, Culture=neutral, PublicKeyToken=3042ba97c5930d49, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\Microsoft.WindowsAzure.StorageClient.Async.0.1.2-preview\lib\net45\Microsoft.WindowsAzure.StorageClient.Async.dll</HintPath>
+      <HintPath>..\packages\Microsoft.WindowsAzure.StorageClient.Async.0.1.4-preview\lib\net45\Microsoft.WindowsAzure.StorageClient.Async.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Threading.Tasks.Dataflow, Version=4.5.5.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\Microsoft.Tpl.Dataflow.4.5.5-rc\lib\net45\System.Threading.Tasks.Dataflow.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -75,10 +88,6 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Data.Services.Client" />
-    <Reference Include="System.Threading.Tasks.Dataflow, Version=4.5.5.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\Microsoft.Tpl.Dataflow.4.5.5-rc\lib\net45\System.Threading.Tasks.Dataflow.dll</HintPath>
-    </Reference>
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -99,6 +108,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <None Include="Release.pfx" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(SolutionDir)\.nuget\nuget.targets" />

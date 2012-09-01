@@ -41,17 +41,19 @@
 		/// </summary>
 		public static readonly TimeSpan MaxLifetimeCeiling = TimeSpan.FromDays(14);
 
+		private static readonly Dictionary<string, TaskCompletionSource<object>> longPollWaiters = new Dictionary<string, TaskCompletionSource<object>>();
+
+		/// <summary>
+		/// The key to the Azure account configuration information.
+		/// </summary>
+		internal const string DefaultCloudConfigurationName = "StorageConnectionString";
+
 		/// <summary>
 		/// The default name for the container used to store posted messages.
 		/// </summary>
 		private const string DefaultInboxContainerName = "inbox";
 
 		private const string DefaultInboxTableName = "inbox";
-
-		/// <summary>
-		/// The key to the Azure account configuration information.
-		/// </summary>
-		private const string DefaultCloudConfigurationName = "StorageConnectionString";
 
 		private string wnsBearerToken;
 
@@ -109,18 +111,26 @@
 		}
 
 		[HttpGet, ActionName("Slot"), InboxOwnerAuthorize]
-		public async Task<ActionResult> GetInboxItemsAsync(string id) {
+		public async Task<ActionResult> GetInboxItemsAsync(string id, bool longPoll = false) {
 			var directory = this.InboxContainer.GetDirectoryReference(id);
 			var blobs = new List<IncomingList.IncomingItem>();
-			try {
-				var directoryListing = await directory.ListBlobsSegmentedAsync(50);
-				var notExpiringBefore = DateTime.UtcNow;
-				blobs.AddRange(
-					from blob in directoryListing.OfType<CloudBlob>()
-					where DateTime.Parse(blob.Metadata[ExpirationDateMetadataKey]) > notExpiringBefore
-					select new IncomingList.IncomingItem { Location = blob.Uri, DatePostedUtc = blob.Properties.LastModifiedUtc });
-			} catch (StorageClientException) {
-			}
+			do {
+				try {
+					var blobRequestOptions = new BlobRequestOptions { BlobListingDetails = BlobListingDetails.Metadata };
+					var directoryListing = await directory.ListBlobsSegmentedAsync(50, blobRequestOptions);
+					var notExpiringBefore = DateTime.UtcNow;
+					blobs.AddRange(
+						from blob in directoryListing.OfType<CloudBlob>()
+						let expirationString = blob.Metadata[ExpirationDateMetadataKey]
+						where expirationString != null && DateTime.Parse(expirationString) > notExpiringBefore
+						select new IncomingList.IncomingItem { Location = blob.Uri, DatePostedUtc = blob.Properties.LastModifiedUtc });
+				} catch (StorageClientException) {
+				}
+
+				if (longPoll && blobs.Count == 0) {
+					await WaitIncomingMessageAsync(id).WithCancellation(this.Response.GetClientDisconnectedToken());
+				}
+			} while (longPoll && blobs.Count == 0);
 
 			var list = new IncomingList() { Items = blobs };
 			return new JsonResult() {
@@ -160,9 +170,7 @@
 				throw new ArgumentException("Maximum message notification size exceeded.");
 			}
 
-			if (inbox.PushChannelUri != null) {
-				await this.PushNotifyInboxMessageAsync(inbox);
-			}
+			await this.AlertLongPollWaiterAsync(inbox);
 
 			return new EmptyResult();
 		}
@@ -223,7 +231,7 @@
 			Requires.NotNullOrEmpty(id, "id");
 
 			if (notification == null) {
-				return await DeleteAsync(id);
+				return await this.DeleteAsync(id);
 			}
 
 			Requires.NotNullOrEmpty(notification, "notification");
@@ -234,7 +242,15 @@
 			var directory = this.InboxContainer.GetDirectoryReference(id);
 			if (directory.Uri.IsBaseOf(new Uri(notification, UriKind.Absolute))) {
 				var blob = this.InboxContainer.GetBlobReference(notification);
-				await blob.DeleteAsync();
+				try {
+					await blob.DeleteAsync();
+				} catch (StorageClientException ex) {
+					if (ex.StatusCode == HttpStatusCode.NotFound) {
+						return new HttpNotFoundResult(ex.Message);
+					}
+
+					throw;
+				}
 				return new EmptyResult();
 			} else {
 				return new HttpUnauthorizedResult("Notification URL does not match owner id.");
@@ -316,6 +332,37 @@
 
 		protected virtual Uri GetAbsoluteUrlForAction(string action, dynamic routeValues) {
 			return new Uri(this.Request.Url, this.Url.Action(action, routeValues));
+		}
+
+		private static Task WaitIncomingMessageAsync(string id) {
+			TaskCompletionSource<object> tcs;
+			lock (longPollWaiters) {
+				if (!longPollWaiters.TryGetValue(id, out tcs)) {
+					longPollWaiters[id] = tcs = new TaskCompletionSource<object>();
+				}
+			}
+
+			return tcs.Task;
+		}
+
+		private async Task AlertLongPollWaiterAsync(InboxEntity inbox) {
+			Requires.NotNull(inbox, "inbox");
+
+			if (inbox.PushChannelUri != null) {
+				await this.PushNotifyInboxMessageAsync(inbox);
+			}
+
+			var id = inbox.RowKey;
+			TaskCompletionSource<object> tcs;
+			lock (longPollWaiters) {
+				if (longPollWaiters.TryGetValue(id, out tcs)) {
+					longPollWaiters.Remove(id);
+				}
+			}
+
+			if (tcs != null) {
+				tcs.TrySetResult(null);
+			}
 		}
 
 		private async Task<InboxEntity> GetInboxAsync(string id) {

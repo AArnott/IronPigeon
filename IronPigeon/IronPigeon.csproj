@@ -14,6 +14,8 @@
     <TargetFrameworkProfile>Profile7</TargetFrameworkProfile>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{786C830F-07A1-408B-BD7F-6EE04809D6DB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+    <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
+    <RestorePackages>true</RestorePackages>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -47,6 +49,12 @@
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
+  <PropertyGroup>
+    <SignAssembly>true</SignAssembly>
+  </PropertyGroup>
+  <PropertyGroup>
+    <AssemblyOriginatorKeyFile>Release.pfx</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
   <ItemGroup>
     <Compile Include="AddressBookEntry.cs" />
     <Compile Include="BadAddressBookEntryException.cs" />
@@ -60,6 +68,7 @@
     <Compile Include="ILogger.cs" />
     <Compile Include="IncomingList.cs" />
     <Compile Include="InvalidMessageException.cs" />
+    <Compile Include="IUrlShortener.cs" />
     <Compile Include="OnlineAddressBook.cs" />
     <Compile Include="Payload.cs" />
     <Compile Include="OwnEndpoint.cs" />
@@ -68,6 +77,8 @@
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Providers\DirectEntryAddressBook.cs" />
+    <Compile Include="Providers\GoogleUrlShortener.cs" />
+    <Compile Include="Providers\RelayCloudBlobStorageProvider.cs" />
     <Compile Include="SecurityLevel.cs" />
     <Compile Include="Relay\InboxCreationResponse.cs" />
     <Compile Include="Strings.Designer.cs">
@@ -108,6 +119,7 @@
       <Link>IronPigeon.nuspec</Link>
     </None>
     <None Include="packages.config" />
+    <None Include="Release.pfx" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" Condition=" '$(TargetFrameworkVersion)' != 'v4.0' " />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" Condition=" '$(TargetFrameworkVersion)' == 'v4.0' " />

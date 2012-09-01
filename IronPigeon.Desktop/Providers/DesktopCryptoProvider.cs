@@ -17,13 +17,13 @@
 		/// with the default security level.
 		/// </summary>
 		public DesktopCryptoProvider()
-			: this(SecurityLevel.Recommended) {
+			: this(SecurityLevel.Maximum) {
 		}
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="DesktopCryptoProvider" /> class.
 		/// </summary>
-		/// <param name="securityLevel">The security level to apply to this instance.  The default is <see cref="SecurityLevel.Recommended"/>.</param>
+		/// <param name="securityLevel">The security level to apply to this instance.  The default is <see cref="SecurityLevel.Maximum"/>.</param>
 		public DesktopCryptoProvider(SecurityLevel securityLevel) {
 			Requires.NotNull(securityLevel, "securityLevel");
 			securityLevel.Apply(this);
@@ -44,7 +44,7 @@
 		}
 
 		public override SymmetricEncryptionResult Encrypt(byte[] data) {
-			using (var alg = SymmetricAlgorithm.Create()) {
+			using (var alg = SymmetricAlgorithm.Create(this.SymmetricAlgorithmName)) {
 				alg.KeySize = this.BlobSymmetricKeySize;
 				using (var encryptor = alg.CreateEncryptor()) {
 					using (var memoryStream = new MemoryStream()) {
@@ -59,7 +59,7 @@
 		}
 
 		public override byte[] Decrypt(SymmetricEncryptionResult data) {
-			using (var alg = SymmetricAlgorithm.Create()) {
+			using (var alg = SymmetricAlgorithm.Create(this.SymmetricAlgorithmName)) {
 				using (var decryptor = alg.CreateDecryptor(data.Key, data.IV)) {
 					using (var plaintextStream = new MemoryStream()) {
 						using (var cryptoStream = new CryptoStream(plaintextStream, decryptor, CryptoStreamMode.Write)) {

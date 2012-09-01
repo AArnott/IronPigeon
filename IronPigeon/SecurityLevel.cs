@@ -15,13 +15,13 @@
 		/// The recommended security level for personal or business communications.
 		/// Keys may take several seconds to generate, but provide maximum protection.
 		/// </summary>
-		public static readonly SecurityLevel Recommended = new MaximumLevel();
+		public static readonly SecurityLevel Maximum = new MaximumLevel();
 
 		/// <summary>
 		/// The minimal security level that still includes encryption and signatures.
 		/// Keys are generated much faster, but provide less protection.
 		/// </summary>
-		public static readonly SecurityLevel Minimal = new MinimalLevel();
+		public static readonly SecurityLevel Minimum = new MinimumLevel();
 
 		/// <summary>
 		/// Gets the name of the hash algorithm.
@@ -30,6 +30,11 @@
 		/// The name of the hash algorithm.
 		/// </value>
 		public abstract string HashAlgorithmName { get; }
+
+		/// <summary>
+		/// Gets the name of the symmetric algorithm to use.
+		/// </summary>
+		public abstract string SymmetricAlgorithmName { get; }
 
 		/// <summary>
 		/// Gets the size of the encryption asymmetric key.
@@ -63,6 +68,7 @@
 			Requires.NotNull(cryptoProvider, "cryptoProvider");
 
 			cryptoProvider.HashAlgorithmName = this.HashAlgorithmName;
+			cryptoProvider.SymmetricAlgorithmName = this.SymmetricAlgorithmName;
 			cryptoProvider.EncryptionAsymmetricKeySize = this.EncryptionAsymmetricKeySize;
 			cryptoProvider.SignatureAsymmetricKeySize = this.SignatureAsymmetricKeySize;
 			cryptoProvider.BlobSymmetricKeySize = this.BlobSymmetricKeySize;
@@ -71,7 +77,7 @@
 		/// <summary>
 		/// Minimal key sizes.
 		/// </summary>
-		private class MinimalLevel : SecurityLevel {
+		private class MinimumLevel : SecurityLevel {
 			/// <summary>
 			/// Gets the name of the hash algorithm.
 			/// </summary>
@@ -80,6 +86,13 @@
 			/// </value>
 			public override string HashAlgorithmName {
 				get { return "SHA1"; }
+			}
+
+			/// <summary>
+			/// Gets the name of the symmetric algorithm to use.
+			/// </summary>
+			public override string SymmetricAlgorithmName {
+				get { return "Rijndael"; }
 			}
 
 			/// <summary>
@@ -125,6 +138,13 @@
 			/// </value>
 			public override string HashAlgorithmName {
 				get { return "SHA256"; }
+			}
+
+			/// <summary>
+			/// Gets the name of the symmetric algorithm to use.
+			/// </summary>
+			public override string SymmetricAlgorithmName {
+				get { return "Rijndael"; }
 			}
 
 			/// <summary>

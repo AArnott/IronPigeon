@@ -1,0 +1,5 @@
+{
+ "kind": "urlshortener#url",
+ "id": "http://goo.gl/fbsS",
+ "longUrl": "http://www.google.com/"
+}

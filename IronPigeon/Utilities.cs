@@ -4,6 +4,7 @@
 	using System.Diagnostics.Contracts;
 	using System.Globalization;
 	using System.IO;
+	using System.Linq;
 	using System.Net;
 	using System.Net.Http;
 	using System.Net.Http.Headers;
@@ -12,6 +13,9 @@
 	using System.Threading;
 	using System.Threading.Tasks;
 	using Microsoft;
+#if !NET40
+	using TaskEx = System.Threading.Tasks.Task;
+#endif
 
 	public static class Utilities {
 		/// <summary>
@@ -227,6 +231,98 @@
 		/// <param name="level">The level of security to apply.</param>
 		public static void ApplySecurityLevel(this ICryptoProvider cryptoProvider, SecurityLevel level) {
 			level.Apply(cryptoProvider);
+		}
+
+		/// <summary>
+		/// Shortens the specified long URL, but leaves the fragment part (if present) visibly applied to the shortened URL.
+		/// </summary>
+		/// <param name="longUrl">The long URL.</param>
+		/// <returns>The short URL.</returns>
+		public static async Task<Uri> ShortenExcludeFragmentAsync(this IUrlShortener shortener, Uri longUrl) {
+			Requires.NotNull(shortener, "shortener");
+
+			Uri longUriWithoutFragment;
+			if (longUrl.Fragment.Length == 0) {
+				longUriWithoutFragment = longUrl;
+			} else {
+				var removeFragmentBuilder = new UriBuilder(longUrl);
+				removeFragmentBuilder.Fragment = null;
+				longUriWithoutFragment = removeFragmentBuilder.Uri;
+			}
+
+			var shortUrl = await shortener.ShortenAsync(longUriWithoutFragment);
+
+			if (longUrl.Fragment.Length > 0) {
+				var addFragmentBuilder = new UriBuilder(shortUrl);
+				addFragmentBuilder.Fragment = longUrl.Fragment.Substring(1);
+				shortUrl = addFragmentBuilder.Uri;
+			}
+
+			return shortUrl;
+		}
+
+		/// <summary>
+		/// Retrieves a contact with some user supplied identifier.
+		/// </summary>
+		/// <param name="addressBooks">The address books to lookup an identifier in.</param>
+		/// <param name="identifier">The user-supplied identifier for the contact.</param>
+		/// <param name="cancellationToken">A cancellation token.</param>
+		/// <returns>
+		/// A task whose result is the contact, or null if no match is found.
+		/// </returns>
+		/// <exception cref="BadAddressBookEntryException">Thrown when a validation error occurs while reading the address book entry.</exception>
+		public static async Task<Endpoint> LookupAsync(this IEnumerable<AddressBook> addressBooks, string identifier, CancellationToken cancellationToken = default(CancellationToken)) {
+			Requires.NotNull(addressBooks, "addressBooks");
+			Requires.NotNullOrEmpty(identifier, "identifier");
+
+			// NOTE: we could optimize this to return as soon as the *first* address book
+			// returned a non-null result, and cancel the rest, rather than wait for
+			// results from all of them.
+			var results = await TaskEx.WhenAll(addressBooks.Select(ab => ab.LookupAsync(identifier, cancellationToken)));
+			return results.FirstOrDefault(result => result != null);
+		}
+
+		/// <summary>
+		/// Wraps a task with one that will complete as cancelled based on a cancellation token, 
+		/// allowing someone to await a task but be able to break out early by cancelling the token.
+		/// </summary>
+		/// <typeparam name="T">The type of value returned by the task.</typeparam>
+		/// <param name="task">The task to wrap.</param>
+		/// <param name="cancellationToken">The token that can be canceled to break out of the await.</param>
+		/// <returns>The wrapping task.</returns>
+		public static async Task<T> WithCancellation<T>(this Task<T> task, CancellationToken cancellationToken) {
+			if (cancellationToken.CanBeCanceled) {
+				var tcs = new TaskCompletionSource<bool>();
+				using (cancellationToken.Register(s => ((TaskCompletionSource<bool>)s).TrySetResult(true), tcs)) {
+					if (task != await TaskEx.WhenAny(task, tcs.Task)) {
+						cancellationToken.ThrowIfCancellationRequested();
+					}
+				}
+			}
+
+			// Return result or rethrow any fault/cancellation exception.
+			return await task;
+		}
+
+		/// <summary>
+		/// Wraps a task with one that will complete as cancelled based on a cancellation token, 
+		/// allowing someone to await a task but be able to break out early by cancelling the token.
+		/// </summary>
+		/// <param name="task">The task to wrap.</param>
+		/// <param name="cancellationToken">The token that can be canceled to break out of the await.</param>
+		/// <returns>The wrapping task.</returns>
+		public static async Task WithCancellation(this Task task, CancellationToken cancellationToken) {
+			if (cancellationToken.CanBeCanceled) {
+				var tcs = new TaskCompletionSource<bool>();
+				using (cancellationToken.Register(s => ((TaskCompletionSource<bool>)s).TrySetResult(true), tcs)) {
+					if (task != await TaskEx.WhenAny(task, tcs.Task)) {
+						cancellationToken.ThrowIfCancellationRequested();
+					}
+				}
+			}
+
+			// Rethrow any fault/cancellation exception.
+			await task;
 		}
 
 		/// <summary>
