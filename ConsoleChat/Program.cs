@@ -37,6 +37,7 @@
 
 			await InitializeLocalCloudAsync(azureAccount, blobStorage);
 			var channel = new Channel(blobStorage, cryptoServices, ownEndpoint);
+			channel.UrlShortener = null;
 			await channel.CreateInboxAsync(new Uri(ConfigurationManager.ConnectionStrings["RelayService"].ConnectionString));
 			var shareableAddress = await channel.PublishAddressBookEntryAsync();
 			Console.WriteLine("Public receiving endpoint: {0}", shareableAddress.AbsoluteUri);
