@@ -55,8 +55,6 @@
 
 		private const string DefaultInboxTableName = "inbox";
 
-		private string wnsBearerToken;
-
 		/// <summary>
 		/// Initializes a new instance of the <see cref="InboxController" /> class.
 		/// </summary>
@@ -80,7 +78,10 @@
 			var tableClient = storage.CreateCloudTableClient();
 			this.InboxTable = new InboxContext(tableClient, tableName);
 			this.HttpClient = new HttpClient();
+			this.ClientTable = new PushNotificationContext(tableClient, WindowsPushNotificationClientController.DefaultTableName);
 		}
+
+		public PushNotificationContext ClientTable { get; set; }
 
 		/// <summary>
 		/// Gets or sets the inbox container.
@@ -184,6 +185,7 @@
 			var inbox = await this.GetInboxAsync(id);
 			inbox.PushChannelUri = channelUri.AbsoluteUri;
 			inbox.PushChannelContent = content;
+			inbox.ClientPackageSecurityIdentifier = this.Request.Form["package_security_identifier"];
 			this.InboxTable.UpdateObject(inbox);
 			await this.InboxTable.SaveChangesAsync();
 			return new EmptyResult();
@@ -323,7 +325,12 @@
 		private async Task PushNotifyInboxMessageAsync(InboxEntity inbox, int failedAttempts = 0) {
 			Requires.NotNull(inbox, "inbox");
 
-			string bearerToken = await this.AcquireWnsPushBearerTokenAsync();
+			if (string.IsNullOrEmpty(inbox.ClientPackageSecurityIdentifier)) {
+				return;
+			}
+
+			var client = await this.ClientTable.GetAsync(inbox.ClientPackageSecurityIdentifier);
+			string bearerToken = client.AccessToken;
 			var pushNotifyRequest = new HttpRequestMessage(HttpMethod.Post, inbox.PushChannelUri);
 			pushNotifyRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", bearerToken);
 			pushNotifyRequest.Headers.Add("X-WNS-Type", "wns/raw");
@@ -336,7 +343,9 @@
 					var authHeader = response.Headers.WwwAuthenticate.FirstOrDefault();
 					if (authHeader != null) {
 						if (authHeader.Parameter.Contains("Token expired")) {
-							this.wnsBearerToken = null; // clear out the expired token.
+							await client.AcquireWnsPushBearerTokenAsync(this.HttpClient);
+							this.ClientTable.UpdateObject(client);
+							await this.ClientTable.SaveChangesAsync();
 							await this.PushNotifyInboxMessageAsync(inbox, failedAttempts + 1);
 							return;
 						}
@@ -378,30 +387,6 @@
 				var permissions = new BlobContainerPermissions { PublicAccess = BlobContainerPublicAccessType.Blob };
 				await this.InboxContainer.SetPermissionsAsync(permissions);
 			}
-		}
-
-		private async Task<string> AcquireWnsPushBearerTokenAsync() {
-			if (this.wnsBearerToken == null) {
-				var tokenEndpoint = new Uri("https://login.live.com/accesstoken.srf");
-				var clientId = ConfigurationManager.AppSettings["WNSClientID"];
-				var clientSecret = ConfigurationManager.AppSettings["WNSClientSecret"];
-				const string Scope = "notify.windows.com";
-
-				var formData = new Dictionary<string, string> {
-					                                              { "grant_type", "client_credentials" },
-					                                              { "client_id", clientId },
-					                                              { "client_secret", clientSecret },
-					                                              { "scope", Scope },
-				                                              };
-				var content = new FormUrlEncodedContent(formData);
-				var response = await this.HttpClient.PostAsync(tokenEndpoint, content);
-				response.EnsureSuccessStatusCode();
-				var json = await response.Content.ReadAsStringAsync();
-				var responseObj = JObject.Parse(json);
-				this.wnsBearerToken = (string)responseObj["access_token"];
-			}
-
-			return this.wnsBearerToken;
 		}
 	}
 }

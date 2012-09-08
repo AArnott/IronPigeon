@@ -23,6 +23,11 @@
 		public string InboxOwnerCode { get; set; }
 
 		/// <summary>
+		/// Gets or sets the Windows 8 application's package security identifier.
+		/// </summary>
+		public string ClientPackageSecurityIdentifier { get; set; }
+
+		/// <summary>
 		/// Gets or sets the URI of the Windows Notification Service to push to when a message arrives.
 		/// </summary>
 		public string PushChannelUri { get; set; }

@@ -32,6 +32,14 @@
 		}
 
 		/// <summary>
+		/// Gets or sets the package security identifier of the app.
+		/// </summary>
+		/// <value>
+		/// The package security identifier.
+		/// </value>
+		public string PackageSecurityIdentifier { get; set; }
+
+		/// <summary>
 		/// Registers a Windows 8 application to receive push notifications for incoming messages.
 		/// </summary>
 		/// <param name="pushNotificationChannel">The push notification channel.</param>
@@ -40,10 +48,12 @@
 		/// <returns>A task representing the async operation.</returns>
 		public async Task RegisterPushNotificationChannelAsync(PushNotificationChannel pushNotificationChannel, string pushContent, CancellationToken cancellationToken = default(CancellationToken)) {
 			Requires.NotNull(pushNotificationChannel, "pushNotificationChannel");
+			Requires.ValidState(!string.IsNullOrEmpty(this.PackageSecurityIdentifier), "PackageSecurityIdentifier must be initialized first.");
 
 			var request = new HttpRequestMessage(HttpMethod.Put, this.Endpoint.PublicEndpoint.MessageReceivingEndpoint);
 			request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", this.Endpoint.InboxOwnerCode);
 			request.Content = new FormUrlEncodedContent(new Dictionary<string, string> {
+				{ "package_security_identifier", this.PackageSecurityIdentifier },
 				{ "channel_uri", pushNotificationChannel.Uri },
 				{ "channel_content", pushContent ?? string.Empty },
 				{ "expiration", pushNotificationChannel.ExpirationTime.ToString(CultureInfo.InvariantCulture) },

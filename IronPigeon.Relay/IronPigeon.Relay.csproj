@@ -161,11 +161,14 @@
     <Compile Include="Controllers\AddressBookController.cs" />
     <Compile Include="Controllers\BlobController.cs" />
     <Compile Include="Controllers\InboxController.cs" />
+    <Compile Include="Controllers\WindowsPushNotificationClientController.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
+    <Compile Include="Models\PushNotificationContext.cs" />
     <Compile Include="Models\InboxContext.cs" />
     <Compile Include="Models\InboxEntity.cs" />
+    <Compile Include="Models\PushNotificationClientEntity.cs" />
     <Compile Include="Models\TableStorageEntity.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -204,6 +207,9 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Views\AddressBook\Index.cshtml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Views\WindowsPushNotificationClient\Index.cshtml" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
