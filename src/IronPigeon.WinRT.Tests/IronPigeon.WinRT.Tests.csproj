@@ -19,6 +19,7 @@
     <DefineConstants>$(DefineConstants);NETFX_CORE</DefineConstants>
     <NoWarn>;2008</NoWarn>
     <UseVSHostingProcess>false</UseVSHostingProcess>
+    <NonShipping>true</NonShipping>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
   </PropertyGroup>
