@@ -5,15 +5,39 @@
 	</PropertyGroup>
 
 	<PropertyGroup>
+		<ProjectRoot>$(MSBuildThisFileDirectory)</ProjectRoot>
+		<SolutionDir>$(ProjectRoot)src\</SolutionDir>
+		<RestorePackages>true</RestorePackages>
+
+		<Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+		<Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+		<IntermediatePath>$(ProjectRoot)obj\$(Platform)\$(Configuration)\</IntermediatePath>
+		<OutputPath>$(ProjectRoot)bin\$(Platform)\$(Configuration)\</OutputPath>
+		<PlatformTarget>$(Platform)</PlatformTarget>
+
 		<!-- Release builds should break when StyleCop warnings exist. -->
 		<!-- TODO: re-enable this when we're StyleCop clean: 
 		<StyleCopTreatErrorsAsWarnings Condition=" '$(StyleCopTreatErrorsAsWarnings)' == '' and '$(Configuration)' == 'Release' ">false</StyleCopTreatErrorsAsWarnings>
 		-->
 		<StyleCopTreatErrorsAsWarnings Condition=" '$(StyleCopTreatErrorsAsWarnings)' == '' ">true</StyleCopTreatErrorsAsWarnings>
 
-		<ProjectRoot>$(MSBuildThisFileDirectory)</ProjectRoot>
 		<ErrorReport>prompt</ErrorReport>
 		<WarningLevel>4</WarningLevel>
-		<IntermediatePath>$(ProjectRoot)obj\$(TargetFrameworkVersion)\$(Configuration)\</IntermediatePath>
+
+		<SignAssembly>true</SignAssembly>
+		<AssemblyOriginatorKeyFile>$(ProjectRoot)src\Release.pfx</AssemblyOriginatorKeyFile>
+	</PropertyGroup>
+
+	<PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+		<DebugSymbols>true</DebugSymbols>
+		<DebugType>full</DebugType>
+		<Optimize>false</Optimize>
+		<DefineConstants>DEBUG;TRACE</DefineConstants>
+	</PropertyGroup>
+
+	<PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+		<DebugType>pdbonly</DebugType>
+		<Optimize>true</Optimize>
+		<DefineConstants>TRACE</DefineConstants>
 	</PropertyGroup>
 </Project>
