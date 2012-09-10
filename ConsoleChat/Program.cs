@@ -29,7 +29,7 @@
 			var azureAccount = CloudStorageAccount.FromConfigurationSetting("StorageConnectionString");
 
 			var blobStorage = new AzureBlobStorage(azureAccount, AzureBlobStorageContainerName);
-			var cryptoServices = new DesktopCryptoProvider(SecurityLevel.Minimal);
+			var cryptoServices = new DesktopCryptoProvider(SecurityLevel.Minimum);
 			var ownEndpoint = await CreateOrOpenEndpointAsync(cryptoServices);
 			if (ownEndpoint == null) {
 				return;
@@ -37,6 +37,7 @@
 
 			await InitializeLocalCloudAsync(azureAccount, blobStorage);
 			var channel = new Channel(blobStorage, cryptoServices, ownEndpoint);
+			channel.UrlShortener = null;
 			await channel.CreateInboxAsync(new Uri(ConfigurationManager.ConnectionStrings["RelayService"].ConnectionString));
 			var shareableAddress = await channel.PublishAddressBookEntryAsync();
 			Console.WriteLine("Public receiving endpoint: {0}", shareableAddress.AbsoluteUri);

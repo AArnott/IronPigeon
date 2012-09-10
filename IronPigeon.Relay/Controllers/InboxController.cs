@@ -6,19 +6,23 @@
 	using System.IO;
 	using System.Linq;
 	using System.Net;
+	using System.Net.Http;
+	using System.Net.Http.Headers;
 	using System.Text.RegularExpressions;
 	using System.Threading;
 	using System.Threading.Tasks;
-#if !NET40
-	using System.Threading.Tasks.Dataflow;
-	using TaskEx = System.Threading.Tasks.Task;
-#endif
 	using System.Web;
 	using System.Web.Mvc;
 	using IronPigeon.Relay.Models;
 	using Microsoft;
 	using Microsoft.WindowsAzure;
 	using Microsoft.WindowsAzure.StorageClient;
+	using Newtonsoft.Json;
+	using Newtonsoft.Json.Linq;
+#if !NET40
+	using System.Threading.Tasks.Dataflow;
+	using TaskEx = System.Threading.Tasks.Task;
+#endif
 
 	////[RequireHttps]
 	public class InboxController : Controller {
@@ -73,7 +77,11 @@
 			this.InboxContainer = blobClient.GetContainerReference(containerName);
 			var tableClient = storage.CreateCloudTableClient();
 			this.InboxTable = new InboxContext(tableClient, tableName);
+			this.HttpClient = new HttpClient();
+			this.ClientTable = new PushNotificationContext(tableClient, WindowsPushNotificationClientController.DefaultTableName);
 		}
+
+		public PushNotificationContext ClientTable { get; set; }
 
 		/// <summary>
 		/// Gets or sets the inbox container.
@@ -84,6 +92,8 @@
 		public CloudBlobContainer InboxContainer { get; set; }
 
 		public InboxContext InboxTable { get; set; }
+
+		public HttpClient HttpClient { get; set; }
 
 		[HttpPost, ActionName("Create")]
 		public async Task<JsonResult> CreateAsync() {
@@ -161,8 +171,23 @@
 				throw new ArgumentException("Maximum message notification size exceeded.");
 			}
 
-			AlertLongPollWaiter(id);
+			await this.AlertLongPollWaiterAsync(inbox);
 
+			return new EmptyResult();
+		}
+
+		[HttpPut, ActionName("Slot"), InboxOwnerAuthorize]
+		public async Task<ActionResult> PushChannelAsync(string id) {
+			var channelUri = new Uri(this.Request.Form["channel_uri"], UriKind.Absolute);
+			var content = this.Request.Form["channel_content"];
+			Requires.Argument(content == null || content.Length <= 4096, "content", "Push content too large");
+
+			var inbox = await this.GetInboxAsync(id);
+			inbox.PushChannelUri = channelUri.AbsoluteUri;
+			inbox.PushChannelContent = content;
+			inbox.ClientPackageSecurityIdentifier = this.Request.Form["package_security_identifier"];
+			this.InboxTable.UpdateObject(inbox);
+			await this.InboxTable.SaveChangesAsync();
 			return new EmptyResult();
 		}
 
@@ -297,7 +322,49 @@
 			return tcs.Task;
 		}
 
-		private static void AlertLongPollWaiter(string id) {
+		private async Task PushNotifyInboxMessageAsync(InboxEntity inbox, int failedAttempts = 0) {
+			Requires.NotNull(inbox, "inbox");
+
+			if (string.IsNullOrEmpty(inbox.ClientPackageSecurityIdentifier)) {
+				return;
+			}
+
+			var client = await this.ClientTable.GetAsync(inbox.ClientPackageSecurityIdentifier);
+			string bearerToken = client.AccessToken;
+			var pushNotifyRequest = new HttpRequestMessage(HttpMethod.Post, inbox.PushChannelUri);
+			pushNotifyRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", bearerToken);
+			pushNotifyRequest.Headers.Add("X-WNS-Type", "wns/raw");
+			pushNotifyRequest.Content = new StringContent(inbox.PushChannelContent ?? string.Empty);
+			pushNotifyRequest.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream"); // yes, it's a string, but we must claim it's an octet-stream
+
+			var response = await this.HttpClient.SendAsync(pushNotifyRequest);
+			if (!response.IsSuccessStatusCode) {
+				if (failedAttempts == 0) {
+					var authHeader = response.Headers.WwwAuthenticate.FirstOrDefault();
+					if (authHeader != null) {
+						if (authHeader.Parameter.Contains("Token expired")) {
+							await client.AcquireWnsPushBearerTokenAsync(this.HttpClient);
+							this.ClientTable.UpdateObject(client);
+							await this.ClientTable.SaveChangesAsync();
+							await this.PushNotifyInboxMessageAsync(inbox, failedAttempts + 1);
+							return;
+						}
+					}
+				}
+
+				// Log a failure.
+				// TODO: code here.
+			}
+		}
+
+		private async Task AlertLongPollWaiterAsync(InboxEntity inbox) {
+			Requires.NotNull(inbox, "inbox");
+
+			if (inbox.PushChannelUri != null) {
+				await this.PushNotifyInboxMessageAsync(inbox);
+			}
+
+			var id = inbox.RowKey;
 			TaskCompletionSource<object> tcs;
 			lock (longPollWaiters) {
 				if (longPollWaiters.TryGetValue(id, out tcs)) {

@@ -9,6 +9,11 @@
 		string HashAlgorithmName { get; set; }
 
 		/// <summary>
+		/// Gets or sets the name of the symmetric algorithm to use.
+		/// </summary>
+		string SymmetricAlgorithmName { get; set; }
+
+		/// <summary>
 		/// Gets or sets the size of the key used for asymmetric signatures.
 		/// </summary>
 		int SignatureAsymmetricKeySize { get; set; }

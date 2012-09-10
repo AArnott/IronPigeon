@@ -53,7 +53,7 @@
 		/// <param name="message">The dart to send.</param>
 		/// <param name="cancellationToken">The cancellation token.</param>
 		/// <returns>The asynchronous result.</returns>
-		public Task PostAsync(Message message, CancellationToken cancellationToken = default(CancellationToken)) {
+		public virtual Task PostAsync(Message message, CancellationToken cancellationToken = default(CancellationToken)) {
 			Requires.NotNull(message, "message");
 
 			var ms = new MemoryStream();
@@ -77,7 +77,7 @@
 		/// <param name="progress">A callback to invoke for each downloaded message as it arrives.</param>
 		/// <param name="cancellationToken">The cancellation token.</param>
 		/// <returns>A task whose result is the complete list of received messages.</returns>
-		public async Task<ReadOnlyListOfMessage> ReceiveAsync(bool longPoll = false, IProgress<Message> progress = null, CancellationToken cancellationToken = default(CancellationToken)) {
+		public virtual async Task<ReadOnlyListOfMessage> ReceiveAsync(bool longPoll = false, IProgress<Message> progress = null, CancellationToken cancellationToken = default(CancellationToken)) {
 			var messages = new List<Message>();
 			var payloadProgress = new Progress<Payload>(
 				payload => {
@@ -118,7 +118,7 @@
 		/// <param name="message">The message to delete from its online location.</param>
 		/// <param name="cancellationToken">The cancellation token.</param>
 		/// <returns>The asynchronous result.</returns>
-		public Task DeleteAsync(Message message, CancellationToken cancellationToken = default(CancellationToken)) {
+		public virtual Task DeleteAsync(Message message, CancellationToken cancellationToken = default(CancellationToken)) {
 			Requires.NotNull(message, "message");
 			Requires.Argument(message.OriginatingPayload != null, "message", "Original message payload no longer available.");
 			return this.Channel.DeleteInboxItem(message.OriginatingPayload, cancellationToken);

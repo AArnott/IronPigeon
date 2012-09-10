@@ -121,6 +121,13 @@
 		/// </summary>
 		public ILogger Logger { get; set; }
 
+		/// <summary>
+		/// Gets the HTTP client used for outbound HTTP requests.
+		/// </summary>
+		protected HttpClient HttpClient {
+			get { return this.httpClient; }
+		}
+
 		#region Initialization methods
 
 		/// <summary>

@@ -1,6 +1,7 @@
 ﻿namespace IronPigeon {
 	using System;
 	using System.Collections.Generic;
+	using System.Diagnostics;
 	using System.Linq;
 	using System.Text;
 	using System.Threading.Tasks;
@@ -12,22 +13,32 @@
 		/// <summary>
 		/// Backing field for the <see cref="HashAlgorithmName"/> property.
 		/// </summary>
-		private string hashAlgorithmName = SecurityLevel.Recommended.HashAlgorithmName;
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
+		private string hashAlgorithmName = SecurityLevel.Maximum.HashAlgorithmName;
+
+		/// <summary>
+		/// Backing field for the <see cref="SymmetricAlgorithmName"/> property.
+		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
+		private string symmetricAlgorithmName = SecurityLevel.Maximum.SymmetricAlgorithmName;
 
 		/// <summary>
 		/// Backing field for the <see cref="EncryptionAsymmetricKeySize"/> property.
 		/// </summary>
-		private int encryptionAsymmetricKeySize = SecurityLevel.Recommended.EncryptionAsymmetricKeySize;
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
+		private int encryptionAsymmetricKeySize = SecurityLevel.Maximum.EncryptionAsymmetricKeySize;
 
 		/// <summary>
 		/// Backing field for the <see cref="SignatureAsymmetricKeySize"/> property.
 		/// </summary>
-		private int signatureAsymmetricKeySize = SecurityLevel.Recommended.SignatureAsymmetricKeySize;
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
+		private int signatureAsymmetricKeySize = SecurityLevel.Maximum.SignatureAsymmetricKeySize;
 
 		/// <summary>
 		/// Backing field for the <see cref="BlobSymmetricKeySize"/> property.
 		/// </summary>
-		private int blobSymmetricKeySize = SecurityLevel.Recommended.BlobSymmetricKeySize;
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
+		private int blobSymmetricKeySize = SecurityLevel.Maximum.BlobSymmetricKeySize;
 
 		/// <summary>
 		/// Gets or sets the name of the hash algorithm to use.
@@ -35,6 +46,14 @@
 		public string HashAlgorithmName {
 			get { return this.hashAlgorithmName; }
 			set { this.hashAlgorithmName = value; }
+		}
+
+		/// <summary>
+		/// Gets or sets the name of the symmetric algorithm to use.
+		/// </summary>
+		public string SymmetricAlgorithmName {
+			get { return this.symmetricAlgorithmName; }
+			set { this.symmetricAlgorithmName = value; }
 		}
 
 		/// <summary>
