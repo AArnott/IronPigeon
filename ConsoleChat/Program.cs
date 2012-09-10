@@ -143,7 +143,7 @@
 					Console.WriteLine("< {0}", message);
 				}
 
-				await Task.WhenAll(incoming.Select(payload => channel.DeleteInboxItem(payload)));
+				await Task.WhenAll(incoming.Select(payload => channel.DeleteInboxItemAsync(payload)));
 			}
 		}
 

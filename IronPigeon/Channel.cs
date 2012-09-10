@@ -235,7 +235,7 @@
 			var responseMessage = await this.httpClient.GetAsync(inboxItem.Location, cancellationToken);
 			if (responseMessage.StatusCode == HttpStatusCode.NotFound) {
 				// delete inbox item and move on.
-				await this.DeletePayloadReference(inboxItem.Location, cancellationToken);
+				await this.DeletePayloadReferenceAsync(inboxItem.Location, cancellationToken);
 				this.Log("Missing payload reference.", null);
 				return null;
 			}
@@ -419,14 +419,14 @@
 		/// This method should be called after the client application has saved the
 		/// downloaded payload to persistent storage.
 		/// </remarks>
-		public Task DeleteInboxItem(Payload payload, CancellationToken cancellationToken = default(CancellationToken)) {
+		public Task DeleteInboxItemAsync(Payload payload, CancellationToken cancellationToken = default(CancellationToken)) {
 			Requires.NotNull(payload, "payload");
 			Requires.Argument(payload.PayloadReferenceUri != null, "payload", "Original payload reference URI no longer available.");
 
-			return this.DeletePayloadReference(payload.PayloadReferenceUri, cancellationToken);
+			return this.DeletePayloadReferenceAsync(payload.PayloadReferenceUri, cancellationToken);
 		}
 
-		private async Task DeletePayloadReference(Uri payloadReferenceLocation, CancellationToken cancellationToken) {
+		private async Task DeletePayloadReferenceAsync(Uri payloadReferenceLocation, CancellationToken cancellationToken) {
 			Requires.NotNull(payloadReferenceLocation, "payloadReferenceLocation");
 
 			var deleteEndpoint = new UriBuilder(this.Endpoint.PublicEndpoint.MessageReceivingEndpoint);
