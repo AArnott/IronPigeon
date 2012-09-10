@@ -1,0 +1,93 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>VersioningTasks</name>
+    </assembly>
+    <members>
+        <member name="M:VersioningTasks.CompareFiles.FastFileEqualityCheck(System.String,System.String)">
+            <summary>
+            Tests whether a file is up to date with respect to another,
+            based on existence, last write time and file size.
+            </summary>
+            <param name="sourcePath">The source path.</param>
+            <param name="destPath">The dest path.</param>
+            <returns><c>true</c> if the files are the same; <c>false</c> if the files are different</returns>
+        </member>
+        <member name="P:VersioningTasks.CompareFiles.OriginalItems">
+            <summary>
+            One set of items to compare.
+            </summary>
+        </member>
+        <member name="P:VersioningTasks.CompareFiles.NewItems">
+            <summary>
+            The other set of items to compare.
+            </summary>
+        </member>
+        <member name="P:VersioningTasks.CompareFiles.AreSame">
+            <summary>
+            Gets whether the items lists contain items that are identical going down the list.
+            </summary>
+        </member>
+        <member name="P:VersioningTasks.CompareFiles.AreChanged">
+            <summary>
+            Same as <see cref="P:VersioningTasks.CompareFiles.AreSame"/>, but opposite.
+            </summary>
+        </member>
+        <member name="M:VersioningTasks.GetBuildVersion.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:VersioningTasks.GetBuildVersion"/> class.
+            </summary>
+        </member>
+        <member name="P:VersioningTasks.GetBuildVersion.Version">
+            <summary>
+            Gets the version string to use in the compiled assemblies.
+            </summary>
+        </member>
+        <member name="P:VersioningTasks.GetBuildVersion.SimpleVersion">
+            <summary>
+            Gets the version string to use in the official release name (lacks revision number).
+            </summary>
+        </member>
+        <member name="P:VersioningTasks.GetBuildVersion.MajorMinorVersion">
+            <summary>
+            Gets or sets the major.minor version string.
+            </summary>
+            <value>
+            The x.y string (no build number or revision number).
+            </value>
+        </member>
+        <member name="P:VersioningTasks.GetBuildVersion.PrereleaseVersion">
+            <summary>
+            Gets or sets the prerelease version, or empty if this is a final release.
+            </summary>
+            <value>
+            The prerelease version.
+            </value>
+        </member>
+        <member name="P:VersioningTasks.GetBuildVersion.OAuth2PackagesVersion">
+            <summary>
+            Gets or sets the version string to use for NuGet packages containing OAuth 2 components.
+            </summary>
+        </member>
+        <member name="P:VersioningTasks.GetBuildVersion.GitCommitId">
+            <summary>
+            Gets the Git revision control commit id for HEAD (the current source code version).
+            </summary>
+        </member>
+        <member name="P:VersioningTasks.GetBuildVersion.BuildNumber">
+            <summary>
+            Gets the build number (JDate) for this version.
+            </summary>
+        </member>
+        <member name="P:VersioningTasks.GetBuildVersion.VersionFile">
+            <summary>
+            The file that contains the version base (Major.Minor.Build) to use.
+            </summary>
+        </member>
+        <member name="P:VersioningTasks.GetBuildVersion.GitRepoRoot">
+            <summary>
+            Gets or sets the parent directory of the .git directory.
+            </summary>
+        </member>
+    </members>
+</doc>
