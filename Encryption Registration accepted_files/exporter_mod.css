@@ -1,0 +1,330 @@
+body {
+	margin: 0px; padding: 0px; font-family: Arial, Helvetica, sans-serif; font-size: 1em;
+}
+table.header {
+	background-position: center; width: 100%; border-bottom-color: rgb(153, 0, 0); border-bottom-width: 1px; border-bottom-style: solid; background-image: url("/snapr/docs/images/gradient2px.jpg"); background-repeat: repeat-y; background-color: rgb(153, 0, 0);
+}
+.banner_seal {
+	margin: 2px 10px;
+}
+.banner_Snap {
+	left: 120px; bottom: 30px; position: relative; z-index: 1;
+}
+.banner_bis {
+	top: 65px; right: 10px; position: absolute; z-index: 0;
+}
+.leftNav {
+	color: rgb(56, 58, 127); font-family: Geneva, Arial, Helvetica, sans-serif; font-size: 0.8em; font-variant: small-caps; font-weight: normal;
+}
+.leftNav p {
+	margin-top: 0px; margin-bottom: 1.5px; margin-left: 4px;
+}
+.leftNav a {
+	color: rgb(56, 58, 127); text-decoration: none;
+}
+.leftNav a:link {
+	color: rgb(56, 58, 127); text-decoration: none;
+}
+.leftNav a:visited {
+	color: rgb(56, 58, 127); text-decoration: none;
+}
+.leftNav a:hover {
+	color: rgb(56, 58, 127);
+}
+.leftNav a:active {
+	color: rgb(56, 58, 127);
+}
+.subnav {
+	display: none;
+}
+.contentheader {
+	width: 834px; color: rgb(56, 58, 127); font-size: 0.9em;
+}
+.contentheader table {
+	width: 100%;
+}
+.content {
+	border: thin solid rgb(153, 0, 0); width: 834px; color: rgb(51, 51, 51); font-size: 0.9em; border-collapse: collapse;
+}
+.outer {
+	width: 100%; border-collapse: collapse;
+}
+.content table {
+	width: 100%; border-collapse: collapse;
+}
+.content th {
+	padding: 0.2em; text-align: left; color: rgb(255, 255, 255); font-size: 1.1em; font-weight: bold; background-color: rgb(153, 0, 0);
+}
+.content td {
+	border-top-color: rgb(255, 255, 255); border-top-width: 0.1em; border-top-style: solid; border-collapse: collapse;
+}
+.content th.helpIcon {
+	text-align: right;
+}
+.contentDescr {
+	padding: 0.2em; text-align: left; color: rgb(0, 0, 0); font-size: 0.9em; background-color: rgb(255, 255, 255);
+}
+.contentDescr a {
+	color: rgb(153, 0, 0);
+}
+.section {
+	width: 100%; border-collapse: collapse;
+}
+.section td {
+	padding: 0.2em; border-collapse: collapse;
+}
+.sectionWb td {
+	padding: 0.2em; border-collapse: collapse;
+}
+.sectionWb {
+	border: 0.1em solid rgb(204, 204, 204); width: 100%; border-collapse: collapse;
+}
+td.halfScreen {
+	padding: 0em; width: 50%; vertical-align: top; border-collapse: collapse;
+}
+.sectionheader {
+	padding: 0.2em; text-align: left; color: rgb(0, 0, 0); font-size: 0.9em; font-weight: bold; background-color: rgb(217, 230, 255);
+}
+.sectionheader td {
+	border-top-color: rgb(221, 221, 221); border-top-width: 1px; border-top-style: solid;
+}
+.sectionNotes {
+	padding: 0.2em; width: 100%; color: rgb(0, 0, 0); font-size: 0.9em; border-collapse: collapse; background-color: rgb(255, 255, 255);
+}
+.sectionNotes a {
+	color: rgb(56, 58, 127);
+}
+.sectionNotes span {
+	color: rgb(0, 0, 0); font-weight: bold;
+}
+.subheader {
+	padding: 0.3em; color: rgb(255, 255, 255); font-size: 1em; font-weight: bold; background-color: rgb(56, 58, 127);
+}
+.subheader td {
+	padding: 0.3em;
+}
+.subheader em {
+	font-size: 0.8em; font-weight: normal;
+}
+.subheader_decollapse {
+	padding: 0em; color: rgb(255, 255, 255); font-size: 1em; font-weight: bold; background-color: rgb(56, 58, 127);
+}
+.subheader_decollapse table {
+	width: 100%;
+}
+.subheader_decollapse table td {
+	padding: 0.2em 0.3em;
+}
+.collapseImg {
+	border: currentColor; vertical-align: middle; display: inline; border-collapse: collapse;
+}
+.contentRow1 {
+	padding: 0.2em; font-size: 0.9em; background-color: rgb(217, 230, 255);
+}
+.contentRow2 {
+	padding: 0.2em; font-size: 0.9em; background-color: rgb(242, 247, 255);
+}
+.contentRow3 {
+	padding: 0.2em; font-size: 0.9em; background-color: rgb(255, 255, 255);
+}
+.contentRow1 a {
+	color: rgb(56, 58, 127);
+}
+.contentRow2 a {
+	color: rgb(56, 58, 127);
+}
+.contentRow1 span.imgButton a {
+	color: rgb(56, 58, 127); text-decoration: underline;
+}
+.contentRow2 span.imgButton a {
+	color: rgb(56, 58, 127); text-decoration: underline;
+}
+.coltitle {
+	text-align: left; color: rgb(0, 0, 0); font-size: 0.9em; font-weight: bold;
+}
+.itemId {
+	width: 2em; color: rgb(102, 102, 102); font-weight: bold; white-space: nowrap;
+}
+.itemDescr {
+	width: 40%;
+}
+.itemValue {
+	width: 60%;
+}
+.editText {
+	border: 1px inset rgb(204, 204, 204); border-collapse: collapse; background-color: rgb(255, 255, 255);
+}
+.viewText {
+	border: 1px solid rgb(204, 204, 204); border-collapse: collapse; background-color: rgb(238, 238, 238);
+}
+.ofButton {
+	padding: 2px; text-align: center;
+}
+.ofButton span.grayText {
+	font-size: 0.9em;
+}
+.saveButton {
+	background: rgb(221, 221, 221); border: 1px outset currentColor; width: auto; height: 20px; border-collapse: collapse; cursor: pointer;
+}
+span.error {
+	color: rgb(153, 0, 0); font-weight: bold;
+}
+.helpImg img {
+	border: currentColor; vertical-align: middle;
+}
+.triggerhover {
+	background: rgb(204, 204, 204);
+}
+.elementnormal {
+	left: 0px; position: static;
+}
+.elementcollapsed {
+	left: -999em; top: 0px; height: 1px; position: absolute;
+}
+.spacer {
+	border-collapse: collapse; background-color: rgb(255, 255, 255);
+}
+#domcollapseall ul {
+	margin: 0px; padding: 0px;
+}
+#domcollapseall li {
+	border: currentColor; padding-right: 0.5em; display: inline;
+}
+.loginBox {
+	border: thin solid rgb(153, 0, 0); width: 50%; color: rgb(51, 51, 51); font-family: Arial, Helvetica, sans-serif; font-size: 0.9em; border-collapse: collapse;
+}
+.loginBox th {
+	padding: 2px; text-align: center; color: rgb(255, 255, 255); font-weight: bold; background-color: rgb(153, 0, 0);
+}
+.loginBox td.col1 {
+	text-align: right; color: rgb(153, 0, 0); padding-right: 20px; background-color: rgb(255, 255, 255);
+}
+.loginBox td.col2 {
+	text-align: center; color: rgb(153, 0, 0); font-size: 0.75em; background-color: rgb(255, 255, 255);
+}
+.loginBox td.error {
+	text-align: left; color: rgb(153, 0, 0); font-size: 0.75em; background-color: rgb(255, 255, 255);
+}
+.loginBox td.notes {
+	padding: 10px; text-align: left; color: rgb(56, 58, 127); font-size: 0.75em;
+}
+.loginRegBox {
+	width: 50%; text-align: center; color: rgb(51, 51, 51); font-family: Arial, Helvetica, sans-serif; font-size: 0.9em; border-collapse: collapse;
+}
+.loginRegBox th {
+	padding: 2px; text-align: center; color: rgb(153, 0, 0); font-size: 0.9em; font-weight: bold;
+}
+.loginRegBox td {
+	padding: 2px; text-align: center; color: rgb(153, 0, 0); font-size: 0.75em;
+}
+.loginRegBox a {
+	color: rgb(56, 58, 127);
+}
+span.loginSysDescr {
+	line-height: 1.5em; font-family: Arial, Helvetica, sans-serif; font-size: 0.8em; font-weight: normal;
+}
+span.smallText {
+	color: rgb(56, 58, 127); font-family: Arial, Helvetica, sans-serif; font-size: 0.75em;
+}
+span.smallText a:active {
+	color: rgb(56, 58, 127); font-family: Arial, Helvetica, sans-serif; font-size: 0.75em;
+}
+span.smallText a:visited {
+	color: rgb(56, 58, 127); font-size: 0.75em;
+}
+.privacyAct {
+	font-family: Arial, Helvetica, sans-serif; font-size: 0.75em;
+}
+.pageBar {
+	color: rgb(0, 0, 0); font-size: 1em; background-color: rgb(255, 255, 255);
+}
+.pageBar td {
+	padding: 0.3em;
+}
+.pageBar a {
+	color: rgb(56, 58, 127); font-size: 0.9em; text-decoration: underline;
+}
+.searchColHeader {
+	color: rgb(255, 255, 255); font-size: 0.9em; font-weight: bold; background-color: rgb(56, 58, 127);
+}
+.searchColHeader a {
+	color: rgb(255, 255, 255); font-size: 0.9em; font-weight: bold; text-decoration: underline;
+}
+.searchResultHeader {
+	color: rgb(153, 0, 0); font-size: 0.8em; font-weight: normal; text-decoration: none;
+}
+.searchResultHeader span.recordCount {
+	font-weight: bold;
+}
+.privacyAct a {
+	color: rgb(56, 58, 127); text-decoration: none;
+}
+.privacyAct a:link {
+	color: rgb(56, 58, 127); text-decoration: none;
+}
+.privacyAct a:visited {
+	color: rgb(56, 58, 127); text-decoration: none;
+}
+.privacyAct a:hover {
+	color: rgb(56, 58, 127);
+}
+.privacyAct a:active {
+	color: rgb(56, 58, 127);
+}
+.footerLink {
+	color: rgb(56, 58, 127); font-family: Arial, Helvetica, sans-serif; font-size: 0.75em;
+}
+.footerLink a:link {
+	color: rgb(56, 58, 127); font-family: Arial, Helvetica, sans-serif; font-size: 0.75em;
+}
+.noPadding {
+	padding: 0em;
+}
+.importantNotes {
+	color: rgb(153, 0, 0); font-weight: normal;
+}
+span.blueLink a {
+	color: rgb(56, 58, 127);
+}
+.redLink a {
+	color: rgb(153, 0, 0); font-weight: normal;
+}
+span.grayText {
+	color: gray;
+}
+span.collapseLink a {
+	color: rgb(56, 58, 127); text-decoration: none;
+}
+.errorMsg {
+	margin: 10px 0px; padding: 2px 0px 2px 18px; color: rgb(153, 0, 0); background-image: url("/snapr/docs/images/icon_error.gif"); background-repeat: no-repeat;
+}
+.errHomeButton {
+	background: rgb(221, 221, 221); border: 5px currentColor; width: auto; height: 20px; cursor: pointer;
+}
+.msgContent {
+	border: thin solid rgb(153, 0, 0); width: 834px; color: rgb(51, 51, 51); font-size: 0.9em; border-collapse: collapse;
+}
+.msgContent th {
+	padding: 0.2em; text-align: left; color: rgb(255, 255, 255); font-size: 1.1em; font-weight: bold; background-color: rgb(153, 0, 0);
+}
+.msg {
+	margin: 10px 0px; padding: 2px 0px 2px 18px; text-align: left; color: rgb(0, 0, 0);
+}
+td.columnsizeone {
+	width: 85px; text-align: left; vertical-align: top;
+}
+td.columnsizetwo {
+	width: 120px; text-align: left; vertical-align: top;
+}
+td.columnsizethree {
+	width: 40px; text-align: left; vertical-align: top;
+}
+td.columnsizefour {
+	width: 100px; text-align: left; vertical-align: top;
+}
+td.columnsizefive {
+	width: 80px; text-align: left; vertical-align: top;
+}
+td.columnsizesix {
+	width: 109px; text-align: left; vertical-align: top;
+}

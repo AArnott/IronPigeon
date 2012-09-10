@@ -1,0 +1,63 @@
+body {
+	font-family: Arial, Helvetica, sans-serif;
+}
+table.header {
+	background-position: center; border-bottom-color: rgb(153, 0, 0); border-bottom-width: 1px; border-bottom-style: solid; background-image: none; background-color: rgb(255, 255, 255);
+}
+.banner_bis {
+	display: none;
+}
+table.leftNavTable {
+	display: none;
+}
+.noPrint {
+	display: none;
+}
+.helpImg img {
+	display: none;
+}
+.contentheader {
+	width: 100%; color: rgb(56, 58, 127); font-size: 0.9em;
+}
+.content {
+	border: thin solid rgb(0, 0, 0); width: 100%; color: rgb(0, 0, 0); font-size: 0.8em;
+}
+.content th {
+	text-align: left; color: rgb(0, 0, 0); font-size: 1.3em; font-weight: bold; background-color: rgb(255, 255, 255);
+}
+.subheader {
+	color: rgb(0, 0, 0); font-size: 1.1em; font-weight: bold; background-color: rgb(255, 255, 255);
+}
+.subheader_decollapse {
+	color: rgb(0, 0, 0); font-size: 1.1em; font-weight: bold; background-color: rgb(255, 255, 255);
+}
+.sectionheader td {
+	border: currentColor;
+}
+.contentDescr {
+	display: none;
+}
+.sectionNotes {
+	display: none;
+}
+.contentRow1 {
+	background-color: rgb(255, 255, 255);
+}
+.contentRow2 {
+	background-color: rgb(255, 255, 255);
+}
+.coltitle {
+	text-align: left; color: rgb(0, 0, 0); font-size: 0.9em; font-weight: bold;
+}
+.helpImg {
+	display: none;
+}
+.ofButton {
+	display: none;
+}
+a {
+	color: rgb(0, 0, 0); text-decoration: none;
+}
+.noprint {
+	display: none;
+}
