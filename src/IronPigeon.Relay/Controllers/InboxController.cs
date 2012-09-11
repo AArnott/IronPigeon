@@ -24,7 +24,9 @@
 	using TaskEx = System.Threading.Tasks.Task;
 #endif
 
-	////[RequireHttps]
+#if !DEBUG
+	[RequireHttps]
+#endif
 	public class InboxController : Controller {
 		/// <summary>
 		/// The key into a blob's metadata that stores the blob's expiration date.
@@ -37,13 +39,6 @@
 		public const int MaxNotificationSize = 10 * 1024;
 
 		/// <summary>
-		/// The maximum lifetime an inbox will retain a posted message.
-		/// </summary>
-		public static readonly TimeSpan MaxLifetimeCeiling = TimeSpan.FromDays(14);
-
-		private static readonly Dictionary<string, TaskCompletionSource<object>> longPollWaiters = new Dictionary<string, TaskCompletionSource<object>>();
-
-		/// <summary>
 		/// The key to the Azure account configuration information.
 		/// </summary>
 		internal const string DefaultCloudConfigurationName = "StorageConnectionString";
@@ -54,6 +49,13 @@
 		private const string DefaultInboxContainerName = "inbox";
 
 		private const string DefaultInboxTableName = "inbox";
+
+		/// <summary>
+		/// The maximum lifetime an inbox will retain a posted message.
+		/// </summary>
+		public static readonly TimeSpan MaxLifetimeCeiling = TimeSpan.FromDays(14);
+
+		private static readonly Dictionary<string, TaskCompletionSource<object>> longPollWaiters = new Dictionary<string, TaskCompletionSource<object>>();
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="InboxController" /> class.

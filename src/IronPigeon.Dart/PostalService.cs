@@ -74,9 +74,12 @@
 		/// <summary>
 		/// Retrieves all messages waiting for pickup at our endpoint.
 		/// </summary>
+		/// <param name="longPoll">if set to <c>true</c> [long poll].</param>
 		/// <param name="progress">A callback to invoke for each downloaded message as it arrives.</param>
 		/// <param name="cancellationToken">The cancellation token.</param>
-		/// <returns>A task whose result is the complete list of received messages.</returns>
+		/// <returns>
+		/// A task whose result is the complete list of received messages.
+		/// </returns>
 		public virtual async Task<ReadOnlyListOfMessage> ReceiveAsync(bool longPoll = false, IProgress<Message> progress = null, CancellationToken cancellationToken = default(CancellationToken)) {
 			var messages = new List<Message>();
 			var payloadProgress = new Progress<Payload>(

@@ -6,8 +6,20 @@
 	using System.Web.Mvc;
 	using Microsoft;
 
+	/// <summary>
+	/// This controller serves URLs that may appear to the user, but represent the downloadable address book entry
+	/// for IronPigeon communication.
+	/// </summary>
+#if !DEBUG
+	[RequireHttps]
+#endif
 	public class AddressBookController : Controller {
-		// GET: /AddressBook/?blob={uri}
+		/// <summary>
+		/// Returns the address book entry, or an HTML page for browsers.
+		/// GET: /AddressBook/?blob={uri}
+		/// </summary>
+		/// <param name="blob">The blob address to redirect a programmatic client to.</param>
+		/// <returns>The HTTP response.</returns>
 		public ActionResult Index(string blob) {
 			Requires.NotNullOrEmpty(blob, "blob");
 

@@ -13,13 +13,13 @@
 	using Microsoft.WindowsAzure;
 	using Microsoft.WindowsAzure.StorageClient;
 
-	class Program {
+	internal class Program {
 		private const string AzureTableStorageName = "inbox";
 
 		private const string AzureBlobStorageContainerName = "consoleapptest";
 
 		[STAThread]
-		static void Main(string[] args) {
+		private static void Main(string[] args) {
 			DoAsync().GetAwaiter().GetResult();
 		}
 

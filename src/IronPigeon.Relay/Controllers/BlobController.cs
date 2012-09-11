@@ -17,6 +17,9 @@
 	using TaskEx = System.Threading.Tasks.Task;
 #endif
 
+#if !DEBUG
+	[RequireHttps]
+#endif
 	public class BlobController : ApiController {
 		/// <summary>
 		/// The default name of the Azure blob container to use for blobs.
