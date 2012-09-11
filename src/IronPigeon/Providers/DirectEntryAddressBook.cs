@@ -27,6 +27,14 @@
 			this.CryptoServices = cryptoProvider;
 		}
 
+		/// <summary>
+		/// Retrieves a contact with some user supplied identifier.
+		/// </summary>
+		/// <param name="identifier">The user-supplied identifier for the contact.</param>
+		/// <param name="cancellationToken">A cancellation token.</param>
+		/// <returns>
+		/// A task whose result is the contact, or null if no match is found.
+		/// </returns>
 		public override async Task<Endpoint> LookupAsync(string identifier, CancellationToken cancellationToken = default(CancellationToken)) {
 			Uri entryLocation;
 			if (!Uri.TryCreate(identifier, UriKind.Absolute, out entryLocation)) {

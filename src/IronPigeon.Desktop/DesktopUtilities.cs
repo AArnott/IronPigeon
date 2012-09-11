@@ -6,7 +6,13 @@
 	using System.Text.RegularExpressions;
 	using System.Threading.Tasks;
 
+	/// <summary>
+	/// Utility methods for desktop IronPigeon apps.
+	/// </summary>
 	public static class DesktopUtilities {
+		/// <summary>
+		/// The recommended length of a randomly generated string used to name uploaded blobs.
+		/// </summary>
 		internal const int BlobNameLength = 15;
 
 		/// <summary>

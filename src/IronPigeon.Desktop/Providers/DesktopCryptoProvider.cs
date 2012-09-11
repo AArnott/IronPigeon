@@ -29,20 +29,44 @@
 			securityLevel.Apply(this);
 		}
 
+		/// <summary>
+		/// Asymmetrically signs a data blob.
+		/// </summary>
+		/// <param name="data">The data to sign.</param>
+		/// <param name="signingPrivateKey">The private key used to sign the data.</param>
+		/// <returns>
+		/// The signature.
+		/// </returns>
 		public override byte[] Sign(byte[] data, byte[] signingPrivateKey) {
 			using (var rsa = new RSACryptoServiceProvider()) {
 				rsa.ImportCspBlob(signingPrivateKey);
-				return rsa.SignData(data, HashAlgorithmName);
+				return rsa.SignData(data, this.HashAlgorithmName);
 			}
 		}
 
+		/// <summary>
+		/// Verifies the asymmetric signature of some data blob.
+		/// </summary>
+		/// <param name="signingPublicKey">The public key used to verify the signature.</param>
+		/// <param name="data">The data that was signed.</param>
+		/// <param name="signature">The signature.</param>
+		/// <returns>
+		/// A value indicating whether the signature is valid.
+		/// </returns>
 		public override bool VerifySignature(byte[] signingPublicKey, byte[] data, byte[] signature) {
 			using (var rsa = new RSACryptoServiceProvider()) {
 				rsa.ImportCspBlob(signingPublicKey);
-				return rsa.VerifyData(data, HashAlgorithmName, signature);
+				return rsa.VerifyData(data, this.HashAlgorithmName, signature);
 			}
 		}
 
+		/// <summary>
+		/// Symmetrically encrypts the specified buffer using a randomly generated key.
+		/// </summary>
+		/// <param name="data">The data to encrypt.</param>
+		/// <returns>
+		/// The result of the encryption.
+		/// </returns>
 		public override SymmetricEncryptionResult Encrypt(byte[] data) {
 			using (var alg = SymmetricAlgorithm.Create(this.SymmetricAlgorithmName)) {
 				alg.KeySize = this.BlobSymmetricKeySize;
@@ -58,6 +82,13 @@
 			}
 		}
 
+		/// <summary>
+		/// Symmetrically decrypts a buffer using the specified key.
+		/// </summary>
+		/// <param name="data">The encrypted data and the key and IV used to encrypt it.</param>
+		/// <returns>
+		/// The decrypted buffer.
+		/// </returns>
 		public override byte[] Decrypt(SymmetricEncryptionResult data) {
 			using (var alg = SymmetricAlgorithm.Create(this.SymmetricAlgorithmName)) {
 				using (var decryptor = alg.CreateDecryptor(data.Key, data.IV)) {
@@ -72,6 +103,14 @@
 			}
 		}
 
+		/// <summary>
+		/// Asymmetrically encrypts the specified buffer using the provided public key.
+		/// </summary>
+		/// <param name="encryptionPublicKey">The public key used to encrypt the buffer.</param>
+		/// <param name="data">The buffer to encrypt.</param>
+		/// <returns>
+		/// The ciphertext.
+		/// </returns>
 		public override byte[] Encrypt(byte[] encryptionPublicKey, byte[] data) {
 			using (var rsa = new RSACryptoServiceProvider()) {
 				rsa.ImportCspBlob(encryptionPublicKey);
@@ -79,6 +118,14 @@
 			}
 		}
 
+		/// <summary>
+		/// Asymmetrically decrypts the specified buffer using the provided private key.
+		/// </summary>
+		/// <param name="decryptionPrivateKey">The private key used to decrypt the buffer.</param>
+		/// <param name="data">The buffer to decrypt.</param>
+		/// <returns>
+		/// The plaintext.
+		/// </returns>
 		public override byte[] Decrypt(byte[] decryptionPrivateKey, byte[] data) {
 			using (var rsa = new RSACryptoServiceProvider()) {
 				rsa.ImportCspBlob(decryptionPrivateKey);
@@ -86,12 +133,24 @@
 			}
 		}
 
+		/// <summary>
+		/// Computes the hash of the specified buffer.
+		/// </summary>
+		/// <param name="data">The data to hash.</param>
+		/// <returns>
+		/// The computed hash.
+		/// </returns>
 		public override byte[] Hash(byte[] data) {
 			using (var hasher = HashAlgorithm.Create(this.HashAlgorithmName)) {
 				return hasher.ComputeHash(data);
 			}
 		}
 
+		/// <summary>
+		/// Generates a key pair for asymmetric cryptography.
+		/// </summary>
+		/// <param name="keyPair">Receives the serialized key pair (includes private key).</param>
+		/// <param name="publicKey">Receives the public key.</param>
 		public override void GenerateSigningKeyPair(out byte[] keyPair, out byte[] publicKey) {
 			using (var rsa = new RSACryptoServiceProvider(this.SignatureAsymmetricKeySize)) {
 				keyPair = rsa.ExportCspBlob(true);
@@ -99,6 +158,11 @@
 			}
 		}
 
+		/// <summary>
+		/// Generates a key pair for asymmetric cryptography.
+		/// </summary>
+		/// <param name="keyPair">Receives the serialized key pair (includes private key).</param>
+		/// <param name="publicKey">Receives the public key.</param>
 		public override void GenerateEncryptionKeyPair(out byte[] keyPair, out byte[] publicKey) {
 			using (var rsa = new RSACryptoServiceProvider(this.EncryptionAsymmetricKeySize)) {
 				keyPair = rsa.ExportCspBlob(true);

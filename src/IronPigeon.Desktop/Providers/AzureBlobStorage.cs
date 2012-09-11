@@ -14,11 +14,30 @@
 	using Microsoft.WindowsAzure;
 	using Microsoft.WindowsAzure.StorageClient;
 
+	/// <summary>
+	/// A cloud blob storage provider that uses Azure blob storage directly.
+	/// </summary>
 	public class AzureBlobStorage : ICloudBlobStorageProvider {
+		/// <summary>
+		/// The Azure storage account.
+		/// </summary>
 		private readonly CloudStorageAccount account;
+
+		/// <summary>
+		/// The blob client.
+		/// </summary>
 		private readonly CloudBlobClient client;
+
+		/// <summary>
+		/// The container in which to store blobs.
+		/// </summary>
 		private readonly CloudBlobContainer container;
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="AzureBlobStorage" /> class.
+		/// </summary>
+		/// <param name="account">The Azure account to use.</param>
+		/// <param name="containerAddress">The name of the Azure blob container to use for uploaded blobs.</param>
 		public AzureBlobStorage(CloudStorageAccount account, string containerAddress) {
 			Requires.NotNull(account, "account");
 			Requires.NotNullOrEmpty(containerAddress, "containerAddress");

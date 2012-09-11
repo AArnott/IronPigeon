@@ -12,7 +12,13 @@
 
 	using Microsoft;
 
+	/// <summary>
+	/// A blob storage provider that stores blobs to the message relay service via its well-known blob API.
+	/// </summary>
 	public class RelayCloudBlobStorageProvider : ICloudBlobStorageProvider {
+		/// <summary>
+		/// The handler to use for outbound HTTP requests.
+		/// </summary>
 		private HttpMessageHandler httpMessageHandler = new HttpClientHandler();
 
 		/// <summary>
@@ -56,6 +62,17 @@
 		/// </summary>
 		protected HttpClient HttpClient { get; private set; }
 
+		/// <summary>
+		/// Uploads a blob to public cloud storage.
+		/// </summary>
+		/// <param name="content">The blob's content.</param>
+		/// <param name="expirationUtc">The date after which this blob should be deleted.</param>
+		/// <param name="contentType">The content type of the blob.</param>
+		/// <param name="contentEncoding">The content encoding of the blob.</param>
+		/// <param name="cancellationToken">A cancellation token.</param>
+		/// <returns>
+		/// A task whose result is the URL by which the blob's content may be accessed.
+		/// </returns>
 		public async Task<Uri> UploadMessageAsync(Stream content, DateTime expirationUtc, string contentType = null, string contentEncoding = null, CancellationToken cancellationToken = default(CancellationToken)) {
 			var httpContent = new StreamContent(content);
 			if (contentType != null) {

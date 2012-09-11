@@ -229,6 +229,54 @@
 #endif
 		}
 
+		#endregion
+
+		#region Message sending methods
+
+		/// <summary>
+		/// Sends some payload to a set of recipients.
+		/// </summary>
+		/// <param name="message">The payload to transmit.</param>
+		/// <param name="recipients">The recipients to receive the message.</param>
+		/// <param name="expiresUtc">The date after which the message may be destroyed.</param>
+		/// <param name="cancellationToken">The cancellation token.</param>
+		/// <returns>The task representing the asynchronous operation.</returns>
+		public async Task PostAsync(Payload message, ReadOnlyCollectionOfEndpoint recipients, DateTime expiresUtc, CancellationToken cancellationToken = default(CancellationToken)) {
+			Requires.NotNull(message, "message");
+			Requires.That(expiresUtc.Kind == DateTimeKind.Utc, "expiresUtc", Strings.UTCTimeRequired);
+			Requires.NotNullOrEmpty(recipients, "recipients");
+
+			var payloadReference = await this.PostPayloadAsync(message, expiresUtc, cancellationToken);
+			await this.PostPayloadReferenceAsync(payloadReference, recipients, cancellationToken);
+		}
+
+		#endregion
+
+		/// <summary>
+		/// Deletes the online inbox item that points to a previously downloaded payload.
+		/// </summary>
+		/// <param name="payload">The payload whose originating inbox item should be deleted.</param>
+		/// <param name="cancellationToken">The cancellation token.</param>
+		/// <returns>The task representing the asynchronous operation.</returns>
+		/// <remarks>
+		/// This method should be called after the client application has saved the
+		/// downloaded payload to persistent storage.
+		/// </remarks>
+		public Task DeleteInboxItemAsync(Payload payload, CancellationToken cancellationToken = default(CancellationToken)) {
+			Requires.NotNull(payload, "payload");
+			Requires.Argument(payload.PayloadReferenceUri != null, "payload", "Original payload reference URI no longer available.");
+
+			return this.DeletePayloadReferenceAsync(payload.PayloadReferenceUri, cancellationToken);
+		}
+
+		#region Protected message sending/receiving methods
+
+		/// <summary>
+		/// Downloads a <see cref="PayloadReference"/> that is referenced from an incoming inbox item.
+		/// </summary>
+		/// <param name="inboxItem">The inbox item that referenced the <see cref="PayloadReference"/>.</param>
+		/// <param name="cancellationToken">The cancellation token.</param>
+		/// <returns>The task representing the asynchronous operation.</returns>
 		protected virtual async Task<PayloadReference> DownloadPayloadReferenceAsync(IncomingList.IncomingItem inboxItem, CancellationToken cancellationToken) {
 			Requires.NotNull(inboxItem, "inboxItem");
 
@@ -280,6 +328,12 @@
 			return messageReference;
 		}
 
+		/// <summary>
+		/// Downloads the message payload referred to by the specified <see cref="PayloadReference"/>.
+		/// </summary>
+		/// <param name="notification">The payload reference.</param>
+		/// <param name="cancellationToken">The cancellation token.</param>
+		/// <returns>The task representing the asynchronous operation.</returns>
 		protected virtual async Task<Payload> DownloadPayloadAsync(PayloadReference notification, CancellationToken cancellationToken) {
 			Requires.NotNull(notification, "notification");
 
@@ -305,19 +359,13 @@
 			return message;
 		}
 
-		#endregion
-
-		#region Message sending methods
-
-		public async Task PostAsync(Payload message, ReadOnlyCollectionOfEndpoint recipients, DateTime expiresUtc, CancellationToken cancellationToken = default(CancellationToken)) {
-			Requires.NotNull(message, "message");
-			Requires.That(expiresUtc.Kind == DateTimeKind.Utc, "expiresUtc", Strings.UTCTimeRequired);
-			Requires.NotNullOrEmpty(recipients, "recipients");
-
-			var payloadReference = await this.PostPayloadAsync(message, expiresUtc, cancellationToken);
-			await this.PostPayloadReferenceAsync(payloadReference, recipients, cancellationToken);
-		}
-
+		/// <summary>
+		/// Encrypts a message and uploads it to the cloud.
+		/// </summary>
+		/// <param name="message">The message being transmitted.</param>
+		/// <param name="expiresUtc">The date after which the message may be destroyed.</param>
+		/// <param name="cancellationToken">The cancellation token.</param>
+		/// <returns>The task whose result is a reference to the uploaded payload including decryption key.</returns>
 		protected virtual async Task<PayloadReference> PostPayloadAsync(Payload message, DateTime expiresUtc, CancellationToken cancellationToken) {
 			Requires.NotNull(message, "message");
 			Requires.That(expiresUtc.Kind == DateTimeKind.Utc, "expiresUtc", Strings.UTCTimeRequired);
@@ -346,6 +394,13 @@
 			}
 		}
 
+		/// <summary>
+		/// Shares the reference to a message payload with the specified set of recipients.
+		/// </summary>
+		/// <param name="messageReference">The payload reference to share.</param>
+		/// <param name="recipients">The set of recipients that should be notified of the message.</param>
+		/// <param name="cancellationToken">The cancellation token.</param>
+		/// <returns>The task representing the asynchronous operation.</returns>
 		protected virtual async Task PostPayloadReferenceAsync(PayloadReference messageReference, ReadOnlyCollectionOfEndpoint recipients, CancellationToken cancellationToken = default(CancellationToken)) {
 			Requires.NotNull(messageReference, "messageReference");
 			Requires.NotNullOrEmpty(recipients, "recipients");
@@ -356,6 +411,13 @@
 				recipients.Select(recipient => TaskEx.Run(() => this.PostPayloadReferenceAsync(messageReference, recipient, cancellationToken))));
 		}
 
+		/// <summary>
+		/// Shares the reference to a message payload with the specified recipient.
+		/// </summary>
+		/// <param name="messageReference">The payload reference to share.</param>
+		/// <param name="recipient">The recipient that should be notified of the message.</param>
+		/// <param name="cancellationToken">The cancellation token.</param>
+		/// <returns>The task representing the asynchronous operation.</returns>
 		protected virtual async Task PostPayloadReferenceAsync(PayloadReference messageReference, Endpoint recipient, CancellationToken cancellationToken) {
 			Requires.NotNull(recipient, "recipient");
 			Requires.NotNull(messageReference, "messageReference");
@@ -412,20 +474,11 @@
 		#endregion
 
 		/// <summary>
-		/// Deletes the online inbox item that points to a previously downloaded payload.
+		/// Deletes an entry from an inbox's incoming item list.
 		/// </summary>
-		/// <param name="payload"></param>
-		/// <remarks>
-		/// This method should be called after the client application has saved the
-		/// downloaded payload to persistent storage.
-		/// </remarks>
-		public Task DeleteInboxItemAsync(Payload payload, CancellationToken cancellationToken = default(CancellationToken)) {
-			Requires.NotNull(payload, "payload");
-			Requires.Argument(payload.PayloadReferenceUri != null, "payload", "Original payload reference URI no longer available.");
-
-			return this.DeletePayloadReferenceAsync(payload.PayloadReferenceUri, cancellationToken);
-		}
-
+		/// <param name="payloadReferenceLocation">The URL to the downloadable <see cref="PayloadReference"/> that the inbox item to delete contains.</param>
+		/// <param name="cancellationToken">The cancellation token.</param>
+		/// <returns>The task representing the asynchronous operation.</returns>
 		private async Task DeletePayloadReferenceAsync(Uri payloadReferenceLocation, CancellationToken cancellationToken) {
 			Requires.NotNull(payloadReferenceLocation, "payloadReferenceLocation");
 
@@ -441,6 +494,12 @@
 			}
 		}
 
+		/// <summary>
+		/// Downloads inbox items from the server.
+		/// </summary>
+		/// <param name="longPoll"><c>true</c> to asynchronously wait for messages if there are none immediately available for download.</param>
+		/// <param name="cancellationToken">The cancellation token.</param>
+		/// <returns>The task representing the asynchronous operation.</returns>
 		private async Task<ReadOnlyListOfInboxItem> DownloadIncomingItemsAsync(bool longPoll, CancellationToken cancellationToken) {
 			var deserializer = new DataContractJsonSerializer(typeof(IncomingList));
 			var requestUri = this.Endpoint.PublicEndpoint.MessageReceivingEndpoint;

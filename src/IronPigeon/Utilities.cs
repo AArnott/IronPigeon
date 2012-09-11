@@ -17,6 +17,9 @@
 	using TaskEx = System.Threading.Tasks.Task;
 #endif
 
+	/// <summary>
+	/// Common utilities for IronPigeon apps.
+	/// </summary>
 	public static class Utilities {
 		/// <summary>
 		/// The encoding to use when writing out POST entity strings.
@@ -118,7 +121,7 @@
 		/// <summary>
 		/// Serializes a data contract.
 		/// </summary>
-		/// <param name="serializer">The serializer.</param>
+		/// <typeparam name="T">The type of object to serialize.</typeparam>
 		/// <param name="writer">The stream writer to use for serialization.</param>
 		/// <param name="graph">The object to serialize.</param>
 		/// <remarks>
@@ -138,7 +141,7 @@
 		/// <summary>
 		/// Deserializes a data contract from a given stream.
 		/// </summary>
-		/// <param name="serializer">The serializer.</param>
+		/// <typeparam name="T">The type of object to deserialize.</typeparam>
 		/// <param name="binaryReader">The stream reader to use for deserialization.</param>
 		/// <returns>The deserialized object.</returns>
 		/// <remarks>
@@ -153,6 +156,14 @@
 			return (T)serializer.ReadObject(ms);
 		}
 
+		/// <summary>
+		/// Writes out the serialized form of the specified object as Base64-encoded text,
+		/// with line breaks such that no line exceeds 79 characters in length.
+		/// </summary>
+		/// <typeparam name="T">The type of the object to serialize.</typeparam>
+		/// <param name="writer">The writer to use for emitting base64 encoded text.</param>
+		/// <param name="graph">The object to serialize.</param>
+		/// <returns>A task that is completed when serialization has completed.</returns>
 		public static async Task SerializeDataContractAsBase64Async<T>(TextWriter writer, T graph) where T : class {
 			Requires.NotNull(writer, "writer");
 			Requires.NotNull(graph, "graph");
@@ -170,6 +181,12 @@
 			}
 		}
 
+		/// <summary>
+		/// Deserializes an object previously stored as base64-encoded text, possibly with line breaks.
+		/// </summary>
+		/// <typeparam name="T">The type of object to deserialize.</typeparam>
+		/// <param name="reader">The reader from which to draw base64-encoded text.</param>
+		/// <returns>A task whose result is the deserialized object.</returns>
 		public static async Task<T> DeserializeDataContractFromBase64Async<T>(TextReader reader) where T : class {
 			Requires.NotNull(reader, "reader");
 
@@ -185,6 +202,11 @@
 			return value;
 		}
 
+		/// <summary>
+		/// Reads the size of a buffer, and then the buffer itself, from a binary reader.
+		/// </summary>
+		/// <param name="reader">The reader.</param>
+		/// <returns>The buffer.</returns>
 		public static byte[] ReadSizeAndBuffer(this BinaryReader reader) {
 			Requires.NotNull(reader, "reader");
 
@@ -194,6 +216,11 @@
 			return buffer;
 		}
 
+		/// <summary>
+		/// Writes out the size of the buffer and its contents.
+		/// </summary>
+		/// <param name="writer">The receiver of the written bytes.</param>
+		/// <param name="buffer">The buffer.</param>
 		public static void WriteSizeAndBuffer(this BinaryWriter writer, byte[] buffer) {
 			Requires.NotNull(writer, "writer");
 			Requires.NotNull(buffer, "buffer");
@@ -202,6 +229,13 @@
 			writer.Write(buffer);
 		}
 
+		/// <summary>
+		/// Writes out the size of the buffer and its contents.
+		/// </summary>
+		/// <param name="stream">The stream to write the buffer's length and contents to.</param>
+		/// <param name="buffer">The buffer.</param>
+		/// <param name="cancellationToken">The cancellation token.  Cancellation may leave the stream in a partially written state.</param>
+		/// <returns>A task whose completion indicates the async operation has completed.</returns>
 		public static async Task WriteSizeAndBufferAsync(this Stream stream, byte[] buffer, CancellationToken cancellationToken) {
 			Requires.NotNull(stream, "stream");
 			Requires.NotNull(buffer, "buffer");
@@ -211,7 +245,15 @@
 			await stream.WriteAsync(buffer, 0, buffer.Length, cancellationToken);
 		}
 
-		public static async Task<byte[]> ReadSizeAndBufferAsync(this Stream stream, CancellationToken cancellationToken, int maxSize = 10*1024) {
+		/// <summary>
+		/// Reads the size of a buffer, and then the buffer itself, from a binary reader.
+		/// </summary>
+		/// <param name="stream">The stream from which to read the buffer's size and contents.</param>
+		/// <param name="cancellationToken">A cancellation token.</param>
+		/// <param name="maxSize">The maximum value to accept as the length of the buffer.</param>
+		/// <returns>The buffer.</returns>
+		/// <exception cref="InvalidMessageException">Thrown if the buffer length read from the stream exceeds the maximum allowable size.</exception>
+		public static async Task<byte[]> ReadSizeAndBufferAsync(this Stream stream, CancellationToken cancellationToken, int maxSize = 10 * 1024) {
 			byte[] lengthBuffer = new byte[sizeof(int)];
 			await stream.ReadAsync(lengthBuffer, 0, lengthBuffer.Length, cancellationToken);
 			int size = BitConverter.ToInt32(lengthBuffer, 0);
@@ -236,6 +278,7 @@
 		/// <summary>
 		/// Shortens the specified long URL, but leaves the fragment part (if present) visibly applied to the shortened URL.
 		/// </summary>
+		/// <param name="shortener">The URL shortening service to use.</param>
 		/// <param name="longUrl">The long URL.</param>
 		/// <returns>The short URL.</returns>
 		public static async Task<Uri> ShortenExcludeFragmentAsync(this IUrlShortener shortener, Uri longUrl) {
@@ -349,6 +392,13 @@
 			return webSafeBase64.ToString();
 		}
 
+		/// <summary>
+		/// Executes an HTTP GET request at the specified location, throwing if the server returns a failing result or a buffered stream on success.
+		/// </summary>
+		/// <param name="client">The HTTP client to use.</param>
+		/// <param name="location">The URI to HTTP GET.</param>
+		/// <param name="cancellationToken">The cancellation token.</param>
+		/// <returns>A task whose result is the buffered response stream.</returns>
 		internal static async Task<Stream> GetBufferedStreamAsync(this HttpClient client, Uri location, CancellationToken cancellationToken) {
 			Requires.NotNull(client, "client");
 
@@ -357,6 +407,12 @@
 			return await response.Content.ReadAsBufferedStreamAsync(cancellationToken);
 		}
 
+		/// <summary>
+		/// Buffers an HTTP stream's contents and returns the buffered stream.
+		/// </summary>
+		/// <param name="content">The HTTP content whose stream should be buffered.</param>
+		/// <param name="cancellationToken">The cancellation token.</param>
+		/// <returns>A task whose result is the buffered response stream.</returns>
 		internal static async Task<Stream> ReadAsBufferedStreamAsync(this HttpContent content, CancellationToken cancellationToken) {
 			Requires.NotNull(content, "content");
 
@@ -369,6 +425,14 @@
 			}
 		}
 
+		/// <summary>
+		/// Executes an HTTP GET, adding a bearer token to the HTTP Authorization header.
+		/// </summary>
+		/// <param name="httpClient">The HTTP client to use.</param>
+		/// <param name="location">The URL to GET.</param>
+		/// <param name="bearerToken">The bearer token to add to the Authorization header.</param>
+		/// <param name="cancellationToken">The cancellation token.</param>
+		/// <returns>The asynchronous HTTP response.</returns>
 		internal static Task<HttpResponseMessage> GetAsync(this HttpClient httpClient, Uri location, string bearerToken, CancellationToken cancellationToken) {
 			Requires.NotNull(httpClient, "httpClient");
 			Requires.NotNull(location, "location");
@@ -379,6 +443,14 @@
 			return httpClient.SendAsync(request, cancellationToken);
 		}
 
+		/// <summary>
+		/// Executes an HTTP DELETE, adding a bearer token to the HTTP Authorization header.
+		/// </summary>
+		/// <param name="httpClient">The HTTP client to use.</param>
+		/// <param name="location">The URL to DELETE.</param>
+		/// <param name="bearerToken">The bearer token to add to the Authorization header.</param>
+		/// <param name="cancellationToken">The cancellation token.</param>
+		/// <returns>The asynchronous HTTP response.</returns>
 		internal static Task<HttpResponseMessage> DeleteAsync(this HttpClient httpClient, Uri location, string bearerToken, CancellationToken cancellationToken) {
 			Requires.NotNull(httpClient, "httpClient");
 			Requires.NotNull(location, "location");
