@@ -50,6 +50,15 @@
 
 		#region ICloudBlobStorageProvider Members
 
+		/// <summary>
+		/// Uploads a blob to public cloud storage.
+		/// </summary>
+		/// <param name="content">The blob's content.</param>
+		/// <param name="expirationUtc">The date after which this blob should be deleted.</param>
+		/// <param name="contentType">The content type of the blob.</param>
+		/// <param name="contentEncoding">The content encoding of the blob.</param>
+		/// <param name="cancellationToken">A cancellation token.</param>
+		/// <returns>A task whose result is the URL by which the blob's content may be accessed.</returns>
 		public async Task<Uri> UploadMessageAsync(Stream content, DateTime expirationUtc, string contentType, string contentEncoding, CancellationToken cancellationToken = default(CancellationToken)) {
 			Requires.NotNull(content, "content");
 			Requires.Range(expirationUtc > DateTime.UtcNow, "expirationUtc");
@@ -81,6 +90,7 @@
 		/// Creates the blob container if it does not exist, and sets its public access permission to allow
 		/// downloading of blobs by their URIs.
 		/// </summary>
+		/// <returns>The task representing the asynchronous operation.</returns>
 		public async Task CreateContainerIfNotExistAsync() {
 			if (await this.container.CreateIfNotExistAsync()) {
 				var permissions = new BlobContainerPermissions {
@@ -97,6 +107,7 @@
 		/// All blobs scheduled to expire prior to this date will be purged.  The default value
 		/// is interpreted as <see cref="DateTime.UtcNow"/>.
 		/// </param>
+		/// <returns>The task representing the asynchronous operation.</returns>
 		public Task PurgeBlobsExpiringBeforeAsync(DateTime deleteBlobsExpiringBefore = default(DateTime)) {
 #if NET40
 			throw new NotImplementedException();

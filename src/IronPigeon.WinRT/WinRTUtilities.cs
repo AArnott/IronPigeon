@@ -17,34 +17,28 @@
 	using Windows.UI.Core;
 	using Windows.UI.Notifications;
 
+	/// <summary>
+	/// Utilities common to an IronPigeon application targeting WinRT.
+	/// </summary>
 	public static class WinRTUtilities {
-		public static CryptographicKey ExtractPublicKey(this CryptographicKey key, AsymmetricKeyAlgorithmProvider provider) {
-			return provider.ImportPublicKey(key.ExportPublicKey());
-		}
-
+		/// <summary>
+		/// Converts a WinRT buffer to a .NET buffer.
+		/// </summary>
+		/// <param name="buffer">The WinRT buffer.</param>
+		/// <returns>The .NET buffer.</returns>
 		public static byte[] ToArray(this IBuffer buffer) {
 			byte[] result;
 			CryptographicBuffer.CopyToByteArray(buffer, out result);
 			return result;
 		}
 
+		/// <summary>
+		/// Converts a .NET buffer to a WinRT buffer.
+		/// </summary>
+		/// <param name="array">The .NET buffer.</param>
+		/// <returns>The WinRT buffer.</returns>
 		public static IBuffer ToBuffer(this byte[] array) {
 			return CryptographicBuffer.CreateFromByteArray(array);
-		}
-
-		internal static async Task WriteSizeAndBufferAsync(this IOutputStream stream, IBuffer buffer) {
-			await stream.WriteAsync(CryptographicBuffer.CreateFromByteArray(BitConverter.GetBytes(buffer.Length)));
-			await stream.WriteAsync(buffer);
-		}
-
-		internal static async Task<IBuffer> ReadSizeAndBufferAsync(this IInputStream stream) {
-			IBuffer sizeBuffer = new Windows.Storage.Streams.Buffer(sizeof(int));
-			sizeBuffer = await stream.ReadAsync(sizeBuffer, sizeBuffer.Capacity, InputStreamOptions.None); // FEEDBACK: why doesn't sizeBuffer's Length automatically get increased?
-			uint size = (uint)BitConverter.ToInt32(sizeBuffer.ToArray(), 0);
-
-			IBuffer buffer = new Windows.Storage.Streams.Buffer(size);
-			buffer = await stream.ReadAsync(buffer, size, InputStreamOptions.None);
-			return buffer;
 		}
 	}
 }

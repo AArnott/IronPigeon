@@ -499,7 +499,7 @@
 		/// </summary>
 		/// <param name="longPoll"><c>true</c> to asynchronously wait for messages if there are none immediately available for download.</param>
 		/// <param name="cancellationToken">The cancellation token.</param>
-		/// <returns>The task representing the asynchronous operation.</returns>
+		/// <returns>The task whose result is the list of downloaded inbox items.</returns>
 		private async Task<ReadOnlyListOfInboxItem> DownloadIncomingItemsAsync(bool longPoll, CancellationToken cancellationToken) {
 			var deserializer = new DataContractJsonSerializer(typeof(IncomingList));
 			var requestUri = this.Endpoint.PublicEndpoint.MessageReceivingEndpoint;
