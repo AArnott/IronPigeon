@@ -46,6 +46,7 @@
   <ItemGroup>
     <Compile Include="CompareFiles.cs" />
     <Compile Include="GetBuildVersion.cs" />
+    <Compile Include="NuGetPack.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

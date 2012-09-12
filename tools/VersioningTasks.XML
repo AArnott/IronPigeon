@@ -64,11 +64,6 @@
             The prerelease version.
             </value>
         </member>
-        <member name="P:VersioningTasks.GetBuildVersion.OAuth2PackagesVersion">
-            <summary>
-            Gets or sets the version string to use for NuGet packages containing OAuth 2 components.
-            </summary>
-        </member>
         <member name="P:VersioningTasks.GetBuildVersion.GitCommitId">
             <summary>
             Gets the Git revision control commit id for HEAD (the current source code version).
@@ -88,6 +83,71 @@
             <summary>
             Gets or sets the parent directory of the .git directory.
             </summary>
+        </member>
+        <member name="T:VersioningTasks.NuGetPack">
+            <summary>
+            Creates a .nupkg archive from a .nuspec file and content files.
+            </summary>
+        </member>
+        <member name="M:VersioningTasks.NuGetPack.GenerateFullPathToTool">
+            <summary>
+            Returns the fully qualified path to the executable file.
+            </summary>
+            <returns>
+            The fully qualified path to the executable file.
+            </returns>
+        </member>
+        <member name="M:VersioningTasks.NuGetPack.Execute">
+            <summary>
+            Runs the exectuable file with the specified task parameters.
+            </summary>
+            <returns>
+            true if the task runs successfully; otherwise, false.
+            </returns>
+        </member>
+        <member name="M:VersioningTasks.NuGetPack.GenerateCommandLineCommands">
+            <summary>
+            Returns a string value containing the command line arguments to pass directly to the executable file.
+            </summary>
+            <returns>
+            A string value containing the command line arguments to pass directly to the executable file.
+            </returns>
+        </member>
+        <member name="P:VersioningTasks.NuGetPack.NuSpec">
+            <summary>
+            Gets or sets the path to the .nuspec file.
+            </summary>
+        </member>
+        <member name="P:VersioningTasks.NuGetPack.BaseDirectory">
+            <summary>
+            Gets or sets the base directory, the contents of which gets included in the .nupkg archive.
+            </summary>
+        </member>
+        <member name="P:VersioningTasks.NuGetPack.OutputPackageDirectory">
+            <summary>
+            Gets or sets the path to the directory that will contain the generated .nupkg archive.
+            </summary>
+        </member>
+        <member name="P:VersioningTasks.NuGetPack.Properties">
+            <summary>
+            Gets or sets the semicolon delimited list of properties to supply to the NuGet Pack command to perform token substitution.
+            </summary>
+        </member>
+        <member name="P:VersioningTasks.NuGetPack.Symbols">
+            <summary>
+            Gets or sets a value indicating whether to generate a symbols nuget package.
+            </summary>
+        </member>
+        <member name="P:VersioningTasks.NuGetPack.Version">
+            <summary>
+            Gets or sets the version to override the one in the nuspec file.
+            </summary>
+        </member>
+        <member name="P:VersioningTasks.NuGetPack.ToolName">
+            <summary>
+            Gets the name of the executable file to run.
+            </summary>
+            <returns>The name of the executable file to run.</returns>
         </member>
     </members>
 </doc>

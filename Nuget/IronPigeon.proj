@@ -1,0 +1,51 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+	<Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildProjectDirectory), EnlistmentInfo.props))\EnlistmentInfo.props" Condition=" '$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildProjectDirectory), EnlistmentInfo.props))' != '' " />
+
+	<ItemGroup>
+		<ProjectReference Include="$(ProjectRoot)src\IronPigeon\IronPigeon.csproj" />
+		<ProjectReference Include="$(ProjectRoot)src\IronPigeon.Desktop\IronPigeon.Desktop.csproj" />
+		<ProjectReference Include="$(ProjectRoot)src\IronPigeon.WinRT\IronPigeon.WinRT.csproj" />
+	</ItemGroup>
+		
+	<Target Name="Build" DependsOnTargets="GetBuildVersion">
+		<MSBuild
+			Projects="@(ProjectReference)"
+			Targets="Build"
+			Properties="Configuration=Release"
+			BuildInParallel="$(BuildInParallel)"
+			/>
+		<MSBuild
+			Projects="@(ProjectReference)"
+			Targets="Build"
+			Properties="Configuration=ReleaseNET40"
+			BuildInParallel="$(BuildInParallel)"
+			/>
+
+		<ItemGroup>
+			<NuGetProperties Include="Version=$(NuGetPackageVersion)" />
+			<NuGetProperties Include="OutputPath45=$(ProjectRoot)bin\$(Platform)\Release\" />
+			<NuGetProperties Include="OutputPath40=$(ProjectRoot)bin\$(Platform)\ReleaseNET40\" />
+		</ItemGroup>
+
+		<ItemGroup>
+			<NuGetSpecifications Include="IronPigeon.nuspec">
+				<Symbols>true</Symbols>
+				<Properties>@(NuGetProperties)</Properties>
+				<Version>$(NuGetPackageVersion)</Version>
+				<OutputPackageDirectory>$(ProjectRoot)bin\</OutputPackageDirectory>
+			</NuGetSpecifications>
+		</ItemGroup>
+
+		<NuGetPack
+			NuSpec="%(NuGetSpecifications.Identity)"
+			Properties="%(NuGetSpecifications.Properties)"
+			Version="%(NuGetSpecifications.Version)"
+			OutputPackageDirectory="%(NuGetSpecifications.OutputPackageDirectory)"
+			Symbols="%(NuGetSpecifications.Symbols)"
+			ToolPath="$(ProjectRoot)src\.nuget\"
+			/>
+	</Target>
+
+	<Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildProjectDirectory), EnlistmentInfo.targets))\EnlistmentInfo.targets" Condition=" '$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildProjectDirectory), EnlistmentInfo.targets))' != '' " />
+</Project>

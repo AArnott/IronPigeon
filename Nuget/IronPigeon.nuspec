@@ -1,0 +1,53 @@
+<?xml version="1.0"?>
+<package >
+	<metadata>
+		<id>IronPigeon</id>
+		<version>$version$</version>
+		<title>IronPigeon secure messaging protocol</title>
+		<authors>Andrew Arnott</authors>
+		<owners>Andrew Arnott</owners>
+		<licenseUrl>http://opensource.org/licenses/MS-RL</licenseUrl>
+		<!--
+		<projectUrl>http://PROJECT_URL_HERE_OR_DELETE_THIS_LINE</projectUrl>
+		<iconUrl>http://ICON_URL_HERE_OR_DELETE_THIS_LINE</iconUrl>
+		-->
+		<requireLicenseAcceptance>false</requireLicenseAcceptance>
+		<description>
+			A generic message passing protocol which is tuned for confidentiality and authentication.
+		</description>
+		<releaseNotes>Basic message passing protocol implemented.</releaseNotes>
+		<copyright>Copyright 2012</copyright>
+		<tags>crypto cryptography mail email privacy</tags>
+		<dependencies>
+			<group>
+				<dependency id="Microsoft.Validation" version="[1.0.16, 2.0)" />
+			</group>
+			<group targetFramework="net40">
+				<dependency id="Microsoft.Validation" version="[1.0.16, 2.0)" />
+				<dependency id="Microsoft.WindowsAzure.StorageClient.Async" version="0.1.3-preview" />
+			</group>
+		</dependencies>
+	</metadata>
+	<files>
+		<file src="$OutputPath45$IronPigeon.dll" target="lib\net45" />
+		<file src="$OutputPath45$IronPigeon.pdb" target="lib\net45" />
+		<file src="$OutputPath45$IronPigeon.xml" target="lib\net45" />
+		<file src="$OutputPath45$IronPigeon.Desktop.dll" target="lib\net45" />
+		<file src="$OutputPath45$IronPigeon.Desktop.pdb" target="lib\net45" />
+		<file src="$OutputPath45$IronPigeon.Desktop.xml" target="lib\net45" />
+
+		<file src="$OutputPath40$IronPigeon.dll" target="lib\net40" />
+		<file src="$OutputPath40$IronPigeon.pdb" target="lib\net40" />
+		<file src="$OutputPath40$IronPigeon.xml" target="lib\net40" />
+		<file src="$OutputPath40$IronPigeon.Desktop.dll" target="lib\net40" />
+		<file src="$OutputPath40$IronPigeon.Desktop.pdb" target="lib\net40" />
+		<file src="$OutputPath40$IronPigeon.Desktop.xml" target="lib\net40" />
+
+		<file src="$OutputPath45$IronPigeon.dll" target="lib\winrt45" />
+		<file src="$OutputPath45$IronPigeon.pdb" target="lib\winrt45" />
+		<file src="$OutputPath45$IronPigeon.xml" target="lib\winrt45" />
+		<file src="$OutputPath45$IronPigeon.WinRT.dll" target="lib\winrt45" />
+		<file src="$OutputPath45$IronPigeon.WinRT.pdb" target="lib\winrt45" />
+		<file src="$OutputPath45$IronPigeon.WinRT.xml" target="lib\winrt45" />
+	</files>
+</package>
