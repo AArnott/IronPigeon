@@ -14,7 +14,7 @@
 	using Newtonsoft.Json.Linq;
 
 #if !DEBUG
-	//[RequireHttps]
+	[RequireHttps]
 #endif
 	public class WindowsPushNotificationClientController : Controller {
 		/// <summary>
@@ -24,7 +24,7 @@
 
 		internal const string DefaultTableName = "WindowsPushNotificationClients";
 
-		private static bool TableCreated;
+		private static bool tableCreated;
 
 		public WindowsPushNotificationClientController()
 			: this(DefaultTableName, DefaultCloudConfigurationName) {
@@ -54,9 +54,9 @@
 		public async Task<ActionResult> PutClient(PushNotificationClientEntity clientEntity) {
 			Requires.NotNull(clientEntity, "clientEntity");
 
-			if (!TableCreated) {
+			if (!tableCreated) {
 				await this.TableClient.CreateTableIfNotExistAsync(DefaultTableName);
-				TableCreated = true;
+				tableCreated = true;
 			}
 
 			if (this.TryValidateModel(clientEntity)) {
@@ -96,6 +96,7 @@
 		/// </summary>
 		/// <param name="id">The Package Security Identifier (SID) of the client app.</param>
 		/// <param name="clientSecret">The client secret of the app.</param>
+		/// <returns>The asynchronous operation.</returns>
 		public async Task Put(string id, string clientSecret) {
 			var client = new PushNotificationClientEntity(id, clientSecret);
 			this.ClientTable.AddObject(client);
@@ -107,6 +108,7 @@
 		/// </summary>
 		/// <param name="id">The Package Security Identifier (SID) of the client app.</param>
 		/// <param name="clientSecret">The client secret of the app.</param>
+		/// <returns>The asynchronous operation.</returns>
 		public async Task Delete(string id, string clientSecret) {
 			var client = await this.ClientTable.GetAsync(id);
 			if (client == null) {

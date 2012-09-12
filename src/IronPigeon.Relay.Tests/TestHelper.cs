@@ -22,11 +22,8 @@
 
 			foreach (var kvp in new RouteValueDictionary(expectations)) {
 				Assert.True(
-					string.Equals(kvp.Value.ToString(),
-						routeData.Values[kvp.Key].ToString(),
-						StringComparison.OrdinalIgnoreCase),
-					string.Format("Expected '{0}', not '{1}' for '{2}'.",
-						kvp.Value, routeData.Values[kvp.Key], kvp.Key));
+					string.Equals(kvp.Value.ToString(), routeData.Values[kvp.Key].ToString(), StringComparison.OrdinalIgnoreCase),
+					string.Format("Expected '{0}', not '{1}' for '{2}'.", kvp.Value, routeData.Values[kvp.Key], kvp.Key));
 			}
 		}
 	}

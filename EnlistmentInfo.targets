@@ -8,6 +8,6 @@
 	<Import Project="Tools\Versioning.targets"/>
 
 	<PropertyGroup>
-		<DocumentationFile Condition=" '$(NonShipping)' != 'true' ">$(OutputPath)$(AssemblyName).xml</DocumentationFile>
+		<DocumentationFile Condition=" '$(NonShipping)' != 'true' and '$(NoDocumentationFile)' != 'true' ">$(OutputPath)$(AssemblyName).xml</DocumentationFile>
 	</PropertyGroup>
 </Project>

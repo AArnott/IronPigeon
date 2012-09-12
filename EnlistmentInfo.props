@@ -16,9 +16,7 @@
 		<PlatformTarget>$(Platform)</PlatformTarget>
 
 		<!-- Release builds should break when StyleCop warnings exist. -->
-		<!-- TODO: re-enable this when we're StyleCop clean: 
 		<StyleCopTreatErrorsAsWarnings Condition=" '$(StyleCopTreatErrorsAsWarnings)' == '' and '$(Configuration)' == 'Release' ">false</StyleCopTreatErrorsAsWarnings>
-		-->
 		<StyleCopTreatErrorsAsWarnings Condition=" '$(StyleCopTreatErrorsAsWarnings)' == '' ">true</StyleCopTreatErrorsAsWarnings>
 
 		<ErrorReport>prompt</ErrorReport>

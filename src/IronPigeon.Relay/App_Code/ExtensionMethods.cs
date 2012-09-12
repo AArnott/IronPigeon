@@ -14,6 +14,7 @@
 		/// Gets the client disconnected token.
 		/// </summary>
 		/// <param name="response">The response.</param>
+		/// <returns>The token that is cancelled when the client disconnects.</returns>
 		internal static CancellationToken GetClientDisconnectedToken(this HttpResponseBase response) {
 #if NET40
 			var cts = new CancellationTokenSource();

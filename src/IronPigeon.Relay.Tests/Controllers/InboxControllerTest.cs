@@ -37,7 +37,7 @@
 			AzureStorageConfig.RegisterConfiguration();
 
 			var testContainerName = "unittests" + Guid.NewGuid().ToString();
-			var testTableName = "unittests" + Guid.NewGuid().ToString().Replace("-", "");
+			var testTableName = "unittests" + Guid.NewGuid().ToString().Replace("-", string.Empty);
 			var account = CloudStorageAccount.FromConfigurationSetting(CloudConfigurationName);
 			var client = account.CreateCloudBlobClient();
 			this.tableClient = account.CreateCloudTableClient();

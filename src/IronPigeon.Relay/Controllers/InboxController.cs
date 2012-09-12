@@ -11,6 +11,9 @@
 	using System.Text.RegularExpressions;
 	using System.Threading;
 	using System.Threading.Tasks;
+#if !NET40
+	using System.Threading.Tasks.Dataflow;
+#endif
 	using System.Web;
 	using System.Web.Mvc;
 	using IronPigeon.Relay.Models;
@@ -20,7 +23,6 @@
 	using Newtonsoft.Json;
 	using Newtonsoft.Json.Linq;
 #if !NET40
-	using System.Threading.Tasks.Dataflow;
 	using TaskEx = System.Threading.Tasks.Task;
 #endif
 
@@ -39,6 +41,11 @@
 		public const int MaxNotificationSize = 10 * 1024;
 
 		/// <summary>
+		/// The maximum lifetime an inbox will retain a posted message.
+		/// </summary>
+		public static readonly TimeSpan MaxLifetimeCeiling = TimeSpan.FromDays(14);
+
+		/// <summary>
 		/// The key to the Azure account configuration information.
 		/// </summary>
 		internal const string DefaultCloudConfigurationName = "StorageConnectionString";
@@ -50,12 +57,7 @@
 
 		private const string DefaultInboxTableName = "inbox";
 
-		/// <summary>
-		/// The maximum lifetime an inbox will retain a posted message.
-		/// </summary>
-		public static readonly TimeSpan MaxLifetimeCeiling = TimeSpan.FromDays(14);
-
-		private static readonly Dictionary<string, TaskCompletionSource<object>> longPollWaiters = new Dictionary<string, TaskCompletionSource<object>>();
+		private static readonly Dictionary<string, TaskCompletionSource<object>> LongPollWaiters = new Dictionary<string, TaskCompletionSource<object>>();
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="InboxController" /> class.
@@ -196,8 +198,10 @@
 		/// <summary>
 		/// Deletes an inbox entirely.
 		/// </summary>
+		/// <param name="id">The ID of the inbox to delete.</param>
+		/// <returns>The asynchronous operation.</returns>
 		[NonAction] // to avoid ambiguity with the other overload.
-		public async Task<ActionResult> DeleteAsync(string id) {
+		public Task<ActionResult> DeleteAsync(string id) {
 			Requires.NotNullOrEmpty(id, "id");
 			throw new NotImplementedException();
 		}
@@ -205,6 +209,9 @@
 		/// <summary>
 		/// Deletes an individual notification from an inbox.
 		/// </summary>
+		/// <param name="id">The ID of the inbox with the notification to be deleted.</param>
+		/// <param name="notification">The URL to the PayloadReference contained by the inbox item that should be deleted.</param>
+		/// <returns>The asynchronous operation.</returns>
 		[HttpDelete, ActionName("Slot"), InboxOwnerAuthorize]
 		public async Task<ActionResult> DeleteAsync(string id, string notification) {
 			Requires.NotNullOrEmpty(id, "id");
@@ -230,6 +237,7 @@
 
 					throw;
 				}
+
 				return new EmptyResult();
 			} else {
 				return new HttpUnauthorizedResult("Notification URL does not match owner id.");
@@ -315,9 +323,9 @@
 
 		private static Task WaitIncomingMessageAsync(string id) {
 			TaskCompletionSource<object> tcs;
-			lock (longPollWaiters) {
-				if (!longPollWaiters.TryGetValue(id, out tcs)) {
-					longPollWaiters[id] = tcs = new TaskCompletionSource<object>();
+			lock (LongPollWaiters) {
+				if (!LongPollWaiters.TryGetValue(id, out tcs)) {
+					LongPollWaiters[id] = tcs = new TaskCompletionSource<object>();
 				}
 			}
 
@@ -368,9 +376,9 @@
 
 			var id = inbox.RowKey;
 			TaskCompletionSource<object> tcs;
-			lock (longPollWaiters) {
-				if (longPollWaiters.TryGetValue(id, out tcs)) {
-					longPollWaiters.Remove(id);
+			lock (LongPollWaiters) {
+				if (LongPollWaiters.TryGetValue(id, out tcs)) {
+					LongPollWaiters.Remove(id);
 				}
 			}
 

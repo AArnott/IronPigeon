@@ -107,7 +107,6 @@
 				}
 			}
 
-
 #if NET40
 			return new ReadOnlyCollection<Message>(messages);
 #else
