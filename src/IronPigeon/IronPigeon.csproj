@@ -88,10 +88,7 @@
     <Reference Include="System.XML" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\buildpkg.bat">
-      <Link>buildpkg.bat</Link>
-    </None>
-    <None Include="..\IronPigeon.nuspec">
+    <None Include="..\..\Nuget\IronPigeon.nuspec">
       <Link>IronPigeon.nuspec</Link>
     </None>
     <None Include="packages.config" />

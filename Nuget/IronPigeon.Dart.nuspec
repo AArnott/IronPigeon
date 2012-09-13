@@ -24,13 +24,16 @@
 		</dependencies>
 	</metadata>
 	<files>
-		<file src="IronPigeon.Dart\bin\release\IronPigeon.Dart.dll" target="lib\net45" />
-		<file src="IronPigeon.Dart\bin\release\IronPigeon.Dart.xml" target="lib\net45" />
+		<file src="$OutputPath45$IronPigeon.Dart.dll" target="lib\net45" />
+		<file src="$OutputPath45$IronPigeon.Dart.pdb" target="lib\net45" />
+		<file src="$OutputPath45$IronPigeon.Dart.xml" target="lib\net45" />
 
-		<file src="IronPigeon.Dart\bin\releaseNET40\IronPigeon.Dart.dll" target="lib\net40" />
-		<file src="IronPigeon.Dart\bin\releaseNET40\IronPigeon.Dart.xml" target="lib\net40" />
+		<file src="$OutputPath40$IronPigeon.Dart.dll" target="lib\net40" />
+		<file src="$OutputPath40$IronPigeon.Dart.pdb" target="lib\net40" />
+		<file src="$OutputPath40$IronPigeon.Dart.xml" target="lib\net40" />
 
-		<file src="IronPigeon.Dart\bin\release\IronPigeon.Dart.dll" target="lib\winrt45" />
-		<file src="IronPigeon.Dart\bin\release\IronPigeon.Dart.xml" target="lib\winrt45" />
+		<file src="$OutputPath45$IronPigeon.Dart.dll" target="lib\winrt45" />
+		<file src="$OutputPath45$IronPigeon.Dart.pdb" target="lib\winrt45" />
+		<file src="$OutputPath45$IronPigeon.Dart.xml" target="lib\winrt45" />
 	</files>
 </package>

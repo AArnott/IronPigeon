@@ -6,6 +6,7 @@
 		<ProjectReference Include="$(ProjectRoot)src\IronPigeon\IronPigeon.csproj" />
 		<ProjectReference Include="$(ProjectRoot)src\IronPigeon.Desktop\IronPigeon.Desktop.csproj" />
 		<ProjectReference Include="$(ProjectRoot)src\IronPigeon.WinRT\IronPigeon.WinRT.csproj" />
+		<ProjectReference Include="$(ProjectRoot)src\IronPigeon.Dart\IronPigeon.Dart.csproj" />
 	</ItemGroup>
 		
 	<Target Name="Build" DependsOnTargets="GetBuildVersion">
@@ -30,6 +31,12 @@
 
 		<ItemGroup>
 			<NuGetSpecifications Include="IronPigeon.nuspec">
+				<Symbols>true</Symbols>
+				<Properties>@(NuGetProperties)</Properties>
+				<Version>$(NuGetPackageVersion)</Version>
+				<OutputPackageDirectory>$(ProjectRoot)bin\</OutputPackageDirectory>
+			</NuGetSpecifications>
+			<NuGetSpecifications Include="IronPigeon.Dart.nuspec">
 				<Symbols>true</Symbols>
 				<Properties>@(NuGetProperties)</Properties>
 				<Version>$(NuGetPackageVersion)</Version>

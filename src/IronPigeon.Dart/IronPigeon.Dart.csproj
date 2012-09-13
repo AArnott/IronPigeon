@@ -25,7 +25,6 @@
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <TargetFrameworkProfile>
     </TargetFrameworkProfile>
-    <OutputPath>bin\ReleaseNet40\</OutputPath>
     <DefineConstants>TRACE;NET40</DefineConstants>
     <DocumentationFile>bin\ReleaseNet40\IronPigeon.Dart.XML</DocumentationFile>
     <Optimize>true</Optimize>
@@ -68,7 +67,7 @@
     <Reference Include="System.XML" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\IronPigeon.Dart.nuspec">
+    <None Include="..\..\Nuget\IronPigeon.Dart.nuspec">
       <Link>IronPigeon.Dart.nuspec</Link>
     </None>
     <None Include="packages.config" />
