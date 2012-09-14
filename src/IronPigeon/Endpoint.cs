@@ -49,6 +49,20 @@
 		public DateTime CreatedOnUtc { get; set; }
 
 		/// <summary>
+		/// Gets or sets an array of identifiers authorized to claim this endpoint.
+		/// </summary>
+		/// <remarks>
+		/// The set of identifiers in this array are *not* to be trusted as belonging to this endpoint,
+		/// and the endpoint sent from a remote party can claim anything.  The contents must be
+		/// verified by the receiving end.
+		/// This property is present so that when a message arrives, the receiving end has a list of
+		/// identifiers to try to perform discovery on in order to provide the receiving user a human
+		/// recognizeable and verified idea of who sent the message.
+		/// </remarks>
+		[DataMember]
+		public string[] AuthorizedIdentifiers { get; set; }
+
+		/// <summary>
 		/// Checks equality between this and another instance.
 		/// </summary>
 		/// <param name="obj">The <see cref="System.Object" /> to compare with this instance.</param>
