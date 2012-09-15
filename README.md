@@ -13,9 +13,9 @@ Installing IronPigeon
 ---------------------
 
 The recommended way to acquire the binary is via the
-[IronPigeon](https://nuget.org/packages/IronPigeon) NuGet package.
+[IronPigeon][1] NuGet package.
 
-For email-like message exchange, the [IronPigeon.Dart](https://nuget.org/packages/IronPigeon.Dart)
+For email-like message exchange, the [IronPigeon.Dart][2]
 NuGet package is recommended.
 
 Establishing a communications channel
@@ -138,3 +138,7 @@ types:
 	var message = new Message(ownEndpoint, recipients, "subject", "body");
 	await postalService.PostAsync(message);
 	var incoming = await postalService.ReceiveAsync(longPoll: true|false);
+
+[1]: http://nuget.org/packages/IronPigeon      "IronPigeon NuGet package"
+[2]: http://nuget.org/packages/IronPigeon.Dart "IronPigeon.Dart NuGet package"
+
