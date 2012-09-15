@@ -30,6 +30,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{DADFDF
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{9EA1EF35-0DDC-40DD-88B6-DC95CC839919}"
 	ProjectSection(SolutionItems) = preProject
+		..\README.md = ..\README.md
 		version.txt = version.txt
 	EndProjectSection
 EndProject
