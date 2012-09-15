@@ -16,7 +16,7 @@
 			An open source email-like message passing protocol with focus on confidentiality and authentication.
 		</description>
 		<releaseNotes>Basic message passing protocol implemented.</releaseNotes>
-		<copyright>Copyright 2012</copyright>
+		<copyright>Copyright © Andrew Arnott</copyright>
 		<tags>crypto cryptography mail email privacy</tags>
 		<dependencies>
 			<dependency id="IronPigeon" version="$version$" />
