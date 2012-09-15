@@ -41,27 +41,38 @@
 		/// </summary>
 		/// <returns>The asynchronous operation.</returns>
 		private static async Task DoAsync() {
-			CloudStorageAccount.SetConfigurationSettingPublisher(
-				(name, func) => func(ConfigurationManager.ConnectionStrings[name].ConnectionString));
-			var azureAccount = CloudStorageAccount.FromConfigurationSetting("StorageConnectionString");
-
-			var blobStorage = new AzureBlobStorage(azureAccount, AzureBlobStorageContainerName);
+			var blobStorage = await CreateBlobStorageAsync();
 			var cryptoServices = new DesktopCryptoProvider(SecurityLevel.Minimum);
 			var ownEndpoint = await CreateOrOpenEndpointAsync(cryptoServices);
 			if (ownEndpoint == null) {
 				return;
 			}
 
-			await InitializeLocalCloudAsync(azureAccount, blobStorage);
 			var channel = new Channel(blobStorage, cryptoServices, ownEndpoint);
 			channel.UrlShortener = null;
-			await channel.CreateInboxAsync(new Uri(ConfigurationManager.ConnectionStrings["RelayService"].ConnectionString));
+			await channel.CreateInboxAsync(new Uri(ConfigurationManager.ConnectionStrings["RelayInboxService"].ConnectionString));
 			var shareableAddress = await channel.PublishAddressBookEntryAsync();
 			Console.WriteLine("Public receiving endpoint: {0}", shareableAddress.AbsoluteUri);
 
 			Endpoint friend = await GetFriendEndpointAsync(cryptoServices, channel.Endpoint.PublicEndpoint);
 
 			await ChatLoopAsync(channel, friend);
+		}
+
+		private static async Task<ICloudBlobStorageProvider> CreateBlobStorageAsync() {
+			if (ConfigurationManager.ConnectionStrings["StorageConnectionString"] != null) {
+				CloudStorageAccount.SetConfigurationSettingPublisher(
+					(name, func) => func(ConfigurationManager.ConnectionStrings[name].ConnectionString));
+				var azureAccount = CloudStorageAccount.FromConfigurationSetting("StorageConnectionString");
+
+				var blobStorage = new AzureBlobStorage(azureAccount, AzureBlobStorageContainerName);
+				await InitializeLocalCloudAsync(azureAccount, blobStorage);
+				return blobStorage;
+			} else if (ConfigurationManager.ConnectionStrings["RelayBlobService"] != null) {
+				return new RelayCloudBlobStorageProvider(new Uri(ConfigurationManager.ConnectionStrings["RelayBlobService"].ConnectionString));
+			} else {
+				throw new ApplicationException("No blob service available.  Check app.config.");
+			}
 		}
 
 		/// <summary>
