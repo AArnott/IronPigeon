@@ -9,6 +9,15 @@ and transmitted indirectly so that eavesdroppers find it difficult or
 impossible to establish *whether* two parties have even communicated,
 *what* was communicated or *how much* was communicated.
 
+Installing IronPigeon
+---------------------
+
+The recommended way to acquire the binary is via the
+[IronPigeon](https://nuget.org/packages/IronPigeon) NuGet package.
+
+For email-like message exchange, the [IronPigeon.Dart](https://nuget.org/packages/IronPigeon.Dart)
+NuGet package is recommended.
+
 Establishing a communications channel
 -------------------------------------
 

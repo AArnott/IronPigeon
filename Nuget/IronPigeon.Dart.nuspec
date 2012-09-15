@@ -13,7 +13,8 @@
 		-->
 		<requireLicenseAcceptance>false</requireLicenseAcceptance>
 		<description>
-			A generic message passing protocol which is tuned for confidentiality and authentication.
+			An open source email-like message passing protocol with focus on confidentiality and authentication.
+			The source is available on GitHub: http://github.com/aarnott/ironpigeon
 		</description>
 		<releaseNotes>Basic message passing protocol implemented.</releaseNotes>
 		<copyright>Copyright 2012</copyright>
