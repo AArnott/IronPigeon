@@ -6,7 +6,7 @@
 	using System.Runtime.Serialization;
 	using System.Text;
 	using System.Threading.Tasks;
-	using Microsoft;
+	using Validation;
 
 	/// <summary>
 	/// A self-signed description of an endpoint including public signing and encryption keys.

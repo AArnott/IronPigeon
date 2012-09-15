@@ -8,7 +8,7 @@
 	using System.Threading;
 	using System.Threading.Tasks;
 
-	using Microsoft;
+	using Validation;
 #if NET40
 	using ReadOnlyListOfMessage = System.Collections.ObjectModel.ReadOnlyCollection<Message>;
 #else

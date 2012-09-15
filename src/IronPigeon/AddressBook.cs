@@ -6,7 +6,7 @@
 	using System.Runtime.Serialization;
 	using System.Threading;
 	using System.Threading.Tasks;
-	using Microsoft;
+	using Validation;
 
 	/// <summary>
 	/// Retrieves contacts from some public store.

@@ -4,7 +4,7 @@
 	using System.Configuration;
 	using System.Linq;
 	using System.Web;
-	using Microsoft;
+	using Validation;
 	using Microsoft.WindowsAzure;
 
 	public class AzureStorageConfig {

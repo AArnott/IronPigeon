@@ -10,9 +10,9 @@
 #if !NET40
 	using System.Threading.Tasks.Dataflow;
 #endif
-	using Microsoft;
 	using Microsoft.WindowsAzure;
 	using Microsoft.WindowsAzure.StorageClient;
+	using Validation;
 
 	/// <summary>
 	/// A cloud blob storage provider that uses Azure blob storage directly.

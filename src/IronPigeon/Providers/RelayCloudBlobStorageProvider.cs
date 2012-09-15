@@ -10,7 +10,7 @@
 	using System.Threading;
 	using System.Threading.Tasks;
 
-	using Microsoft;
+	using Validation;
 
 	/// <summary>
 	/// A blob storage provider that stores blobs to the message relay service via its well-known blob API.

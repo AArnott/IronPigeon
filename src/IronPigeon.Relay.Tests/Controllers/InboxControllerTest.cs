@@ -9,7 +9,7 @@
 	using System.Web.Mvc;
 	using System.Web.Routing;
 	using IronPigeon.Relay.Controllers;
-	using Microsoft;
+	using Validation;
 	using Microsoft.WindowsAzure;
 	using Microsoft.WindowsAzure.StorageClient;
 	using Moq;

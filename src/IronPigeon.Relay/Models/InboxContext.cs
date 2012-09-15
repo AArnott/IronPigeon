@@ -3,7 +3,7 @@
 	using System.Collections.Generic;
 	using System.Linq;
 	using System.Web;
-	using Microsoft;
+	using Validation;
 	using Microsoft.WindowsAzure.StorageClient;
 
 	public class InboxContext : TableServiceContext {

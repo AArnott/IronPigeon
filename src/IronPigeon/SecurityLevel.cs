@@ -5,7 +5,7 @@
 	using System.Text;
 	using System.Threading.Tasks;
 
-	using Microsoft;
+	using Validation;
 
 	/// <summary>
 	/// Describes common predefined security levels for communications.

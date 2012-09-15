@@ -73,8 +73,8 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="Microsoft.Validation">
-      <HintPath>..\packages\Microsoft.Validation.1.0.16\lib\net40-client\Microsoft.Validation.dll</HintPath>
+    <Reference Include="Validation">
+      <HintPath>..\packages\Validation.1.0.0.12259\lib\net40-client\Validation.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFrameworkVersion)' == 'v4.0' ">

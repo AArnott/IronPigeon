@@ -5,7 +5,7 @@
 	using System.Text;
 	using System.Threading.Tasks;
 
-	using Microsoft;
+	using Validation;
 
 	/// <summary>
 	/// Extension methods to the <see cref="ICryptoProvider"/> interface.

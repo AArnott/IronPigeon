@@ -5,7 +5,7 @@
 	using System.Linq;
 	using System.Runtime.Serialization;
 	using System.Text;
-	using Microsoft;
+	using Validation;
 
 	/// <summary>
 	/// The payload in a securely transmitted message, before encryptions and signatures are applied

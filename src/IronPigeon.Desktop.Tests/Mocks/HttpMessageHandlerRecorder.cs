@@ -11,7 +11,7 @@
 	using System.Text;
 	using System.Threading;
 	using System.Threading.Tasks;
-	using Microsoft;
+	using Validation;
 
 	internal class HttpMessageHandlerRecorder : HttpClientHandler {
 		private readonly string recordingPath;

@@ -4,7 +4,7 @@
 	using System.Linq;
 	using System.Threading.Tasks;
 	using System.Web;
-	using Microsoft;
+	using Validation;
 	using Microsoft.WindowsAzure.StorageClient;
 
 	public class PushNotificationContext : TableServiceContext {

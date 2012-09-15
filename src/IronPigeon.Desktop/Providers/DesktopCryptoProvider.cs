@@ -6,7 +6,7 @@
 	using System.Security.Cryptography;
 	using System.Text;
 	using System.Threading.Tasks;
-	using Microsoft;
+	using Validation;
 
 	/// <summary>
 	/// The (full) .NET Framework implementation of cryptography.

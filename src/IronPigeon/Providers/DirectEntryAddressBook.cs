@@ -7,7 +7,7 @@
 	using System.Threading;
 	using System.Threading.Tasks;
 
-	using Microsoft;
+	using Validation;
 
 	/// <summary>
 	/// An address book whose identifiers are URLs to the online address book entries.

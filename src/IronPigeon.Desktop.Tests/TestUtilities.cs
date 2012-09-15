@@ -6,7 +6,7 @@
 	using System.Text;
 	using System.Threading.Tasks;
 	using IronPigeon.Providers;
-	using Microsoft;
+	using Validation;
 
 	internal static class TestUtilities {
 		internal static void ApplyFuzzing(byte[] buffer, int bytesToChange) {

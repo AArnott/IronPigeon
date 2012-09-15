@@ -11,7 +11,7 @@
 
 	using IronPigeon.Providers;
 
-	using Microsoft;
+	using Validation;
 	using Microsoft.WindowsAzure;
 	using Microsoft.WindowsAzure.StorageClient;
 #if !NET40

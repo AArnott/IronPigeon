@@ -4,7 +4,7 @@
 	using System.Linq;
 	using System.Web;
 	using System.Web.Mvc;
-	using Microsoft;
+	using Validation;
 
 	[AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = true, Inherited = true)]
 	public class InboxOwnerAuthorizeAttribute : AuthorizeAttribute {

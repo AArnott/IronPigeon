@@ -11,7 +11,7 @@
 	using System.Text.RegularExpressions;
 	using System.Threading;
 	using System.Threading.Tasks;
-	using Microsoft;
+	using Validation;
 
 	/// <summary>
 	/// Discovers an address book entry by searching for the URL to it on the user's Twitter bio.

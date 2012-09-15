@@ -6,11 +6,11 @@
 	using System.Net.Http;
 	using System.Text;
 	using System.Threading.Tasks;
-	using Microsoft;
 
 	using Moq;
 
 	using NUnit.Framework;
+	using Validation;
 
 	[TestFixture]
 	public class ChannelTests {

@@ -18,7 +18,7 @@
 	using IronPigeon.Providers;
 	using IronPigeon.Relay;
 
-	using Microsoft;
+	using Validation;
 #if NET40
 	using ReadOnlyCollectionOfEndpoint = System.Collections.Generic.IEnumerable<Endpoint>;
 	using ReadOnlyListOfInboxItem = System.Collections.ObjectModel.ReadOnlyCollection<IncomingList.IncomingItem>;

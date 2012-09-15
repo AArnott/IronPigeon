@@ -7,7 +7,7 @@
 	using System.Text;
 	using System.Threading;
 	using System.Threading.Tasks;
-	using Microsoft;
+	using Validation;
 #if !NET40
 	using TaskEx = System.Threading.Tasks.Task;
 #endif
