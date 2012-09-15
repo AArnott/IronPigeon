@@ -7,14 +7,13 @@
 		<authors>Andrew Arnott</authors>
 		<owners>Andrew Arnott</owners>
 		<licenseUrl>http://opensource.org/licenses/MS-RL</licenseUrl>
+		<projectUrl>http://github.com/aarnott/ironpigeon</projectUrl>
 		<!--
-		<projectUrl>http://PROJECT_URL_HERE_OR_DELETE_THIS_LINE</projectUrl>
 		<iconUrl>http://ICON_URL_HERE_OR_DELETE_THIS_LINE</iconUrl>
 		-->
 		<requireLicenseAcceptance>false</requireLicenseAcceptance>
 		<description>
 			An open source email-like message passing protocol with focus on confidentiality and authentication.
-			The source is available on GitHub: http://github.com/aarnott/ironpigeon
 		</description>
 		<releaseNotes>Basic message passing protocol implemented.</releaseNotes>
 		<copyright>Copyright 2012</copyright>
