@@ -141,10 +141,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="App_Code\ExtensionMethods.cs" />
+    <Compile Include="Code\HtmlExtensions.cs" />
     <Compile Include="App_Code\InboxOwnerAuthorize.cs" />
     <Compile Include="App_Start\AzureStorageConfig.cs" />
     <Compile Include="Controllers\AddressBookController.cs" />
     <Compile Include="Controllers\BlobController.cs" />
+    <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\InboxController.cs" />
     <Compile Include="Controllers\WindowsPushNotificationClientController.cs" />
     <Compile Include="Global.asax.cs">
@@ -192,6 +194,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Views\AddressBook\Index.cshtml" />
+    <Content Include="Views\Home\Index.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Views\WindowsPushNotificationClient\Index.cshtml" />
