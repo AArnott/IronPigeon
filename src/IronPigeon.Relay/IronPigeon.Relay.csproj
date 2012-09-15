@@ -207,9 +207,9 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Properties\PublishProfiles\amber - FTP.pubxml" />
-    <None Include="Properties\PublishProfiles\amber - Web Deploy.pubxml" />
     <Content Include="Views\AddressBook\Index.cshtml" />
+    <None Include="Properties\PublishProfiles\IronPigeon - FTP.pubxml" />
+    <None Include="Properties\PublishProfiles\IronPigeon - Web Deploy.pubxml" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Views\WindowsPushNotificationClient\Index.cshtml" />
