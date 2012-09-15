@@ -1,0 +1,153 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>VersioningTasks</name>
+    </assembly>
+    <members>
+        <member name="M:VersioningTasks.CompareFiles.FastFileEqualityCheck(System.String,System.String)">
+            <summary>
+            Tests whether a file is up to date with respect to another,
+            based on existence, last write time and file size.
+            </summary>
+            <param name="sourcePath">The source path.</param>
+            <param name="destPath">The dest path.</param>
+            <returns><c>true</c> if the files are the same; <c>false</c> if the files are different</returns>
+        </member>
+        <member name="P:VersioningTasks.CompareFiles.OriginalItems">
+            <summary>
+            One set of items to compare.
+            </summary>
+        </member>
+        <member name="P:VersioningTasks.CompareFiles.NewItems">
+            <summary>
+            The other set of items to compare.
+            </summary>
+        </member>
+        <member name="P:VersioningTasks.CompareFiles.AreSame">
+            <summary>
+            Gets whether the items lists contain items that are identical going down the list.
+            </summary>
+        </member>
+        <member name="P:VersioningTasks.CompareFiles.AreChanged">
+            <summary>
+            Same as <see cref="P:VersioningTasks.CompareFiles.AreSame"/>, but opposite.
+            </summary>
+        </member>
+        <member name="M:VersioningTasks.GetBuildVersion.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:VersioningTasks.GetBuildVersion"/> class.
+            </summary>
+        </member>
+        <member name="P:VersioningTasks.GetBuildVersion.Version">
+            <summary>
+            Gets the version string to use in the compiled assemblies.
+            </summary>
+        </member>
+        <member name="P:VersioningTasks.GetBuildVersion.SimpleVersion">
+            <summary>
+            Gets the version string to use in the official release name (lacks revision number).
+            </summary>
+        </member>
+        <member name="P:VersioningTasks.GetBuildVersion.MajorMinorVersion">
+            <summary>
+            Gets or sets the major.minor version string.
+            </summary>
+            <value>
+            The x.y string (no build number or revision number).
+            </value>
+        </member>
+        <member name="P:VersioningTasks.GetBuildVersion.PrereleaseVersion">
+            <summary>
+            Gets or sets the prerelease version, or empty if this is a final release.
+            </summary>
+            <value>
+            The prerelease version.
+            </value>
+        </member>
+        <member name="P:VersioningTasks.GetBuildVersion.GitCommitId">
+            <summary>
+            Gets the Git revision control commit id for HEAD (the current source code version).
+            </summary>
+        </member>
+        <member name="P:VersioningTasks.GetBuildVersion.BuildNumber">
+            <summary>
+            Gets the build number (JDate) for this version.
+            </summary>
+        </member>
+        <member name="P:VersioningTasks.GetBuildVersion.VersionFile">
+            <summary>
+            The file that contains the version base (Major.Minor.Build) to use.
+            </summary>
+        </member>
+        <member name="P:VersioningTasks.GetBuildVersion.GitRepoRoot">
+            <summary>
+            Gets or sets the parent directory of the .git directory.
+            </summary>
+        </member>
+        <member name="T:VersioningTasks.NuGetPack">
+            <summary>
+            Creates a .nupkg archive from a .nuspec file and content files.
+            </summary>
+        </member>
+        <member name="M:VersioningTasks.NuGetPack.GenerateFullPathToTool">
+            <summary>
+            Returns the fully qualified path to the executable file.
+            </summary>
+            <returns>
+            The fully qualified path to the executable file.
+            </returns>
+        </member>
+        <member name="M:VersioningTasks.NuGetPack.Execute">
+            <summary>
+            Runs the exectuable file with the specified task parameters.
+            </summary>
+            <returns>
+            true if the task runs successfully; otherwise, false.
+            </returns>
+        </member>
+        <member name="M:VersioningTasks.NuGetPack.GenerateCommandLineCommands">
+            <summary>
+            Returns a string value containing the command line arguments to pass directly to the executable file.
+            </summary>
+            <returns>
+            A string value containing the command line arguments to pass directly to the executable file.
+            </returns>
+        </member>
+        <member name="P:VersioningTasks.NuGetPack.NuSpec">
+            <summary>
+            Gets or sets the path to the .nuspec file.
+            </summary>
+        </member>
+        <member name="P:VersioningTasks.NuGetPack.BaseDirectory">
+            <summary>
+            Gets or sets the base directory, the contents of which gets included in the .nupkg archive.
+            </summary>
+        </member>
+        <member name="P:VersioningTasks.NuGetPack.OutputPackageDirectory">
+            <summary>
+            Gets or sets the path to the directory that will contain the generated .nupkg archive.
+            </summary>
+        </member>
+        <member name="P:VersioningTasks.NuGetPack.Properties">
+            <summary>
+            Gets or sets the semicolon delimited list of properties to supply to the NuGet Pack command to perform token substitution.
+            </summary>
+        </member>
+        <member name="P:VersioningTasks.NuGetPack.Symbols">
+            <summary>
+            Gets or sets a value indicating whether to generate a symbols nuget package.
+            </summary>
+        </member>
+        <member name="P:VersioningTasks.NuGetPack.Version">
+            <summary>
+            Gets or sets the version to override the one in the nuspec file.
+            </summary>
+        </member>
+        <member name="P:VersioningTasks.NuGetPack.ToolName">
+            <summary>
+            Gets the name of the executable file to run.
+            </summary>
+            <returns>The name of the executable file to run.</returns>
+        </member>
+    </members>
+</doc>

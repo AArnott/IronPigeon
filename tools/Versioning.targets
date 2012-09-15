@@ -1,0 +1,65 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="GetBuildVersion" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="4.0">
+	<!-- Import this .targets file to automatically generate AssemblyVersion attributes.
+	     It also sets several MSBuild properties that may be useful in other build steps. -->
+	<PropertyGroup>
+		<VersionCsFile>$(IntermediatePath)\$(AssemblyName).Version.cs</VersionCsFile>
+		<NoWarn>$(NoWarn);1607</NoWarn>
+	</PropertyGroup>
+
+	<UsingTask AssemblyFile="MSBuild.Community.Tasks.dll" TaskName="AssemblyInfo"/>
+	<UsingTask AssemblyFile="VersioningTasks.dll" TaskName="GetBuildVersion" />
+	<UsingTask AssemblyFile="VersioningTasks.dll" TaskName="CompareFiles" />
+	<UsingTask AssemblyFile="VersioningTasks.dll" TaskName="NuGetPack" />
+
+	<Target Name="GetBuildVersion">
+		<GetBuildVersion Condition=" '$(BuildVersion)' == '' "
+		                 VersionFile="$(ProjectRoot)src\version.txt"
+		                 GitRepoRoot="$(ProjectRoot)">
+			<Output TaskParameter="Version" PropertyName="BuildVersion" />
+			<Output TaskParameter="SimpleVersion" PropertyName="BuildVersionSimple" />
+			<Output TaskParameter="PrereleaseVersion" PropertyName="PrereleaseVersion" />
+			<Output TaskParameter="MajorMinorVersion" PropertyName="MajorMinorVersion" />
+			<Output TaskParameter="GitCommitId" PropertyName="GitCommitId" />
+			<Output TaskParameter="BuildNumber" PropertyName="BuildNumber" />
+		</GetBuildVersion>
+		<PropertyGroup>
+			<!-- In TeamCity, the build agent doesn't get the .git directory, but the commit id is available by other means. -->
+			<GitCommitId Condition=" '$(GitCommitId)' == '' ">$(BUILD_VCS_NUMBER)</GitCommitId>
+
+			<GitCommitIdShort Condition=" '$(GitCommitId)' != '' ">.$(GitCommitId.Substring(0,10))</GitCommitIdShort>
+			<SemVerBuildSuffix>+build.$(BuildNumber)$(GitCommitIdShort)</SemVerBuildSuffix>
+			<AssemblyInformationalVersion>$(BuildVersionSimple)$(PrereleaseVersion)$(SemVerBuildSuffix)</AssemblyInformationalVersion>
+
+			<!-- When NuGet supports SemVer 2.0, we can set NuGetPackageVersion to be the same as $(AssemblyInformationalVersion) -->
+			<NuGetPackageVersion Condition=" '$(PrereleaseVersion)' == '' ">$(BuildVersion)</NuGetPackageVersion>
+			<NuGetPackageVersion Condition=" '$(PrereleaseVersion)' != '' ">$(BuildVersionSimple)$(PrereleaseVersion)</NuGetPackageVersion>
+		</PropertyGroup>
+		<Warning Condition=" '$(AssemblyInformationalVersion)' == '' " Text="Unable to determine the git HEAD commit ID to use for informational version number." />
+		<Message Condition=" '$(AssemblyInformationalVersion)' != '' " Text="Building version $(BuildVersion) from commit $(GitCommitId)"/>
+		<Message Condition=" '$(AssemblyInformationalVersion)' == '' " Text="Building version $(BuildVersion)"/>
+		<Message Importance="low" Text="AssemblyInformationalVersion: $(AssemblyInformationalVersion)" />
+		<Message Importance="low" Text="NuGetPackageVersion: $(NuGetPackageVersion)" />
+	</Target>
+
+	<Target Name="BeforeBuild" DependsOnTargets="GetBuildVersion">
+		<PropertyGroup>
+			<NewVersionCsFile>$(VersionCsFile).new</NewVersionCsFile>
+		</PropertyGroup>
+		<MakeDir Directories="$(IntermediatePath)"/>
+		<AssemblyInfo OutputFile="$(NewVersionCsFile)" CodeLanguage="C#"
+		              AssemblyVersion="$(MajorMinorVersion)"
+		              AssemblyFileVersion="$(BuildVersion)"
+		              AssemblyInformationalVersion="$(AssemblyInformationalVersion)"
+		              GenerateClass="true" />
+		<!-- Avoid applying the newly generated AssemblyInfo.cs file to the build 
+		     unless it has changed in order to allow for incremental building. -->
+		<CompareFiles OriginalItems="$(VersionCsFile)" NewItems="$(NewVersionCsFile)">
+			<Output TaskParameter="AreChanged" PropertyName="AssemblyInfoChanged" />
+		</CompareFiles>
+		<Copy Condition=" '$(AssemblyInfoChanged)' == 'true' " SourceFiles="$(NewVersionCsFile)" DestinationFiles="$(VersionCsFile)" />
+		<ItemGroup>
+			<Compile Include="$(VersionCsFile)" />
+		</ItemGroup>
+	</Target>
+</Project>
