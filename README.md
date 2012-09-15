@@ -9,6 +9,10 @@ and transmitted indirectly so that eavesdroppers find it difficult or
 impossible to establish *whether* two parties have even communicated,
 *what* was communicated or *how much* was communicated.
 
+This project includes libraries that implement the protocol and a message
+relay web service project that provides the cloud component necessary for
+passing messages.
+
 Installing IronPigeon
 ---------------------
 
