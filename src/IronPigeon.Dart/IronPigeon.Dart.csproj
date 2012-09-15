@@ -69,6 +69,7 @@
   <ItemGroup>
     <None Include="..\..\Nuget\IronPigeon.Dart.nuspec">
       <Link>IronPigeon.Dart.nuspec</Link>
+      <SubType>Designer</SubType>
     </None>
     <None Include="packages.config" />
   </ItemGroup>
