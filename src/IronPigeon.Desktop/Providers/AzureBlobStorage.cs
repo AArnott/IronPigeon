@@ -91,13 +91,8 @@
 		/// downloading of blobs by their URIs.
 		/// </summary>
 		/// <returns>The task representing the asynchronous operation.</returns>
-		public async Task CreateContainerIfNotExistAsync() {
-			if (await this.container.CreateIfNotExistAsync()) {
-				var permissions = new BlobContainerPermissions {
-					PublicAccess = BlobContainerPublicAccessType.Blob,
-				};
-				await this.container.SetPermissionsAsync(permissions, null);
-			}
+		public Task CreateContainerIfNotExistAsync() {
+			return this.container.CreateContainerWithPublicBlobsIfNotExistAsync();
 		}
 
 		/// <summary>

@@ -25,13 +25,13 @@
 		/// <summary>
 		/// The default name of the Azure blob container to use for blobs.
 		/// </summary>
-		private const string DefaultContainerName = "blobs";
+		internal const string DefaultContainerName = "blobs";
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="BlobController" /> class.
 		/// </summary>
 		public BlobController()
-			: this(InboxController.DefaultCloudConfigurationName) {
+			: this(AzureStorageConfig.DefaultCloudConfigurationName) {
 		}
 
 		/// <summary>
@@ -71,6 +71,11 @@
 				: blobLocation;
 
 			return resultLocation.AbsoluteUri;
+		}
+
+		internal static async Task OneTimeInitializeAsync(CloudStorageAccount azureAccount) {
+			var blobStorage = new AzureBlobStorage(azureAccount, BlobController.DefaultContainerName);
+			await blobStorage.CreateContainerIfNotExistAsync();
 		}
 	}
 }

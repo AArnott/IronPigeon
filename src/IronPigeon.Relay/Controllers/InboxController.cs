@@ -46,11 +46,6 @@
 		public static readonly TimeSpan MaxLifetimeCeiling = TimeSpan.FromDays(14);
 
 		/// <summary>
-		/// The key to the Azure account configuration information.
-		/// </summary>
-		internal const string DefaultCloudConfigurationName = "StorageConnectionString";
-
-		/// <summary>
 		/// The default name for the container used to store posted messages.
 		/// </summary>
 		private const string DefaultInboxContainerName = "inbox";
@@ -63,7 +58,7 @@
 		/// Initializes a new instance of the <see cref="InboxController" /> class.
 		/// </summary>
 		public InboxController()
-			: this(DefaultInboxContainerName, DefaultInboxTableName, DefaultCloudConfigurationName) {
+			: this(DefaultInboxContainerName, DefaultInboxTableName, AzureStorageConfig.DefaultCloudConfigurationName) {
 		}
 
 		/// <summary>
@@ -103,9 +98,7 @@
 		public async Task<JsonResult> CreateAsync() {
 			var inbox = InboxEntity.Create();
 			this.InboxTable.AddObject(inbox);
-			await TaskEx.WhenAll(
-				this.InboxTable.SaveChangesAsync(),
-				this.EnsureContainerInitializedAsync());
+			await this.InboxTable.SaveChangesAsync();
 
 			string messageReceivingEndpoint = this.GetAbsoluteUrlForAction("Slot", new { id = inbox.RowKey }).AbsoluteUri;
 			var result = new InboxCreationResponse {
@@ -317,6 +310,17 @@
 #endif
 		}
 
+		internal static async Task OneTimeInitializeAsync(CloudStorageAccount azureAccount) {
+			var inboxTable = azureAccount.CreateCloudTableClient();
+
+			var blobClient = azureAccount.CreateCloudBlobClient();
+			var inboxContainer = blobClient.GetContainerReference(DefaultInboxContainerName);
+
+			await TaskEx.WhenAll(
+					inboxContainer.CreateContainerWithPublicBlobsIfNotExistAsync(),
+					inboxTable.CreateTableIfNotExistAsync(DefaultInboxTableName));
+		}
+
 		protected virtual Uri GetAbsoluteUrlForAction(string action, dynamic routeValues) {
 			return new Uri(this.Request.Url, this.Url.Action(action, routeValues));
 		}
@@ -390,13 +394,6 @@
 		private async Task<InboxEntity> GetInboxAsync(string id) {
 			var queryResults = await this.InboxTable.Get(id).ExecuteAsync();
 			return queryResults.FirstOrDefault();
-		}
-
-		private async Task EnsureContainerInitializedAsync() {
-			if (await this.InboxContainer.CreateIfNotExistAsync()) {
-				var permissions = new BlobContainerPermissions { PublicAccess = BlobContainerPublicAccessType.Blob };
-				await this.InboxContainer.SetPermissionsAsync(permissions);
-			}
 		}
 	}
 }
