@@ -33,6 +33,7 @@
 		/// <summary>
 		/// The handler to use for outbound HTTP requests.
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private HttpMessageHandler httpMessageHandler = new HttpClientHandler();
 
 		/// <summary>

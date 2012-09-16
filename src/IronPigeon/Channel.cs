@@ -46,11 +46,13 @@
 		/// <summary>
 		/// The message handler to use for sending/receiving HTTP messages.
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private HttpMessageHandler httpMessageHandler = new HttpClientHandler();
 
 		/// <summary>
 		/// The HTTP client to use for sending/receiving HTTP messages.
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private HttpClient httpClient;
 
 		/// <summary>
