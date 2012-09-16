@@ -43,6 +43,7 @@
 			this.tableClient = account.CreateCloudTableClient();
 			this.tableClient.CreateTableIfNotExist(testTableName);
 			this.container = client.GetContainerReference(testContainerName);
+			this.container.CreateContainerWithPublicBlobsIfNotExistAsync();
 			this.controller = new InboxControllerForTest(this.container.Name, testTableName, CloudConfigurationName);
 		}
 
