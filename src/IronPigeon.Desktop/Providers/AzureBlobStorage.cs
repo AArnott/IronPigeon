@@ -107,11 +107,11 @@
 #if NET40
 			throw new NotImplementedException();
 #else
-			Requires.Argument(deleteBlobsExpiringBefore.Kind == DateTimeKind.Utc, "expirationUtc", "UTC required.");
-
 			if (deleteBlobsExpiringBefore == default(DateTime)) {
 				deleteBlobsExpiringBefore = DateTime.UtcNow;
 			}
+
+			Requires.Argument(deleteBlobsExpiringBefore.Kind == DateTimeKind.Utc, "expirationUtc", "UTC required.");
 
 			var searchExpiredDirectoriesBlock = new TransformManyBlock<CloudBlobContainer, CloudBlobDirectory>(
 				async c => {
