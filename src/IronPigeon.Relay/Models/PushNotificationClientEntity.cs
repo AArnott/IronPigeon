@@ -10,8 +10,8 @@
 	using System.Net.Http;
 	using System.Threading.Tasks;
 	using System.Web.Http;
-	using Validation;
 	using Newtonsoft.Json.Linq;
+	using Validation;
 
 	public class PushNotificationClientEntity : TableStorageEntity {
 		internal const string SchemePrefix = "ms-app://";

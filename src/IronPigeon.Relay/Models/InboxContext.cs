@@ -3,8 +3,8 @@
 	using System.Collections.Generic;
 	using System.Linq;
 	using System.Web;
-	using Validation;
 	using Microsoft.WindowsAzure.StorageClient;
+	using Validation;
 
 	public class InboxContext : TableServiceContext {
 		public InboxContext(CloudTableClient client, string tableName)

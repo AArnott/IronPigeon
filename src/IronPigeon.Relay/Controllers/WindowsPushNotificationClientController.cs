@@ -8,10 +8,10 @@
 	using System.Threading.Tasks;
 	using System.Web.Mvc;
 	using IronPigeon.Relay.Models;
-	using Validation;
 	using Microsoft.WindowsAzure;
 	using Microsoft.WindowsAzure.StorageClient;
 	using Newtonsoft.Json.Linq;
+	using Validation;
 
 #if !DEBUG
 	[RequireHttps]

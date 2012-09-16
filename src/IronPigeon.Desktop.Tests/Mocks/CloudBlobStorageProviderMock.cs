@@ -7,8 +7,8 @@
 	using System.Text;
 	using System.Threading;
 	using System.Threading.Tasks;
-	using Validation;
 	using NUnit.Framework;
+	using Validation;
 
 	internal class CloudBlobStorageProviderMock : ICloudBlobStorageProvider {
 		internal static readonly string BaseUploadUri = "http://localhost/blob/";

@@ -9,12 +9,12 @@
 	using System.Web.Mvc;
 	using System.Web.Routing;
 	using IronPigeon.Relay.Controllers;
-	using Validation;
 	using Microsoft.WindowsAzure;
 	using Microsoft.WindowsAzure.StorageClient;
 	using Moq;
 	using Newtonsoft.Json;
 	using NUnit.Framework;
+	using Validation;
 
 	[TestFixture]
 	public class InboxControllerTest {

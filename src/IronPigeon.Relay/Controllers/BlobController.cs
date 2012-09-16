@@ -8,12 +8,10 @@
 	using System.Threading.Tasks;
 	using System.Web.Http;
 	using System.Web.Mvc;
-
 	using IronPigeon.Providers;
-
-	using Validation;
 	using Microsoft.WindowsAzure;
 	using Microsoft.WindowsAzure.StorageClient;
+	using Validation;
 #if !NET40
 	using TaskEx = System.Threading.Tasks.Task;
 #endif
@@ -27,12 +25,12 @@
 		/// </summary>
 		internal const string DefaultContainerName = "blobs";
 
-		private static readonly SortedDictionary<int, TimeSpan> MaxBlobSizesAndLifetimes = new SortedDictionary<int, TimeSpan> {
-			{ 10*1024, TimeSpan.MaxValue }, // this is intended for address book entries.
-			{ 512*1024, TimeSpan.FromDays(7) },
-		};
-
 		private const int MaxBlobLength = 512 * 1024; // 0.5 MB
+
+		private static readonly SortedDictionary<int, TimeSpan> MaxBlobSizesAndLifetimes = new SortedDictionary<int, TimeSpan> {
+			{ 10 * 1024, TimeSpan.MaxValue }, // this is intended for address book entries.
+			{ 512 * 1024, TimeSpan.FromDays(7) },
+		};
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="BlobController" /> class.
