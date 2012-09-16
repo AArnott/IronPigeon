@@ -1,6 +1,8 @@
 ﻿namespace ConsoleChat {
 	using System;
 	using System.Collections.Generic;
+	using System.Composition.Convention;
+	using System.Composition.Hosting;
 	using System.Configuration;
 	using System.IO;
 	using System.Linq;
@@ -41,38 +43,36 @@
 		/// </summary>
 		/// <returns>The asynchronous operation.</returns>
 		private static async Task DoAsync() {
-			var blobStorage = await CreateBlobStorageAsync();
-			var cryptoServices = new DesktopCryptoProvider(SecurityLevel.Minimum);
+			var configuration = new ContainerConfiguration().WithParts(
+				typeof(Channel),
+				typeof(DesktopCryptoProvider),
+				typeof(RelayCloudBlobStorageProvider),
+				typeof(GoogleUrlShortener),
+				typeof(TwitterAddressBook),
+				typeof(DirectEntryAddressBook));
+			var container = configuration.CreateContainer();
+
+			var relayService = container.GetExport<RelayCloudBlobStorageProvider>();
+			relayService.PostUrl = new Uri(ConfigurationManager.ConnectionStrings["RelayInboxService"].ConnectionString);
+
+			var cryptoServices = container.GetExport<ICryptoProvider>();
+			cryptoServices.ApplySecurityLevel(SecurityLevel.Minimum);
+
 			var ownEndpoint = await CreateOrOpenEndpointAsync(cryptoServices);
 			if (ownEndpoint == null) {
 				return;
 			}
 
-			var channel = new Channel(blobStorage, cryptoServices, ownEndpoint);
-			channel.UrlShortener = null;
-			await channel.CreateInboxAsync(new Uri(ConfigurationManager.ConnectionStrings["RelayInboxService"].ConnectionString));
+			var channel = container.GetExport<Channel>();
+			channel.Endpoint = ownEndpoint;
+
+			await channel.CreateInboxAsync(relayService.PostUrl);
 			var shareableAddress = await channel.PublishAddressBookEntryAsync();
 			Console.WriteLine("Public receiving endpoint: {0}", shareableAddress.AbsoluteUri);
 
 			Endpoint friend = await GetFriendEndpointAsync(cryptoServices, channel.Endpoint.PublicEndpoint);
 
 			await ChatLoopAsync(channel, friend);
-		}
-
-		private static async Task<ICloudBlobStorageProvider> CreateBlobStorageAsync() {
-			if (ConfigurationManager.ConnectionStrings["StorageConnectionString"] != null) {
-				CloudStorageAccount.SetConfigurationSettingPublisher(
-					(name, func) => func(ConfigurationManager.ConnectionStrings[name].ConnectionString));
-				var azureAccount = CloudStorageAccount.FromConfigurationSetting("StorageConnectionString");
-
-				var blobStorage = new AzureBlobStorage(azureAccount, AzureBlobStorageContainerName);
-				await InitializeLocalCloudAsync(azureAccount, blobStorage);
-				return blobStorage;
-			} else if (ConfigurationManager.ConnectionStrings["RelayBlobService"] != null) {
-				return new RelayCloudBlobStorageProvider(new Uri(ConfigurationManager.ConnectionStrings["RelayBlobService"].ConnectionString));
-			} else {
-				throw new ApplicationException("No blob service available.  Check app.config.");
-			}
 		}
 
 		/// <summary>
@@ -135,7 +135,7 @@
 		/// </summary>
 		/// <param name="cryptoServices">The crypto provider in use.</param>
 		/// <returns>A task whose result is the local user's own endpoint.</returns>
-		private static async Task<OwnEndpoint> CreateOrOpenEndpointAsync(DesktopCryptoProvider cryptoServices) {
+		private static async Task<OwnEndpoint> CreateOrOpenEndpointAsync(ICryptoProvider cryptoServices) {
 			OwnEndpoint result;
 			switch (MessageBox.Show("Do you have an existing endpoint you want to open?", "Endpoint selection", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question)) {
 				case DialogResult.Yes:

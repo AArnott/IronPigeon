@@ -1,6 +1,11 @@
 ﻿namespace IronPigeon.Providers {
 	using System;
 	using System.Collections.Generic;
+#if NET40
+	using System.ComponentModel.Composition;
+#else
+	using System.Composition;
+#endif
 	using System.Globalization;
 	using System.IO;
 	using System.Linq;
@@ -17,6 +22,10 @@
 	/// <summary>
 	/// A cloud blob storage provider that uses Azure blob storage directly.
 	/// </summary>
+	[Export(typeof(ICloudBlobStorageProvider)), Export]
+#if !NET40
+	[Shared]
+#endif
 	public class AzureBlobStorage : ICloudBlobStorageProvider {
 		/// <summary>
 		/// The Azure storage account.

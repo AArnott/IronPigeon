@@ -1,6 +1,11 @@
 ﻿namespace IronPigeon.Providers {
 	using System;
 	using System.Collections.Generic;
+#if NET40
+	using System.ComponentModel.Composition;
+#else
+	using System.Composition;
+#endif
 	using System.IO;
 	using System.Linq;
 	using System.Net.Http;
@@ -15,6 +20,10 @@
 	/// <summary>
 	/// A blob storage provider that stores blobs to the message relay service via its well-known blob API.
 	/// </summary>
+	[Export(typeof(ICloudBlobStorageProvider)), Export]
+#if !NET40
+	[Shared]
+#endif
 	public class RelayCloudBlobStorageProvider : ICloudBlobStorageProvider {
 		/// <summary>
 		/// The handler to use for outbound HTTP requests.

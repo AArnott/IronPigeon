@@ -1,6 +1,11 @@
 ﻿namespace IronPigeon.Providers {
 	using System;
 	using System.Collections.Generic;
+#if NET40
+	using System.ComponentModel.Composition;
+#else
+	using System.Composition;
+#endif
 	using System.Linq;
 	using System.Net.Http;
 	using System.Text;
@@ -12,6 +17,10 @@
 	/// <summary>
 	/// An address book whose identifiers are URLs to the online address book entries.
 	/// </summary>
+	[Export(typeof(AddressBook))]
+#if !NET40
+	[Shared]
+#endif
 	public class DirectEntryAddressBook : OnlineAddressBook {
 		/// <summary>
 		/// Initializes a new instance of the <see cref="DirectEntryAddressBook" /> class.

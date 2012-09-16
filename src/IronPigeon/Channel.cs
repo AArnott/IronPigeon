@@ -2,6 +2,11 @@
 	using System;
 	using System.Collections.Generic;
 	using System.Collections.ObjectModel;
+#if NET40
+	using System.ComponentModel.Composition;
+#else
+	using System.Composition;
+#endif
 	using System.Diagnostics;
 	using System.Globalization;
 	using System.IO;
@@ -33,6 +38,10 @@
 	/// <summary>
 	/// A channel for sending or receiving secure messages.
 	/// </summary>
+	[Export]
+#if !NET40
+	[Shared]
+#endif
 	public class Channel {
 		/// <summary>
 		/// The message handler to use for sending/receiving HTTP messages.
@@ -55,7 +64,6 @@
 		public Channel() {
 			this.httpClient = new HttpClient(this.httpMessageHandler);
 			this.httpClientLongPoll = new HttpClient(this.httpMessageHandler) { Timeout = TimeSpan.FromMilliseconds(Timeout.Infinite) };
-			this.UrlShortener = new GoogleUrlShortener();
 		}
 
 		/// <summary>
@@ -93,6 +101,7 @@
 		/// <summary>
 		/// Gets or sets the provider of blob storage.
 		/// </summary>
+		[Import]
 		public ICloudBlobStorageProvider CloudBlobStorage { get; set; }
 
 		/// <summary>
@@ -101,6 +110,7 @@
 		/// <value>
 		/// The crypto services.
 		/// </value>
+		[Import]
 		public ICryptoProvider CryptoServices { get; set; }
 
 		/// <summary>
@@ -114,6 +124,7 @@
 		/// <summary>
 		/// Gets or sets the URL shortener.
 		/// </summary>
+		[Import(AllowDefault = true)]
 		public IUrlShortener UrlShortener { get; set; }
 
 		/// <summary>

@@ -48,6 +48,7 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\Microsoft.WindowsAzure.StorageClient.Async.0.1.4-preview\lib\net40\Microsoft.WindowsAzure.StorageClient.Async.dll</HintPath>
     </Reference>
+    <Reference Include="System.ComponentModel.Composition" />
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFrameworkVersion)' != 'v4.0' ">
     <Reference Include="Microsoft.CompilerServices.AsyncTargetingPack.Net45">
@@ -60,6 +61,26 @@
     <Reference Include="Microsoft.WindowsAzure.StorageClient.Async, Version=1.0.0.0, Culture=neutral, PublicKeyToken=3042ba97c5930d49, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\Microsoft.WindowsAzure.StorageClient.Async.0.1.4-preview\lib\net45\Microsoft.WindowsAzure.StorageClient.Async.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Composition.AttributedModel, Version=1.0.15.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\Microsoft.Composition.1.0.15\lib\net45\System.Composition.AttributedModel.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Composition.Convention, Version=1.0.15.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\Microsoft.Composition.1.0.15\lib\net45\System.Composition.Convention.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Composition.Hosting, Version=1.0.15.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\Microsoft.Composition.1.0.15\lib\net45\System.Composition.Hosting.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Composition.Runtime, Version=1.0.15.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\Microsoft.Composition.1.0.15\lib\net45\System.Composition.Runtime.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Composition.TypedParts, Version=1.0.15.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\Microsoft.Composition.1.0.15\lib\net45\System.Composition.TypedParts.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
