@@ -44,14 +44,6 @@
 		}
 
 		/// <summary>
-		/// Initializes a new instance of the <see cref="TwitterAddressBook" /> class.
-		/// </summary>
-		/// <param name="cryptoProvider">The crypto provider.</param>
-		public TwitterAddressBook(ICryptoProvider cryptoProvider) {
-			this.CryptoServices = cryptoProvider;
-		}
-
-		/// <summary>
 		/// Retrieves a contact with some user supplied identifier.
 		/// </summary>
 		/// <param name="identifier">The user-supplied identifier for the contact.</param>

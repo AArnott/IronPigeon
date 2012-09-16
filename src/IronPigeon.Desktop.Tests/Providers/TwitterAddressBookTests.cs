@@ -1,4 +1,5 @@
 ﻿namespace IronPigeon.Tests.Providers {
+	using System.Net.Http;
 	using IronPigeon.Providers;
 	using IronPigeon.Tests;
 	using NUnit.Framework;
@@ -11,7 +12,7 @@
 		public void SetUp() {
 			this.twitter = new TwitterAddressBook();
 			this.twitter.CryptoServices = TestUtilities.CreateAuthenticCryptoProvider();
-			this.twitter.HttpMessageHandler = Mocks.HttpMessageHandlerRecorder.CreatePlayback();
+			this.twitter.HttpClient = new HttpClient(Mocks.HttpMessageHandlerRecorder.CreatePlayback());
 		}
 
 		[Test]

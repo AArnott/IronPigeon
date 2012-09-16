@@ -3,6 +3,7 @@
 	using System.Collections.Generic;
 	using System.IO;
 	using System.Linq;
+	using System.Net.Http;
 	using System.Text;
 	using System.Threading.Tasks;
 	using IronPigeon.Providers;
@@ -15,7 +16,7 @@
 		[SetUp]
 		public void SetUp() {
 			var provider = new RelayCloudBlobStorageProvider(new Uri("http://localhost:39472/api/blob"));
-			provider.HttpMessageHandler = Mocks.HttpMessageHandlerRecorder.CreatePlayback();
+			provider.HttpClient = new HttpClient(Mocks.HttpMessageHandlerRecorder.CreatePlayback());
 			this.provider = provider;
 		}
 

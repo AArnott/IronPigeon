@@ -2,6 +2,11 @@
 	using System;
 	using System.Collections.Generic;
 	using System.Collections.ObjectModel;
+#if NET40
+	using System.ComponentModel.Composition;
+#else
+	using System.Composition;
+#endif
 	using System.IO;
 	using System.Linq;
 	using System.Text;
@@ -20,31 +25,9 @@
 	/// </summary>
 	public class PostalService {
 		/// <summary>
-		/// Initializes a new instance of the <see cref="PostalService" /> class.
-		/// </summary>
-		/// <param name="channel">The channel used to send and receive messages.</param>
-		public PostalService(Channel channel) {
-			Requires.NotNull(channel, "channel");
-			this.Channel = channel;
-		}
-
-		/// <summary>
-		/// Initializes a new instance of the <see cref="PostalService" /> class.
-		/// </summary>
-		/// <param name="blobStorageProvider">The blob storage provider.</param>
-		/// <param name="cryptoProvider">The crypto provider.</param>
-		/// <param name="endpoint">The endpoint.</param>
-		public PostalService(ICloudBlobStorageProvider blobStorageProvider, ICryptoProvider cryptoProvider, OwnEndpoint endpoint) {
-			Requires.NotNull(blobStorageProvider, "blobStorageProvider");
-			Requires.NotNull(cryptoProvider, "cryptoProvider");
-			Requires.NotNull(endpoint, "endpoint");
-
-			this.Channel = new Channel(blobStorageProvider, cryptoProvider, endpoint);
-		}
-
-		/// <summary>
 		/// Gets the channel used to send and receive messages.
 		/// </summary>
+		[Import]
 		public Channel Channel { get; private set; }
 
 		/// <summary>

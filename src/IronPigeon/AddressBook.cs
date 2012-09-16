@@ -1,6 +1,11 @@
 ﻿namespace IronPigeon {
 	using System;
 	using System.Collections.Generic;
+#if NET40
+	using System.ComponentModel.Composition;
+#else
+	using System.Composition;
+#endif
 	using System.IO;
 	using System.Net.Http;
 	using System.Runtime.Serialization;
@@ -20,6 +25,7 @@
 		/// <summary>
 		/// Gets or sets the cryptographic services provider.
 		/// </summary>
+		[Import]
 		public ICryptoProvider CryptoServices { get; set; }
 
 		/// <summary>

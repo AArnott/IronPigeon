@@ -54,6 +54,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Providers\DirectEntryAddressBook.cs" />
     <Compile Include="Providers\GoogleUrlShortener.cs" />
+    <Compile Include="Providers\HttpClientWrapper.cs" />
     <Compile Include="Providers\RelayCloudBlobStorageProvider.cs" />
     <Compile Include="SecurityLevel.cs" />
     <Compile Include="Relay\InboxCreationResponse.cs" />

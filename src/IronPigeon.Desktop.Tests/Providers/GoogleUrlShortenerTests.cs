@@ -2,6 +2,7 @@
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
+	using System.Net.Http;
 	using System.Text;
 	using System.Threading.Tasks;
 	using IronPigeon.Providers;
@@ -15,7 +16,7 @@
 		public void SetUp() {
 			var shortener = new GoogleUrlShortener();
 			this.shortener = shortener;
-			shortener.HttpMessageHandler = Mocks.HttpMessageHandlerRecorder.CreatePlayback();
+			shortener.HttpClient = new HttpClient(Mocks.HttpMessageHandlerRecorder.CreatePlayback());
 		}
 
 		[Test]

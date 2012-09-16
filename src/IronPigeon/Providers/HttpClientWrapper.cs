@@ -1,0 +1,36 @@
+﻿namespace IronPigeon.Providers {
+	using System;
+	using System.Collections.Generic;
+#if NET40
+	using System.ComponentModel.Composition;
+#else
+	using System.Composition;
+#endif
+	using System.Linq;
+	using System.Net.Http;
+	using System.Text;
+	using System.Threading.Tasks;
+
+	/// <summary>
+	/// A simple MEF part that wraps an <see cref="HttpMessageHandler"/> in a new <see cref="HttpClient"/>
+	/// for all importers.
+	/// </summary>
+#if !NET40
+	[Shared]
+#endif
+	public class HttpClientWrapper {
+		/// <summary>
+		/// Gets a new instance of <see cref="HttpClient"/> that wraps an optionally custom <see cref="HttpMessageHandler"/>.
+		/// </summary>
+		[Export]
+		public HttpClient Client {
+			get { return new HttpClient(this.MessageHandler ?? new HttpClientHandler()); }
+		}
+
+		/// <summary>
+		/// Gets or sets a custom <see cref="HttpMessageHandler"/>.
+		/// </summary>
+		[Import(AllowDefault = true)]
+		public HttpMessageHandler MessageHandler { get; set; }
+	}
+}

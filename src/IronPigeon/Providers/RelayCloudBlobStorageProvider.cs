@@ -26,11 +26,6 @@
 #endif
 	public class RelayCloudBlobStorageProvider : ICloudBlobStorageProvider {
 		/// <summary>
-		/// The handler to use for outbound HTTP requests.
-		/// </summary>
-		private HttpMessageHandler httpMessageHandler = new HttpClientHandler();
-
-		/// <summary>
 		/// Initializes a new instance of the <see cref="RelayCloudBlobStorageProvider" /> class.
 		/// </summary>
 		public RelayCloudBlobStorageProvider() {
@@ -43,22 +38,6 @@
 		public RelayCloudBlobStorageProvider(Uri postUrl) {
 			Requires.NotNull(postUrl, "postUrl");
 			this.PostUrl = postUrl;
-			this.HttpClient = new HttpClient(this.httpMessageHandler);
-		}
-
-		/// <summary>
-		/// Gets or sets the message handler to use for outbound HTTP requests.
-		/// </summary>
-		public HttpMessageHandler HttpMessageHandler {
-			get {
-				return this.httpMessageHandler;
-			}
-
-			set {
-				Requires.NotNull(value, "value");
-				this.httpMessageHandler = value;
-				this.HttpClient = new HttpClient(value);
-			}
 		}
 
 		/// <summary>
@@ -67,9 +46,10 @@
 		public Uri PostUrl { get; set; }
 
 		/// <summary>
-		/// Gets the HTTP client to use for outbound HTTP requests.
+		/// Gets or sets the HTTP client to use for outbound HTTP requests.
 		/// </summary>
-		protected HttpClient HttpClient { get; private set; }
+		[Import]
+		public HttpClient HttpClient { get; set; }
 
 		/// <summary>
 		/// Uploads a blob to public cloud storage.

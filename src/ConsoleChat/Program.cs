@@ -11,9 +11,9 @@
 	using System.Windows.Forms;
 	using IronPigeon;
 	using IronPigeon.Providers;
-	using Validation;
 	using Microsoft.WindowsAzure;
 	using Microsoft.WindowsAzure.StorageClient;
+	using Validation;
 
 	/// <summary>
 	/// Simple console app that demonstrates the IronPigeon protocol in a live chat program.
@@ -44,6 +44,7 @@
 		/// <returns>The asynchronous operation.</returns>
 		private static async Task DoAsync() {
 			var configuration = new ContainerConfiguration().WithParts(
+				typeof(HttpClientWrapper),
 				typeof(Channel),
 				typeof(DesktopCryptoProvider),
 				typeof(RelayCloudBlobStorageProvider),
