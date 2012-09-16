@@ -3,6 +3,7 @@
 	using System.Collections.Generic;
 	using System.Configuration;
 	using System.Linq;
+	using System.Threading.Tasks;
 	using System.Web;
 	using IronPigeon.Providers;
 	using IronPigeon.Relay.Controllers;
@@ -19,6 +20,8 @@
 		/// The key to the Azure account configuration information.
 		/// </summary>
 		internal const string DefaultCloudConfigurationName = "StorageConnectionString";
+
+		internal static readonly TimeSpan PurgeExpiredBlobsInterval = TimeSpan.FromHours(4);
 
 		public static void RegisterConfiguration() {
 			CloudStorageAccount.SetConfigurationSettingPublisher(ConfigSetter);

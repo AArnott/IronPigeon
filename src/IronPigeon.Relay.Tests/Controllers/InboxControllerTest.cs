@@ -167,7 +167,7 @@
 			freshBlob.Metadata[InboxController.ExpirationDateMetadataKey] = (DateTime.UtcNow + TimeSpan.FromDays(1)).ToString();
 			freshBlob.SetMetadata();
 
-			this.controller.PurgeExpiredAsync().GetAwaiter().GetResult();
+			InboxController.PurgeExpiredAsync(this.container).GetAwaiter().GetResult();
 
 			Assert.That(expiredBlob.DeleteIfExists(), Is.False);
 			Assert.That(freshBlob.DeleteIfExists(), Is.True);

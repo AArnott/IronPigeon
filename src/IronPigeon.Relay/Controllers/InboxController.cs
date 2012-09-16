@@ -237,25 +237,29 @@
 			}
 		}
 
-		[ActionName("Purge")]
-		public async Task<ActionResult> PurgeExpiredAsync() {
+		public static async Task PurgeExpiredAsync(CloudBlobContainer inboxContainer) {
+			Requires.NotNull(inboxContainer, "inboxContainer");
+
 			var deleteBlobsExpiringBefore = DateTime.UtcNow;
+			var requestOptions = new BlobRequestOptions {
+				UseFlatBlobListing = true,
+				BlobListingDetails = BlobListingDetails.Metadata,
+			};
 #if NET40
 			try {
-				var items = await this.InboxContainer.ListBlobsSegmentedAsync(50);
+				var items = await inboxContainer.ListBlobsSegmentedAsync(50, requestOptions);
 				var blobs = (from blob in items.OfType<CloudBlob>()
-				             let expires = DateTime.Parse(blob.Metadata[ExpirationDateMetadataKey])
-				             where expires < deleteBlobsExpiringBefore
-				             select blob).ToArray();
+							 let expires = DateTime.Parse(blob.Metadata[ExpirationDateMetadataKey])
+							 where expires < deleteBlobsExpiringBefore
+							 select blob).ToArray();
 				await TaskEx.WhenAll(blobs.Select(blob => blob.DeleteAsync()));
-				return new ContentResult() { Content = "Deleted " + blobs.Length + " expired blobs." };
 			} catch (StorageClientException ex) {
 				var webException = ex.InnerException as WebException;
 				if (webException != null) {
 					var httpResponse = (HttpWebResponse)webException.Response;
 					if (httpResponse.StatusCode == HttpStatusCode.NotFound) {
 						// it's legit that some tests never created the container to begin with.
-						return new ContentResult() { Content = "Missing container" };
+						return;
 					}
 				}
 
@@ -266,11 +270,7 @@
 			var searchExpiredBlobs = new TransformManyBlock<CloudBlobContainer, CloudBlob>(
 				async c => {
 					try {
-						var options = new BlobRequestOptions {
-							UseFlatBlobListing = true,
-							BlobListingDetails = BlobListingDetails.Metadata,
-						};
-						var results = await c.ListBlobsSegmentedAsync(10, options);
+						var results = await c.ListBlobsSegmentedAsync(10, requestOptions);
 						return from blob in results.OfType<CloudBlob>()
 							   let expires = DateTime.Parse(blob.Metadata[ExpirationDateMetadataKey])
 							   where expires < deleteBlobsExpiringBefore
@@ -303,10 +303,9 @@
 
 			searchExpiredBlobs.LinkTo(deleteBlobBlock, new DataflowLinkOptions { PropagateCompletion = true });
 
-			searchExpiredBlobs.Post(this.InboxContainer);
+			searchExpiredBlobs.Post(inboxContainer);
 			searchExpiredBlobs.Complete();
 			await deleteBlobBlock.Completion;
-			return new ContentResult() { Content = "Deleted " + purgedBlobCount + " expired blobs." };
 #endif
 		}
 
@@ -319,6 +318,14 @@
 			await TaskEx.WhenAll(
 					inboxContainer.CreateContainerWithPublicBlobsIfNotExistAsync(),
 					inboxTable.CreateTableIfNotExistAsync(DefaultInboxTableName));
+
+			TaskEx.Run(
+				async delegate {
+					while (true) {
+						await PurgeExpiredAsync(inboxContainer);
+						await TaskEx.Delay(AzureStorageConfig.PurgeExpiredBlobsInterval);
+					}
+				});
 		}
 
 		protected virtual Uri GetAbsoluteUrlForAction(string action, dynamic routeValues) {
