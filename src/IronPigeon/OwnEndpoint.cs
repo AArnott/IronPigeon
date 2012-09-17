@@ -66,47 +66,6 @@
 		public string InboxOwnerCode { get; set; }
 
 		/// <summary>
-		/// Generates a new receiving endpoint.
-		/// </summary>
-		/// <param name="cryptoProvider">The crypto provider.</param>
-		/// <returns>The newly generated endpoint.</returns>
-		/// <remarks>
-		/// Depending on the length of the keys set in the provider and the amount of buffered entropy in the operating system,
-		/// this method can take an extended period (several seconds) to complete.
-		/// </remarks>
-		public static OwnEndpoint Create(ICryptoProvider cryptoProvider) {
-			Requires.NotNull(cryptoProvider, "cryptoProvider");
-
-			byte[] privateEncryptionKey, publicEncryptionKey;
-			byte[] privateSigningKey, publicSigningKey;
-
-			cryptoProvider.GenerateEncryptionKeyPair(out privateEncryptionKey, out publicEncryptionKey);
-			cryptoProvider.GenerateSigningKeyPair(out privateSigningKey, out publicSigningKey);
-
-			var contact = new Endpoint() {
-				EncryptionKeyPublicMaterial = publicEncryptionKey,
-				SigningKeyPublicMaterial = publicSigningKey,
-			};
-
-			var ownContact = new OwnEndpoint(contact, privateSigningKey, privateEncryptionKey);
-			return ownContact;
-		}
-
-		/// <summary>
-		/// Generates a new receiving endpoint.
-		/// </summary>
-		/// <param name="cryptoProvider">The crypto provider.</param>
-		/// <returns>A task whose result is the newly generated endpoint.</returns>
-		/// <remarks>
-		/// Depending on the length of the keys set in the provider and the amount of buffered entropy in the operating system,
-		/// this method can take an extended period (several seconds) to complete.
-		/// This method merely moves all the work to a threadpool thread.
-		/// </remarks>
-		public static Task<OwnEndpoint> CreateAsync(ICryptoProvider cryptoProvider) {
-			return TaskEx.Run(() => Create(cryptoProvider));
-		}
-
-		/// <summary>
 		/// Loads endpoint information including private data from the specified stream.
 		/// </summary>
 		/// <param name="stream">A stream, previously serialized to using <see cref="SaveAsync"/>.</param>

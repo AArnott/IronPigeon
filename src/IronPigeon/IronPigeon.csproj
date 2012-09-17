@@ -41,11 +41,13 @@
     <Compile Include="ICloudBlobStorageProvider.cs" />
     <Compile Include="ICryptoProvider.cs" />
     <Compile Include="AddressBook.cs" />
+    <Compile Include="Relay\IEndpointInboxFactory.cs" />
     <Compile Include="ILogger.cs" />
     <Compile Include="IncomingList.cs" />
     <Compile Include="InvalidMessageException.cs" />
     <Compile Include="IUrlShortener.cs" />
     <Compile Include="OnlineAddressBook.cs" />
+    <Compile Include="OwnEndpointServices.cs" />
     <Compile Include="Payload.cs" />
     <Compile Include="OwnEndpoint.cs" />
     <Compile Include="PayloadReference.cs">

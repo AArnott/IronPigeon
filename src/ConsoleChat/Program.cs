@@ -1,6 +1,7 @@
 ﻿namespace ConsoleChat {
 	using System;
 	using System.Collections.Generic;
+	using System.Composition;
 	using System.Composition.Convention;
 	using System.Composition.Hosting;
 	using System.Configuration;
@@ -30,50 +31,42 @@
 		private const string AzureBlobStorageContainerName = "consoleapptest";
 
 		/// <summary>
+		/// Gets or sets the channel.
+		/// </summary>
+		[Import]
+		public Channel Channel { get; set; }
+
+		/// <summary>
+		/// Gets or sets the message relay service.
+		/// </summary>
+		[Import]
+		public RelayCloudBlobStorageProvider MessageRelayService { get; set; }
+
+		/// <summary>
+		/// Gets or sets the crypto provider.
+		/// </summary>
+		[Import]
+		public ICryptoProvider CryptoProvider { get; set; }
+
+		/// <summary>
+		/// Gets or sets the own endpoint services.
+		/// </summary>
+		[Import]
+		public OwnEndpointServices OwnEndpointServices { get; set; }
+
+		/// <summary>
 		/// Entrypoint to the console application
 		/// </summary>
 		/// <param name="args">The arguments passed into the console app.</param>
 		[STAThread]
 		private static void Main(string[] args) {
-			DoAsync().GetAwaiter().GetResult();
-		}
-
-		/// <summary>
-		/// The asynchronous entrypoint into the app.
-		/// </summary>
-		/// <returns>The asynchronous operation.</returns>
-		private static async Task DoAsync() {
-			var configuration = new ContainerConfiguration().WithParts(
-				typeof(HttpClientWrapper),
-				typeof(Channel),
-				typeof(DesktopCryptoProvider),
-				typeof(RelayCloudBlobStorageProvider),
-				typeof(GoogleUrlShortener),
-				typeof(TwitterAddressBook),
-				typeof(DirectEntryAddressBook));
+			var configuration = new ContainerConfiguration()
+				.WithAssembly(typeof(Channel).Assembly)
+				.WithPart(typeof(DesktopCryptoProvider))
+				.WithPart(typeof(Program));
 			var container = configuration.CreateContainer();
-
-			var relayService = container.GetExport<RelayCloudBlobStorageProvider>();
-			relayService.PostUrl = new Uri(ConfigurationManager.ConnectionStrings["RelayInboxService"].ConnectionString);
-
-			var cryptoServices = container.GetExport<ICryptoProvider>();
-			cryptoServices.ApplySecurityLevel(SecurityLevel.Minimum);
-
-			var ownEndpoint = await CreateOrOpenEndpointAsync(cryptoServices);
-			if (ownEndpoint == null) {
-				return;
-			}
-
-			var channel = container.GetExport<Channel>();
-			channel.Endpoint = ownEndpoint;
-
-			await channel.CreateInboxAsync(relayService.PostUrl);
-			var shareableAddress = await channel.PublishAddressBookEntryAsync();
-			Console.WriteLine("Public receiving endpoint: {0}", shareableAddress.AbsoluteUri);
-
-			Endpoint friend = await GetFriendEndpointAsync(cryptoServices, channel.Endpoint.PublicEndpoint);
-
-			await ChatLoopAsync(channel, friend);
+			var program = container.GetExport<Program>();
+			program.DoAsync().GetAwaiter().GetResult();
 		}
 
 		/// <summary>
@@ -91,8 +84,7 @@
 					if (container.Name.StartsWith("unittests")) {
 						container.Delete();
 					} else {
-						var options = new BlobRequestOptions
-						{ UseFlatBlobListing = true, BlobListingDetails = BlobListingDetails.Metadata, };
+						var options = new BlobRequestOptions { UseFlatBlobListing = true, BlobListingDetails = BlobListingDetails.Metadata, };
 						var blobs = container.ListBlobs(options).OfType<CloudBlob>().ToList();
 						foreach (var blob in blobs) {
 							Console.WriteLine("\tBlob: {0} {1}", blob.Uri, blob.Metadata["DeleteAfter"]);
@@ -105,14 +97,46 @@
 		}
 
 		/// <summary>
+		/// Ensures that the Azure blob container and table are created in the Azure account.
+		/// </summary>
+		/// <param name="azureAccount">The Azure account in use.</param>
+		/// <param name="blobStorage">The blob storage </param>
+		/// <returns>A task representing the asynchronous operation.</returns>
+		private static async Task InitializeLocalCloudAsync(CloudStorageAccount azureAccount, AzureBlobStorage blobStorage) {
+			var tableStorage = azureAccount.CreateCloudTableClient();
+			await Task.WhenAll(
+				tableStorage.CreateTableIfNotExistAsync(AzureTableStorageName),
+				blobStorage.CreateContainerIfNotExistAsync());
+		}
+
+		/// <summary>
+		/// The asynchronous entrypoint into the app.
+		/// </summary>
+		/// <returns>The asynchronous operation.</returns>
+		private async Task DoAsync() {
+			this.MessageRelayService.BlobPostUrl = new Uri(ConfigurationManager.ConnectionStrings["RelayBlobService"].ConnectionString);
+			this.MessageRelayService.InboxServiceUrl = new Uri(ConfigurationManager.ConnectionStrings["RelayInboxService"].ConnectionString);
+			this.CryptoProvider.ApplySecurityLevel(SecurityLevel.Minimum);
+
+			this.Channel.Endpoint = await this.CreateOrOpenEndpointAsync();
+			if (this.Channel.Endpoint == null) {
+				return;
+			}
+
+			var shareableAddress = await this.OwnEndpointServices.PublishAddressBookEntryAsync(this.Channel.Endpoint);
+			Console.WriteLine("Public receiving endpoint: {0}", shareableAddress.AbsoluteUri);
+
+			Endpoint friend = await this.GetFriendEndpointAsync(this.Channel.Endpoint.PublicEndpoint);
+
+			await this.ChatLoopAsync(friend);
+		}
+
+		/// <summary>
 		/// Queries the user for the remote endpoint to send messages to.
 		/// </summary>
-		/// <param name="cryptoProvider">The crypto provider in use.</param>
 		/// <param name="defaultEndpoint">The user's own endpoint, to use for loopback demos in the event the user has no friend to talk to.</param>
 		/// <returns>A task whose result is the remote endpoint to use.</returns>
-		private static async Task<Endpoint> GetFriendEndpointAsync(ICryptoProvider cryptoProvider, Endpoint defaultEndpoint) {
-			Requires.NotNull(cryptoProvider, "cryptoProvider");
-
+		private async Task<Endpoint> GetFriendEndpointAsync(Endpoint defaultEndpoint) {
 			do {
 				Console.Write("Enter your friend's public endpoint URL (leave blank for loopback): ");
 				string url = Console.ReadLine();
@@ -120,7 +144,7 @@
 					return defaultEndpoint;
 				}
 
-				var addressBook = new DirectEntryAddressBook(cryptoProvider);
+				var addressBook = new DirectEntryAddressBook(this.CryptoProvider);
 				var endpoint = await addressBook.LookupAsync(url);
 				if (endpoint != null) {
 					return endpoint;
@@ -134,9 +158,8 @@
 		/// <summary>
 		/// Creates a new local endpoint to identify the user, or opens a previously created one.
 		/// </summary>
-		/// <param name="cryptoServices">The crypto provider in use.</param>
 		/// <returns>A task whose result is the local user's own endpoint.</returns>
-		private static async Task<OwnEndpoint> CreateOrOpenEndpointAsync(ICryptoProvider cryptoServices) {
+		private async Task<OwnEndpoint> CreateOrOpenEndpointAsync() {
 			OwnEndpoint result;
 			switch (MessageBox.Show("Do you have an existing endpoint you want to open?", "Endpoint selection", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question)) {
 				case DialogResult.Yes:
@@ -152,7 +175,7 @@
 
 					break;
 				case DialogResult.No:
-					result = OwnEndpoint.Create(cryptoServices);
+					result = await this.OwnEndpointServices.CreateAsync();
 					string privateFilePath = Path.GetTempFileName();
 					using (var stream = File.OpenWrite(privateFilePath)) {
 						await result.SaveAsync(stream);
@@ -171,10 +194,9 @@
 		/// <summary>
 		/// Executes the send/receive loop until the user exits the chat session with the "#quit" command.
 		/// </summary>
-		/// <param name="channel">The channel to use for sending/receiving messages.</param>
 		/// <param name="friend">The remote endpoint to send messages to.</param>
 		/// <returns>A task representing the asynchronous operation.</returns>
-		private static async Task ChatLoopAsync(Channel channel, Endpoint friend) {
+		private async Task ChatLoopAsync(Endpoint friend) {
 			while (true) {
 				Console.Write("> ");
 				var line = Console.ReadLine();
@@ -184,31 +206,18 @@
 
 				if (line.Length > 0) {
 					var payload = new Payload(Encoding.UTF8.GetBytes(line), "text/plain");
-					await channel.PostAsync(payload, new[] { friend }, DateTime.UtcNow + TimeSpan.FromMinutes(5));
+					await this.Channel.PostAsync(payload, new[] { friend }, DateTime.UtcNow + TimeSpan.FromMinutes(5));
 				}
 
 				Console.WriteLine("Awaiting friend's reply...");
-				var incoming = await channel.ReceiveAsync(longPoll: true);
+				var incoming = await this.Channel.ReceiveAsync(longPoll: true);
 				foreach (var payload in incoming) {
 					var message = Encoding.UTF8.GetString(payload.Content);
 					Console.WriteLine("< {0}", message);
 				}
 
-				await Task.WhenAll(incoming.Select(payload => channel.DeleteInboxItemAsync(payload)));
+				await Task.WhenAll(incoming.Select(payload => this.Channel.DeleteInboxItemAsync(payload)));
 			}
-		}
-
-		/// <summary>
-		/// Ensures that the Azure blob container and table are created in the Azure account.
-		/// </summary>
-		/// <param name="azureAccount">The Azure account in use.</param>
-		/// <param name="blobStorage">The blob storage </param>
-		/// <returns>A task representing the asynchronous operation.</returns>
-		private static async Task InitializeLocalCloudAsync(CloudStorageAccount azureAccount, AzureBlobStorage blobStorage) {
-			var tableStorage = azureAccount.CreateCloudTableClient();
-			await Task.WhenAll(
-				tableStorage.CreateTableIfNotExistAsync(AzureTableStorageName),
-				blobStorage.CreateContainerIfNotExistAsync());
 		}
 	}
 }

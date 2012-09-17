@@ -73,12 +73,6 @@
 		public OwnEndpoint Endpoint { get; set; }
 
 		/// <summary>
-		/// Gets or sets the URL shortener.
-		/// </summary>
-		[Import(AllowDefault = true)]
-		public IUrlShortener UrlShortener { get; set; }
-
-		/// <summary>
 		/// Gets or sets the logger.
 		/// </summary>
 		public ILogger Logger { get; set; }
@@ -103,63 +97,6 @@
 				this.httpClientLongPoll = value;
 			}
 		}
-
-		#region Initialization methods
-
-		/// <summary>
-		/// Contacts a message relay services to request the creation of a new inbox to receive messages.
-		/// </summary>
-		/// <param name="messageReceivingEndpointBaseUrl">The URL of the message relay service to use for the new endpoint.</param>
-		/// <param name="cancellationToken">The cancellation token.</param>
-		/// <returns>A task whose completion signals the registration result.</returns>
-		public async Task CreateInboxAsync(Uri messageReceivingEndpointBaseUrl, CancellationToken cancellationToken = default(CancellationToken)) {
-			Requires.NotNull(messageReceivingEndpointBaseUrl, "messageReceivingEndpointBaseUrl");
-			Verify.Operation(this.Endpoint.PublicEndpoint.MessageReceivingEndpoint == null, "Inbox already created.");
-
-			var abe = this.Endpoint.CreateAddressBookEntry(this.CryptoServices);
-			var ms = new MemoryStream();
-			var addressBookEntryWriter = new BinaryWriter(ms);
-			addressBookEntryWriter.SerializeDataContract(abe);
-			addressBookEntryWriter.Flush();
-
-			var registerUrl = new Uri(messageReceivingEndpointBaseUrl, "create");
-
-			var responseMessage =
-				await this.HttpClient.PostAsync(registerUrl, null, cancellationToken);
-			responseMessage.EnsureSuccessStatusCode();
-			using (var responseStream = await responseMessage.Content.ReadAsStreamAsync()) {
-				var deserializer = new DataContractJsonSerializer(typeof(InboxCreationResponse));
-				var creationResponse = (InboxCreationResponse)deserializer.ReadObject(responseStream);
-				this.Endpoint.PublicEndpoint.MessageReceivingEndpoint = new Uri(creationResponse.MessageReceivingEndpoint, UriKind.Absolute);
-				this.Endpoint.InboxOwnerCode = creationResponse.InboxOwnerCode;
-			}
-		}
-
-		/// <summary>
-		/// Saves the information required to send this channel messages to the blob store,
-		/// and returns the URL to share with senders.
-		/// </summary>
-		/// <param name="cancellationToken">A cancellation token to abort the publish.</param>
-		/// <returns>A task whose result is the absolute URI to the address book entry.</returns>
-		public async Task<Uri> PublishAddressBookEntryAsync(CancellationToken cancellationToken = default(CancellationToken)) {
-			var abe = this.Endpoint.CreateAddressBookEntry(this.CryptoServices);
-			var abeWriter = new StringWriter();
-			await Utilities.SerializeDataContractAsBase64Async(abeWriter, abe);
-			var ms = new MemoryStream(Encoding.UTF8.GetBytes(abeWriter.ToString()));
-			var location = await this.CloudBlobStorage.UploadMessageAsync(ms, DateTime.MaxValue, AddressBookEntry.ContentType, cancellationToken: cancellationToken);
-			if (this.UrlShortener != null) {
-				location = await this.UrlShortener.ShortenAsync(location);
-			}
-
-			var fullLocationWithFragment = new Uri(
-				location,
-				"#" + this.CryptoServices.CreateWebSafeBase64Thumbprint(this.Endpoint.PublicEndpoint.SigningKeyPublicMaterial));
-			return fullLocationWithFragment;
-		}
-
-		#endregion
-
-		#region Message receiving methods
 
 		/// <summary>
 		/// Downloads messages from the server.
@@ -205,10 +142,6 @@
 #endif
 		}
 
-		#endregion
-
-		#region Message sending methods
-
 		/// <summary>
 		/// Sends some payload to a set of recipients.
 		/// </summary>
@@ -225,8 +158,6 @@
 			var payloadReference = await this.PostPayloadAsync(message, expiresUtc, cancellationToken);
 			await this.PostPayloadReferenceAsync(payloadReference, recipients, cancellationToken);
 		}
-
-		#endregion
 
 		/// <summary>
 		/// Deletes the online inbox item that points to a previously downloaded payload.
