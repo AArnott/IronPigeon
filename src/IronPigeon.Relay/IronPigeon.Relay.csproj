@@ -178,7 +178,6 @@
     <Compile Include="Models\InboxEntity.cs" />
     <Compile Include="Models\PushNotificationClientEntity.cs" />
     <Compile Include="Models\TableStorageEntity.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="App_Start\FilterConfig.cs" />
@@ -196,6 +195,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
+    <Folder Include="Properties\" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="packages.config" />

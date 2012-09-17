@@ -59,7 +59,6 @@
     <Compile Include="WinRTChannel.cs" />
     <Compile Include="WinRTUtilities.cs" />
     <Compile Include="Providers\WinRTCryptoProvider.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -89,6 +88,9 @@
       <HintPath>..\packages\Validation.1.0.0.12259\lib\net40-client\Validation.dll</HintPath>
       <Private>False</Private>
     </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Properties\" />
   </ItemGroup>
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '11.0' ">
     <VisualStudioVersion>11.0</VisualStudioVersion>

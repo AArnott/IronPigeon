@@ -35,5 +35,8 @@
 		<file src="$OutputPath45$IronPigeon.Dart.dll" target="lib\winrt45" />
 		<file src="$OutputPath45$IronPigeon.Dart.pdb" target="lib\winrt45" />
 		<file src="$OutputPath45$IronPigeon.Dart.xml" target="lib\winrt45" />
+
+		<file src="..\src\IronPigeon.Dart\**\*.cs" target="src\IronPigeon.Dart" exclude="..\src\IronPigeon.Dart\obj\**" />
+		<file src="$IntermediatePath$IronPigeon.Dart.Version.cs" target="src\IronPigeon.Dart\Properties" />
 	</files>
 </package>

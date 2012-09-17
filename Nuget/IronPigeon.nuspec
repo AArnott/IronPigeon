@@ -50,5 +50,13 @@
 		<file src="$OutputPath45$IronPigeon.WinRT.dll" target="lib\winrt45" />
 		<file src="$OutputPath45$IronPigeon.WinRT.pdb" target="lib\winrt45" />
 		<file src="$OutputPath45$IronPigeon.WinRT.xml" target="lib\winrt45" />
+
+		<file src="..\src\IronPigeon\**\*.cs" target="src\IronPigeon" exclude="..\src\IronPigeon\obj\**" />
+		<file src="..\src\IronPigeon.Desktop\**\*.cs" target="src\IronPigeon.Desktop" exclude="..\src\IronPigeon.Desktop\obj\**" />
+		<file src="..\src\IronPigeon.WinRT\**\*.cs" target="src\IronPigeon.WinRT" exclude="..\src\IronPigeon.WinRT\obj\**" />
+
+		<file src="$IntermediatePath$IronPigeon.Version.cs" target="src\IronPigeon\Properties" />
+		<file src="$IntermediatePath$IronPigeon.Desktop.Version.cs" target="src\IronPigeon.Desktop\Properties" />
+		<file src="$IntermediatePath$IronPigeon.WinRT.Version.cs" target="src\IronPigeon.WinRT\Properties" />
 	</files>
 </package>
