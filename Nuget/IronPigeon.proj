@@ -8,7 +8,24 @@
 		<ProjectReference Include="$(ProjectRoot)src\IronPigeon.WinRT\IronPigeon.WinRT.csproj" />
 		<ProjectReference Include="$(ProjectRoot)src\IronPigeon.Dart\IronPigeon.Dart.csproj" />
 	</ItemGroup>
-		
+
+	<Target Name="Rebuild" DependsOnTargets="Clean;Build" />
+
+	<Target Name="Clean">
+		<MSBuild
+			Projects="@(ProjectReference)"
+			Targets="Clean"
+			Properties="Configuration=Release"
+			BuildInParallel="$(BuildInParallel)"
+			/>
+		<MSBuild
+			Projects="@(ProjectReference)"
+			Targets="Clean"
+			Properties="Configuration=ReleaseNET40"
+			BuildInParallel="$(BuildInParallel)"
+			/>
+	</Target>
+
 	<Target Name="Build" DependsOnTargets="GetBuildVersion">
 		<MSBuild
 			Projects="@(ProjectReference)"
