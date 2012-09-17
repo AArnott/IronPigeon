@@ -44,19 +44,23 @@
 			var blobProvider = new Mock<ICloudBlobStorageProvider>();
 			var cryptoProvider = new Mock<ICryptoProvider>();
 			var endpoint = new Mock<OwnEndpoint>();
-			var channel = new Channel(blobProvider.Object, cryptoProvider.Object, endpoint.Object);
+			var channel = new Channel() {
+				CloudBlobStorage = blobProvider.Object,
+				CryptoServices = cryptoProvider.Object,
+				Endpoint = endpoint.Object,
+			};
 			Assert.That(channel.CloudBlobStorage, Is.SameAs(blobProvider.Object));
 			Assert.That(channel.CryptoServices, Is.SameAs(cryptoProvider.Object));
 			Assert.That(channel.Endpoint, Is.SameAs(endpoint.Object));
 		}
 
 		[Test]
-		public void HttpMessageHandler() {
+		public void HttpClient() {
 			var channel = new Channel();
-			Assert.That(channel.HttpMessageHandler, Is.InstanceOf<HttpClientHandler>());
-			var handler = new HttpClientHandler();
-			channel.HttpMessageHandler = handler;
-			Assert.That(channel.HttpMessageHandler, Is.SameAs(handler));
+			Assert.That(channel.HttpClient, Is.Null);
+			var handler = new HttpClient();
+			channel.HttpClient = handler;
+			Assert.That(channel.HttpClient, Is.SameAs(handler));
 		}
 
 		[Test]
@@ -142,7 +146,7 @@
 			inboxMock.Register(httpHandler);
 
 			var channel = new Channel() {
-				HttpMessageHandler = httpHandler,
+				HttpClient = new HttpClient(httpHandler),
 				CloudBlobStorage = cloudBlobStorage,
 				CryptoServices = cryptoProvider,
 				Endpoint = sender,
@@ -162,7 +166,8 @@
 			inboxMock.Register(httpHandler);
 
 			var channel = new Channel {
-				HttpMessageHandler = httpHandler,
+				HttpClient = new HttpClient(httpHandler),
+				HttpClientLongPoll = new HttpClient(httpHandler),
 				CloudBlobStorage = cloudBlobStorage,
 				CryptoServices = cryptoProvider,
 				Endpoint = receiver,

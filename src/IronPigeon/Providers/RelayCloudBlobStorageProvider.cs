@@ -1,6 +1,11 @@
 ﻿namespace IronPigeon.Providers {
 	using System;
 	using System.Collections.Generic;
+#if NET40
+	using System.ComponentModel.Composition;
+#else
+	using System.Composition;
+#endif
 	using System.IO;
 	using System.Linq;
 	using System.Net.Http;
@@ -9,18 +14,19 @@
 	using System.Text;
 	using System.Threading;
 	using System.Threading.Tasks;
-
+	using IronPigeon.Relay;
 	using Validation;
 
 	/// <summary>
 	/// A blob storage provider that stores blobs to the message relay service via its well-known blob API.
 	/// </summary>
-	public class RelayCloudBlobStorageProvider : ICloudBlobStorageProvider {
-		/// <summary>
-		/// The handler to use for outbound HTTP requests.
-		/// </summary>
-		private HttpMessageHandler httpMessageHandler = new HttpClientHandler();
-
+	[Export(typeof(ICloudBlobStorageProvider))]
+	[Export(typeof(IEndpointInboxFactory))]
+	[Export]
+#if !NET40
+	[Shared]
+#endif
+	public class RelayCloudBlobStorageProvider : ICloudBlobStorageProvider, IEndpointInboxFactory {
 		/// <summary>
 		/// Initializes a new instance of the <see cref="RelayCloudBlobStorageProvider" /> class.
 		/// </summary>
@@ -33,34 +39,24 @@
 		/// <param name="postUrl">The URL to post blobs to.</param>
 		public RelayCloudBlobStorageProvider(Uri postUrl) {
 			Requires.NotNull(postUrl, "postUrl");
-			this.PostUrl = postUrl;
-			this.HttpClient = new HttpClient(this.httpMessageHandler);
-		}
-
-		/// <summary>
-		/// Gets or sets the message handler to use for outbound HTTP requests.
-		/// </summary>
-		public HttpMessageHandler HttpMessageHandler {
-			get {
-				return this.httpMessageHandler;
-			}
-
-			set {
-				Requires.NotNull(value, "value");
-				this.httpMessageHandler = value;
-				this.HttpClient = new HttpClient(value);
-			}
+			this.BlobPostUrl = postUrl;
 		}
 
 		/// <summary>
 		/// Gets or sets the URL to post blobs to.
 		/// </summary>
-		public Uri PostUrl { get; set; }
+		public Uri BlobPostUrl { get; set; }
 
 		/// <summary>
-		/// Gets the HTTP client to use for outbound HTTP requests.
+		/// Gets or sets the base URL (without the trailing /create) of the inbox service.
 		/// </summary>
-		protected HttpClient HttpClient { get; private set; }
+		public Uri InboxServiceUrl { get; set; }
+
+		/// <summary>
+		/// Gets or sets the HTTP client to use for outbound HTTP requests.
+		/// </summary>
+		[Import]
+		public HttpClient HttpClient { get; set; }
 
 		/// <summary>
 		/// Uploads a blob to public cloud storage.
@@ -84,12 +80,32 @@
 			}
 
 			int lifetime = expirationUtc == DateTime.MaxValue ? int.MaxValue : (int)(expirationUtc - DateTime.UtcNow).TotalMinutes;
-			var response = await this.HttpClient.PostAsync(this.PostUrl.AbsoluteUri + "?lifetimeInMinutes=" + lifetime, httpContent);
+			var response = await this.HttpClient.PostAsync(this.BlobPostUrl.AbsoluteUri + "?lifetimeInMinutes=" + lifetime, httpContent);
 			response.EnsureSuccessStatusCode();
 
 			var serializer = new DataContractJsonSerializer(typeof(string));
 			var location = (string)serializer.ReadObject(await response.Content.ReadAsStreamAsync());
 			return new Uri(location, UriKind.Absolute);
+		}
+
+		/// <summary>
+		/// Creates an inbox at a message relay service.
+		/// </summary>
+		/// <param name="cancellationToken">The cancellation token.</param>
+		/// <returns>
+		/// The result of the inbox creation request from the server.
+		/// </returns>
+		public async Task<InboxCreationResponse> CreateInboxAsync(CancellationToken cancellationToken = default(CancellationToken)) {
+			var registerUrl = new Uri(this.InboxServiceUrl, "create");
+
+			var responseMessage =
+				await this.HttpClient.PostAsync(registerUrl, null, cancellationToken);
+			responseMessage.EnsureSuccessStatusCode();
+			using (var responseStream = await responseMessage.Content.ReadAsStreamAsync()) {
+				var deserializer = new DataContractJsonSerializer(typeof(InboxCreationResponse));
+				var creationResponse = (InboxCreationResponse)deserializer.ReadObject(responseStream);
+				return creationResponse;
+			}
 		}
 	}
 }

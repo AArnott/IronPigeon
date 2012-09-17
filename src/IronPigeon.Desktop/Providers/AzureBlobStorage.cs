@@ -1,6 +1,11 @@
 ﻿namespace IronPigeon.Providers {
 	using System;
 	using System.Collections.Generic;
+#if NET40
+	using System.ComponentModel.Composition;
+#else
+	using System.Composition;
+#endif
 	using System.Globalization;
 	using System.IO;
 	using System.Linq;
@@ -17,6 +22,10 @@
 	/// <summary>
 	/// A cloud blob storage provider that uses Azure blob storage directly.
 	/// </summary>
+	[Export(typeof(ICloudBlobStorageProvider)), Export]
+#if !NET40
+	[Shared]
+#endif
 	public class AzureBlobStorage : ICloudBlobStorageProvider {
 		/// <summary>
 		/// The Azure storage account.
@@ -91,13 +100,8 @@
 		/// downloading of blobs by their URIs.
 		/// </summary>
 		/// <returns>The task representing the asynchronous operation.</returns>
-		public async Task CreateContainerIfNotExistAsync() {
-			if (await this.container.CreateIfNotExistAsync()) {
-				var permissions = new BlobContainerPermissions {
-					PublicAccess = BlobContainerPublicAccessType.Blob,
-				};
-				await this.container.SetPermissionsAsync(permissions, null);
-			}
+		public Task CreateContainerIfNotExistAsync() {
+			return this.container.CreateContainerWithPublicBlobsIfNotExistAsync();
 		}
 
 		/// <summary>
@@ -108,16 +112,25 @@
 		/// is interpreted as <see cref="DateTime.UtcNow"/>.
 		/// </param>
 		/// <returns>The task representing the asynchronous operation.</returns>
-		public Task PurgeBlobsExpiringBeforeAsync(DateTime deleteBlobsExpiringBefore = default(DateTime)) {
-#if NET40
-			throw new NotImplementedException();
-#else
-			Requires.Argument(deleteBlobsExpiringBefore.Kind == DateTimeKind.Utc, "expirationUtc", "UTC required.");
-
+		public async Task PurgeBlobsExpiringBeforeAsync(DateTime deleteBlobsExpiringBefore = default(DateTime)) {
 			if (deleteBlobsExpiringBefore == default(DateTime)) {
 				deleteBlobsExpiringBefore = DateTime.UtcNow;
 			}
 
+			Requires.Argument(deleteBlobsExpiringBefore.Kind == DateTimeKind.Utc, "expirationUtc", "UTC required.");
+
+#if NET40
+			var results = await this.container.ListBlobsSegmentedAsync(10);
+			var expiredDirectories = from directory in results.OfType<CloudBlobDirectory>()
+			                         let expires = DateTime.Parse(directory.Uri.Segments[directory.Uri.Segments.Length - 1].TrimEnd('/'))
+			                         where expires < deleteBlobsExpiringBefore
+			                         select directory;
+			foreach (var expiredDirectory in expiredDirectories) {
+				var expiredBlobs = await expiredDirectory.ListBlobsSegmentedAsync(10);
+				await TaskEx.WhenAll(expiredBlobs.OfType<CloudBlob>().Select(blob => blob.DeleteAsync()));
+			}
+
+#else
 			var searchExpiredDirectoriesBlock = new TransformManyBlock<CloudBlobContainer, CloudBlobDirectory>(
 				async c => {
 					var results = await c.ListBlobsSegmentedAsync(10);
@@ -150,7 +163,7 @@
 
 			searchExpiredDirectoriesBlock.Post(this.container);
 			searchExpiredDirectoriesBlock.Complete();
-			return deleteBlobBlock.Completion;
+			await deleteBlobBlock.Completion;
 #endif
 		}
 	}

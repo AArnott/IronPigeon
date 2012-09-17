@@ -8,10 +8,10 @@
 	using System.Threading.Tasks;
 	using System.Web.Mvc;
 	using IronPigeon.Relay.Models;
-	using Validation;
 	using Microsoft.WindowsAzure;
 	using Microsoft.WindowsAzure.StorageClient;
 	using Newtonsoft.Json.Linq;
+	using Validation;
 
 #if !DEBUG
 	[RequireHttps]
@@ -23,8 +23,6 @@
 		internal const string DefaultCloudConfigurationName = "StorageConnectionString";
 
 		internal const string DefaultTableName = "WindowsPushNotificationClients";
-
-		private static bool tableCreated;
 
 		public WindowsPushNotificationClientController()
 			: this(DefaultTableName, DefaultCloudConfigurationName) {
@@ -53,11 +51,6 @@
 		[ActionName("Index"), HttpPost]
 		public async Task<ActionResult> PutClient(PushNotificationClientEntity clientEntity) {
 			Requires.NotNull(clientEntity, "clientEntity");
-
-			if (!tableCreated) {
-				await this.TableClient.CreateTableIfNotExistAsync(DefaultTableName);
-				tableCreated = true;
-			}
 
 			if (this.TryValidateModel(clientEntity)) {
 				clientEntity.ClientSecret = clientEntity.ClientSecret.Trim();
@@ -121,6 +114,11 @@
 
 			this.ClientTable.DeleteObject(client);
 			await this.ClientTable.SaveChangesAsync();
+		}
+
+		internal static async Task OneTimeInitializeAsync(CloudStorageAccount azureAccount) {
+			var tableClient = azureAccount.CreateCloudTableClient();
+			await tableClient.CreateTableIfNotExistAsync(DefaultTableName);
 		}
 	}
 }

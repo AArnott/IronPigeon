@@ -2,6 +2,11 @@
 	using System;
 	using System.Collections.Generic;
 	using System.Collections.ObjectModel;
+#if NET40
+	using System.ComponentModel.Composition;
+#else
+	using System.Composition;
+#endif
 	using System.Diagnostics;
 	using System.Globalization;
 	using System.IO;
@@ -33,66 +38,21 @@
 	/// <summary>
 	/// A channel for sending or receiving secure messages.
 	/// </summary>
+	[Export]
+#if !NET40
+	[Shared]
+#endif
 	public class Channel {
-		/// <summary>
-		/// The message handler to use for sending/receiving HTTP messages.
-		/// </summary>
-		private HttpMessageHandler httpMessageHandler = new HttpClientHandler();
-
-		/// <summary>
-		/// The HTTP client to use for sending/receiving HTTP messages.
-		/// </summary>
-		private HttpClient httpClient;
-
 		/// <summary>
 		/// The HTTP client to use for long poll HTTP requests.
 		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private HttpClient httpClientLongPoll;
-
-		/// <summary>
-		/// Initializes a new instance of the <see cref="Channel" /> class.
-		/// </summary>
-		public Channel() {
-			this.httpClient = new HttpClient(this.httpMessageHandler);
-			this.httpClientLongPoll = new HttpClient(this.httpMessageHandler) { Timeout = TimeSpan.FromMilliseconds(Timeout.Infinite) };
-			this.UrlShortener = new GoogleUrlShortener();
-		}
-
-		/// <summary>
-		/// Initializes a new instance of the <see cref="Channel" /> class.
-		/// </summary>
-		/// <param name="blobStorageProvider">The blob storage provider.</param>
-		/// <param name="cryptoProvider">The crypto provider.</param>
-		/// <param name="endpoint">The receiving endpoint.</param>
-		public Channel(ICloudBlobStorageProvider blobStorageProvider, ICryptoProvider cryptoProvider, OwnEndpoint endpoint)
-			: this() {
-			this.CloudBlobStorage = blobStorageProvider;
-			this.CryptoServices = cryptoProvider;
-			this.Endpoint = endpoint;
-		}
-
-		/// <summary>
-		/// Gets or sets the HTTP message handler.
-		/// </summary>
-		/// <value>
-		/// The HTTP message handler.
-		/// </value>
-		public HttpMessageHandler HttpMessageHandler {
-			get {
-				return this.httpMessageHandler;
-			}
-
-			set {
-				Requires.NotNull(value, "value");
-				this.httpMessageHandler = value;
-				this.httpClient = new HttpClient(value);
-				this.httpClientLongPoll = new HttpClient(value) { Timeout = TimeSpan.FromMilliseconds(Timeout.Infinite) };
-			}
-		}
 
 		/// <summary>
 		/// Gets or sets the provider of blob storage.
 		/// </summary>
+		[Import]
 		public ICloudBlobStorageProvider CloudBlobStorage { get; set; }
 
 		/// <summary>
@@ -101,6 +61,7 @@
 		/// <value>
 		/// The crypto services.
 		/// </value>
+		[Import]
 		public ICryptoProvider CryptoServices { get; set; }
 
 		/// <summary>
@@ -112,78 +73,30 @@
 		public OwnEndpoint Endpoint { get; set; }
 
 		/// <summary>
-		/// Gets or sets the URL shortener.
-		/// </summary>
-		public IUrlShortener UrlShortener { get; set; }
-
-		/// <summary>
 		/// Gets or sets the logger.
 		/// </summary>
 		public ILogger Logger { get; set; }
 
 		/// <summary>
-		/// Gets the HTTP client used for outbound HTTP requests.
+		/// Gets or sets the HTTP client used for outbound HTTP requests.
 		/// </summary>
-		protected HttpClient HttpClient {
-			get { return this.httpClient; }
-		}
-
-		#region Initialization methods
+		[Import]
+		public HttpClient HttpClient { get; set; }
 
 		/// <summary>
-		/// Contacts a message relay services to request the creation of a new inbox to receive messages.
+		/// Gets or sets the HTTP client to use for long poll HTTP requests.
 		/// </summary>
-		/// <param name="messageReceivingEndpointBaseUrl">The URL of the message relay service to use for the new endpoint.</param>
-		/// <param name="cancellationToken">The cancellation token.</param>
-		/// <returns>A task whose completion signals the registration result.</returns>
-		public async Task CreateInboxAsync(Uri messageReceivingEndpointBaseUrl, CancellationToken cancellationToken = default(CancellationToken)) {
-			Requires.NotNull(messageReceivingEndpointBaseUrl, "messageReceivingEndpointBaseUrl");
-			Verify.Operation(this.Endpoint.PublicEndpoint.MessageReceivingEndpoint == null, "Inbox already created.");
-
-			var abe = this.Endpoint.CreateAddressBookEntry(this.CryptoServices);
-			var ms = new MemoryStream();
-			var addressBookEntryWriter = new BinaryWriter(ms);
-			addressBookEntryWriter.SerializeDataContract(abe);
-			addressBookEntryWriter.Flush();
-
-			var registerUrl = new Uri(messageReceivingEndpointBaseUrl, "create");
-
-			var responseMessage =
-				await this.httpClient.PostAsync(registerUrl, null, cancellationToken);
-			responseMessage.EnsureSuccessStatusCode();
-			using (var responseStream = await responseMessage.Content.ReadAsStreamAsync()) {
-				var deserializer = new DataContractJsonSerializer(typeof(InboxCreationResponse));
-				var creationResponse = (InboxCreationResponse)deserializer.ReadObject(responseStream);
-				this.Endpoint.PublicEndpoint.MessageReceivingEndpoint = new Uri(creationResponse.MessageReceivingEndpoint, UriKind.Absolute);
-				this.Endpoint.InboxOwnerCode = creationResponse.InboxOwnerCode;
-			}
-		}
-
-		/// <summary>
-		/// Saves the information required to send this channel messages to the blob store,
-		/// and returns the URL to share with senders.
-		/// </summary>
-		/// <param name="cancellationToken">A cancellation token to abort the publish.</param>
-		/// <returns>A task whose result is the absolute URI to the address book entry.</returns>
-		public async Task<Uri> PublishAddressBookEntryAsync(CancellationToken cancellationToken = default(CancellationToken)) {
-			var abe = this.Endpoint.CreateAddressBookEntry(this.CryptoServices);
-			var abeWriter = new StringWriter();
-			await Utilities.SerializeDataContractAsBase64Async(abeWriter, abe);
-			var ms = new MemoryStream(Encoding.UTF8.GetBytes(abeWriter.ToString()));
-			var location = await this.CloudBlobStorage.UploadMessageAsync(ms, DateTime.MaxValue, AddressBookEntry.ContentType, cancellationToken: cancellationToken);
-			if (this.UrlShortener != null) {
-				location = await this.UrlShortener.ShortenAsync(location);
+		[Import]
+		public HttpClient HttpClientLongPoll {
+			get {
+				return this.httpClientLongPoll;
 			}
 
-			var fullLocationWithFragment = new Uri(
-				location,
-				"#" + this.CryptoServices.CreateWebSafeBase64Thumbprint(this.Endpoint.PublicEndpoint.SigningKeyPublicMaterial));
-			return fullLocationWithFragment;
+			set {
+				value.Timeout = TimeSpan.FromMilliseconds(Timeout.Infinite);
+				this.httpClientLongPoll = value;
+			}
 		}
-
-		#endregion
-
-		#region Message receiving methods
 
 		/// <summary>
 		/// Downloads messages from the server.
@@ -229,10 +142,6 @@
 #endif
 		}
 
-		#endregion
-
-		#region Message sending methods
-
 		/// <summary>
 		/// Sends some payload to a set of recipients.
 		/// </summary>
@@ -249,8 +158,6 @@
 			var payloadReference = await this.PostPayloadAsync(message, expiresUtc, cancellationToken);
 			await this.PostPayloadReferenceAsync(payloadReference, recipients, cancellationToken);
 		}
-
-		#endregion
 
 		/// <summary>
 		/// Deletes the online inbox item that points to a previously downloaded payload.
@@ -280,7 +187,7 @@
 		protected virtual async Task<PayloadReference> DownloadPayloadReferenceAsync(IncomingList.IncomingItem inboxItem, CancellationToken cancellationToken) {
 			Requires.NotNull(inboxItem, "inboxItem");
 
-			var responseMessage = await this.httpClient.GetAsync(inboxItem.Location, cancellationToken);
+			var responseMessage = await this.HttpClient.GetAsync(inboxItem.Location, cancellationToken);
 			if (responseMessage.StatusCode == HttpStatusCode.NotFound) {
 				// delete inbox item and move on.
 				await this.DeletePayloadReferenceAsync(inboxItem.Location, cancellationToken);
@@ -337,7 +244,7 @@
 		protected virtual async Task<Payload> DownloadPayloadAsync(PayloadReference notification, CancellationToken cancellationToken) {
 			Requires.NotNull(notification, "notification");
 
-			var responseMessage = await this.httpClient.GetAsync(notification.Location, cancellationToken);
+			var responseMessage = await this.HttpClient.GetAsync(notification.Location, cancellationToken);
 			var messageBuffer = await responseMessage.Content.ReadAsByteArrayAsync();
 
 			// Calculate hash of downloaded message and check that it matches the referenced message hash.
@@ -466,7 +373,7 @@
 			await postContent.FlushAsync();
 			postContent.Position = 0;
 
-			using (var response = await this.httpClient.PostAsync(builder.Uri, new StreamContent(postContent), cancellationToken)) {
+			using (var response = await this.HttpClient.PostAsync(builder.Uri, new StreamContent(postContent), cancellationToken)) {
 				response.EnsureSuccessStatusCode();
 			}
 		}
@@ -484,7 +391,7 @@
 
 			var deleteEndpoint = new UriBuilder(this.Endpoint.PublicEndpoint.MessageReceivingEndpoint);
 			deleteEndpoint.Query = "notification=" + Uri.EscapeDataString(payloadReferenceLocation.AbsoluteUri);
-			using (var response = await this.httpClient.DeleteAsync(deleteEndpoint.Uri, this.Endpoint.InboxOwnerCode, cancellationToken)) {
+			using (var response = await this.HttpClient.DeleteAsync(deleteEndpoint.Uri, this.Endpoint.InboxOwnerCode, cancellationToken)) {
 				if (response.StatusCode == HttpStatusCode.NotFound) {
 					// Good enough.
 					return;
@@ -503,7 +410,7 @@
 		private async Task<ReadOnlyListOfInboxItem> DownloadIncomingItemsAsync(bool longPoll, CancellationToken cancellationToken) {
 			var deserializer = new DataContractJsonSerializer(typeof(IncomingList));
 			var requestUri = this.Endpoint.PublicEndpoint.MessageReceivingEndpoint;
-			var httpClient = this.httpClient;
+			var httpClient = this.HttpClient;
 			if (longPoll) {
 				requestUri = new Uri(requestUri.AbsoluteUri + "?longPoll=true");
 				httpClient = this.httpClientLongPoll;

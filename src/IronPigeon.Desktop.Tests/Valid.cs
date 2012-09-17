@@ -1,6 +1,10 @@
 ﻿namespace IronPigeon.Tests {
 	using System;
 	using System.IO;
+	using System.Threading;
+	using System.Threading.Tasks;
+	using IronPigeon.Relay;
+	using Moq;
 
 	internal static class Valid {
 		internal const string ContentType = "some type";
@@ -23,9 +27,17 @@
 		internal static OwnEndpoint GenerateOwnEndpoint(ICryptoProvider cryptoProvider = null) {
 			cryptoProvider = cryptoProvider ?? new Mocks.MockCryptoProvider();
 
-			var ownContact = OwnEndpoint.Create(cryptoProvider);
-			ownContact.PublicEndpoint.MessageReceivingEndpoint = MessageReceivingEndpoint;
-			ownContact.InboxOwnerCode = "some owner code";
+			var inboxFactory = new Mock<IEndpointInboxFactory>();
+			inboxFactory.Setup(f => f.CreateInboxAsync(CancellationToken.None)).Returns(
+				Task.FromResult(
+					new InboxCreationResponse
+					{ InboxOwnerCode = "some owner code", MessageReceivingEndpoint = MessageReceivingEndpoint.AbsoluteUri }));
+			var endpointServices = new OwnEndpointServices {
+				CryptoProvider = cryptoProvider,
+				EndpointInboxFactory = inboxFactory.Object,
+			};
+
+			var ownContact = endpointServices.CreateAsync().Result;
 			return ownContact;
 		}
 	}

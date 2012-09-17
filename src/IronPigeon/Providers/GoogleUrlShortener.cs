@@ -1,6 +1,12 @@
 ﻿namespace IronPigeon.Providers {
 	using System;
 	using System.Collections.Generic;
+#if NET40
+	using System.ComponentModel.Composition;
+#else
+	using System.Composition;
+#endif
+	using System.Diagnostics;
 	using System.IO;
 	using System.Linq;
 	using System.Net.Http;
@@ -14,6 +20,10 @@
 	/// <summary>
 	/// Shortens URLs using the goo.gl URL shortener service.
 	/// </summary>
+	[Export(typeof(IUrlShortener))]
+#if !NET40
+	[Shared]
+#endif
 	public class GoogleUrlShortener : IUrlShortener {
 		/// <summary>
 		/// The URL to the goog.gl shortening service.
@@ -21,36 +31,16 @@
 		private static readonly Uri ShorteningService = new Uri("https://www.googleapis.com/urlshortener/v1/url");
 
 		/// <summary>
-		/// The handler to use for outbound HTTP requests.
-		/// </summary>
-		private HttpMessageHandler httpMessageHandler = new HttpClientHandler();
-
-		/// <summary>
 		/// Initializes a new instance of the <see cref="GoogleUrlShortener"/> class.
 		/// </summary>
 		public GoogleUrlShortener() {
-			this.HttpClient = new HttpClient(this.httpMessageHandler);
 		}
 
 		/// <summary>
-		/// Gets or sets the message handler to use for outbound HTTP requests.
+		/// Gets or sets the HTTP client to use for outbound HTTP requests.
 		/// </summary>
-		public HttpMessageHandler HttpMessageHandler {
-			get {
-				return this.httpMessageHandler;
-			}
-
-			set {
-				Requires.NotNull(value, "value");
-				this.httpMessageHandler = value;
-				this.HttpClient = new HttpClient(value);
-			}
-		}
-
-		/// <summary>
-		/// Gets the HTTP client to use for outbound HTTP requests.
-		/// </summary>
-		protected HttpClient HttpClient { get; private set; }
+		[Import]
+		public HttpClient HttpClient { get; set; }
 
 		/// <summary>
 		/// Shortens the specified long URL.

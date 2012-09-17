@@ -9,12 +9,12 @@
 	using System.Web.Mvc;
 	using System.Web.Routing;
 	using IronPigeon.Relay.Controllers;
-	using Validation;
 	using Microsoft.WindowsAzure;
 	using Microsoft.WindowsAzure.StorageClient;
 	using Moq;
 	using Newtonsoft.Json;
 	using NUnit.Framework;
+	using Validation;
 
 	[TestFixture]
 	public class InboxControllerTest {
@@ -43,6 +43,7 @@
 			this.tableClient = account.CreateCloudTableClient();
 			this.tableClient.CreateTableIfNotExist(testTableName);
 			this.container = client.GetContainerReference(testContainerName);
+			this.container.CreateContainerWithPublicBlobsIfNotExistAsync();
 			this.controller = new InboxControllerForTest(this.container.Name, testTableName, CloudConfigurationName);
 		}
 
@@ -167,7 +168,7 @@
 			freshBlob.Metadata[InboxController.ExpirationDateMetadataKey] = (DateTime.UtcNow + TimeSpan.FromDays(1)).ToString();
 			freshBlob.SetMetadata();
 
-			this.controller.PurgeExpiredAsync().GetAwaiter().GetResult();
+			InboxController.PurgeExpiredAsync(this.container).GetAwaiter().GetResult();
 
 			Assert.That(expiredBlob.DeleteIfExists(), Is.False);
 			Assert.That(freshBlob.DeleteIfExists(), Is.True);

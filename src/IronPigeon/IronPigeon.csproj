@@ -41,11 +41,13 @@
     <Compile Include="ICloudBlobStorageProvider.cs" />
     <Compile Include="ICryptoProvider.cs" />
     <Compile Include="AddressBook.cs" />
+    <Compile Include="Relay\IEndpointInboxFactory.cs" />
     <Compile Include="ILogger.cs" />
     <Compile Include="IncomingList.cs" />
     <Compile Include="InvalidMessageException.cs" />
     <Compile Include="IUrlShortener.cs" />
     <Compile Include="OnlineAddressBook.cs" />
+    <Compile Include="OwnEndpointServices.cs" />
     <Compile Include="Payload.cs" />
     <Compile Include="OwnEndpoint.cs" />
     <Compile Include="PayloadReference.cs">
@@ -54,6 +56,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Providers\DirectEntryAddressBook.cs" />
     <Compile Include="Providers\GoogleUrlShortener.cs" />
+    <Compile Include="Providers\HttpClientWrapper.cs" />
     <Compile Include="Providers\RelayCloudBlobStorageProvider.cs" />
     <Compile Include="SecurityLevel.cs" />
     <Compile Include="Relay\InboxCreationResponse.cs" />
@@ -77,6 +80,28 @@
       <HintPath>..\packages\Validation.1.0.0.12259\lib\net40-client\Validation.dll</HintPath>
     </Reference>
   </ItemGroup>
+  <ItemGroup Condition=" '$(TargetFrameworkVersion)' != 'v4.0' ">
+    <Reference Include="System.Composition.AttributedModel, Version=1.0.15.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\Microsoft.Composition.1.0.15\lib\net45\System.Composition.AttributedModel.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Composition.Convention, Version=1.0.15.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\Microsoft.Composition.1.0.15\lib\net45\System.Composition.Convention.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Composition.Hosting, Version=1.0.15.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\Microsoft.Composition.1.0.15\lib\net45\System.Composition.Hosting.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Composition.Runtime, Version=1.0.15.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\Microsoft.Composition.1.0.15\lib\net45\System.Composition.Runtime.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Composition.TypedParts, Version=1.0.15.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\Microsoft.Composition.1.0.15\lib\net45\System.Composition.TypedParts.dll</HintPath>
+    </Reference>
+  </ItemGroup>
   <ItemGroup Condition=" '$(TargetFrameworkVersion)' == 'v4.0' ">
     <Reference Include="Microsoft.CompilerServices.AsyncTargetingPack.Net4">
       <HintPath>..\packages\Microsoft.CompilerServices.AsyncTargetingPack.1.0.0\lib\net40\Microsoft.CompilerServices.AsyncTargetingPack.Net4.dll</HintPath>
@@ -86,6 +111,7 @@
     <Reference Include="System.Net.Http, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
     <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.XML" />
+    <Reference Include="System.ComponentModel.Composition" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\Nuget\IronPigeon.nuspec">

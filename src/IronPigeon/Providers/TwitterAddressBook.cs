@@ -1,6 +1,11 @@
 ﻿namespace IronPigeon.Providers {
 	using System;
 	using System.Collections.Generic;
+#if NET40
+	using System.ComponentModel.Composition;
+#else
+	using System.Composition;
+#endif
 	using System.Globalization;
 	using System.IO;
 	using System.Linq;
@@ -16,6 +21,10 @@
 	/// <summary>
 	/// Discovers an address book entry by searching for the URL to it on the user's Twitter bio.
 	/// </summary>
+	[Export(typeof(AddressBook))]
+#if !NET40
+	[Shared]
+#endif
 	public class TwitterAddressBook : OnlineAddressBook {
 		/// <summary>
 		/// The unformatted string that serves as the template for the URL that downloads user information from Twitter.
@@ -32,14 +41,6 @@
 		/// Initializes a new instance of the <see cref="TwitterAddressBook" /> class.
 		/// </summary>
 		public TwitterAddressBook() {
-		}
-
-		/// <summary>
-		/// Initializes a new instance of the <see cref="TwitterAddressBook" /> class.
-		/// </summary>
-		/// <param name="cryptoProvider">The crypto provider.</param>
-		public TwitterAddressBook(ICryptoProvider cryptoProvider) {
-			this.CryptoServices = cryptoProvider;
 		}
 
 		/// <summary>

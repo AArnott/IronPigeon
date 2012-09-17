@@ -8,12 +8,10 @@
 	using System.Threading.Tasks;
 	using System.Web.Http;
 	using System.Web.Mvc;
-
 	using IronPigeon.Providers;
-
-	using Validation;
 	using Microsoft.WindowsAzure;
 	using Microsoft.WindowsAzure.StorageClient;
+	using Validation;
 #if !NET40
 	using TaskEx = System.Threading.Tasks.Task;
 #endif
@@ -25,13 +23,20 @@
 		/// <summary>
 		/// The default name of the Azure blob container to use for blobs.
 		/// </summary>
-		private const string DefaultContainerName = "blobs";
+		internal const string DefaultContainerName = "blobs";
+
+		private const int MaxBlobLength = 512 * 1024; // 0.5 MB
+
+		private static readonly SortedDictionary<int, TimeSpan> MaxBlobSizesAndLifetimes = new SortedDictionary<int, TimeSpan> {
+			{ 10 * 1024, TimeSpan.MaxValue }, // this is intended for address book entries.
+			{ 512 * 1024, TimeSpan.FromDays(7) },
+		};
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="BlobController" /> class.
 		/// </summary>
 		public BlobController()
-			: this(InboxController.DefaultCloudConfigurationName) {
+			: this(AzureStorageConfig.DefaultCloudConfigurationName) {
 		}
 
 		/// <summary>
@@ -58,12 +63,14 @@
 		public async Task<string> Post([FromUri]int lifetimeInMinutes) {
 			Requires.Range(lifetimeInMinutes > 0, "lifetimeInMinutes");
 
-			DateTime expirationUtc = DateTime.UtcNow + TimeSpan.FromMinutes(lifetimeInMinutes);
+			var lifetime = TimeSpan.FromMinutes(lifetimeInMinutes);
+			DateTime expirationUtc = DateTime.UtcNow + lifetime;
 			string contentType = this.Request.Content.Headers.ContentType != null
 									 ? this.Request.Content.Headers.ContentType.ToString()
 									 : null;
 			string contentEncoding = this.Request.Content.Headers.ContentEncoding.FirstOrDefault();
 			var content = await this.Request.Content.ReadAsStreamAsync();
+			VerifyAllowedLifetime(content.Length, lifetime);
 			var blobLocation = await this.CloudBlobStorageProvider.UploadMessageAsync(content, expirationUtc, contentType, contentEncoding);
 
 			Uri resultLocation = contentType == AddressBookEntry.ContentType
@@ -71,6 +78,32 @@
 				: blobLocation;
 
 			return resultLocation.AbsoluteUri;
+		}
+
+		internal static async Task OneTimeInitializeAsync(CloudStorageAccount azureAccount) {
+			var blobStorage = new AzureBlobStorage(azureAccount, BlobController.DefaultContainerName);
+			await blobStorage.CreateContainerIfNotExistAsync();
+
+			TaskEx.Run(async delegate {
+				while (true) {
+					await blobStorage.PurgeBlobsExpiringBeforeAsync();
+					await TaskEx.Delay(AzureStorageConfig.PurgeExpiredBlobsInterval);
+				}
+			});
+		}
+
+		private static void VerifyAllowedLifetime(long blobSize, TimeSpan lifetime) {
+			foreach (var rule in MaxBlobSizesAndLifetimes) {
+				if (blobSize < rule.Key) {
+					if (lifetime > rule.Value) {
+						throw new ArgumentOutOfRangeException("lifetime", "Maximum allowable blob lifetime exceeded.");
+					}
+
+					return;
+				}
+			}
+
+			throw new ArgumentOutOfRangeException("blobSize", "Maximum allowable blob size exceeded.");
 		}
 	}
 }

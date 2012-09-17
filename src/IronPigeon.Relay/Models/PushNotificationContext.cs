@@ -4,8 +4,8 @@
 	using System.Linq;
 	using System.Threading.Tasks;
 	using System.Web;
-	using Validation;
 	using Microsoft.WindowsAzure.StorageClient;
+	using Validation;
 
 	public class PushNotificationContext : TableServiceContext {
 		public PushNotificationContext(CloudTableClient client, string tableName)

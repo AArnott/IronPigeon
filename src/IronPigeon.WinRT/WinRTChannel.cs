@@ -1,6 +1,7 @@
 ﻿namespace IronPigeon {
 	using System;
 	using System.Collections.Generic;
+	using System.Composition;
 	using System.Globalization;
 	using System.Linq;
 	using System.Net.Http;
@@ -14,23 +15,8 @@
 	/// <summary>
 	/// A channel for sending or receiving secure messages with additional WinRT specific functionality.
 	/// </summary>
+	[Export(typeof(Channel)), Export]
 	public class WinRTChannel : Channel {
-		/// <summary>
-		/// Initializes a new instance of the <see cref="WinRTChannel" /> class.
-		/// </summary>
-		public WinRTChannel() {
-		}
-
-		/// <summary>
-		/// Initializes a new instance of the <see cref="WinRTChannel" /> class.
-		/// </summary>
-		/// <param name="blobStorageProvider">The blob storage provider.</param>
-		/// <param name="cryptoProvider">The crypto provider.</param>
-		/// <param name="endpoint">The receiving endpoint.</param>
-		public WinRTChannel(ICloudBlobStorageProvider blobStorageProvider, ICryptoProvider cryptoProvider, OwnEndpoint endpoint)
-			: base(blobStorageProvider, cryptoProvider, endpoint) {
-		}
-
 		/// <summary>
 		/// Gets or sets the package security identifier of the app.
 		/// </summary>
