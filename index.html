@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="viewport" content="width=640" />
+
+    <link rel="stylesheet" href="stylesheets/core.css" media="screen"/>
+    <link rel="stylesheet" href="stylesheets/mobile.css" media="handheld, only screen and (max-device-width:640px)"/>
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css"/>
+
+    <script type="text/javascript" src="javascripts/modernizr.js"></script>
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script type="text/javascript" src="javascripts/headsmart.min.js"></script>
+    <script type="text/javascript">
+      $(document).ready(function () {
+        $('#main_content').headsmart()
+      })
+    </script>
+    <title>Ironpigeon by AArnott</title>
+  </head>
+
+  <body>
+    <a id="forkme_banner" href="https://github.com/AArnott/IronPigeon">View on GitHub</a>
+    <div class="shell">
+
+      <header>
+        <span class="ribbon-outer">
+          <span class="ribbon-inner">
+            <h1>Ironpigeon</h1>
+            <h2>IronPigeon is a decentralized communication protocol that provides high confidentiality and authenticity for the messages.</h2>
+          </span>
+          <span class="left-tail"></span>
+          <span class="right-tail"></span>
+        </span>
+      </header>
+
+      <section id="downloads">
+        <span class="inner">
+          <a href="https://github.com/AArnott/IronPigeon/zipball/master" class="zip"><em>download</em> .ZIP</a><a href="https://github.com/AArnott/IronPigeon/tarball/master" class="tgz"><em>download</em> .TGZ</a>
+        </span>
+      </section>
+
+
+      <span class="banner-fix"></span>
+
+
+      <section id="main_content">
+        <h1>IronPigeon</h1>
+
+<p><em>IronPigeon is a decentralized communication protocol that provides high
+confidentiality and authenticity for the messages.</em></p>
+
+<p>Messages are signed for authenticity, encrypted for confidentiality,
+and transmitted indirectly so that eavesdroppers find it difficult or
+impossible to establish <em>whether</em> two parties have even communicated,
+<em>what</em> was communicated or <em>how much</em> was communicated.</p>
+
+<p>This project includes libraries that implement the protocol and a message
+relay web service project that provides the cloud component necessary for
+passing messages.</p>
+
+<h2>Installing IronPigeon</h2>
+
+<p>The recommended way to acquire the binary is via the
+<a href="http://nuget.org/packages/IronPigeon" title="IronPigeon NuGet package">IronPigeon</a> NuGet package.</p>
+
+<p>For email-like message exchange, the <a href="http://nuget.org/packages/IronPigeon.Dart" title="IronPigeon.Dart NuGet package">IronPigeon.Dart</a>
+NuGet package is recommended.</p>
+
+<h2>Hosting IronPigeon</h2>
+
+<h3>Composition</h3>
+
+<p>There are a small collection of objects that work together to provide the
+functions required to send and receive messages.  These objects can be
+manually and individually instantiated, and properties set on them to point
+to the other objects you've created.  Or you can rely on MEF to do this work
+for you.</p>
+
+<p>When targeting .NET 4.0, use MEF as it is found in the framework under the
+<code>System.ComponentModel.Composition</code> namespace.<br>
+When targeting .NET 4.5 or Windows 8, you should use the MEF "v2" found in the
+<a href="http://nuget.org/packages/Microsoft.Composition" title="Microsoft.Composition NuGet package">Microsoft.Composition</a> NuGet package.  The code below assumes you're using
+the MEF framework from NuGet.  Most fundamental IronPigeon services are in the
+core IronPigeon assembly, so we add that entire assembly to the MEF catalog:</p>
+
+<pre><code>var configuration = new ContainerConfiguration()
+    .WithAssembly(typeof(Channel).Assembly);
+
+// When targeting desktop apps:
+configuration.WithPart(typeof(DesktopCryptoProvider));
+// When targeting WinRT apps:
+configuration.WithAssembly(typeof(WinRTChannel).Assembly);
+</code></pre>
+
+<p>According to standard MEF code, you'll need a container to begin using
+instances of these services:</p>
+
+<pre><code>var container = configuration.CreateContainer();
+</code></pre>
+
+<p>You will need to configure some of these services (setting properties, etc.)
+and other services you'll call methods on to actually send and receive
+messages.  You can acquire these services directly from the container using:</p>
+
+<pre><code>var someService = container.GetExport&lt;T&gt;();
+</code></pre>
+
+<p>The preferred approach however is that you define your own MEF part with
+importing properties that will automatically be set to instances of these
+services, like this:</p>
+
+<pre><code>[Export]
+public class MyImports {
+    [Import]
+    public /*WinRT*/Channel Channel { get; set; }
+
+    [Import]
+    public RelayCloudBlobStorageProvider MessageRelayService { get; set; }
+
+    [Import]
+    public ICryptoProvider CryptoProvider { get; set; }
+
+    [Import]
+    public OwnEndpointServices OwnEndpointServices { get; set; }
+}
+</code></pre>
+
+<p>The latter approach will require that you add your part to the MEF catalog
+prior to creating the container:</p>
+
+<pre><code>configuration.WithPart(typeof(MyImports));
+</code></pre>
+
+<h3>Configuration</h3>
+
+<p>IronPigeon has three settings that it needs to work:</p>
+
+<ol>
+<li>A URL to post public blobs to</li>
+<li>A URL to request new inboxes from</li>
+<li>The length of asymmetric keys to generate for newly created endpoints.</li>
+</ol><p>Assuming the context of running inside the <code>MyImports</code> class as defined above,
+the following code demonstrates configuring the above listed settings.</p>
+
+<pre><code>this.MessageRelayService.BlobPostUrl = new Uri("https://ironpigeon.azurewebsites.net/api/blob/");
+this.MessageRelayService.InboxServiceUrl = new Uri("https://ironpigeon.azurewebsites.net/Inbox/");
+this.CryptoProvider.ApplySecurityLevel(SecurityLevel.Minimum); // minimum is good for testing as keys generate faster
+</code></pre>
+
+<p>The URLs above are examples.  They can point to any compatible cloud service.</p>
+
+<h2>Establishing a communications channel</h2>
+
+<p>To send a message via IronPigeon, a pair of endpoints must exist.
+Endpoints have both public and private components, containing the public
+and private cryptographic key pairs respectively.  When party <em>A</em> shares its
+public endpoint with party <em>B</em>, party <em>B</em> can send party <em>A</em> messages.
+When two parties each create their own endpoints and exchange their public
+components, the two parties may communicate securely.</p>
+
+<h3>Creating an endpoint</h3>
+
+<p>The following code creates a new endpoint.</p>
+
+<pre><code>this.Channel.Endpoint = await this.OwnEndpointServices.CreateAsync();
+</code></pre>
+
+<p>An <code>OwnEndpoint</code> instance includes the private keys required for receiving
+messages at that endpoint.  It is therefore usually advisable to persist the
+private keys after creating the endpoint so that messages can be received
+in a subsequent session of the application.</p>
+
+<pre><code>using (var stream = File.OpenWrite("user private endpoint file")) {
+    await this.Channel.Endpoint.SaveAsync(stream);
+}
+</code></pre>
+
+<h3>Publishing an endpoint so others may send messages to it</h3>
+
+<p>The <code>OwnEndpoint.PublicEndpoint</code> property contains the public data that a
+remote party needs to send messages to your endpoint.  The public endpoint
+may be transmitted to interested remote parties by any means.  One method is
+to publish the public endpoint data to a web server and share the URL to that
+data with the remote party.  Publishing the endpoint and obtaining the URL can
+be done with a single line:</p>
+
+<pre><code>Uri shareableAddress = await this.OwnEndpointServices.PublishAddressBookEntryAsync(this.Channel.Endpoint);
+</code></pre>
+
+<p>A remote party can turn this URL back into a public <code>Endpoint</code> like this:</p>
+
+<pre><code>[Import]
+public DirectEntryAddressBook AddressBook { get; set; }
+
+Endpoint friend = await this.AddressBook.LookupAsync(shareableAddress);
+</code></pre>
+
+<h2>Sending and receiving messages</h2>
+
+<h3>Sending a message</h3>
+
+<p>A simple text message can be sent to a remote party:</p>
+
+<pre><code>var payload = new Payload(Encoding.UTF8.GetBytes("hello, world"), "text/plain");
+var recipients = new[] { friend };
+var expiration = DateTime.UtcNow + TimeSpan.FromMinutes(5);
+await this.Channel.PostAsync(payload, recipients, expiration);
+</code></pre>
+
+<h3>Receiving messages</h3>
+
+<p>Checking the cloud inbox for inbound messages to your endpoint can be done in
+any of a few ways.  </p>
+
+<p>This line will check for any incoming messages and immediately return with
+the set of messages that were waiting.  If no messages were waiting, an empty
+set is returned:</p>
+
+<pre><code>var incoming = await this.Channel.ReceiveAsync();
+</code></pre>
+
+<p>To receive long-poll style push notification of any incoming messages, add a
+<code>longPoll: true</code> parameter.  This will cause the receive operation to complete
+only when a message is actually received.  In this way, you can use an
+asynchronous loop to continuously receive and process messages as soon as they
+arrive.</p>
+
+<pre><code>var incoming = await this.Channel.ReceiveAsync(longPoll: true);
+</code></pre>
+
+<p>Either way, processing the incoming messages is simple:</p>
+
+<pre><code>foreach (var payload in incoming) {
+    var message = Encoding.UTF8.GetString(payload.Content);
+    Console.WriteLine(message);
+}
+</code></pre>
+
+<p>Finally, if you're building a Windows 8 app, you can employ the 
+Windows Push Notification service and avoid using a long poll connection
+yourself, allowing your application to receiving notifications even when it is
+not running, or when the computer is in a low power state:</p>
+
+<pre><code>[Import]
+public WinRTChannel Channel { get; set; }
+
+await this.Channel.RegisterPushNotificationChannelAsync(...);
+</code></pre>
+
+<h2>Email-like communications</h2>
+
+<p>If the messages to exchange resemble emails, consider using Dart as the
+message format.  This is facilitated by the <code>PostalService</code> and <code>Message</code>
+types:</p>
+
+<pre><code>configuration.WithAssembly(typeof(PostalService).Assembly);
+
+[Import]
+public PostalService PostalService { get; set; }
+
+var message = new Message(ownEndpoint, recipients, "subject", "body");
+await this.PostalService.PostAsync(message);
+var incoming = await this.PostalService.ReceiveAsync(longPoll: true|false);
+</code></pre>
+      </section>
+
+      <footer>
+        <span class="ribbon-outer">
+          <span class="ribbon-inner">
+            <p>this project by <a href="https://github.com/AArnott">AArnott</a> can be found on <a href="https://github.com/AArnott/IronPigeon">GitHub</a></p>
+          </span>
+          <span class="left-tail"></span>
+          <span class="right-tail"></span>
+        </span>
+        <p>Generated with <a href="http://pages.github.com">GitHub Pages</a> using Merlot</p>
+        <span class="octocat"></span>
+      </footer>
+
+    </div>
+
+              <script type="text/javascript">
+            var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+            document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+          </script>
+          <script type="text/javascript">
+            try {
+              var pageTracker = _gat._getTracker("UA-69958-14");
+            pageTracker._trackPageview();
+            } catch(err) {}
+          </script>
+
+  </body>
+</html>
