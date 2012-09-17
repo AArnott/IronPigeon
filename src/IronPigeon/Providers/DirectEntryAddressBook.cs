@@ -18,6 +18,7 @@
 	/// An address book whose identifiers are URLs to the online address book entries.
 	/// </summary>
 	[Export(typeof(AddressBook))]
+	[Export]
 #if !NET40
 	[Shared]
 #endif
@@ -32,7 +33,9 @@
 		/// Initializes a new instance of the <see cref="DirectEntryAddressBook" /> class.
 		/// </summary>
 		/// <param name="cryptoProvider">The crypto provider.</param>
-		public DirectEntryAddressBook(ICryptoProvider cryptoProvider) {
+		/// <param name="httpClient">The HTTP client.</param>
+		public DirectEntryAddressBook(ICryptoProvider cryptoProvider, HttpClient httpClient)
+			: base(httpClient) {
 			this.CryptoServices = cryptoProvider;
 		}
 

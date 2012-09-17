@@ -22,6 +22,7 @@
 	/// Discovers an address book entry by searching for the URL to it on the user's Twitter bio.
 	/// </summary>
 	[Export(typeof(AddressBook))]
+	[Export]
 #if !NET40
 	[Shared]
 #endif

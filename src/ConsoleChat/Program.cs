@@ -66,6 +66,7 @@
 				.WithPart(typeof(DesktopCryptoProvider))
 				.WithPart(typeof(Program));
 			var container = configuration.CreateContainer();
+			
 			var program = container.GetExport<Program>();
 			program.DoAsync().GetAwaiter().GetResult();
 		}
