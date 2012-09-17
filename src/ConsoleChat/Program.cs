@@ -19,6 +19,7 @@
 	/// <summary>
 	/// Simple console app that demonstrates the IronPigeon protocol in a live chat program.
 	/// </summary>
+	[Export]
 	internal class Program {
 		/// <summary>
 		/// The name of the table in Azure Table storage to create.
