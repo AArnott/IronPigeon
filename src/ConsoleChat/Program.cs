@@ -146,7 +146,7 @@
 					return defaultEndpoint;
 				}
 
-				var addressBook = new DirectEntryAddressBook(this.CryptoProvider);
+				var addressBook = new DirectEntryAddressBook(this.CryptoProvider, new System.Net.Http.HttpClient());
 				var endpoint = await addressBook.LookupAsync(url);
 				if (endpoint != null) {
 					return endpoint;

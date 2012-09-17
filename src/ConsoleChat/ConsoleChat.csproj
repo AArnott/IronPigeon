@@ -37,6 +37,8 @@
     <Reference Include="System.Composition.TypedParts">
       <HintPath>..\packages\Microsoft.Composition.1.0.15\lib\net45\System.Composition.TypedParts.dll</HintPath>
     </Reference>
+    <Reference Include="System.Net" />
+    <Reference Include="System.Net.Http" />
     <Reference Include="Validation">
       <HintPath>..\packages\Validation.1.0.0.12259\lib\net40-client\Validation.dll</HintPath>
     </Reference>
