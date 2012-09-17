@@ -7,7 +7,7 @@
 <p>Public service URLs:</p>
 <ul>
 	<li>Inbox: @Url.AbsoluteAction("Index", "inbox", null, "https") </li>
-	<li>Blob: @Url.AbsoluteRouteUrl("DefaultApi", new { controller = "blob" }) </li>
+	<li>Blob: @Url.AbsoluteRouteUrl("DefaultApi", new { controller = "blob" }, "https") </li>
 </ul>
 
 <a href="@Url.Action("Index", "WindowsPushNotificationClient")">Register Windows 8 app for push notification</a>.
