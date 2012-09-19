@@ -1,6 +1,7 @@
 Every file is bound by the following copyright and license unless explicitly
 indicated otherwise in and/or for any individual file.
 
+"IronPigeon" and "Dart" are trademarks of Andrew Arnott.
 
 Copyright (c) 2012, Andrew Arnott
 All rights reserved.
