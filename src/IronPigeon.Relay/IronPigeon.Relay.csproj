@@ -166,6 +166,7 @@
     <Compile Include="Code\HtmlExtensions.cs" />
     <Compile Include="App_Code\InboxOwnerAuthorize.cs" />
     <Compile Include="App_Start\AzureStorageConfig.cs" />
+    <Compile Include="Code\MicrosoftAccountAuthorize.cs" />
     <Compile Include="Controllers\AddressBookController.cs" />
     <Compile Include="Controllers\BlobController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
@@ -174,6 +175,8 @@
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
+    <Compile Include="Models\AddressBookContext.cs" />
+    <Compile Include="Models\AddressBookEntity.cs" />
     <Compile Include="Models\PushNotificationContext.cs" />
     <Compile Include="Models\InboxContext.cs" />
     <Compile Include="Models\InboxEntity.cs" />

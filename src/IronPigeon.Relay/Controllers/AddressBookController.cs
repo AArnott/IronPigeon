@@ -1,9 +1,16 @@
 ﻿namespace IronPigeon.Relay.Controllers {
 	using System;
 	using System.Collections.Generic;
+	using System.IO;
 	using System.Linq;
+	using System.Net.Http;
+	using System.Threading.Tasks;
 	using System.Web;
 	using System.Web.Mvc;
+	using IronPigeon.Relay.Models;
+	using Microsoft.WindowsAzure;
+	using Microsoft.WindowsAzure.StorageClient;
+	using Newtonsoft.Json;
 	using Validation;
 
 	/// <summary>
@@ -14,6 +21,36 @@
 	[RequireHttps]
 #endif
 	public class AddressBookController : Controller {
+		/// <summary>
+		/// The name of the table in Azure table storage where address book entries are stored.
+		/// </summary>
+		internal const string DefaultTableName = "AddressBooks";
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="AddressBookController" /> class.
+		/// </summary>
+		public AddressBookController()
+			: this(DefaultTableName, AzureStorageConfig.DefaultCloudConfigurationName) {
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="AddressBookController" /> class.
+		/// </summary>
+		/// <param name="tableName">Name of the table where address book entries are stored.</param>
+		/// <param name="cloudConfigurationName">Name of the cloud configuration.</param>
+		public AddressBookController(string tableName, string cloudConfigurationName) {
+			Requires.NotNullOrEmpty(cloudConfigurationName, "cloudConfigurationName");
+
+			var storage = CloudStorageAccount.FromConfigurationSetting(cloudConfigurationName);
+			var tableClient = storage.CreateCloudTableClient();
+			this.ClientTable = new AddressBookContext(tableClient, tableName);
+			this.HttpClient = new HttpClient();
+		}
+
+		public AddressBookContext ClientTable { get; set; }
+
+		public HttpClient HttpClient { get; set; }
+
 		/// <summary>
 		/// Returns the address book entry, or an HTML page for browsers.
 		/// GET: /AddressBook/?blob={uri}
@@ -31,6 +68,60 @@
 			}
 
 			return this.Redirect(blobUri.AbsoluteUri);
+		}
+
+		[HttpPut, ActionName("MicrosoftAccount"), MicrosoftAccountAuthorize]
+		public async Task<ActionResult> PutMicrosoftAccount(string id) {
+			string addressBookBlobUri = this.Request.Form["addressBookBlobUri"];
+			new Uri(addressBookBlobUri, UriKind.Absolute); // throws if invalid arg
+
+			string accessToken = this.Request.Headers["Authorization"].Substring("Bearer ".Length);
+			var uri = new Uri("https://apis.live.net/v5.0/me?access_token=" + Uri.EscapeDataString(accessToken));
+			var result = await this.HttpClient.GetAsync(uri);
+			result.EnsureSuccessStatusCode();
+			string jsonUserInfo = await result.Content.ReadAsStringAsync();
+			var serializer = new JsonSerializer();
+			var jsonReader = new JsonTextReader(new StringReader(jsonUserInfo));
+			var info = serializer.Deserialize<MicrosoftAccountInfo>(jsonReader);
+
+			// Make sure the user the client is claiming matches the access token that's coming in.
+			if (info.Id != id) {
+				throw new ArgumentException();
+			}
+
+			var entity = new AddressBookEntity {
+				Provider = AddressBookEntity.MicrosoftProvider,
+				UserId = info.Id,
+				AddressBookUrl = addressBookBlobUri,
+			};
+
+			var existing = await this.ClientTable.GetAsync(entity.Provider, entity.UserId);
+			if (existing != null) {
+				this.ClientTable.DeleteObject(existing);
+			}
+
+			this.ClientTable.AddObject(entity);
+			await this.ClientTable.SaveChangesAsync();
+			return new EmptyResult();
+		}
+
+		[HttpGet, ActionName("MicrosoftAccount")]
+		public async Task<ActionResult> GetMicrosoftAccount(string id) {
+			var entity = await this.ClientTable.GetAsync(AddressBookEntity.MicrosoftProvider, id);
+			if (entity == null) {
+				return this.HttpNotFound();
+			}
+
+			return this.Redirect(entity.AddressBookUrl);
+		}
+
+		internal static async Task OneTimeInitializeAsync(CloudStorageAccount azureAccount) {
+			var tableClient = azureAccount.CreateCloudTableClient();
+			await tableClient.CreateTableIfNotExistAsync(DefaultTableName);
+		}
+
+		private class MicrosoftAccountInfo {
+			public string Id { get; set; }
 		}
 	}
 }

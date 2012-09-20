@@ -17,31 +17,24 @@
 	[RequireHttps]
 #endif
 	public class WindowsPushNotificationClientController : Controller {
-		/// <summary>
-		/// The key to the Azure account configuration information.
-		/// </summary>
-		internal const string DefaultCloudConfigurationName = "StorageConnectionString";
-
 		internal const string DefaultTableName = "WindowsPushNotificationClients";
 
 		public WindowsPushNotificationClientController()
-			: this(DefaultTableName, DefaultCloudConfigurationName) {
+			: this(DefaultTableName, AzureStorageConfig.DefaultCloudConfigurationName) {
 		}
 
 		public WindowsPushNotificationClientController(string tableName, string cloudConfigurationName) {
 			Requires.NotNullOrEmpty(cloudConfigurationName, "cloudConfigurationName");
 
 			var storage = CloudStorageAccount.FromConfigurationSetting(cloudConfigurationName);
-			this.TableClient = storage.CreateCloudTableClient();
-			this.ClientTable = new PushNotificationContext(this.TableClient, tableName);
+			var tableClient = storage.CreateCloudTableClient();
+			this.ClientTable = new PushNotificationContext(tableClient, tableName);
 			this.HttpClient = new HttpClient();
 		}
 
 		public HttpClient HttpClient { get; set; }
 
 		public PushNotificationContext ClientTable { get; set; }
-
-		public CloudTableClient TableClient { get; set; }
 
 		[ActionName("Index"), HttpGet]
 		public ActionResult Form() {
