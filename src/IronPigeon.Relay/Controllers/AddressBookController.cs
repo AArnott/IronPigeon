@@ -70,28 +70,18 @@
 			return this.Redirect(blobUri.AbsoluteUri);
 		}
 
-		[HttpPut, ActionName("MicrosoftAccount"), MicrosoftAccountAuthorize]
+		[HttpPut, ActionName("MicrosoftAccount"), OAuthAuthorize(Roles = "AddressBook")]
 		public async Task<ActionResult> PutMicrosoftAccount(string id) {
 			string addressBookBlobUri = this.Request.Form["addressBookBlobUri"];
 			new Uri(addressBookBlobUri, UriKind.Absolute); // throws if invalid arg
 
-			string accessToken = this.Request.Headers["Authorization"].Substring("Bearer ".Length);
-			var uri = new Uri("https://apis.live.net/v5.0/me?access_token=" + Uri.EscapeDataString(accessToken));
-			var result = await this.HttpClient.GetAsync(uri);
-			result.EnsureSuccessStatusCode();
-			string jsonUserInfo = await result.Content.ReadAsStringAsync();
-			var serializer = new JsonSerializer();
-			var jsonReader = new JsonTextReader(new StringReader(jsonUserInfo));
-			var info = serializer.Deserialize<MicrosoftAccountInfo>(jsonReader);
-
-			// Make sure the user the client is claiming matches the access token that's coming in.
-			if (info.Id != id) {
-				throw new ArgumentException();
+			if (id != this.HttpContext.User.Identity.Name) {
+				return new HttpUnauthorizedResult();
 			}
 
 			var entity = new AddressBookEntity {
 				Provider = AddressBookEntity.MicrosoftProvider,
-				UserId = info.Id,
+				UserId = this.HttpContext.User.Identity.Name,
 				AddressBookUrl = addressBookBlobUri,
 			};
 
@@ -118,10 +108,6 @@
 		internal static async Task OneTimeInitializeAsync(CloudStorageAccount azureAccount) {
 			var tableClient = azureAccount.CreateCloudTableClient();
 			await tableClient.CreateTableIfNotExistAsync(DefaultTableName);
-		}
-
-		private class MicrosoftAccountInfo {
-			public string Id { get; set; }
 		}
 	}
 }
