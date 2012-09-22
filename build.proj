@@ -4,6 +4,7 @@
 
 	<ItemGroup>
 		<ProjectReference Include="$(ProjectRoot)NuGet\IronPigeon.proj" />
+		<ProjectReference Include="$(ProjectRoot)src\IronPigeon.sln" />
 	</ItemGroup>
 
 	<Target Name="Build" DependsOnTargets="GetBuildVersion">
@@ -13,6 +14,22 @@
 			BuildInParallel="$(BuildInParallel)"
 			/>
 	</Target>
-	
+
+	<Target Name="Clean">
+		<MSBuild
+			Projects="@(ProjectReference)"
+			Targets="Clean"
+			BuildInParallel="$(BuildInParallel)"
+			/>
+	</Target>
+
+	<Target Name="Rebuild">
+		<MSBuild
+			Projects="@(ProjectReference)"
+			Targets="Rebuild"
+			BuildInParallel="$(BuildInParallel)"
+			/>
+	</Target>
+
 	<Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildProjectDirectory), EnlistmentInfo.targets))\EnlistmentInfo.targets" Condition=" '$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildProjectDirectory), EnlistmentInfo.targets))' != '' " />
 </Project>

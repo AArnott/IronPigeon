@@ -23,6 +23,9 @@
 	/// Creates and services <see cref="OwnEndpoint"/> instances.
 	/// </summary>
 	[Export]
+#if !NET40
+	[Shared]
+#endif
 	public class OwnEndpointServices {
 		/// <summary>
 		/// Gets or sets the crypto provider.

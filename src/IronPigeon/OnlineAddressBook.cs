@@ -32,6 +32,14 @@
 		}
 
 		/// <summary>
+		/// Initializes a new instance of the <see cref="OnlineAddressBook" /> class.
+		/// </summary>
+		/// <param name="httpClient">The HTTP client.</param>
+		protected OnlineAddressBook(HttpClient httpClient) {
+			this.HttpClient = httpClient;
+		}
+
+		/// <summary>
 		/// Gets or sets the HTTP client to use for outbound HTTP requests.
 		/// </summary>
 		[Import]

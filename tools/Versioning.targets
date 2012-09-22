@@ -51,6 +51,10 @@
 		              AssemblyVersion="$(MajorMinorVersion)"
 		              AssemblyFileVersion="$(BuildVersion)"
 		              AssemblyInformationalVersion="$(AssemblyInformationalVersion)"
+		              AssemblyTitle="$(AssemblyName)"
+		              AssemblyProduct="IronPigeon"
+		              AssemblyCopyright="Copyright © 2012 Andrew Arnott"
+		              NeutralResourcesLanguage="en-US"
 		              GenerateClass="true" />
 		<!-- Avoid applying the newly generated AssemblyInfo.cs file to the build 
 		     unless it has changed in order to allow for incremental building. -->

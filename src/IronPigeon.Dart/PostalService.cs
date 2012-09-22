@@ -23,6 +23,7 @@
 	/// <summary>
 	/// An email sending and receiving service.
 	/// </summary>
+	[Export]
 	public class PostalService {
 		/// <summary>
 		/// Gets the channel used to send and receive messages.

@@ -30,7 +30,8 @@
 			var initialization = TaskEx.WhenAll(
 				BlobController.OneTimeInitializeAsync(storage),
 				InboxController.OneTimeInitializeAsync(storage),
-				WindowsPushNotificationClientController.OneTimeInitializeAsync(storage));
+				WindowsPushNotificationClientController.OneTimeInitializeAsync(storage),
+				AddressBookController.OneTimeInitializeAsync(storage));
 			initialization.Wait();
 		}
 

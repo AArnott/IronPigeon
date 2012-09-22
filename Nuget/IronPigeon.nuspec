@@ -19,13 +19,20 @@
 		<copyright>Copyright © Andrew Arnott</copyright>
 		<tags>crypto cryptography mail email privacy</tags>
 		<dependencies>
-			<group>
-				<dependency id="Validation" version="[1.0, 2.0)" />
-			</group>
 			<group targetFramework="net40">
 				<dependency id="Validation" version="[1.0, 2.0)" />
-				<dependency id="Microsoft.WindowsAzure.StorageClient.Async" version="0.1.3-preview" />
 				<dependency id="Microsoft.CompilerServices.AsyncTargetingPack" version="[1.0, 2.0)" />
+				<dependency id="Microsoft.WindowsAzure.StorageClient.Async" version="0.1.3-preview" />
+			</group>
+			<group targetFramework="net45">
+				<dependency id="Validation" version="[1.0, 2.0)" />
+				<dependency id="Microsoft.Composition" version="[1.0.15, 2.0)" />
+				<dependency id="Microsoft.WindowsAzure.StorageClient.Async" version="0.1.3-preview" />
+				<dependency id="Microsoft.Tpl.Dataflow" version="[4.5.6, 5.0)" />
+			</group>
+			<group targetFramework="winrt">
+				<dependency id="Validation" version="[1.0, 2.0)" />
+				<dependency id="Microsoft.Composition" version="[1.0.15, 2.0)" />
 			</group>
 		</dependencies>
 	</metadata>
@@ -50,5 +57,13 @@
 		<file src="$OutputPath45$IronPigeon.WinRT.dll" target="lib\winrt45" />
 		<file src="$OutputPath45$IronPigeon.WinRT.pdb" target="lib\winrt45" />
 		<file src="$OutputPath45$IronPigeon.WinRT.xml" target="lib\winrt45" />
+
+		<file src="..\src\IronPigeon\**\*.cs" target="src\IronPigeon" exclude="..\src\IronPigeon\obj\**" />
+		<file src="..\src\IronPigeon.Desktop\**\*.cs" target="src\IronPigeon.Desktop" exclude="..\src\IronPigeon.Desktop\obj\**" />
+		<file src="..\src\IronPigeon.WinRT\**\*.cs" target="src\IronPigeon.WinRT" exclude="..\src\IronPigeon.WinRT\obj\**" />
+
+		<file src="$IntermediatePath$IronPigeon.Version.cs" target="src\IronPigeon\Properties" />
+		<file src="$IntermediatePath$IronPigeon.Desktop.Version.cs" target="src\IronPigeon.Desktop\Properties" />
+		<file src="$IntermediatePath$IronPigeon.WinRT.Version.cs" target="src\IronPigeon.WinRT\Properties" />
 	</files>
 </package>

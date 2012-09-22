@@ -19,6 +19,7 @@
 	/// <summary>
 	/// Simple console app that demonstrates the IronPigeon protocol in a live chat program.
 	/// </summary>
+	[Export]
 	internal class Program {
 		/// <summary>
 		/// The name of the table in Azure Table storage to create.
@@ -65,6 +66,7 @@
 				.WithPart(typeof(DesktopCryptoProvider))
 				.WithPart(typeof(Program));
 			var container = configuration.CreateContainer();
+			
 			var program = container.GetExport<Program>();
 			program.DoAsync().GetAwaiter().GetResult();
 		}
@@ -144,7 +146,7 @@
 					return defaultEndpoint;
 				}
 
-				var addressBook = new DirectEntryAddressBook(this.CryptoProvider);
+				var addressBook = new DirectEntryAddressBook(this.CryptoProvider, new System.Net.Http.HttpClient());
 				var endpoint = await addressBook.LookupAsync(url);
 				if (endpoint != null) {
 					return endpoint;
