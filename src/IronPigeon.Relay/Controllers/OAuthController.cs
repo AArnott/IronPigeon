@@ -77,7 +77,7 @@
 
 			// Since this authz request has gone through at least one untrusted leg, make sure it's following our rules.
 			// We're auto-approving this, but only want to do so if it's the client we trust.
-			if (incomingAuthzRequest.Callback.AbsoluteUri != ConfigurationManager.AppSettings["TrustedClientCallbackUri"]) {
+			if (incomingAuthzRequest.ClientIdentifier != ConfigurationManager.AppSettings["TrustedClientPackageId"]) {
 				return new HttpUnauthorizedResult("Not a trusted client.");
 			}
 
