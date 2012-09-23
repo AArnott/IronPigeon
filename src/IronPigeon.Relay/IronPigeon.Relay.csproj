@@ -230,7 +230,9 @@
     <Compile Include="App_Start\RouteConfig.cs" />
     <Compile Include="App_Start\WebApiConfig.cs" />
     <Content Include="Global.asax" />
-    <Content Include="Web.config" />
+    <Content Include="Web.config">
+      <SubType>Designer</SubType>
+    </Content>
     <Content Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </Content>
@@ -241,7 +243,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
-    <Folder Include="Properties\" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="packages.config" />
@@ -264,6 +265,9 @@
     <None Include="Properties\PublishProfiles\IronPigeon - FTP.pubxml" />
     <None Include="Properties\PublishProfiles\IronPigeon - Web Deploy.pubxml" />
     <Content Include="Views\Home\Index.cshtml" />
+    <None Include="Web.ReleaseNET40.config">
+      <DependentUpon>Web.config</DependentUpon>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Content Include="Views\WindowsPushNotificationClient\Index.cshtml" />
