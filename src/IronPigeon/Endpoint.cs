@@ -2,6 +2,7 @@
 	using System;
 	using System.Collections.Generic;
 	using System.ComponentModel;
+	using System.Diagnostics;
 	using System.Diagnostics.Contracts;
 	using System.IO;
 	using System.Linq;
@@ -13,6 +14,7 @@
 	/// An entity that is capable of receiving messages via the IronPigeon protocol.
 	/// </summary>
 	[DataContract]
+	[DebuggerDisplay("{MessageReceivingEndpoint}")]
 	public class Endpoint {
 		/// <summary>
 		/// Initializes a new instance of the <see cref="Endpoint"/> class.

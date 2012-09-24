@@ -1,7 +1,9 @@
 ﻿namespace IronPigeon.Relay.Models {
 	using System;
 	using System.Collections.Generic;
+#if !NET40
 	using System.ComponentModel.DataAnnotations.Schema;
+#endif
 	using System.Linq;
 	using System.Web;
 	using Validation;
@@ -11,14 +13,14 @@
 	/// </summary>
 	public class AddressBookEntity : TableStorageEntity {
 		/// <summary>
-		/// The default partition that address books are filed under.
-		/// </summary>
-		private const string DefaultPartition = "AddressBook";
-
-		/// <summary>
 		/// The value for <see cref="Provider"/> used for Microsoft accounts.
 		/// </summary>
 		public const string MicrosoftProvider = "Microsoft";
+
+		/// <summary>
+		/// The default partition that address books are filed under.
+		/// </summary>
+		private const string DefaultPartition = "AddressBook";
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="AddressBookEntity" /> class.
@@ -30,7 +32,9 @@
 		/// <summary>
 		/// Gets or sets the user's identity provider.
 		/// </summary>
+#if !NET40
 		[NotMapped]
+#endif
 		public string Provider {
 			get {
 				string provider, userId;
@@ -44,9 +48,11 @@
 		}
 
 		/// <summary>
-		/// A user ID that is unique within the <see cref="Provider"/>.
+		/// Gets or sets a user ID that is unique within the <see cref="Provider"/>.
 		/// </summary>
+#if !NET40
 		[NotMapped]
+#endif
 		public string UserId {
 			get {
 				string provider, userId;
@@ -58,6 +64,10 @@
 				this.RowKey = ConstructRowKey(this.Provider, value);
 			}
 		}
+
+		public string FirstName { get; set; }
+
+		public string LastName { get; set; }
 
 		public string AddressBookUrl { get; set; }
 

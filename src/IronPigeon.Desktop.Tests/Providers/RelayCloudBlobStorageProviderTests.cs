@@ -12,7 +12,7 @@
 	[TestFixture]
 	public class RelayCloudBlobStorageProviderTests {
 		private ICloudBlobStorageProvider provider;
-		
+
 		[SetUp]
 		public void SetUp() {
 			var provider = new RelayCloudBlobStorageProvider(new Uri("http://localhost:39472/api/blob"));

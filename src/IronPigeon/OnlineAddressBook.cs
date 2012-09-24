@@ -58,6 +58,10 @@
 			var request = new HttpRequestMessage(HttpMethod.Get, entryLocation);
 			request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(AddressBookEntry.ContentType));
 			var response = await this.HttpClient.SendAsync(request, cancellationToken);
+			if (!response.IsSuccessStatusCode) {
+				return null;
+			}
+
 			using (var stream = await response.Content.ReadAsStreamAsync()) {
 				var reader = new StreamReader(stream);
 				try {
@@ -81,6 +85,10 @@
 			Verify.Operation(this.CryptoServices != null, Strings.CryptoServicesRequired);
 
 			var entry = await this.DownloadAddressBookEntryAsync(entryLocation, cancellationToken);
+			if (entry == null) {
+				return null;
+			}
+
 			var endpoint = entry.ExtractEndpoint(this.CryptoServices);
 
 			if (!string.IsNullOrEmpty(entryLocation.Fragment)) {

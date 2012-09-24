@@ -3,6 +3,7 @@
 	using System.Collections.Generic;
 	using System.IO;
 	using System.Linq;
+	using System.Net;
 	using System.Net.Http;
 	using System.Threading.Tasks;
 	using System.Web;
@@ -26,11 +27,13 @@
 		/// </summary>
 		internal const string DefaultTableName = "AddressBooks";
 
+		internal const string EmailTableName = "AddressBookEmails";
+
 		/// <summary>
 		/// Initializes a new instance of the <see cref="AddressBookController" /> class.
 		/// </summary>
 		public AddressBookController()
-			: this(DefaultTableName, AzureStorageConfig.DefaultCloudConfigurationName) {
+			: this(DefaultTableName, EmailTableName, AzureStorageConfig.DefaultCloudConfigurationName) {
 		}
 
 		/// <summary>
@@ -38,12 +41,12 @@
 		/// </summary>
 		/// <param name="tableName">Name of the table where address book entries are stored.</param>
 		/// <param name="cloudConfigurationName">Name of the cloud configuration.</param>
-		public AddressBookController(string tableName, string cloudConfigurationName) {
+		public AddressBookController(string tableName, string emailTableName, string cloudConfigurationName) {
 			Requires.NotNullOrEmpty(cloudConfigurationName, "cloudConfigurationName");
 
 			var storage = CloudStorageAccount.FromConfigurationSetting(cloudConfigurationName);
 			var tableClient = storage.CreateCloudTableClient();
-			this.ClientTable = new AddressBookContext(tableClient, tableName);
+			this.ClientTable = new AddressBookContext(tableClient, tableName, emailTableName);
 			this.HttpClient = new HttpClient();
 		}
 
@@ -79,18 +82,18 @@
 				return new HttpUnauthorizedResult();
 			}
 
-			var entity = new AddressBookEntity {
-				Provider = AddressBookEntity.MicrosoftProvider,
-				UserId = this.HttpContext.User.Identity.Name,
-				AddressBookUrl = addressBookBlobUri,
-			};
-
-			var existing = await this.ClientTable.GetAsync(entity.Provider, entity.UserId);
-			if (existing != null) {
-				this.ClientTable.DeleteObject(existing);
+			var entity = await this.ClientTable.GetAsync(AddressBookEntity.MicrosoftProvider, this.HttpContext.User.Identity.Name);
+			if (entity == null) {
+				entity = new AddressBookEntity();
+				entity.Provider = AddressBookEntity.MicrosoftProvider;
+				entity.UserId = this.HttpContext.User.Identity.Name;
+				this.ClientTable.AddObject(entity);
+			} else {
+				this.ClientTable.UpdateObject(entity);
 			}
 
-			this.ClientTable.AddObject(entity);
+			entity.AddressBookUrl = addressBookBlobUri;
+
 			await this.ClientTable.SaveChangesAsync();
 			return new EmptyResult();
 		}
@@ -105,9 +108,29 @@
 			return this.Redirect(entity.AddressBookUrl);
 		}
 
+		[HttpGet, ActionName("entry")]
+		public async Task<ActionResult> GetAddressBookEntryByEmailHash(string email, string emailHash) {
+			AddressBookEntity entry = null;
+			if (!string.IsNullOrEmpty(email)) {
+				entry = await this.ClientTable.GetAddressBookEntityByEmailAsync(email);
+			} else if (!string.IsNullOrEmpty(emailHash)) {
+				entry = await this.ClientTable.GetAddressBookEntityByEmailHashAsync(emailHash);
+			} else {
+				return new HttpStatusCodeResult(HttpStatusCode.BadRequest);
+			}
+
+			if (entry == null) {
+				return this.HttpNotFound();
+			}
+
+			return this.Redirect(entry.AddressBookUrl);
+		}
+
 		internal static async Task OneTimeInitializeAsync(CloudStorageAccount azureAccount) {
 			var tableClient = azureAccount.CreateCloudTableClient();
-			await tableClient.CreateTableIfNotExistAsync(DefaultTableName);
+			await Task.WhenAll(
+				tableClient.CreateTableIfNotExistAsync(DefaultTableName),
+				tableClient.CreateTableIfNotExistAsync(EmailTableName));
 		}
 	}
 }

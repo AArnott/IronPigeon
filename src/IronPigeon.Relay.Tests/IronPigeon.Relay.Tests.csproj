@@ -108,6 +108,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Controllers\InboxControllerTest.cs" />
+    <Compile Include="Controllers\OAuthControllerTests.cs" />
+    <Compile Include="MicrosoftToolsTests.cs" />
     <Compile Include="ReflectionDynamicObject.cs" />
     <Compile Include="RoutesTest.cs" />
     <Compile Include="TestHelper.cs" />

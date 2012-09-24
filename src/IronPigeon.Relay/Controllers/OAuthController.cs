@@ -1,18 +1,24 @@
 ﻿namespace IronPigeon.Relay.Controllers {
 	using System;
 	using System.Collections.Generic;
-	using System.Linq;
-	using System.Web;
-	using System.Web.Mvc;
-	using DotNetOpenAuth.OAuth2;
-	using DotNetOpenAuth.Messaging;
-	using Validation;
 	using System.Configuration;
+	using System.IO;
+	using System.Linq;
 	using System.Net;
 	using System.Net.Http;
+	using System.Runtime.Serialization;
 	using System.Threading.Tasks;
+	using System.Web;
+	using System.Web.Mvc;
+	using DotNetOpenAuth.Messaging;
+	using DotNetOpenAuth.OAuth2;
+
+	using IronPigeon.Relay.Code;
+	using IronPigeon.Relay.Models;
+	using Microsoft.WindowsAzure;
+	using Microsoft.WindowsAzure.StorageClient;
 	using Newtonsoft.Json;
-	using System.IO;
+	using Validation;
 
 #if !DEBUG
 	[RequireHttps]
@@ -31,15 +37,22 @@
 		private AuthorizationServer authorizationServer;
 
 		public OAuthController()
-			: this(new AuthorizationServer(new AuthorizationServerHost())) {
-
+			: this(new AuthorizationServer(new AuthorizationServerHost()), AddressBookController.DefaultTableName, AddressBookController.EmailTableName, AzureStorageConfig.DefaultCloudConfigurationName) {
 		}
 
-		public OAuthController(AuthorizationServer authorizationServer) {
+		public OAuthController(AuthorizationServer authorizationServer, string primaryTableName, string emailTableName, string cloudConfigurationName) {
 			Requires.NotNull(authorizationServer, "authorizationServer");
+			Requires.NotNullOrEmpty(cloudConfigurationName, "cloudConfigurationName");
+
 			this.authorizationServer = authorizationServer;
 			this.HttpClient = new HttpClient();
+
+			var storage = CloudStorageAccount.FromConfigurationSetting(cloudConfigurationName);
+			var tableClient = storage.CreateCloudTableClient();
+			this.ClientTable = new AddressBookContext(tableClient, primaryTableName, emailTableName);
 		}
+
+		public AddressBookContext ClientTable { get; set; }
 
 		public HttpClient HttpClient { get; set; }
 
@@ -55,14 +68,14 @@
 
 			var returnTo = new UriBuilder(this.Url.AbsoluteAction("AuthorizeWithMicrosoftAccount"));
 			returnTo.AppendQueryArgument("nestedAuth", this.Request.Url.Query);
-			var scopes = new[] { "wl.signin" };
+			var scopes = new[] { "wl.signin", "wl.basic" }; // this is a subset of what the client app asks for, ensuring automatic approval.
 			return LiveConnectClient.PrepareRequestUserAuthorization(scopes, returnTo.Uri).AsActionResult();
 		}
 
 		public async Task<ActionResult> AuthorizeWithMicrosoftAccount(string nestedAuth) {
 			var authorizationState = LiveConnectClient.ProcessUserAuthorization(this.Request);
 			var accessToken = authorizationState.AccessToken;
-			if (String.IsNullOrEmpty(accessToken)) {
+			if (string.IsNullOrEmpty(accessToken)) {
 				throw new ArgumentNullException("accessToken");
 			}
 
@@ -89,12 +102,66 @@
 			var jsonReader = new JsonTextReader(new StringReader(jsonUserInfo));
 			var microsoftAccountInfo = serializer.Deserialize<MicrosoftAccountInfo>(jsonReader);
 
+			await this.SaveAccountInfoAsync(microsoftAccountInfo);
+
 			var response = this.authorizationServer.PrepareApproveAuthorizationRequest(incomingAuthzRequest, microsoftAccountInfo.Id, new[] { "AddressBook" });
 			return this.authorizationServer.Channel.PrepareResponse(response).AsActionResult();
 		}
 
-		private class MicrosoftAccountInfo {
+		private async Task SaveAccountInfoAsync(MicrosoftAccountInfo microsoftAccountInfo) {
+			Requires.NotNull(microsoftAccountInfo, "microsoftAccountInfo");
+
+			var entity = await this.ClientTable.GetAsync(AddressBookEntity.MicrosoftProvider, microsoftAccountInfo.Id);
+			if (entity == null) {
+				entity = new AddressBookEntity();
+				entity.Provider = AddressBookEntity.MicrosoftProvider;
+				entity.UserId = microsoftAccountInfo.Id;
+				this.ClientTable.AddObject(entity);
+			} else {
+				this.ClientTable.UpdateObject(entity);
+			}
+
+			entity.FirstName = microsoftAccountInfo.FirstName;
+			entity.LastName = microsoftAccountInfo.LastName;
+
+			var previouslyRecordedEmails = await this.ClientTable.GetEmailAddressesAsync(entity);
+
+			var previouslyRecordedEmailAddresses = new HashSet<string>(previouslyRecordedEmails.Select(e => e.Email));
+			previouslyRecordedEmailAddresses.ExceptWith(microsoftAccountInfo.Emails.Values);
+
+			var freshEmailAddresses = new HashSet<string>(microsoftAccountInfo.Emails.Values.Where(v => v != null));
+			freshEmailAddresses.ExceptWith(previouslyRecordedEmails.Select(e => e.Email));
+
+			foreach (var previouslyRecordedEmailAddress in previouslyRecordedEmailAddresses) {
+				this.ClientTable.DeleteObject(
+					previouslyRecordedEmails.FirstOrDefault(e => e.Email == previouslyRecordedEmailAddress));
+			}
+
+			foreach (var freshEmailAddress in freshEmailAddresses) {
+				var newEmailEntity = new AddressBookEmailEntity {
+					Email = freshEmailAddress,
+					MicrosoftEmailHash = MicrosoftTools.GetEmailHash(freshEmailAddress),
+					AddressBookEntityRowKey = entity.RowKey,
+				};
+				this.ClientTable.AddObject(newEmailEntity);
+			}
+
+			await this.ClientTable.SaveChangesAsync();
+		}
+
+		[DataContract]
+		public class MicrosoftAccountInfo {
+			[DataMember]
 			public string Id { get; set; }
+
+			[DataMember(Name = "first_name")]
+			public string FirstName { get; set; }
+
+			[DataMember(Name = "last_name")]
+			public string LastName { get; set; }
+
+			[DataMember(Name = "emails")]
+			public IDictionary<string, string> Emails { get; set; }
 		}
 	}
 }
