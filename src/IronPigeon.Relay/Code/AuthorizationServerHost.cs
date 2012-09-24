@@ -35,7 +35,7 @@
 		public IClientDescription GetClient(string clientIdentifier) {
 			if (clientIdentifier == ConfigurationManager.AppSettings["TrustedClientPackageId"]) {
 				return new ClientDescription(
-					ConfigurationManager.AppSettings["TrustedClientSecret"],
+					ConfigurationManager.AppSettings["TrustedClientSecret"], // the client secret technically isn't necessary since we only use implicit grants.
 					new Uri(ConfigurationManager.AppSettings["TrustedClientPackageId"]),
 					ClientType.Public);
 			} else {

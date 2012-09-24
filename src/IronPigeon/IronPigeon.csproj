@@ -41,6 +41,7 @@
     <Compile Include="ICloudBlobStorageProvider.cs" />
     <Compile Include="ICryptoProvider.cs" />
     <Compile Include="AddressBook.cs" />
+    <Compile Include="Providers\RelayServiceAddressBook.cs" />
     <Compile Include="Relay\IEndpointInboxFactory.cs" />
     <Compile Include="ILogger.cs" />
     <Compile Include="IncomingList.cs" />

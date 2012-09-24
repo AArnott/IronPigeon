@@ -13,14 +13,14 @@
 	/// </summary>
 	public class AddressBookEntity : TableStorageEntity {
 		/// <summary>
-		/// The default partition that address books are filed under.
-		/// </summary>
-		private const string DefaultPartition = "AddressBook";
-
-		/// <summary>
 		/// The value for <see cref="Provider"/> used for Microsoft accounts.
 		/// </summary>
 		public const string MicrosoftProvider = "Microsoft";
+
+		/// <summary>
+		/// The default partition that address books are filed under.
+		/// </summary>
+		private const string DefaultPartition = "AddressBook";
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="AddressBookEntity" /> class.
@@ -48,7 +48,7 @@
 		}
 
 		/// <summary>
-		/// A user ID that is unique within the <see cref="Provider"/>.
+		/// Gets or sets a user ID that is unique within the <see cref="Provider"/>.
 		/// </summary>
 #if !NET40
 		[NotMapped]
@@ -64,6 +64,10 @@
 				this.RowKey = ConstructRowKey(this.Provider, value);
 			}
 		}
+
+		public string FirstName { get; set; }
+
+		public string LastName { get; set; }
 
 		public string AddressBookUrl { get; set; }
 

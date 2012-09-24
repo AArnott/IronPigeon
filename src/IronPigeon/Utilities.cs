@@ -326,6 +326,28 @@
 		}
 
 		/// <summary>
+		/// Produces a URL-encoded string of key-value pairs.
+		/// </summary>
+		/// <param name="data">The key-value pairs to concatenate and escape.</param>
+		/// <returns>The URL-encoded string.</returns>
+		public static string UrlEncode(this IEnumerable<KeyValuePair<string, string>> data) {
+			Requires.NotNull(data, "data");
+
+			var builder = new StringBuilder();
+			foreach (var pair in data) {
+				if (builder.Length > 0) {
+					builder.Append("&");
+				}
+
+				builder.Append(Uri.EscapeDataString(pair.Key));
+				builder.Append("=");
+				builder.Append(Uri.EscapeDataString(pair.Value));
+			}
+
+			return builder.ToString();
+		}
+
+		/// <summary>
 		/// Wraps a task with one that will complete as cancelled based on a cancellation token, 
 		/// allowing someone to await a task but be able to break out early by cancelling the token.
 		/// </summary>

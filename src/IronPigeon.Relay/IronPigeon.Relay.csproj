@@ -207,6 +207,7 @@
     <Compile Include="App_Code\InboxOwnerAuthorize.cs" />
     <Compile Include="App_Start\AzureStorageConfig.cs" />
     <Compile Include="Code\AuthorizationServerHost.cs" />
+    <Compile Include="Code\MicrosoftTools.cs" />
     <Compile Include="Code\OAuthAuthorize.cs" />
     <Compile Include="Controllers\AddressBookController.cs" />
     <Compile Include="Controllers\BlobController.cs" />
@@ -219,6 +220,7 @@
     </Compile>
     <Compile Include="Models\AddressBookContext.cs" />
     <Compile Include="Models\AddressBookEntity.cs" />
+    <Compile Include="Models\AddressBookEmailEntity.cs" />
     <Compile Include="Models\PushNotificationContext.cs" />
     <Compile Include="Models\InboxContext.cs" />
     <Compile Include="Models\InboxEntity.cs" />
@@ -238,6 +240,7 @@
     </Content>
     <Content Include="Web.Release.config">
       <DependentUpon>Web.config</DependentUpon>
+      <SubType>Designer</SubType>
     </Content>
     <Content Include="Views\Web.config" />
   </ItemGroup>
