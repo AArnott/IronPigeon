@@ -13,6 +13,9 @@
 	using Microsoft.WindowsAzure.StorageClient;
 	using Newtonsoft.Json;
 	using Validation;
+#if !NET40
+	using TaskEx = System.Threading.Tasks.Task;
+#endif
 
 	/// <summary>
 	/// This controller serves URLs that may appear to the user, but represent the downloadable address book entry
@@ -128,7 +131,7 @@
 
 		internal static async Task OneTimeInitializeAsync(CloudStorageAccount azureAccount) {
 			var tableClient = azureAccount.CreateCloudTableClient();
-			await Task.WhenAll(
+			await TaskEx.WhenAll(
 				tableClient.CreateTableIfNotExistAsync(DefaultTableName),
 				tableClient.CreateTableIfNotExistAsync(EmailTableName));
 		}

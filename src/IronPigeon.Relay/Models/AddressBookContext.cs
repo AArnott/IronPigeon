@@ -6,6 +6,11 @@
 	using System.Web;
 	using Microsoft.WindowsAzure.StorageClient;
 	using Validation;
+#if NET40
+	using ReadOnlyListOfAddressBookEmailEntity = System.Collections.ObjectModel.ReadOnlyCollection<AddressBookEmailEntity>;
+#else
+	using ReadOnlyListOfAddressBookEmailEntity = System.Collections.Generic.IReadOnlyList<AddressBookEmailEntity>;
+#endif
 
 	public class AddressBookContext : TableServiceContext {
 		public AddressBookContext(CloudTableClient client, string primaryTableName, string emailAddressTableName)
@@ -80,12 +85,17 @@
 			return entryEntity;
 		}
 
-		public async Task<IReadOnlyList<AddressBookEmailEntity>> GetEmailAddressesAsync(AddressBookEntity entity) {
+		public async Task<ReadOnlyListOfAddressBookEmailEntity> GetEmailAddressesAsync(AddressBookEntity entity) {
 			var query = (from address in this.CreateQuery<AddressBookEmailEntity>(this.EmailAddressTableName)
 						 where address.AddressBookEntityRowKey == entity.RowKey
 						 select address).AsTableServiceQuery();
 			var result = await query.ExecuteAsync();
+			
+#if NET40
+			return new ReadOnlyListOfAddressBookEmailEntity(result.ToList());
+#else
 			return result.ToList();
+#endif
 		}
 
 		public void AddObject(AddressBookEntity entity) {
