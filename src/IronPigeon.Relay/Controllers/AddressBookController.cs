@@ -43,6 +43,7 @@
 		/// Initializes a new instance of the <see cref="AddressBookController" /> class.
 		/// </summary>
 		/// <param name="tableName">Name of the table where address book entries are stored.</param>
+		/// <param name="emailTableName">Name of the table where address book email addresses are stored.</param>
 		/// <param name="cloudConfigurationName">Name of the cloud configuration.</param>
 		public AddressBookController(string tableName, string emailTableName, string cloudConfigurationName) {
 			Requires.NotNullOrEmpty(cloudConfigurationName, "cloudConfigurationName");
