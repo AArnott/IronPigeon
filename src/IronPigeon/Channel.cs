@@ -38,10 +38,6 @@
 	/// <summary>
 	/// A channel for sending or receiving secure messages.
 	/// </summary>
-	[Export]
-#if !NET40
-	[Shared]
-#endif
 	public class Channel {
 		/// <summary>
 		/// The HTTP client to use for long poll HTTP requests.

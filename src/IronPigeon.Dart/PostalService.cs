@@ -24,12 +24,15 @@
 	/// An email sending and receiving service.
 	/// </summary>
 	[Export]
+#if !NET40
+	[Shared]
+#endif
 	public class PostalService {
 		/// <summary>
-		/// Gets the channel used to send and receive messages.
+		/// Gets or sets the channel used to send and receive messages.
 		/// </summary>
 		[Import]
-		public Channel Channel { get; private set; }
+		public Channel Channel { get; set; }
 
 		/// <summary>
 		/// Sends the specified dart to the recipients specified in the message.
