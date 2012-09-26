@@ -16,8 +16,10 @@
 	using Validation;
 #if NET40
 	using ReadOnlyListOfMessage = System.Collections.ObjectModel.ReadOnlyCollection<Message>;
+	using ReadOnlyListOfPayload = System.Collections.ObjectModel.ReadOnlyCollection<Payload>;
 #else
 	using ReadOnlyListOfMessage = System.Collections.Generic.IReadOnlyList<Message>;
+	using ReadOnlyListOfPayload = System.Collections.Generic.IReadOnlyList<Payload>;
 #endif
 
 	/// <summary>
@@ -68,30 +70,30 @@
 		/// A task whose result is the complete list of received messages.
 		/// </returns>
 		public virtual async Task<ReadOnlyListOfMessage> ReceiveAsync(bool longPoll = false, IProgress<Message> progress = null, CancellationToken cancellationToken = default(CancellationToken)) {
+			var messagesComplete = new TaskCompletionSource<object>();
 			var messages = new List<Message>();
+			ReadOnlyListOfPayload payloads = null;
 			var payloadProgress = new Progress<Payload>(
 				payload => {
 					var message = FromPayload(payload);
 					if (message != null) {
-						lock (messages) {
-							messages.Add(message);
-							Monitor.Pulse(messages);
-						}
-
+						messages.Add(message);
 						if (progress != null) {
 							progress.Report(message);
+						}
+
+						if (payloads != null && payloads.Count == messages.Count) {
+							messagesComplete.TrySetResult(null);
 						}
 					}
 				});
 
-			var payloads = await this.Channel.ReceiveAsync(longPoll, payloadProgress, cancellationToken);
+			payloads = await this.Channel.ReceiveAsync(longPoll, payloadProgress, cancellationToken);
 
 			// Ensure that we've receives the asynchronous progress notifications for all the payloads
 			// so we don't return a partial result.
-			lock (messages) {
-				while (messages.Count < payloads.Count) {
-					Monitor.Wait(messages);
-				}
+			if (payloads.Count != messages.Count) {
+				await messagesComplete.Task;
 			}
 
 #if NET40
