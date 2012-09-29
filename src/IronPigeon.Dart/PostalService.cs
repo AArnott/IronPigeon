@@ -70,20 +70,15 @@
 		/// A task whose result is the complete list of received messages.
 		/// </returns>
 		public virtual async Task<ReadOnlyListOfMessage> ReceiveAsync(bool longPoll = false, IProgress<Message> progress = null, CancellationToken cancellationToken = default(CancellationToken)) {
-			var messagesComplete = new TaskCompletionSource<object>();
 			var messages = new List<Message>();
 			ReadOnlyListOfPayload payloads = null;
-			var payloadProgress = new Progress<Payload>(
+			var payloadProgress = new ProgressWithCompletion<Payload>(
 				payload => {
 					var message = FromPayload(payload);
 					if (message != null) {
 						messages.Add(message);
 						if (progress != null) {
 							progress.Report(message);
-						}
-
-						if (payloads != null && payloads.Count == messages.Count) {
-							messagesComplete.TrySetResult(null);
 						}
 					}
 				});
@@ -92,9 +87,7 @@
 
 			// Ensure that we've receives the asynchronous progress notifications for all the payloads
 			// so we don't return a partial result.
-			if (payloads.Count != messages.Count) {
-				await messagesComplete.Task;
-			}
+			await payloadProgress.WaitAsync();
 
 #if NET40
 			return new ReadOnlyCollection<Message>(messages);
