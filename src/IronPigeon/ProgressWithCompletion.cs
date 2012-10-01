@@ -25,7 +25,7 @@
 		/// <summary>
 		/// The handler to invoke for each progress update.
 		/// </summary>
-		private readonly Action<T> handler;
+		private readonly Func<T, Task> handler;
 
 		/// <summary>
 		/// The set of progress reports that have started (but may not have finished yet).
@@ -44,6 +44,18 @@
 		/// <param name="handler">The handler.</param>
 		public ProgressWithCompletion(Action<T> handler) {
 			Requires.NotNull(handler, "handler");
+			this.handler = value => {
+				handler(value);
+				return TaskEx.FromResult<object>(null);
+			};
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="ProgressWithCompletion{T}" /> class.
+		/// </summary>
+		/// <param name="handler">The async handler.</param>
+		public ProgressWithCompletion(Func<T, Task> handler) {
+			Requires.NotNull(handler, "handler");
 			this.handler = handler;
 		}
 
@@ -52,7 +64,7 @@
 		/// </summary>
 		/// <param name="value">The value representing the updated progress.</param>
 		void IProgress<T>.Report(T value) {
-			var reported = this.taskFactory.StartNew(() => this.handler(value));
+			var reported = this.taskFactory.StartNew(() => this.handler(value)).Unwrap();
 			lock (this.syncObject) {
 				this.outstandingTasks.Add(reported);
 			}

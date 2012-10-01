@@ -57,7 +57,8 @@
 				allRecipients.AddRange(message.CarbonCopyRecipients);
 			}
 
-			return this.Channel.PostAsync(payload, allRecipients, message.ExpirationUtc, cancellationToken);
+			var readOnlyRecipients = new ReadOnlyCollection<Endpoint>(allRecipients);
+			return this.Channel.PostAsync(payload, readOnlyRecipients, message.ExpirationUtc, cancellationToken);
 		}
 
 		/// <summary>
@@ -73,10 +74,18 @@
 			var messages = new List<Message>();
 			ReadOnlyListOfPayload payloads = null;
 			var payloadProgress = new ProgressWithCompletion<Payload>(
-				payload => {
+				async payload => {
 					var message = FromPayload(payload);
 					if (message != null) {
-						messages.Add(message);
+						// Sterilize the message of its claimed endpoint's claimed identifiers,
+						// so that only verifiable identifiers are passed onto our application.
+						var verifiedIdentifiers = await this.Channel.GetVerifiableIdentifiersAsync(message.Author, cancellationToken);
+						message.Author.AuthorizedIdentifiers = verifiedIdentifiers.ToArray();
+
+						lock (messages) {
+							messages.Add(message);
+						}
+
 						if (progress != null) {
 							progress.Report(message);
 						}

@@ -77,12 +77,6 @@
 		public Endpoint Author { get; set; }
 
 		/// <summary>
-		/// Gets or sets a human recognizable identifier which discovery should yield the <see cref="Author"/> endpoint.
-		/// </summary>
-		[DataMember]
-		public string AuthorIdentifier { get; set; }
-
-		/// <summary>
 		/// Gets or sets the set of recipients this message claims to have received this message.
 		/// </summary>
 		[DataMember]
