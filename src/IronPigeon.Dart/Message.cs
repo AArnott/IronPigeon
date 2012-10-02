@@ -18,7 +18,7 @@
 	/// A "Dart", or secure email message.
 	/// </summary>
 	[DataContract]
-	public class Message {
+	public class Message : IEquatable<Message> {
 		/// <summary>
 		/// The content-type that identifies darts as the payload to an IronPigeon message.
 		/// </summary>
@@ -124,5 +124,21 @@
 		/// Gets or sets the originating payload.
 		/// </summary>
 		internal Payload OriginatingPayload { get; set; }
+
+		/// <summary>
+		/// Indicates whether the current object is equal to another object of the same type.
+		/// </summary>
+		/// <param name="other">An object to compare with this object.</param>
+		/// <returns>
+		/// true if the current object is equal to the <paramref name="other" /> parameter; otherwise, false.
+		/// </returns>
+		public bool Equals(Message other) {
+			Requires.NotNull(other, "other");
+
+			return this.Author.Equals(other.Author)
+				&& EqualityComparer<string>.Default.Equals(this.Subject, other.Subject)
+				&& EqualityComparer<string>.Default.Equals(this.Body, other.Body)
+				&& this.CreationDateUtc == other.CreationDateUtc;
+		}
 	}
 }
