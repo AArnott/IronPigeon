@@ -24,7 +24,11 @@
 		/// </summary>
 		[Export]
 		public HttpClient Client {
-			get { return new HttpClient(this.MessageHandler ?? new HttpClientHandler()); }
+			get {
+				return new HttpClient(this.MessageHandler ?? new HttpClientHandler()) {
+					Timeout = TimeSpan.FromSeconds(5)
+				};
+			}
 		}
 
 		/// <summary>
