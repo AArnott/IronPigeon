@@ -68,7 +68,7 @@
 
 			var returnTo = new UriBuilder(this.Url.AbsoluteAction("AuthorizeWithMicrosoftAccount"));
 			returnTo.AppendQueryArgument("nestedAuth", this.Request.Url.Query);
-			var scopes = new[] { "wl.signin", "wl.basic" }; // this is a subset of what the client app asks for, ensuring automatic approval.
+			var scopes = new[] { "wl.signin", "wl.basic", "wl.emails" }; // this is a subset of what the client app asks for, ensuring automatic approval.
 			return LiveConnectClient.PrepareRequestUserAuthorization(scopes, returnTo.Uri).AsActionResult();
 		}
 
@@ -110,6 +110,7 @@
 
 		private async Task SaveAccountInfoAsync(MicrosoftAccountInfo microsoftAccountInfo) {
 			Requires.NotNull(microsoftAccountInfo, "microsoftAccountInfo");
+			Requires.That(microsoftAccountInfo.Emails != null && microsoftAccountInfo.Emails.Count > 0, "microsoftAccountInfo", "No emails were provided by Live Connect.");
 
 			var entity = await this.ClientTable.GetAsync(AddressBookEntity.MicrosoftProvider, microsoftAccountInfo.Id);
 			if (entity == null) {
