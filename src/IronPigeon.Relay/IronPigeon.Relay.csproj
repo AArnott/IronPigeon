@@ -198,6 +198,7 @@
     <Compile Include="Controllers\InboxController.cs" />
     <Compile Include="Controllers\OAuthController.cs" />
     <Compile Include="Controllers\WindowsPushNotificationClientController.cs" />
+    <Compile Include="Controllers\PrivacyController.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
@@ -251,6 +252,9 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Views\WindowsPushNotificationClient\Index.cshtml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Views\Privacy\Index.cshtml" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
