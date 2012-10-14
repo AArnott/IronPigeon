@@ -224,6 +224,10 @@
       <DependentUpon>Web.config</DependentUpon>
       <SubType>Designer</SubType>
     </Content>
+    <Content Include="Web.ReleaseNET40.config">
+      <DependentUpon>Web.config</DependentUpon>
+      <SubType>Designer</SubType>
+    </Content>
     <Content Include="Views\Web.config" />
   </ItemGroup>
   <ItemGroup>
