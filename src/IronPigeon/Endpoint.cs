@@ -8,7 +8,9 @@
 	using System.Linq;
 	using System.Runtime.Serialization;
 	using System.Text;
+	using System.Threading;
 	using System.Threading.Tasks;
+	using Validation;
 
 	/// <summary>
 	/// An entity that is capable of receiving messages via the IronPigeon protocol.

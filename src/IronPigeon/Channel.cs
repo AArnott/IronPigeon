@@ -1,5 +1,6 @@
 ﻿namespace IronPigeon {
 	using System;
+	using System.Collections.Concurrent;
 	using System.Collections.Generic;
 	using System.Collections.ObjectModel;
 #if NET40
@@ -25,11 +26,13 @@
 
 	using Validation;
 #if NET40
-	using ReadOnlyCollectionOfEndpoint = System.Collections.Generic.IEnumerable<Endpoint>;
+	using ReadOnlyCollectionOfEndpoint = System.Collections.ObjectModel.ReadOnlyCollection<Endpoint>;
+	using ReadOnlyCollectionOfString = System.Collections.ObjectModel.ReadOnlyCollection<string>;
 	using ReadOnlyListOfInboxItem = System.Collections.ObjectModel.ReadOnlyCollection<IncomingList.IncomingItem>;
 	using ReadOnlyListOfPayload = System.Collections.ObjectModel.ReadOnlyCollection<Payload>;
 #else
 	using ReadOnlyCollectionOfEndpoint = System.Collections.Generic.IReadOnlyCollection<Endpoint>;
+	using ReadOnlyCollectionOfString = System.Collections.Generic.IReadOnlyCollection<string>;
 	using ReadOnlyListOfInboxItem = System.Collections.Generic.IReadOnlyList<IncomingList.IncomingItem>;
 	using ReadOnlyListOfPayload = System.Collections.Generic.IReadOnlyList<Payload>;
 	using TaskEx = System.Threading.Tasks.Task;
@@ -38,11 +41,13 @@
 	/// <summary>
 	/// A channel for sending or receiving secure messages.
 	/// </summary>
-	[Export]
-#if !NET40
-	[Shared]
-#endif
 	public class Channel {
+		/// <summary>
+		/// A cache of identifiers and their resolved endpoints.
+		/// </summary>
+		private readonly ConcurrentDictionary<string, Endpoint> resolvedIdentifiersCache =
+			new ConcurrentDictionary<string, Endpoint>();
+
 		/// <summary>
 		/// The HTTP client to use for long poll HTTP requests.
 		/// </summary>
@@ -97,6 +102,12 @@
 				this.httpClientLongPoll = value;
 			}
 		}
+
+		/// <summary>
+		/// Gets or sets the set of address books to use when verifying claimed identifiers on received messages.
+		/// </summary>
+		[ImportMany]
+		public IList<AddressBook> AddressBooks { get; set; }
 
 		/// <summary>
 		/// Downloads messages from the server.
@@ -174,6 +185,35 @@
 			Requires.Argument(payload.PayloadReferenceUri != null, "payload", "Original payload reference URI no longer available.");
 
 			return this.DeletePayloadReferenceAsync(payload.PayloadReferenceUri, cancellationToken);
+		}
+
+		/// <summary>
+		/// Gets the set of identifiers this endpoint claims that are verifiable.
+		/// </summary>
+		/// <param name="endpoint">The endpoint whose authorized identifiers are to be verified.</param>
+		/// <param name="cancellationToken">A general cancellation token on the request.</param>
+		/// <returns>A task whose result is the set of verified identifiers.</returns>
+		public async Task<ReadOnlyCollectionOfString> GetVerifiableIdentifiersAsync(Endpoint endpoint, CancellationToken cancellationToken = default(CancellationToken)) {
+			Requires.NotNull(endpoint, "endpoint");
+
+			var verifiedIdentifiers = new List<string>();
+			if (endpoint.AuthorizedIdentifiers != null) {
+				var map = endpoint.AuthorizedIdentifiers.ToDictionary(
+					id => id,
+					id => this.IsVerifiableIdentifierAsync(endpoint, id, cancellationToken));
+				await TaskEx.WhenAll(map.Values);
+				foreach (var result in map) {
+					if (result.Value.Result) {
+						verifiedIdentifiers.Add(result.Key);
+					}
+				}
+			}
+
+#if NET40
+			return new ReadOnlyCollection<string>(verifiedIdentifiers);
+#else
+			return verifiedIdentifiers;
+#endif
 		}
 
 		#region Protected message sending/receiving methods
@@ -379,6 +419,35 @@
 		}
 
 		#endregion
+
+		/// <summary>
+		/// Checks whether the specified identifier yields an endpoint equivalent to this one.
+		/// </summary>
+		/// <param name="claimingEndpoint">The endpoint that claims to be resolvable from a given identifier.</param>
+		/// <param name="claimedIdentifier">The identifier to check.</param>
+		/// <param name="cancellationToken">A general cancellation token on the request.</param>
+		/// <returns>A task whose result is <c>true</c> if the identifier verified correctly; otherwise <c>false</c>.</returns>
+		private async Task<bool> IsVerifiableIdentifierAsync(Endpoint claimingEndpoint, string claimedIdentifier, CancellationToken cancellationToken = default(CancellationToken)) {
+			Requires.NotNull(claimingEndpoint, "claimingEndpoint");
+			Requires.NotNullOrEmpty(claimedIdentifier, "claimedIdentifier");
+
+			Endpoint cachedEndpoint;
+			if (this.resolvedIdentifiersCache.TryGetValue(claimedIdentifier, out cachedEndpoint)) {
+				return cachedEndpoint.Equals(claimingEndpoint);
+			}
+
+			var matchingEndpoint = await Utilities.FastestQualifyingResultAsync(
+				this.AddressBooks,
+				(ct, addressBook) => addressBook.LookupAsync(claimedIdentifier, ct),
+				resolvedEndpoint => claimingEndpoint.Equals(resolvedEndpoint),
+				cancellationToken);
+
+			if (matchingEndpoint != null) {
+				this.resolvedIdentifiersCache.TryAdd(claimedIdentifier, matchingEndpoint);
+			}
+
+			return matchingEndpoint != null;
+		}
 
 		/// <summary>
 		/// Deletes an entry from an inbox's incoming item list.

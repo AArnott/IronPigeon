@@ -64,7 +64,7 @@
 			}
 
 			var builder = new UriBuilder(this.AddressBookLookupUrl);
-			builder.Query = "?" + queryString.UrlEncode();
+			builder.Query = queryString.UrlEncode();
 			return await this.DownloadEndpointAsync(builder.Uri, cancellationToken);
 		}
 	}

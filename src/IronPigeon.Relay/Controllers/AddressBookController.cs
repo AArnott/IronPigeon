@@ -13,6 +13,9 @@
 	using Microsoft.WindowsAzure.StorageClient;
 	using Newtonsoft.Json;
 	using Validation;
+#if !NET40
+	using TaskEx = System.Threading.Tasks.Task;
+#endif
 
 	/// <summary>
 	/// This controller serves URLs that may appear to the user, but represent the downloadable address book entry
@@ -40,6 +43,7 @@
 		/// Initializes a new instance of the <see cref="AddressBookController" /> class.
 		/// </summary>
 		/// <param name="tableName">Name of the table where address book entries are stored.</param>
+		/// <param name="emailTableName">Name of the table where address book email addresses are stored.</param>
 		/// <param name="cloudConfigurationName">Name of the cloud configuration.</param>
 		public AddressBookController(string tableName, string emailTableName, string cloudConfigurationName) {
 			Requires.NotNullOrEmpty(cloudConfigurationName, "cloudConfigurationName");
@@ -128,7 +132,7 @@
 
 		internal static async Task OneTimeInitializeAsync(CloudStorageAccount azureAccount) {
 			var tableClient = azureAccount.CreateCloudTableClient();
-			await Task.WhenAll(
+			await TaskEx.WhenAll(
 				tableClient.CreateTableIfNotExistAsync(DefaultTableName),
 				tableClient.CreateTableIfNotExistAsync(EmailTableName));
 		}

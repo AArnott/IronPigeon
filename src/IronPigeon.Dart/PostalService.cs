@@ -16,20 +16,25 @@
 	using Validation;
 #if NET40
 	using ReadOnlyListOfMessage = System.Collections.ObjectModel.ReadOnlyCollection<Message>;
+	using ReadOnlyListOfPayload = System.Collections.ObjectModel.ReadOnlyCollection<Payload>;
 #else
 	using ReadOnlyListOfMessage = System.Collections.Generic.IReadOnlyList<Message>;
+	using ReadOnlyListOfPayload = System.Collections.Generic.IReadOnlyList<Payload>;
 #endif
 
 	/// <summary>
 	/// An email sending and receiving service.
 	/// </summary>
 	[Export]
+#if !NET40
+	[Shared]
+#endif
 	public class PostalService {
 		/// <summary>
-		/// Gets the channel used to send and receive messages.
+		/// Gets or sets the channel used to send and receive messages.
 		/// </summary>
 		[Import]
-		public Channel Channel { get; private set; }
+		public Channel Channel { get; set; }
 
 		/// <summary>
 		/// Sends the specified dart to the recipients specified in the message.
@@ -52,7 +57,8 @@
 				allRecipients.AddRange(message.CarbonCopyRecipients);
 			}
 
-			return this.Channel.PostAsync(payload, allRecipients, message.ExpirationUtc, cancellationToken);
+			var readOnlyRecipients = new ReadOnlyCollection<Endpoint>(allRecipients);
+			return this.Channel.PostAsync(payload, readOnlyRecipients, message.ExpirationUtc, cancellationToken);
 		}
 
 		/// <summary>
@@ -66,13 +72,18 @@
 		/// </returns>
 		public virtual async Task<ReadOnlyListOfMessage> ReceiveAsync(bool longPoll = false, IProgress<Message> progress = null, CancellationToken cancellationToken = default(CancellationToken)) {
 			var messages = new List<Message>();
-			var payloadProgress = new Progress<Payload>(
-				payload => {
+			ReadOnlyListOfPayload payloads = null;
+			var payloadProgress = new ProgressWithCompletion<Payload>(
+				async payload => {
 					var message = FromPayload(payload);
 					if (message != null) {
+						// Sterilize the message of its claimed endpoint's claimed identifiers,
+						// so that only verifiable identifiers are passed onto our application.
+						var verifiedIdentifiers = await this.Channel.GetVerifiableIdentifiersAsync(message.Author, cancellationToken);
+						message.Author.AuthorizedIdentifiers = verifiedIdentifiers.ToArray();
+
 						lock (messages) {
 							messages.Add(message);
-							Monitor.Pulse(messages);
 						}
 
 						if (progress != null) {
@@ -81,15 +92,11 @@
 					}
 				});
 
-			var payloads = await this.Channel.ReceiveAsync(longPoll, payloadProgress, cancellationToken);
+			payloads = await this.Channel.ReceiveAsync(longPoll, payloadProgress, cancellationToken);
 
 			// Ensure that we've receives the asynchronous progress notifications for all the payloads
 			// so we don't return a partial result.
-			lock (messages) {
-				while (messages.Count < payloads.Count) {
-					Monitor.Wait(messages);
-				}
-			}
+			await payloadProgress.WaitAsync();
 
 #if NET40
 			return new ReadOnlyCollection<Message>(messages);

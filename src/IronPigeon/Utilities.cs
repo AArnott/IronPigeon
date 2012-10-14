@@ -391,6 +391,34 @@
 		}
 
 		/// <summary>
+		/// Executes an operation against a collection of providers simultaneously and accepts the first
+		/// qualifying result, cancelling the slower responses.
+		/// </summary>
+		/// <typeparam name="TInput">The type of provider being queried.</typeparam>
+		/// <typeparam name="TOutput">The type of result supplied by the provider.</typeparam>
+		/// <param name="inputs">The collection of providers.</param>
+		/// <param name="asyncOperation">The operation to execute against each provider.</param>
+		/// <param name="qualifyingTest">The function that tests whether a received result qualifies.  This function will not be executed concurrently and need not be thread-safe.</param>
+		/// <param name="cancellationToken">The overall cancellation token.</param>
+		/// <returns>A task whose result is the qualifying result, or <c>default(TOutput)</c> if no result qualified.</returns>
+		public static async Task<TOutput> FastestQualifyingResultAsync<TInput, TOutput>(IEnumerable<TInput> inputs, Func<CancellationToken, TInput, Task<TOutput>> asyncOperation, Func<TOutput, bool> qualifyingTest, CancellationToken cancellationToken = default(CancellationToken)) {
+			CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+			List<Task<TOutput>> tasks = inputs.Select(i => asyncOperation(cts.Token, i)).ToList();
+
+			while (tasks.Count > 0) {
+				var completingTask = await TaskEx.WhenAny(tasks);
+				if (qualifyingTest(completingTask.Result)) {
+					cts.Cancel();
+					return completingTask.Result;
+				} else {
+					tasks.Remove(completingTask);
+				}
+			}
+
+			return default(TOutput);
+		}
+
+		/// <summary>
 		/// Converts a base64-encoded string to a web-safe base64-encoded string.
 		/// </summary>
 		/// <param name="base64">The base64-encoded string.</param>
