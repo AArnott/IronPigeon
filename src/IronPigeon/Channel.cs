@@ -55,6 +55,12 @@
 		private HttpClient httpClientLongPoll;
 
 		/// <summary>
+		/// Initializes a new instance of the <see cref="Channel" /> class.
+		/// </summary>
+		public Channel() {
+		}
+
+		/// <summary>
 		/// Gets or sets the provider of blob storage.
 		/// </summary>
 		[Import]
