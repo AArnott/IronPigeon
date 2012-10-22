@@ -6,11 +6,12 @@
 	using System.Web.Mvc;
 
 	public class PrivacyController : Controller {
-		//
-		// GET: /Privacy/
+		/// <summary>
+		/// GET: /Privacy/
+		/// </summary>
+		/// <returns>The web result.</returns>
 		public ActionResult Index() {
-			return View();
+			return this.View();
 		}
-
 	}
 }
