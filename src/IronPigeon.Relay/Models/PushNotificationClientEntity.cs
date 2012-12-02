@@ -2,9 +2,7 @@
 	using System;
 	using System.Collections.Generic;
 	using System.ComponentModel.DataAnnotations;
-#if !NET40
 	using System.ComponentModel.DataAnnotations.Schema;
-#endif
 	using System.Linq;
 	using System.Net;
 	using System.Net.Http;
@@ -30,9 +28,7 @@
 
 		[Required(AllowEmptyStrings = false), StringLength(255, MinimumLength = 1)]
 		[Display(Name = "Package security identifier")]
-#if !NET40
 		[NotMapped]
-#endif
 		public string PackageSecurityIdentifier {
 			get {
 				return SchemePrefix + this.RowKey;

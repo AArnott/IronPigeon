@@ -1,9 +1,7 @@
 ﻿namespace IronPigeon.Relay.Models {
 	using System;
 	using System.Collections.Generic;
-#if !NET40
 	using System.ComponentModel.DataAnnotations.Schema;
-#endif
 	using System.Linq;
 	using System.Web;
 	using Validation;
@@ -32,9 +30,7 @@
 		/// <summary>
 		/// Gets or sets the user's identity provider.
 		/// </summary>
-#if !NET40
 		[NotMapped]
-#endif
 		public string Provider {
 			get {
 				string provider, userId;
@@ -50,9 +46,7 @@
 		/// <summary>
 		/// Gets or sets a user ID that is unique within the <see cref="Provider"/>.
 		/// </summary>
-#if !NET40
 		[NotMapped]
-#endif
 		public string UserId {
 			get {
 				string provider, userId;

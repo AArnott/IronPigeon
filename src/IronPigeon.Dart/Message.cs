@@ -8,11 +8,7 @@
 	using System.Threading.Tasks;
 
 	using Validation;
-#if NET40
-	using ReadOnlyListOfEndpoint = System.Collections.ObjectModel.ReadOnlyCollection<Endpoint>;
-#else
 	using ReadOnlyListOfEndpoint = System.Collections.Generic.IReadOnlyList<Endpoint>;
-#endif
 
 	/// <summary>
 	/// A "Dart", or secure email message.

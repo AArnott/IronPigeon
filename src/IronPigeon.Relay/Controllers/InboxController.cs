@@ -11,20 +11,17 @@
 	using System.Text.RegularExpressions;
 	using System.Threading;
 	using System.Threading.Tasks;
-#if !NET40
 	using System.Threading.Tasks.Dataflow;
-#endif
 	using System.Web;
 	using System.Web.Mvc;
 	using IronPigeon.Relay.Models;
 	using Microsoft.WindowsAzure;
+	using Microsoft.WindowsAzure.Storage;
+	using Microsoft.WindowsAzure.Storage.Blob;
 	using Microsoft.WindowsAzure.StorageClient;
 	using Newtonsoft.Json;
 	using Newtonsoft.Json.Linq;
 	using Validation;
-#if !NET40
-	using TaskEx = System.Threading.Tasks.Task;
-#endif
 
 #if !DEBUG
 	[RequireHttps]
@@ -71,7 +68,7 @@
 			Requires.NotNullOrEmpty(containerName, "containerName");
 			Requires.NotNullOrEmpty(cloudConfigurationName, "cloudConfigurationName");
 
-			var storage = CloudStorageAccount.FromConfigurationSetting(cloudConfigurationName);
+			var storage = CloudStorageAccount.Parse(ConfigurationManager.ConnectionStrings[cloudConfigurationName].ConnectionString);
 			var blobClient = storage.CreateCloudBlobClient();
 			this.InboxContainer = blobClient.GetContainerReference(containerName);
 			var tableClient = storage.CreateCloudTableClient();
@@ -98,47 +95,28 @@
 			Requires.NotNull(inboxContainer, "inboxContainer");
 
 			var deleteBlobsExpiringBefore = DateTime.UtcNow;
-			var requestOptions = new BlobRequestOptions {
-				UseFlatBlobListing = true,
-				BlobListingDetails = BlobListingDetails.Metadata,
-			};
-#if NET40
-			try {
-				var items = await inboxContainer.ListBlobsSegmentedAsync(50, requestOptions);
-				var blobs = (from blob in items.OfType<CloudBlob>()
-							 let expires = DateTime.Parse(blob.Metadata[ExpirationDateMetadataKey])
-							 where expires < deleteBlobsExpiringBefore
-							 select blob).ToArray();
-				await TaskEx.WhenAll(blobs.Select(blob => blob.DeleteAsync()));
-			} catch (StorageClientException ex) {
-				var webException = ex.InnerException as WebException;
-				if (webException != null) {
-					var httpResponse = (HttpWebResponse)webException.Response;
-					if (httpResponse.StatusCode == HttpStatusCode.NotFound) {
-						// it's legit that some tests never created the container to begin with.
-						return;
-					}
-				}
-
-				throw;
-			}
-#else
 			int purgedBlobCount = 0;
-			var searchExpiredBlobs = new TransformManyBlock<CloudBlobContainer, CloudBlob>(
+			var searchExpiredBlobs = new TransformManyBlock<CloudBlobContainer, ICloudBlob>(
 				async c => {
 					try {
-						var results = await c.ListBlobsSegmentedAsync(10, requestOptions);
-						return from blob in results.OfType<CloudBlob>()
+						var results = await c.ListBlobsSegmentedAsync(
+							inboxContainer.Name,
+							useFlatBlobListing: true,
+							pageSize: 50,
+							details: BlobListingDetails.Metadata,
+							options: new BlobRequestOptions(),
+							operationContext: null);
+						return from blob in results.OfType<ICloudBlob>()
 							   let expires = DateTime.Parse(blob.Metadata[ExpirationDateMetadataKey])
 							   where expires < deleteBlobsExpiringBefore
 							   select blob;
-					} catch (StorageClientException ex) {
+					} catch (StorageException ex) {
 						var webException = ex.InnerException as WebException;
 						if (webException != null) {
 							var httpResponse = (HttpWebResponse)webException.Response;
 							if (httpResponse.StatusCode == HttpStatusCode.NotFound) {
 								// it's legit that some tests never created the container to begin with.
-								return Enumerable.Empty<CloudBlob>();
+								return Enumerable.Empty<ICloudBlob>();
 							}
 						}
 
@@ -148,7 +126,7 @@
 				new ExecutionDataflowBlockOptions {
 					BoundedCapacity = 4,
 				});
-			var deleteBlobBlock = new ActionBlock<CloudBlob>(
+			var deleteBlobBlock = new ActionBlock<ICloudBlob>(
 				blob => {
 					Interlocked.Increment(ref purgedBlobCount);
 					return blob.DeleteAsync();
@@ -163,7 +141,6 @@
 			searchExpiredBlobs.Post(inboxContainer);
 			searchExpiredBlobs.Complete();
 			await deleteBlobBlock.Completion;
-#endif
 		}
 
 		[HttpPost, ActionName("Create")]
@@ -186,15 +163,19 @@
 			var blobs = new List<IncomingList.IncomingItem>();
 			do {
 				try {
-					var blobRequestOptions = new BlobRequestOptions { BlobListingDetails = BlobListingDetails.Metadata };
-					var directoryListing = await directory.ListBlobsSegmentedAsync(50, blobRequestOptions);
+					var directoryListing = await directory.ListBlobsSegmentedAsync(
+						useFlatBlobListing: true,
+						pageSize: 50,
+						details: BlobListingDetails.Metadata,
+						options: new BlobRequestOptions(),
+						operationContext: null);
 					var notExpiringBefore = DateTime.UtcNow;
 					blobs.AddRange(
-						from blob in directoryListing.OfType<CloudBlob>()
+						from blob in directoryListing.OfType<ICloudBlob>()
 						let expirationString = blob.Metadata[ExpirationDateMetadataKey]
 						where expirationString != null && DateTime.Parse(expirationString) > notExpiringBefore
-						select new IncomingList.IncomingItem { Location = blob.Uri, DatePostedUtc = blob.Properties.LastModifiedUtc });
-				} catch (StorageClientException) {
+						select new IncomingList.IncomingItem { Location = blob.Uri, DatePostedUtc = blob.Properties.LastModified.Value.UtcDateTime });
+				} catch (StorageException) {
 				}
 
 				if (longPoll && blobs.Count == 0) {
@@ -224,7 +205,7 @@
 			}
 
 			var directory = this.InboxContainer.GetDirectoryReference(id);
-			var blob = directory.GetBlobReference(Utilities.CreateRandomWebSafeName(24));
+			var blob = directory.GetBlockBlobReference(Utilities.CreateRandomWebSafeName(24));
 
 			var requestedLifeSpan = TimeSpan.FromMinutes(lifetime);
 			var actualLifespan = requestedLifeSpan > MaxLifetimeCeiling ? MaxLifetimeCeiling : requestedLifeSpan;
@@ -292,11 +273,11 @@
 			// can't delete another user's notifications.
 			var directory = this.InboxContainer.GetDirectoryReference(id);
 			if (directory.Uri.IsBaseOf(new Uri(notification, UriKind.Absolute))) {
-				var blob = this.InboxContainer.GetBlobReference(notification);
+				var blob = this.InboxContainer.GetBlockBlobReference(notification);
 				try {
 					await blob.DeleteAsync();
-				} catch (StorageClientException ex) {
-					if (ex.StatusCode == HttpStatusCode.NotFound) {
+				} catch (StorageException ex) {
+					if (ex.RequestInformation.HttpStatusCode == (int)HttpStatusCode.NotFound) {
 						return new HttpNotFoundResult(ex.Message);
 					}
 
@@ -315,15 +296,15 @@
 			var blobClient = azureAccount.CreateCloudBlobClient();
 			var inboxContainer = blobClient.GetContainerReference(DefaultInboxContainerName);
 
-			await TaskEx.WhenAll(
+			await Task.WhenAll(
 					inboxContainer.CreateContainerWithPublicBlobsIfNotExistAsync(),
-					inboxTable.CreateTableIfNotExistAsync(DefaultInboxTableName));
+					inboxTable.GetTableReference(DefaultInboxTableName).CreateIfNotExistsAsync());
 
-			TaskEx.Run(
+			Task.Run(
 				async delegate {
 					while (true) {
 						await PurgeExpiredAsync(inboxContainer);
-						await TaskEx.Delay(AzureStorageConfig.PurgeExpiredBlobsInterval);
+						await Task.Delay(AzureStorageConfig.PurgeExpiredBlobsInterval);
 					}
 				});
 		}
@@ -399,7 +380,7 @@
 		}
 
 		private async Task<InboxEntity> GetInboxAsync(string id) {
-			var queryResults = await this.InboxTable.Get(id).ExecuteAsync();
+			var queryResults = await this.InboxTable.Get(id).ExecuteSegmentedAsync();
 			return queryResults.FirstOrDefault();
 		}
 	}

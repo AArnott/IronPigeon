@@ -1,11 +1,7 @@
 ﻿namespace IronPigeon.Providers {
 	using System;
 	using System.Collections.Generic;
-#if NET40
-	using System.ComponentModel.Composition;
-#else
 	using System.Composition;
-#endif
 	using System.Diagnostics;
 	using System.IO;
 	using System.Linq;
@@ -21,9 +17,7 @@
 	/// Shortens URLs using the goo.gl URL shortener service.
 	/// </summary>
 	[Export(typeof(IUrlShortener))]
-#if !NET40
 	[Shared]
-#endif
 	public class GoogleUrlShortener : IUrlShortener {
 		/// <summary>
 		/// The URL to the goog.gl shortening service.

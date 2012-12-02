@@ -4,17 +4,15 @@
 	using System.Linq;
 	using System.Threading.Tasks;
 	using System.Web;
+	using Microsoft.WindowsAzure.Storage.Table;
+	using Microsoft.WindowsAzure.Storage.Table.DataServices;
 	using Microsoft.WindowsAzure.StorageClient;
 	using Validation;
-#if NET40
-	using ReadOnlyListOfAddressBookEmailEntity = System.Collections.ObjectModel.ReadOnlyCollection<AddressBookEmailEntity>;
-#else
 	using ReadOnlyListOfAddressBookEmailEntity = System.Collections.Generic.IReadOnlyList<AddressBookEmailEntity>;
-#endif
 
 	public class AddressBookContext : TableServiceContext {
 		public AddressBookContext(CloudTableClient client, string primaryTableName, string emailAddressTableName)
-			: base(client.BaseUri.AbsoluteUri, client.Credentials) {
+			: base(client) {
 			Requires.NotNullOrEmpty(primaryTableName, "primaryTableName");
 			Requires.NotNullOrEmpty(emailAddressTableName, "emailAddressTableName");
 
@@ -32,24 +30,24 @@
 
 			var query = (from inbox in this.CreateQuery<AddressBookEntity>(this.PrimaryTableName)
 						 where inbox.RowKey == AddressBookEntity.ConstructRowKey(provider, userId)
-						 select inbox).AsTableServiceQuery();
-			var result = await query.ExecuteAsync();
+						 select inbox).AsTableServiceQuery(this);
+			var result = await query.ExecuteSegmentedAsync();
 			return result.FirstOrDefault();
 		}
 
 		public async Task<AddressBookEmailEntity> GetAddressBookEmailEntityAsync(string email) {
 			var query = (from address in this.CreateQuery<AddressBookEmailEntity>(this.EmailAddressTableName)
 						 where address.RowKey == email.ToLowerInvariant()
-						 select address).AsTableServiceQuery();
-			var result = await query.ExecuteAsync();
+						 select address).AsTableServiceQuery(this);
+			var result = await query.ExecuteSegmentedAsync();
 			return result.FirstOrDefault();
 		}
 
 		public async Task<AddressBookEmailEntity> GetAddressBookEmailEntityByHashAsync(string emailHash) {
 			var query = (from address in this.CreateQuery<AddressBookEmailEntity>(this.EmailAddressTableName)
 						 where address.MicrosoftEmailHash == emailHash
-						 select address).AsTableServiceQuery();
-			var result = await query.ExecuteAsync();
+						 select address).AsTableServiceQuery(this);
+			var result = await query.ExecuteSegmentedAsync();
 			return result.FirstOrDefault();
 		}
 
@@ -63,8 +61,8 @@
 
 			var query = (from inbox in this.CreateQuery<AddressBookEntity>(this.PrimaryTableName)
 						 where inbox.RowKey == emailEntity.AddressBookEntityRowKey
-						 select inbox).AsTableServiceQuery();
-			var result = await query.ExecuteAsync();
+						 select inbox).AsTableServiceQuery(this);
+			var result = await query.ExecuteSegmentedAsync();
 			var entryEntity = result.FirstOrDefault();
 			return entryEntity;
 		}
@@ -79,8 +77,8 @@
 
 			var query = (from inbox in this.CreateQuery<AddressBookEntity>(this.PrimaryTableName)
 						 where inbox.RowKey == emailEntity.AddressBookEntityRowKey
-						 select inbox).AsTableServiceQuery();
-			var result = await query.ExecuteAsync();
+						 select inbox).AsTableServiceQuery(this);
+			var result = await query.ExecuteSegmentedAsync();
 			var entryEntity = result.FirstOrDefault();
 			return entryEntity;
 		}
@@ -88,14 +86,10 @@
 		public async Task<ReadOnlyListOfAddressBookEmailEntity> GetEmailAddressesAsync(AddressBookEntity entity) {
 			var query = (from address in this.CreateQuery<AddressBookEmailEntity>(this.EmailAddressTableName)
 						 where address.AddressBookEntityRowKey == entity.RowKey
-						 select address).AsTableServiceQuery();
-			var result = await query.ExecuteAsync();
+						 select address).AsTableServiceQuery(this);
+			var result = await query.ExecuteSegmentedAsync();
 			
-#if NET40
-			return new ReadOnlyListOfAddressBookEmailEntity(result.ToList());
-#else
 			return result.ToList();
-#endif
 		}
 
 		public void AddObject(AddressBookEntity entity) {

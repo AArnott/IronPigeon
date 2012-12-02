@@ -13,6 +13,8 @@
 	using IronPigeon;
 	using IronPigeon.Providers;
 	using Microsoft.WindowsAzure;
+	using Microsoft.WindowsAzure.Storage;
+	using Microsoft.WindowsAzure.Storage.Blob;
 	using Microsoft.WindowsAzure.StorageClient;
 	using Validation;
 
@@ -86,13 +88,18 @@
 					if (container.Name.StartsWith("unittests")) {
 						container.Delete();
 					} else {
-						var options = new BlobRequestOptions { UseFlatBlobListing = true, BlobListingDetails = BlobListingDetails.Metadata, };
-						var blobs = container.ListBlobs(options).OfType<CloudBlob>().ToList();
-						foreach (var blob in blobs) {
+						var blobs = await container.ListBlobsSegmentedAsync(
+							container.Name,
+							useFlatBlobListing: true,
+							pageSize: 50,
+							details: BlobListingDetails.Metadata,
+							options: new BlobRequestOptions(),
+							operationContext: null);
+						foreach (var blob in blobs.Cast<ICloudBlob>()) {
 							Console.WriteLine("\tBlob: {0} {1}", blob.Uri, blob.Metadata["DeleteAfter"]);
 						}
 
-						await Task.WhenAll(blobs.Select(b => b.DeleteAsync()));
+						await Task.WhenAll(blobs.Cast<ICloudBlob>().Select(b => b.DeleteAsync()));
 					}
 				}
 			}
@@ -107,7 +114,7 @@
 		private static async Task InitializeLocalCloudAsync(CloudStorageAccount azureAccount, AzureBlobStorage blobStorage) {
 			var tableStorage = azureAccount.CreateCloudTableClient();
 			await Task.WhenAll(
-				tableStorage.CreateTableIfNotExistAsync(AzureTableStorageName),
+				tableStorage.GetTableReference(AzureTableStorageName).CreateIfNotExistsAsync(),
 				blobStorage.CreateContainerIfNotExistAsync());
 		}
 

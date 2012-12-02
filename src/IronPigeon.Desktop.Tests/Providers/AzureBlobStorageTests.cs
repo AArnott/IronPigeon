@@ -10,7 +10,8 @@
 	using System.Threading.Tasks;
 	using IronPigeon.Providers;
 	using Microsoft.WindowsAzure;
-	using Microsoft.WindowsAzure.StorageClient;
+	using Microsoft.WindowsAzure.Storage;
+	using Microsoft.WindowsAzure.Storage.Blob;
 	using NUnit.Framework;
 
 	[TestFixture]
@@ -22,8 +23,7 @@
 		[SetUp]
 		public void Initialize() {
 			this.testContainerName = "unittests" + Guid.NewGuid().ToString();
-			CloudStorageAccount.SetConfigurationSettingPublisher(ConfigSetter);
-			var account = CloudStorageAccount.FromConfigurationSetting("StorageConnectionString");
+			var account = CloudStorageAccount.DevelopmentStorageAccount;
 			var blobClient = account.CreateCloudBlobClient();
 			this.Provider = this.provider = new AzureBlobStorage(account, this.testContainerName);
 			this.provider.CreateContainerIfNotExistAsync().GetAwaiter().GetResult();
@@ -47,15 +47,6 @@
 			this.UploadMessageHelperAsync().GetAwaiter().GetResult();
 			this.provider.PurgeBlobsExpiringBeforeAsync(DateTime.UtcNow.AddDays(7)).GetAwaiter().GetResult();
 			Assert.That(this.container.ListBlobs().Count(), Is.EqualTo(0));
-		}
-
-		private static void ConfigSetter(string configName, Func<string, bool> configSetter) {
-			string value = ConfigurationManager.AppSettings[configName];
-			if (string.IsNullOrEmpty(value)) {
-				value = ConfigurationManager.ConnectionStrings[configName].ConnectionString;
-			}
-
-			configSetter(value);
 		}
 	}
 }

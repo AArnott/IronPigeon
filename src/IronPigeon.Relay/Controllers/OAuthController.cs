@@ -12,10 +12,10 @@
 	using System.Web.Mvc;
 	using DotNetOpenAuth.Messaging;
 	using DotNetOpenAuth.OAuth2;
-
 	using IronPigeon.Relay.Code;
 	using IronPigeon.Relay.Models;
 	using Microsoft.WindowsAzure;
+	using Microsoft.WindowsAzure.Storage;
 	using Microsoft.WindowsAzure.StorageClient;
 	using Newtonsoft.Json;
 	using Validation;
@@ -47,7 +47,7 @@
 			this.authorizationServer = authorizationServer;
 			this.HttpClient = new HttpClient();
 
-			var storage = CloudStorageAccount.FromConfigurationSetting(cloudConfigurationName);
+			var storage = CloudStorageAccount.Parse(ConfigurationManager.ConnectionStrings[cloudConfigurationName].ConnectionString);
 			var tableClient = storage.CreateCloudTableClient();
 			this.ClientTable = new AddressBookContext(tableClient, primaryTableName, emailTableName);
 		}

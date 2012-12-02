@@ -9,11 +9,9 @@
 	using IronPigeon.Relay.Controllers;
 	using IronPigeon.Relay.Models;
 	using Microsoft.WindowsAzure;
+	using Microsoft.WindowsAzure.Storage;
 	using Microsoft.WindowsAzure.StorageClient;
 	using Validation;
-#if !NET40
-	using TaskEx = System.Threading.Tasks.Task;
-#endif
 
 	public class AzureStorageConfig {
 		/// <summary>
@@ -24,31 +22,13 @@
 		internal static readonly TimeSpan PurgeExpiredBlobsInterval = TimeSpan.FromHours(4);
 
 		public static void RegisterConfiguration() {
-			CloudStorageAccount.SetConfigurationSettingPublisher(ConfigSetter);
-
-			var storage = CloudStorageAccount.FromConfigurationSetting(DefaultCloudConfigurationName);
-			var initialization = TaskEx.WhenAll(
+			var storage = CloudStorageAccount.Parse(ConfigurationManager.ConnectionStrings[DefaultCloudConfigurationName].ConnectionString);
+			var initialization = Task.WhenAll(
 				BlobController.OneTimeInitializeAsync(storage),
 				InboxController.OneTimeInitializeAsync(storage),
 				WindowsPushNotificationClientController.OneTimeInitializeAsync(storage),
 				AddressBookController.OneTimeInitializeAsync(storage));
 			initialization.Wait();
-		}
-
-		private static void ConfigSetter(string configName, Func<string, bool> configSetter) {
-			var connectionString = ConfigurationManager.ConnectionStrings[configName];
-			if (connectionString != null) {
-				configSetter(connectionString.ConnectionString);
-				return;
-			}
-
-			var appSetting = ConfigurationManager.AppSettings[configName];
-			if (!string.IsNullOrEmpty(appSetting)) {
-				configSetter(appSetting);
-				return;
-			}
-
-			Requires.Fail("Configuration name not found.");
 		}
 	}
 }

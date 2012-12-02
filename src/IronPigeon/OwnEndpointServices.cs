@@ -1,11 +1,7 @@
 ﻿namespace IronPigeon {
 	using System;
 	using System.Collections.Generic;
-#if NET40
-	using System.ComponentModel.Composition;
-#else
 	using System.Composition;
-#endif
 	using System.IO;
 	using System.Linq;
 	using System.Net.Http;
@@ -15,17 +11,13 @@
 	using System.Threading.Tasks;
 	using IronPigeon.Relay;
 	using Validation;
-#if !NET40
 	using TaskEx = System.Threading.Tasks.Task;
-#endif
 
 	/// <summary>
 	/// Creates and services <see cref="OwnEndpoint"/> instances.
 	/// </summary>
 	[Export]
-#if !NET40
 	[Shared]
-#endif
 	public class OwnEndpointServices {
 		/// <summary>
 		/// Gets or sets the crypto provider.

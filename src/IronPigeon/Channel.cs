@@ -3,11 +3,7 @@
 	using System.Collections.Concurrent;
 	using System.Collections.Generic;
 	using System.Collections.ObjectModel;
-#if NET40
-	using System.ComponentModel.Composition;
-#else
 	using System.Composition;
-#endif
 	using System.Diagnostics;
 	using System.Globalization;
 	using System.IO;
@@ -25,18 +21,11 @@
 	using IronPigeon.Relay;
 
 	using Validation;
-#if NET40
-	using ReadOnlyCollectionOfEndpoint = System.Collections.ObjectModel.ReadOnlyCollection<Endpoint>;
-	using ReadOnlyCollectionOfString = System.Collections.ObjectModel.ReadOnlyCollection<string>;
-	using ReadOnlyListOfInboxItem = System.Collections.ObjectModel.ReadOnlyCollection<IncomingList.IncomingItem>;
-	using ReadOnlyListOfPayload = System.Collections.ObjectModel.ReadOnlyCollection<Payload>;
-#else
 	using ReadOnlyCollectionOfEndpoint = System.Collections.Generic.IReadOnlyCollection<Endpoint>;
 	using ReadOnlyCollectionOfString = System.Collections.Generic.IReadOnlyCollection<string>;
 	using ReadOnlyListOfInboxItem = System.Collections.Generic.IReadOnlyList<IncomingList.IncomingItem>;
 	using ReadOnlyListOfPayload = System.Collections.Generic.IReadOnlyList<Payload>;
 	using TaskEx = System.Threading.Tasks.Task;
-#endif
 
 	/// <summary>
 	/// A channel for sending or receiving secure messages.
@@ -152,11 +141,7 @@
 				}
 			}
 
-#if NET40
-			return new ReadOnlyCollection<Payload>(payloads);
-#else
 			return payloads;
-#endif
 		}
 
 		/// <summary>
@@ -215,11 +200,7 @@
 				}
 			}
 
-#if NET40
-			return new ReadOnlyCollection<string>(verifiedIdentifiers);
-#else
 			return verifiedIdentifiers;
-#endif
 		}
 
 		#region Protected message sending/receiving methods
@@ -498,11 +479,7 @@
 					var responseStream = await responseMessage.Content.ReadAsStreamAsync();
 					var inboxResults = (IncomingList)deserializer.ReadObject(responseStream);
 
-#if NET40
-					return new ReadOnlyCollection<IncomingList.IncomingItem>(inboxResults.Items);
-#else
 					return inboxResults.Items;
-#endif
 				} catch (OperationCanceledException) {
 					// This can occur if the caller cancelled or if our HTTP client timed out.
 					// On time-outs, we want to re-establish.  For caller cancellation, propagate it out.

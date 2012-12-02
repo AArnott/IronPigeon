@@ -1,11 +1,7 @@
 ﻿namespace IronPigeon.Providers {
 	using System;
 	using System.Collections.Generic;
-#if NET40
-	using System.ComponentModel.Composition;
-#else
 	using System.Composition;
-#endif
 	using System.IO;
 	using System.Linq;
 	using System.Net.Http;
@@ -23,9 +19,7 @@
 	[Export(typeof(ICloudBlobStorageProvider))]
 	[Export(typeof(IEndpointInboxFactory))]
 	[Export]
-#if !NET40
 	[Shared]
-#endif
 	public class RelayCloudBlobStorageProvider : ICloudBlobStorageProvider, IEndpointInboxFactory {
 		/// <summary>
 		/// Initializes a new instance of the <see cref="RelayCloudBlobStorageProvider" /> class.

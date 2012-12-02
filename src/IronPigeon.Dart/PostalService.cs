@@ -2,11 +2,7 @@
 	using System;
 	using System.Collections.Generic;
 	using System.Collections.ObjectModel;
-#if NET40
-	using System.ComponentModel.Composition;
-#else
 	using System.Composition;
-#endif
 	using System.IO;
 	using System.Linq;
 	using System.Text;
@@ -14,21 +10,14 @@
 	using System.Threading.Tasks;
 
 	using Validation;
-#if NET40
-	using ReadOnlyListOfMessage = System.Collections.ObjectModel.ReadOnlyCollection<Message>;
-	using ReadOnlyListOfPayload = System.Collections.ObjectModel.ReadOnlyCollection<Payload>;
-#else
 	using ReadOnlyListOfMessage = System.Collections.Generic.IReadOnlyList<Message>;
 	using ReadOnlyListOfPayload = System.Collections.Generic.IReadOnlyList<Payload>;
-#endif
 
 	/// <summary>
 	/// An email sending and receiving service.
 	/// </summary>
 	[Export]
-#if !NET40
 	[Shared]
-#endif
 	public class PostalService {
 		/// <summary>
 		/// Gets or sets the channel used to send and receive messages.
@@ -98,11 +87,7 @@
 			// so we don't return a partial result.
 			await payloadProgress.WaitAsync();
 
-#if NET40
-			return new ReadOnlyCollection<Message>(messages);
-#else
 			return messages;
-#endif
 		}
 
 		/// <summary>

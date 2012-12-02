@@ -1,9 +1,7 @@
 ﻿namespace IronPigeon.Relay.Models {
 	using System;
 	using System.Collections.Generic;
-#if !NET40
 	using System.ComponentModel.DataAnnotations.Schema;
-#endif
 	using System.Linq;
 	using System.Web;
 
@@ -28,9 +26,7 @@
 		/// <summary>
 		/// Gets or sets the email address.
 		/// </summary>
-#if !NET40
 		[NotMapped]
-#endif
 		public string Email {
 			get { return this.RowKey; }
 			set { this.RowKey = value.ToLowerInvariant(); }
