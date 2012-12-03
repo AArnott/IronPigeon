@@ -41,7 +41,7 @@
     </Reference>
     <Reference Include="Microsoft.WindowsAzure.StorageClient.Async, Version=0.2.0.0, Culture=neutral, PublicKeyToken=3042ba97c5930d49, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\Microsoft.WindowsAzure.StorageClient.Async.0.2.6-preview\lib\net40\Microsoft.WindowsAzure.StorageClient.Async.dll</HintPath>
+      <HintPath>..\packages\Microsoft.WindowsAzure.StorageClient.Async.0.2.1-preview\lib\net40\Microsoft.WindowsAzure.StorageClient.Async.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json, Version=4.5.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
