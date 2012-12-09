@@ -20,21 +20,17 @@
 		<tags>crypto cryptography mail email privacy</tags>
 		<dependencies>
 			<dependency id="IronPigeon" version="$version$" />
-			<dependency id="Validation" version="[1.0, 2.0)" />
+			<dependency id="Validation" version="[2.0, 3.0)" />
 		</dependencies>
 	</metadata>
 	<files>
-		<file src="$OutputPath45$IronPigeon.Dart.dll" target="lib\net45" />
-		<file src="$OutputPath45$IronPigeon.Dart.pdb" target="lib\net45" />
-		<file src="$OutputPath45$IronPigeon.Dart.xml" target="lib\net45" />
+		<file src="$OutputPath$IronPigeon.Dart.dll" target="lib\net45" />
+		<file src="$OutputPath$IronPigeon.Dart.pdb" target="lib\net45" />
+		<file src="$OutputPath$IronPigeon.Dart.xml" target="lib\net45" />
 
-		<file src="$OutputPath40$IronPigeon.Dart.dll" target="lib\net40" />
-		<file src="$OutputPath40$IronPigeon.Dart.pdb" target="lib\net40" />
-		<file src="$OutputPath40$IronPigeon.Dart.xml" target="lib\net40" />
-
-		<file src="$OutputPath45$IronPigeon.Dart.dll" target="lib\winrt45" />
-		<file src="$OutputPath45$IronPigeon.Dart.pdb" target="lib\winrt45" />
-		<file src="$OutputPath45$IronPigeon.Dart.xml" target="lib\winrt45" />
+		<file src="$OutputPath$IronPigeon.Dart.dll" target="lib\winrt45" />
+		<file src="$OutputPath$IronPigeon.Dart.pdb" target="lib\winrt45" />
+		<file src="$OutputPath$IronPigeon.Dart.xml" target="lib\winrt45" />
 
 		<file src="..\src\IronPigeon.Dart\**\*.cs" target="src\IronPigeon.Dart" exclude="..\src\IronPigeon.Dart\obj\**" />
 		<file src="$IntermediatePath$IronPigeon.Dart.Version.cs" target="src\IronPigeon.Dart\Properties" />

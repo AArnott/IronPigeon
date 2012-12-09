@@ -15,13 +15,6 @@
 		<MSBuild
 			Projects="@(ProjectReference)"
 			Targets="Clean"
-			Properties="Configuration=Release"
-			BuildInParallel="$(BuildInParallel)"
-			/>
-		<MSBuild
-			Projects="@(ProjectReference)"
-			Targets="Clean"
-			Properties="Configuration=ReleaseNET40"
 			BuildInParallel="$(BuildInParallel)"
 			/>
 	</Target>
@@ -30,21 +23,13 @@
 		<MSBuild
 			Projects="@(ProjectReference)"
 			Targets="Build"
-			Properties="Configuration=Release"
-			BuildInParallel="$(BuildInParallel)"
-			/>
-		<MSBuild
-			Projects="@(ProjectReference)"
-			Targets="Build"
-			Properties="Configuration=ReleaseNET40"
 			BuildInParallel="$(BuildInParallel)"
 			/>
 
 		<ItemGroup>
 			<NuGetProperties Include="Version=$(NuGetPackageVersion)" />
-			<NuGetProperties Include="OutputPath45=$(ProjectRoot)bin\$(Platform)\Release\" />
-			<NuGetProperties Include="OutputPath40=$(ProjectRoot)bin\$(Platform)\ReleaseNET40\" />
-			<NuGetProperties Include="IntermediatePath=$(ProjectRoot)obj\AnyCPU\Release\" />
+			<NuGetProperties Include="OutputPath=$(ProjectRoot)bin\$(Platform)\$(Configuration)\" />
+			<NuGetProperties Include="IntermediatePath=$(ProjectRoot)obj\$(Platform)\$(Configuration)\" />
 		</ItemGroup>
 
 		<ItemGroup>
@@ -52,13 +37,13 @@
 				<Symbols>true</Symbols>
 				<Properties>@(NuGetProperties)</Properties>
 				<Version>$(NuGetPackageVersion)</Version>
-				<OutputPackageDirectory>$(ProjectRoot)bin\</OutputPackageDirectory>
+				<OutputPackageDirectory>$(ProjectRoot)bin\$(Platform)\$(Configuration)\</OutputPackageDirectory>
 			</NuGetSpecifications>
 			<NuGetSpecifications Include="IronPigeon.Dart.nuspec">
 				<Symbols>true</Symbols>
 				<Properties>@(NuGetProperties)</Properties>
 				<Version>$(NuGetPackageVersion)</Version>
-				<OutputPackageDirectory>$(ProjectRoot)bin\</OutputPackageDirectory>
+				<OutputPackageDirectory>$(ProjectRoot)bin\$(Platform)\$(Configuration)\</OutputPackageDirectory>
 			</NuGetSpecifications>
 		</ItemGroup>
 
