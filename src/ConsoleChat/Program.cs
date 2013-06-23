@@ -66,6 +66,7 @@
 			var configuration = new ContainerConfiguration()
 				.WithAssembly(typeof(Channel).Assembly)
 				.WithPart(typeof(DesktopCryptoProvider))
+				.WithPart(typeof(DesktopChannel))
 				.WithPart(typeof(Program));
 			var container = configuration.CreateContainer();
 			
