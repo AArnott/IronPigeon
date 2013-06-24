@@ -15,7 +15,7 @@
 	/// <summary>
 	/// A channel for sending or receiving secure messages with additional WinRT specific functionality.
 	/// </summary>
-	[Export(typeof(Channel)), Export]
+	[Export(typeof(Channel))]
 	[Shared]
 	public class WinRTChannel : Channel {
 		/// <summary>
