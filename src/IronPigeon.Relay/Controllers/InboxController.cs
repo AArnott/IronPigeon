@@ -100,7 +100,7 @@
 				async c => {
 					try {
 						var results = await c.ListBlobsSegmentedAsync(
-							inboxContainer.Name,
+							string.Empty,
 							useFlatBlobListing: true,
 							pageSize: 50,
 							details: BlobListingDetails.Metadata,
