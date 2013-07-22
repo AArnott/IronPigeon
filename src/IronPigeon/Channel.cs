@@ -1,6 +1,5 @@
 ﻿namespace IronPigeon {
 	using System;
-	using System.Collections.Concurrent;
 	using System.Collections.Generic;
 	using System.Collections.ObjectModel;
 	using System.Composition;
@@ -16,10 +15,8 @@
 	using System.Text;
 	using System.Threading;
 	using System.Threading.Tasks;
-
 	using IronPigeon.Providers;
 	using IronPigeon.Relay;
-
 	using Validation;
 	using ReadOnlyCollectionOfEndpoint = System.Collections.Generic.IReadOnlyCollection<Endpoint>;
 	using ReadOnlyCollectionOfString = System.Collections.Generic.IReadOnlyCollection<string>;
@@ -34,8 +31,8 @@
 		/// <summary>
 		/// A cache of identifiers and their resolved endpoints.
 		/// </summary>
-		private readonly ConcurrentDictionary<string, Endpoint> resolvedIdentifiersCache =
-			new ConcurrentDictionary<string, Endpoint>();
+		private readonly Dictionary<string, Endpoint> resolvedIdentifiersCache =
+			new Dictionary<string, Endpoint>();
 
 		/// <summary>
 		/// The HTTP client to use for long poll HTTP requests.
@@ -419,8 +416,10 @@
 			Requires.NotNullOrEmpty(claimedIdentifier, "claimedIdentifier");
 
 			Endpoint cachedEndpoint;
-			if (this.resolvedIdentifiersCache.TryGetValue(claimedIdentifier, out cachedEndpoint)) {
-				return cachedEndpoint.Equals(claimingEndpoint);
+			lock (this.resolvedIdentifiersCache) {
+				if (this.resolvedIdentifiersCache.TryGetValue(claimedIdentifier, out cachedEndpoint)) {
+					return cachedEndpoint.Equals(claimingEndpoint);
+				}
 			}
 
 			var matchingEndpoint = await Utilities.FastestQualifyingResultAsync(
@@ -430,7 +429,11 @@
 				cancellationToken);
 
 			if (matchingEndpoint != null) {
-				this.resolvedIdentifiersCache.TryAdd(claimedIdentifier, matchingEndpoint);
+				lock (this.resolvedIdentifiersCache) {
+					if (!this.resolvedIdentifiersCache.ContainsKey(claimedIdentifier)) {
+						this.resolvedIdentifiersCache.Add(claimedIdentifier, matchingEndpoint);
+					}
+				}
 			}
 
 			return matchingEndpoint != null;
