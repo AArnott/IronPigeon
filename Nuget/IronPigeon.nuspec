@@ -20,15 +20,17 @@
 		<tags>crypto cryptography mail email privacy</tags>
 		<dependencies>
 			<group targetFramework="net45">
-				<dependency id="Validation" version="[2.0, 3.0)" />
-				<dependency id="Microsoft.Composition" version="[1.0.15, 2.0)" />
-				<dependency id="Microsoft.Tpl.Dataflow" version="[4.5.9, 5.0)" />
+				<dependency id="Validation" version="[2.0.2, 3.0)" />
+				<dependency id="Microsoft.Net.Http" version="2.2.13" />
+				<dependency id="Microsoft.Composition" version="[1.0.17, 2.0)" />
+				<dependency id="Microsoft.Tpl.Dataflow" version="[4.5.11, 5.0)" />
 				<dependency id="Microsoft.WindowsAzure.StorageClient.Async" version="0.3.1-preview" />
 			</group>
 			<group targetFramework="winrt">
-				<dependency id="Validation" version="[2.0, 3.0)" />
-				<dependency id="Microsoft.Composition" version="[1.0.15, 2.0)" />
-				<dependency id="Microsoft.Tpl.Dataflow" version="[4.5.9, 5.0)" />
+				<dependency id="Validation" version="[2.0.2, 3.0)" />
+				<dependency id="Microsoft.Net.Http" version="2.2.13" />
+				<dependency id="Microsoft.Composition" version="[1.0.17, 2.0)" />
+				<dependency id="Microsoft.Tpl.Dataflow" version="[4.5.11, 5.0)" />
 			</group>
 		</dependencies>
 	</metadata>
