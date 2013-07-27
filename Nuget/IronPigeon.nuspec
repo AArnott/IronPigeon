@@ -42,19 +42,28 @@
 		<file src="$OutputPath$IronPigeon.Desktop.pdb" target="lib\net45" />
 		<file src="$OutputPath$IronPigeon.Desktop.xml" target="lib\net45" />
 
-		<file src="$OutputPath$IronPigeon.dll" target="lib\winrt45" />
-		<file src="$OutputPath$IronPigeon.pdb" target="lib\winrt45" />
-		<file src="$OutputPath$IronPigeon.xml" target="lib\winrt45" />
-		<file src="$OutputPath$IronPigeon.WinRT.dll" target="lib\winrt45" />
-		<file src="$OutputPath$IronPigeon.WinRT.pdb" target="lib\winrt45" />
-		<file src="$OutputPath$IronPigeon.WinRT.xml" target="lib\winrt45" />
+		<file src="$OutputPath$IronPigeon.dll" target="lib\netcore45" />
+		<file src="$OutputPath$IronPigeon.pdb" target="lib\netcore45" />
+		<file src="$OutputPath$IronPigeon.xml" target="lib\netcore45" />
+		<file src="$OutputPath$IronPigeon.WinRT.dll" target="lib\netcore45" />
+		<file src="$OutputPath$IronPigeon.WinRT.pdb" target="lib\netcore45" />
+		<file src="$OutputPath$IronPigeon.WinRT.xml" target="lib\netcore45" />
+
+		<file src="$OutputPath$IronPigeon.dll" target="lib\windowsphone8" />
+		<file src="$OutputPath$IronPigeon.pdb" target="lib\windowsphone8" />
+		<file src="$OutputPath$IronPigeon.xml" target="lib\windowsphone8" />
+		<file src="$OutputPath$IronPigeon.WinPhone8.dll" target="lib\windowsphone8" />
+		<file src="$OutputPath$IronPigeon.WinPhone8.pdb" target="lib\windowsphone8" />
+		<file src="$OutputPath$IronPigeon.WinPhone8.xml" target="lib\windowsphone8" />
 
 		<file src="..\src\IronPigeon\**\*.cs" target="src\IronPigeon" exclude="..\src\IronPigeon\obj\**" />
 		<file src="..\src\IronPigeon.Desktop\**\*.cs" target="src\IronPigeon.Desktop" exclude="..\src\IronPigeon.Desktop\obj\**" />
 		<file src="..\src\IronPigeon.WinRT\**\*.cs" target="src\IronPigeon.WinRT" exclude="..\src\IronPigeon.WinRT\obj\**" />
+		<file src="..\src\IronPigeon.WinPhone8\**\*.cs" target="src\IronPigeon.WinPhone8" exclude="..\src\IronPigeon.WinPhone8\obj\**" />
 
 		<file src="$IntermediatePath$IronPigeon.Version.cs" target="src\IronPigeon\Properties" />
 		<file src="$IntermediatePath$IronPigeon.Desktop.Version.cs" target="src\IronPigeon.Desktop\Properties" />
 		<file src="$IntermediatePath$IronPigeon.WinRT.Version.cs" target="src\IronPigeon.WinRT\Properties" />
+		<file src="$IntermediatePath$IronPigeon.WinPhone8.Version.cs" target="src\IronPigeon.WinPhone8\Properties" />
 	</files>
 </package>

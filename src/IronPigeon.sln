@@ -34,6 +34,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		version.txt = version.txt
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IronPigeon.WinPhone8", "IronPigeon.WinPhone8\IronPigeon.WinPhone8.csproj", "{47C40966-7B25-44DF-B7DF-7EA972099E77}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -156,6 +158,20 @@ Global
 		{7413FF6F-DC39-4B86-AD14-EAC145F5C3B7}.Release|ARM.ActiveCfg = Release|Any CPU
 		{7413FF6F-DC39-4B86-AD14-EAC145F5C3B7}.Release|x64.ActiveCfg = Release|Any CPU
 		{7413FF6F-DC39-4B86-AD14-EAC145F5C3B7}.Release|x86.ActiveCfg = Release|Any CPU
+		{47C40966-7B25-44DF-B7DF-7EA972099E77}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{47C40966-7B25-44DF-B7DF-7EA972099E77}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{47C40966-7B25-44DF-B7DF-7EA972099E77}.Debug|ARM.ActiveCfg = Debug|ARM
+		{47C40966-7B25-44DF-B7DF-7EA972099E77}.Debug|ARM.Build.0 = Debug|ARM
+		{47C40966-7B25-44DF-B7DF-7EA972099E77}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{47C40966-7B25-44DF-B7DF-7EA972099E77}.Debug|x86.ActiveCfg = Debug|x86
+		{47C40966-7B25-44DF-B7DF-7EA972099E77}.Debug|x86.Build.0 = Debug|x86
+		{47C40966-7B25-44DF-B7DF-7EA972099E77}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{47C40966-7B25-44DF-B7DF-7EA972099E77}.Release|Any CPU.Build.0 = Release|Any CPU
+		{47C40966-7B25-44DF-B7DF-7EA972099E77}.Release|ARM.ActiveCfg = Release|ARM
+		{47C40966-7B25-44DF-B7DF-7EA972099E77}.Release|ARM.Build.0 = Release|ARM
+		{47C40966-7B25-44DF-B7DF-7EA972099E77}.Release|x64.ActiveCfg = Release|Any CPU
+		{47C40966-7B25-44DF-B7DF-7EA972099E77}.Release|x86.ActiveCfg = Release|x86
+		{47C40966-7B25-44DF-B7DF-7EA972099E77}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
