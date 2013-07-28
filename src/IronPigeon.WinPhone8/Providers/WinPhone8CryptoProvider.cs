@@ -10,6 +10,7 @@
 	using Org.BouncyCastle.Asn1.X509;
 	using Org.BouncyCastle.Crypto;
 	using Org.BouncyCastle.Crypto.Engines;
+	using Org.BouncyCastle.Crypto.Modes;
 	using Org.BouncyCastle.Crypto.Paddings;
 	using Org.BouncyCastle.Crypto.Parameters;
 	using Org.BouncyCastle.Security;
@@ -78,12 +79,14 @@
 		/// The result of the encryption.
 		/// </returns>
 		public override SymmetricEncryptionResult Encrypt(byte[] data) {
-			var encryptor = new PaddedBufferedBlockCipher(this.GetBlockCipher(), this.GetPadding());
+			var encryptor = this.GetCipher();
 
+			var secureRandom = new SecureRandom();
 			byte[] key = new byte[this.BlobSymmetricKeySize / 8];
+			secureRandom.NextBytes(key);
+
+			var random = new Random();
 			byte[] iv = new byte[encryptor.GetBlockSize()];
-			var random = new SecureRandom();
-			random.NextBytes(key);
 			random.NextBytes(iv);
 
 			var parameters = new ParametersWithIV(new KeyParameter(key), iv);
@@ -101,7 +104,7 @@
 		/// </returns>
 		public override byte[] Decrypt(SymmetricEncryptionResult data) {
 			var parameters = new ParametersWithIV(new KeyParameter(data.Key), data.IV);
-			var decryptor = new PaddedBufferedBlockCipher(this.GetBlockCipher(), this.GetPadding());
+			var decryptor = this.GetCipher();
 			decryptor.Init(false, parameters);
 			byte[] plaintext = decryptor.DoFinal(data.Ciphertext);
 			return plaintext;
@@ -175,19 +178,20 @@
 		/// <summary>
 		/// Gets the block cipher.
 		/// </summary>
-		protected virtual IBlockCipher GetBlockCipher() {
-			if (this.SymmetricAlgorithmName == "Rijndael") {
-				return new RijndaelEngine();
+		protected virtual IBufferedCipher GetCipher() {
+			IBlockCipher cipher;
+			switch (this.SymmetricAlgorithmName) {
+				case "Rijndael":
+					cipher = new RijndaelEngine();
+					break;
+				default:
+					throw new NotSupportedException();
 			}
 
-			throw new NotSupportedException();
-		}
-
-		/// <summary>
-		/// Gets the padding used for symmetric encryption.
-		/// </summary>
-		protected virtual IBlockCipherPadding GetPadding() {
-			return new Pkcs7Padding();
+			var cbcCipher = new CbcBlockCipher(cipher);
+			var padding = new Pkcs7Padding();
+			var result = new PaddedBufferedBlockCipher(cbcCipher, padding);
+			return result;
 		}
 	}
 }
