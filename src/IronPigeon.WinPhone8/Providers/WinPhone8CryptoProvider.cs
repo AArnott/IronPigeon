@@ -6,6 +6,9 @@
 	using System.Security.Cryptography;
 	using System.Text;
 	using System.Threading.Tasks;
+
+	using Org.BouncyCastle.Asn1;
+
 	using Validation;
 
 	[Export(typeof(ICryptoProvider))]
@@ -142,10 +145,7 @@
 		/// The computed hash.
 		/// </returns>
 		public override byte[] Hash(byte[] data) {
-			throw new NotImplementedException();
-			//using (var hasher = HashAlgorithm.Create(this.HashAlgorithmName)) {
-			//	return hasher.ComputeHash(data);
-			//}
+			return Org.BouncyCastle.Security.DigestUtilities.CalculateDigest(this.HashAlgorithmName, data);
 		}
 
 		/// <summary>
