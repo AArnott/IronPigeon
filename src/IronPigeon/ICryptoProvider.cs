@@ -9,9 +9,14 @@
 		string HashAlgorithmName { get; set; }
 
 		/// <summary>
-		/// Gets or sets the name of the symmetric algorithm to use.
+		/// Gets or sets the configuration to use for symmetric encryption.
 		/// </summary>
-		string SymmetricAlgorithmName { get; set; }
+		EncryptionConfiguration SymmetricEncryptionConfiguration { get; set; }
+
+		/// <summary>
+		/// Gets or sets the size of the key used for symmetric blob encryption.
+		/// </summary>
+		int SymmetricEncryptionKeySize { get; set; }
 
 		/// <summary>
 		/// Gets or sets the size of the key used for asymmetric signatures.
@@ -22,11 +27,6 @@
 		/// Gets or sets the size of the key used for asymmetric encryption.
 		/// </summary>
 		int EncryptionAsymmetricKeySize { get; set; }
-
-		/// <summary>
-		/// Gets or sets the size of the key used for symmetric blob encryption.
-		/// </summary>
-		int BlobSymmetricKeySize { get; set; }
 
 		/// <summary>
 		/// Asymmetrically signs a data blob.

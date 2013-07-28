@@ -17,10 +17,10 @@
 		private string hashAlgorithmName = SecurityLevel.Maximum.HashAlgorithmName;
 
 		/// <summary>
-		/// Backing field for the <see cref="SymmetricAlgorithmName"/> property.
+		/// Backing field for the <see cref="SymmetricEncryptionConfiguration"/> property.
 		/// </summary>
 		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
-		private string symmetricAlgorithmName = SecurityLevel.Maximum.SymmetricAlgorithmName;
+		private EncryptionConfiguration symmetricEncryptionConfiguration = SecurityLevel.Maximum.SymmetricEncryptionConfiguration;
 
 		/// <summary>
 		/// Backing field for the <see cref="EncryptionAsymmetricKeySize"/> property.
@@ -35,7 +35,7 @@
 		private int signatureAsymmetricKeySize = SecurityLevel.Maximum.SignatureAsymmetricKeySize;
 
 		/// <summary>
-		/// Backing field for the <see cref="BlobSymmetricKeySize"/> property.
+		/// Backing field for the <see cref="SymmetricEncryptionKeySize"/> property.
 		/// </summary>
 		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private int blobSymmetricKeySize = SecurityLevel.Maximum.BlobSymmetricKeySize;
@@ -49,15 +49,15 @@
 		}
 
 		/// <summary>
-		/// Gets or sets the name of the symmetric algorithm to use.
+		/// Gets or sets the configuration to use for symmetric encryption.
 		/// </summary>
-		public string SymmetricAlgorithmName {
-			get { return this.symmetricAlgorithmName; }
-			set { this.symmetricAlgorithmName = value; }
+		public EncryptionConfiguration SymmetricEncryptionConfiguration {
+			get { return this.symmetricEncryptionConfiguration; }
+			set { this.symmetricEncryptionConfiguration = value; }
 		}
 
 		/// <summary>
-		/// Gets or sets the size of the key used for asymmetric signatures.
+		/// Gets or sets the size of the key (in bits) used for asymmetric signatures.
 		/// </summary>
 		public int SignatureAsymmetricKeySize {
 			get { return this.signatureAsymmetricKeySize; }
@@ -65,7 +65,7 @@
 		}
 
 		/// <summary>
-		/// Gets or sets the size of the key used for asymmetric encryption.
+		/// Gets or sets the size of the key (in bits) used for asymmetric encryption.
 		/// </summary>
 		public int EncryptionAsymmetricKeySize {
 			get { return this.encryptionAsymmetricKeySize; }
@@ -73,9 +73,9 @@
 		}
 
 		/// <summary>
-		/// Gets or sets the size of the key used for symmetric blob encryption.
+		/// Gets or sets the size of the key (in bits) used for symmetric blob encryption.
 		/// </summary>
-		public int BlobSymmetricKeySize {
+		public int SymmetricEncryptionKeySize {
 			get { return this.blobSymmetricKeySize; }
 			set { this.blobSymmetricKeySize = value; }
 		}

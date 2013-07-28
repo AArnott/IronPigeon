@@ -71,8 +71,10 @@
 		/// The result of the encryption.
 		/// </returns>
 		public override SymmetricEncryptionResult Encrypt(byte[] data) {
-			using (var alg = SymmetricAlgorithm.Create(this.SymmetricAlgorithmName)) {
-				alg.KeySize = this.BlobSymmetricKeySize;
+			using (var alg = SymmetricAlgorithm.Create(this.SymmetricEncryptionConfiguration.AlgorithmName)) {
+				alg.Mode = (CipherMode)Enum.Parse(typeof(CipherMode), this.SymmetricEncryptionConfiguration.BlockMode);
+				alg.Padding = (PaddingMode)Enum.Parse(typeof(PaddingMode), this.SymmetricEncryptionConfiguration.Padding);
+				alg.KeySize = this.SymmetricEncryptionKeySize;
 				using (var encryptor = alg.CreateEncryptor()) {
 					using (var memoryStream = new MemoryStream()) {
 						using (var cryptoStream = new CryptoStream(memoryStream, encryptor, CryptoStreamMode.Write)) {
@@ -93,7 +95,9 @@
 		/// The decrypted buffer.
 		/// </returns>
 		public override byte[] Decrypt(SymmetricEncryptionResult data) {
-			using (var alg = SymmetricAlgorithm.Create(this.SymmetricAlgorithmName)) {
+			using (var alg = SymmetricAlgorithm.Create(this.SymmetricEncryptionConfiguration.AlgorithmName)) {
+				alg.Mode = (CipherMode)Enum.Parse(typeof(CipherMode), this.SymmetricEncryptionConfiguration.BlockMode);
+				alg.Padding = (PaddingMode)Enum.Parse(typeof(PaddingMode), this.SymmetricEncryptionConfiguration.Padding);
 				using (var decryptor = alg.CreateDecryptor(data.Key, data.IV)) {
 					using (var plaintextStream = new MemoryStream()) {
 						using (var cryptoStream = new CryptoStream(plaintextStream, decryptor, CryptoStreamMode.Write)) {
