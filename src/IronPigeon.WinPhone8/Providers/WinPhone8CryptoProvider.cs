@@ -179,19 +179,7 @@
 		/// Gets the block cipher.
 		/// </summary>
 		protected virtual IBufferedCipher GetCipher() {
-			IBlockCipher cipher;
-			switch (this.SymmetricAlgorithmName) {
-				case "Rijndael":
-					cipher = new RijndaelEngine();
-					break;
-				default:
-					throw new NotSupportedException();
-			}
-
-			var cbcCipher = new CbcBlockCipher(cipher);
-			var padding = new Pkcs7Padding();
-			var result = new PaddedBufferedBlockCipher(cbcCipher, padding);
-			return result;
+			return CipherUtilities.GetCipher(this.SymmetricAlgorithmName + "/CBC/PKCS7");
 		}
 	}
 }
