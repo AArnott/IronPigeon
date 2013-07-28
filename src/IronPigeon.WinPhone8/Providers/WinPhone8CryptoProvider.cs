@@ -6,11 +6,19 @@
 	using System.Security.Cryptography;
 	using System.Text;
 	using System.Threading.Tasks;
-
 	using Org.BouncyCastle.Asn1;
+	using Org.BouncyCastle.Asn1.X509;
+	using Org.BouncyCastle.Crypto;
+	using Org.BouncyCastle.Crypto.Engines;
+	using Org.BouncyCastle.Crypto.Paddings;
+	using Org.BouncyCastle.Crypto.Parameters;
+	using Org.BouncyCastle.Security;
 
 	using Validation;
 
+	/// <summary>
+	/// The Windows Phone 8 implementation of the IronPigeon crypto provider.
+	/// </summary>
 	[Export(typeof(ICryptoProvider))]
 	[Shared]
 	public class WinPhone8CryptoProvider : CryptoProviderBase {
@@ -70,19 +78,18 @@
 		/// The result of the encryption.
 		/// </returns>
 		public override SymmetricEncryptionResult Encrypt(byte[] data) {
-			throw new NotImplementedException();
-			//using (var alg = SymmetricAlgorithm.Create(this.SymmetricAlgorithmName)) {
-			//	alg.KeySize = this.BlobSymmetricKeySize;
-			//	using (var encryptor = alg.CreateEncryptor()) {
-			//		using (var memoryStream = new MemoryStream()) {
-			//			using (var cryptoStream = new CryptoStream(memoryStream, encryptor, CryptoStreamMode.Write)) {
-			//				cryptoStream.Write(data, 0, data.Length);
-			//				cryptoStream.FlushFinalBlock();
-			//				return new SymmetricEncryptionResult(alg.Key, alg.IV, memoryStream.ToArray());
-			//			}
-			//		}
-			//	}
-			//}
+			var encryptor = new PaddedBufferedBlockCipher(this.GetBlockCipher(), this.GetPadding());
+
+			byte[] key = new byte[this.BlobSymmetricKeySize / 8];
+			byte[] iv = new byte[encryptor.GetBlockSize()];
+			var random = new SecureRandom();
+			random.NextBytes(key);
+			random.NextBytes(iv);
+
+			var parameters = new ParametersWithIV(new KeyParameter(key), iv);
+			encryptor.Init(true, parameters);
+			byte[] ciphertext = encryptor.DoFinal(data);
+			return new SymmetricEncryptionResult(key, iv, ciphertext);
 		}
 
 		/// <summary>
@@ -93,18 +100,11 @@
 		/// The decrypted buffer.
 		/// </returns>
 		public override byte[] Decrypt(SymmetricEncryptionResult data) {
-			throw new NotImplementedException();
-			//using (var alg = SymmetricAlgorithm.Create(this.SymmetricAlgorithmName)) {
-			//	using (var decryptor = alg.CreateDecryptor(data.Key, data.IV)) {
-			//		using (var plaintextStream = new MemoryStream()) {
-			//			using (var cryptoStream = new CryptoStream(plaintextStream, decryptor, CryptoStreamMode.Write)) {
-			//				cryptoStream.Write(data.Ciphertext, 0, data.Ciphertext.Length);
-			//			}
-
-			//			return plaintextStream.ToArray();
-			//		}
-			//	}
-			//}
+			var parameters = new ParametersWithIV(new KeyParameter(data.Key), data.IV);
+			var decryptor = new PaddedBufferedBlockCipher(this.GetBlockCipher(), this.GetPadding());
+			decryptor.Init(false, parameters);
+			byte[] plaintext = decryptor.DoFinal(data.Ciphertext);
+			return plaintext;
 		}
 
 		/// <summary>
@@ -145,7 +145,7 @@
 		/// The computed hash.
 		/// </returns>
 		public override byte[] Hash(byte[] data) {
-			return Org.BouncyCastle.Security.DigestUtilities.CalculateDigest(this.HashAlgorithmName, data);
+			return DigestUtilities.CalculateDigest(this.HashAlgorithmName, data);
 		}
 
 		/// <summary>
@@ -170,6 +170,24 @@
 				keyPair = rsa.ExportCspBlob(true);
 				publicKey = rsa.ExportCspBlob(false);
 			}
+		}
+
+		/// <summary>
+		/// Gets the block cipher.
+		/// </summary>
+		protected virtual IBlockCipher GetBlockCipher() {
+			if (this.SymmetricAlgorithmName == "Rijndael") {
+				return new RijndaelEngine();
+			}
+
+			throw new NotSupportedException();
+		}
+
+		/// <summary>
+		/// Gets the padding used for symmetric encryption.
+		/// </summary>
+		protected virtual IBlockCipherPadding GetPadding() {
+			return new Pkcs7Padding();
 		}
 	}
 }

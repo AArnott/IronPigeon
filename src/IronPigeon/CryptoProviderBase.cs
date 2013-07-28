@@ -57,7 +57,7 @@
 		}
 
 		/// <summary>
-		/// Gets or sets the size of the key used for asymmetric signatures.
+		/// Gets or sets the size of the key (in bits) used for asymmetric signatures.
 		/// </summary>
 		public int SignatureAsymmetricKeySize {
 			get { return this.signatureAsymmetricKeySize; }
@@ -65,7 +65,7 @@
 		}
 
 		/// <summary>
-		/// Gets or sets the size of the key used for asymmetric encryption.
+		/// Gets or sets the size of the key (in bits) used for asymmetric encryption.
 		/// </summary>
 		public int EncryptionAsymmetricKeySize {
 			get { return this.encryptionAsymmetricKeySize; }
@@ -73,7 +73,7 @@
 		}
 
 		/// <summary>
-		/// Gets or sets the size of the key used for symmetric blob encryption.
+		/// Gets or sets the size of the key (in bits) used for symmetric blob encryption.
 		/// </summary>
 		public int BlobSymmetricKeySize {
 			get { return this.blobSymmetricKeySize; }
