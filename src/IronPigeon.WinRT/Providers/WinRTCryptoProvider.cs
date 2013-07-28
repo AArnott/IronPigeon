@@ -67,7 +67,7 @@
 		/// </returns>
 		public override SymmetricEncryptionResult Encrypt(byte[] data) {
 			IBuffer plainTextBuffer = CryptographicBuffer.CreateFromByteArray(data);
-			IBuffer symmetricKeyMaterial = CryptographicBuffer.GenerateRandom((uint)this.BlobSymmetricKeySize / 8);
+			IBuffer symmetricKeyMaterial = CryptographicBuffer.GenerateRandom((uint)this.SymmetricEncryptionKeySize / 8);
 			var symmetricKey = SymmetricAlgorithm.CreateSymmetricKey(symmetricKeyMaterial);
 			IBuffer ivBuffer = CryptographicBuffer.GenerateRandom(SymmetricAlgorithm.BlockLength);
 

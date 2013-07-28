@@ -32,9 +32,9 @@
 		public abstract string HashAlgorithmName { get; }
 
 		/// <summary>
-		/// Gets the name of the symmetric algorithm to use.
+		/// Gets the symmetric encryption configuration.
 		/// </summary>
-		public abstract string SymmetricAlgorithmName { get; }
+		public abstract EncryptionConfiguration SymmetricEncryptionConfiguration { get; }
 
 		/// <summary>
 		/// Gets the size of the encryption asymmetric key.
@@ -68,10 +68,10 @@
 			Requires.NotNull(cryptoProvider, "cryptoProvider");
 
 			cryptoProvider.HashAlgorithmName = this.HashAlgorithmName;
-			cryptoProvider.SymmetricAlgorithmName = this.SymmetricAlgorithmName;
+			cryptoProvider.SymmetricEncryptionConfiguration = this.SymmetricEncryptionConfiguration;
 			cryptoProvider.EncryptionAsymmetricKeySize = this.EncryptionAsymmetricKeySize;
 			cryptoProvider.SignatureAsymmetricKeySize = this.SignatureAsymmetricKeySize;
-			cryptoProvider.BlobSymmetricKeySize = this.BlobSymmetricKeySize;
+			cryptoProvider.SymmetricEncryptionKeySize = this.BlobSymmetricKeySize;
 		}
 
 		/// <summary>
@@ -91,8 +91,8 @@
 			/// <summary>
 			/// Gets the name of the symmetric algorithm to use.
 			/// </summary>
-			public override string SymmetricAlgorithmName {
-				get { return "Rijndael"; }
+			public override EncryptionConfiguration SymmetricEncryptionConfiguration {
+				get { return new EncryptionConfiguration("Rijndael", "CBC", "PKCS7"); }
 			}
 
 			/// <summary>
@@ -143,8 +143,8 @@
 			/// <summary>
 			/// Gets the name of the symmetric algorithm to use.
 			/// </summary>
-			public override string SymmetricAlgorithmName {
-				get { return "Rijndael"; }
+			public override EncryptionConfiguration SymmetricEncryptionConfiguration {
+				get { return new EncryptionConfiguration("Rijndael", "CBC", "PKCS7"); }
 			}
 
 			/// <summary>

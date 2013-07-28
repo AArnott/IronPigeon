@@ -2,6 +2,7 @@
 	using System;
 	using System.Collections.Generic;
 	using System.Composition;
+	using System.Globalization;
 	using System.Linq;
 	using System.Security.Cryptography;
 	using System.Text;
@@ -82,7 +83,7 @@
 			var encryptor = this.GetCipher();
 
 			var secureRandom = new SecureRandom();
-			byte[] key = new byte[this.BlobSymmetricKeySize / 8];
+			byte[] key = new byte[this.SymmetricEncryptionKeySize / 8];
 			secureRandom.NextBytes(key);
 
 			var random = new Random();
@@ -178,8 +179,16 @@
 		/// <summary>
 		/// Gets the block cipher.
 		/// </summary>
+		/// <returns>An instance of a buffered, padded cipher.</returns>
 		protected virtual IBufferedCipher GetCipher() {
-			return CipherUtilities.GetCipher(this.SymmetricAlgorithmName + "/CBC/PKCS7");
+			return
+				CipherUtilities.GetCipher(
+					string.Format(
+						CultureInfo.InvariantCulture,
+						"{0}/{1}/{2}",
+						this.SymmetricEncryptionConfiguration.AlgorithmName,
+						this.SymmetricEncryptionConfiguration.BlockMode,
+						this.SymmetricEncryptionConfiguration.Padding));
 		}
 	}
 }

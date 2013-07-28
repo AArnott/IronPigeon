@@ -17,8 +17,8 @@
 			set { throw new NotSupportedException(); }
 		}
 
-		string ICryptoProvider.SymmetricAlgorithmName {
-			get { return "mock"; }
+		EncryptionConfiguration ICryptoProvider.SymmetricEncryptionConfiguration {
+			get { return new EncryptionConfiguration("mock", "mock", "mock"); }
 			set { throw new NotSupportedException(); }
 		}
 
@@ -32,7 +32,7 @@
 			set { throw new NotSupportedException(); }
 		}
 
-		public int BlobSymmetricKeySize {
+		public int SymmetricEncryptionKeySize {
 			get { return KeyLengthInBytes; }
 			set { throw new NotSupportedException(); }
 		}
