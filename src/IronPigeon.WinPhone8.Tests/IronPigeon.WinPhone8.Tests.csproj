@@ -72,6 +72,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="..\IronPigeon.Tests\CryptoProviderTests.cs">
+      <Link>Providers\CryptoProviderTests.cs</Link>
+    </Compile>
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
     </Compile>
@@ -130,6 +133,10 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\IronPigeon.Tests\IronPigeon.Tests.csproj">
+      <Project>{D2FF68FF-68C8-400A-A6E2-6E3BA61D17A1}</Project>
+      <Name>IronPigeon.Tests</Name>
+    </ProjectReference>
     <ProjectReference Include="..\IronPigeon.WinPhone8\IronPigeon.WinPhone8.csproj">
       <Project>{47C40966-7B25-44DF-B7DF-7EA972099E77}</Project>
       <Name>IronPigeon.WinPhone8</Name>

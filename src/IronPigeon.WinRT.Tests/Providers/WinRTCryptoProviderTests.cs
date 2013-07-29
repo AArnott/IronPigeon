@@ -7,10 +7,16 @@
 	using Microsoft.VisualStudio.TestPlatform.UnitTestFramework;
 
 	[TestClass]
-	public class WinRTCryptoProviderTests {
-		[TestMethod]
-		public void Ctor() {
-			var provider = new WinRTCryptoProvider();
+	public class WinRTCryptoProviderTests : CryptoProviderTests {
+		private WinRTCryptoProvider provider;
+
+		protected override ICryptoProvider CryptoProvider {
+			get { return this.provider; }
+		}
+
+		[TestInitialize]
+		public void Setup() {
+			this.provider = new WinRTCryptoProvider();
 		}
 	}
 }
