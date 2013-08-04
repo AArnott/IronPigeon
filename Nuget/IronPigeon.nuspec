@@ -35,6 +35,10 @@
 		</dependencies>
 	</metadata>
 	<files>
+		<file src="$OutputPath$IronPigeon.dll" target="lib\portable-win+net45+wp80" />
+		<file src="$OutputPath$IronPigeon.pdb" target="lib\portable-win+net45+wp80" />
+		<file src="$OutputPath$IronPigeon.xml" target="lib\portable-win+net45+wp80" />
+
 		<file src="$OutputPath$IronPigeon.dll" target="lib\net45" />
 		<file src="$OutputPath$IronPigeon.pdb" target="lib\net45" />
 		<file src="$OutputPath$IronPigeon.xml" target="lib\net45" />
