@@ -85,8 +85,9 @@
     <Reference Include="Validation">
       <HintPath>..\packages\Validation.2.0.2.13022\lib\portable-windows8+net40+sl5+windowsphone8\Validation.dll</HintPath>
     </Reference>
-    <Reference Include="WP8BouncyCastle">
-      <HintPath>..\..\lib\WP8BouncyCastle.dll</HintPath>
+    <Reference Include="WP8BouncyCastle, Version=0.1.1.1, Culture=neutral, PublicKeyToken=496b81cf81b200f0, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\WinRTBouncyCastle.0.1.1.1\lib\windowsphone8\WP8BouncyCastle.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>

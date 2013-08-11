@@ -32,6 +32,13 @@
 				<dependency id="Microsoft.Composition" version="[1.0.17, 2.0)" />
 				<dependency id="Microsoft.Tpl.Dataflow" version="[4.5.11, 5.0)" />
 			</group>
+			<group targetFramework="windowsphone8">
+				<dependency id="Validation" version="[2.0.2, 3.0)" />
+				<dependency id="Microsoft.Net.Http" version="2.2.13" />
+				<dependency id="Microsoft.Composition" version="[1.0.17, 2.0)" />
+				<dependency id="Microsoft.Tpl.Dataflow" version="[4.5.11, 5.0)" />
+				<dependency id="WinRTBouncyCastle" version="[0.1.1.1,2.0)" />
+			</group>
 		</dependencies>
 	</metadata>
 	<files>
@@ -59,7 +66,6 @@
 		<file src="$OutputPath$IronPigeon.WinPhone8.dll" target="lib\windowsphone8" />
 		<file src="$OutputPath$IronPigeon.WinPhone8.pdb" target="lib\windowsphone8" />
 		<file src="$OutputPath$IronPigeon.WinPhone8.xml" target="lib\windowsphone8" />
-		<file src="..\lib\WP8BouncyCastle.dll" target="lib\windowsphone8" />
 
 		<file src="..\src\IronPigeon\**\*.cs" target="src\IronPigeon" exclude="..\src\IronPigeon\obj\**" />
 		<file src="..\src\IronPigeon.Desktop\**\*.cs" target="src\IronPigeon.Desktop" exclude="..\src\IronPigeon.Desktop\obj\**" />
