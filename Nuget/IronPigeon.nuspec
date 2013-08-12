@@ -35,8 +35,7 @@
 			<group targetFramework="windowsphone8">
 				<dependency id="Validation" version="[2.0.2, 3.0)" />
 				<dependency id="Microsoft.Net.Http" version="2.2.13" />
-				<dependency id="Microsoft.Composition" version="[1.0.17, 2.0)" />
-				<dependency id="Microsoft.Tpl.Dataflow" version="[4.5.11, 5.0)" />
+				<!--<dependency id="Microsoft.Composition" version="[1.0.17, 2.0)" />-->
 				<dependency id="WinRTBouncyCastle" version="[0.1.1.1,2.0)" />
 			</group>
 		</dependencies>
