@@ -12,7 +12,20 @@
 	/// for all importers.
 	/// </summary>
 	[Shared]
+	[Export]
 	public class HttpClientWrapper {
+		/// <summary>
+		/// Initializes a new instance of the <see cref="HttpClientWrapper"/> class.
+		/// </summary>
+		public HttpClientWrapper() {
+			this.DefaultTimeout = TimeSpan.FromSeconds(10);
+		}
+
+		/// <summary>
+		/// Gets or sets the default timeout for HttpClient instances produced by this part.
+		/// </summary>
+		public TimeSpan DefaultTimeout { get; set; }
+
 		/// <summary>
 		/// Gets a new instance of <see cref="HttpClient"/> that wraps an optionally custom <see cref="HttpMessageHandler"/>.
 		/// </summary>
@@ -20,7 +33,7 @@
 		public HttpClient Client {
 			get {
 				return new HttpClient(this.MessageHandler ?? new HttpClientHandler()) {
-					Timeout = TimeSpan.FromSeconds(5)
+					Timeout = this.DefaultTimeout
 				};
 			}
 		}
