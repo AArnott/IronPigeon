@@ -4,6 +4,7 @@
 	using System.Composition;
 	using System.Composition.Hosting;
 	using System.Configuration;
+	using System.IO;
 	using System.Linq;
 	using System.Reflection;
 	using System.Text;
@@ -78,9 +79,13 @@
 				var dialog = new SaveFileDialog();
 				bool? result = dialog.ShowDialog(this);
 				if (result.HasValue && result.Value) {
-					await this.SetEndpointAsync(await endpointTask, cts.Token);
+					Uri addressBookEntry = await this.OwnEndpointServices.PublishAddressBookEntryAsync(await endpointTask, cts.Token);
+					await this.SetEndpointAsync(await endpointTask, addressBookEntry, cts.Token);
 					using (var stream = dialog.OpenFile()) {
-						this.Channel.Endpoint.SaveAsync(stream, cts.Token);
+						var writer = new BinaryWriter(stream, Encoding.UTF8);
+						writer.SerializeDataContract(addressBookEntry);
+						writer.Flush();
+						await this.Channel.Endpoint.SaveAsync(stream, cts.Token);
 					}
 				} else {
 					cts.Cancel();
@@ -99,7 +104,9 @@
 				bool? result = dialog.ShowDialog(this);
 				if (result.HasValue && result.Value) {
 					using (var fileStream = dialog.OpenFile()) {
-						await this.SetEndpointAsync(await OwnEndpoint.OpenAsync(fileStream));
+						var reader = new BinaryReader(fileStream, Encoding.UTF8);
+						var addressBookEntry = reader.DeserializeDataContract<Uri>();
+						await this.SetEndpointAsync(await OwnEndpoint.OpenAsync(fileStream), addressBookEntry);
 					}
 				}
 			} finally {
@@ -113,8 +120,7 @@
 			chatroomWindow.Value.Show();
 		}
 
-		private async Task SetEndpointAsync(OwnEndpoint endpoint, CancellationToken cancellationToken = default(CancellationToken)) {
-			Uri addressBookEntry = await this.OwnEndpointServices.PublishAddressBookEntryAsync(endpoint, cancellationToken);
+		private async Task SetEndpointAsync(OwnEndpoint endpoint, Uri addressBookEntry, CancellationToken cancellationToken = default(CancellationToken)) {
 			this.Channel.Endpoint = endpoint;
 			this.PublicEndpointUrlTextBlock.Text = addressBookEntry.AbsoluteUri;
 			this.OpenChatroom.IsEnabled = true;
