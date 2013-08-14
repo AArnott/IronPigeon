@@ -45,13 +45,21 @@
 			var addressBook = new DirectEntryAddressBook(this.CryptoProvider, new HttpClient());
 			var endpoint = await addressBook.LookupAsync(inviteWindow.PublicEndpointUrlBox.Text);
 			if (endpoint != null) {
-				this.AddMember(inviteWindow.FriendlyNameBox.Text, endpoint);
+				try {
+					this.AddMember(inviteWindow.FriendlyNameBox.Text, endpoint);
+				} catch (InvalidOperationException ex) {
+					MessageBox.Show(ex.Message);
+				}
 			}
 
 			inviteWindow.Close();
 		}
 
 		private void AddMember(string friendlyName, Endpoint endpoint) {
+			if (this.members.Values.Contains(endpoint)) {
+				throw new InvalidOperationException("That member is already in the chatroom.");
+			}
+
 			this.members.Add(friendlyName, endpoint);
 			this.ChatroomMembersList.Items.Add(friendlyName);
 		}
