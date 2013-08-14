@@ -80,7 +80,7 @@
 					bool lastTimeFailed = delay > TimeSpan.Zero;
 					delay = TimeSpan.Zero;
 					var progress = new ProgressWithCompletion<Payload>(m => this.ProcessReceivedMessagedAsync(m));
-					await this.Channel.ReceiveAsync(longPoll: !lastTimeFailed);
+					await this.Channel.ReceiveAsync(longPoll: !lastTimeFailed, progress: progress);
 					this.TopInfoBar.Visibility = Visibility.Collapsed;
 				} catch (HttpRequestException) {
 					// report the error eventually if it keeps happening.
@@ -92,11 +92,10 @@
 			}
 		}
 
-		private Task ProcessReceivedMessagedAsync(Payload payload) {
+		private async Task ProcessReceivedMessagedAsync(Payload payload) {
 			var message = Encoding.UTF8.GetString(payload.Content);
 			this.History.Items.Add(message);
-			this.Channel.DeleteInboxItemAsync(payload);
-			return Task.FromResult<object>(null);
+			await this.Channel.DeleteInboxItemAsync(payload);
 		}
 
 		private async void SendMessageButton_Click(object sender, RoutedEventArgs e) {
