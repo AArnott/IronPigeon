@@ -1,0 +1,19 @@
+﻿<Window x:Class="WpfChatroom.ChatroomWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="IronPigeon Chatroom" Height="300" Width="300">
+	<DockPanel LastChildFill="True">
+		<TextBlock DockPanel.Dock="Top" Background="Khaki" HorizontalAlignment="Stretch" TextAlignment="Center" Visibility="Collapsed" x:Name="TopInfoBar"/>
+		<TextBlock DockPanel.Dock="Bottom" Background="Khaki" HorizontalAlignment="Stretch" TextAlignment="Left" Visibility="Collapsed" x:Name="BottomInfoBar"/>
+		<DockPanel DockPanel.Dock="Bottom" LastChildFill="True">
+			<Button Padding="5" DockPanel.Dock="Right" IsDefault="True" x:Name="SendMessageButton" Click="SendMessageButton_Click">Send</Button>
+			<TextBox DockPanel.Dock="Bottom" x:Name="AuthoredMessage"/>
+		</DockPanel>
+		<StackPanel DockPanel.Dock="Right" Margin="10,0,10,0">
+			<TextBlock>Members</TextBlock>
+			<ListBox x:Name="ChatroomMembersList"/>
+			<Button x:Name="InviteButton" Click="InviteButton_OnClick">Invite</Button>
+		</StackPanel>
+		<ListBox x:Name="History" Background="Beige"/>
+	</DockPanel>
+</Window>
