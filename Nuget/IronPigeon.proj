@@ -6,6 +6,7 @@
 		<ProjectReference Include="$(ProjectRoot)src\IronPigeon\IronPigeon.csproj" />
 		<ProjectReference Include="$(ProjectRoot)src\IronPigeon.Desktop\IronPigeon.Desktop.csproj" />
 		<ProjectReference Include="$(ProjectRoot)src\IronPigeon.WinRT\IronPigeon.WinRT.csproj" />
+		<ProjectReference Include="$(ProjectRoot)src\IronPigeon.WinPhone8\IronPigeon.WinPhone8.csproj" />
 		<ProjectReference Include="$(ProjectRoot)src\IronPigeon.Dart\IronPigeon.Dart.csproj" />
 	</ItemGroup>
 
