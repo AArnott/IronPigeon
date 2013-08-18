@@ -475,22 +475,12 @@
 				httpClient = this.httpClientLongPoll;
 			}
 
-			while (true) {
-				try {
-					var responseMessage = await httpClient.GetAsync(requestUri, this.Endpoint.InboxOwnerCode, cancellationToken);
-					responseMessage.EnsureSuccessStatusCode();
-					var responseStream = await responseMessage.Content.ReadAsStreamAsync();
-					var inboxResults = (IncomingList)deserializer.ReadObject(responseStream);
+			var responseMessage = await httpClient.GetAsync(requestUri, this.Endpoint.InboxOwnerCode, cancellationToken);
+			responseMessage.EnsureSuccessStatusCode();
+			var responseStream = await responseMessage.Content.ReadAsStreamAsync();
+			var inboxResults = (IncomingList)deserializer.ReadObject(responseStream);
 
-					return inboxResults.Items;
-				} catch (OperationCanceledException) {
-					// This can occur if the caller cancelled or if our HTTP client timed out.
-					// On time-outs, we want to re-establish.  For caller cancellation, propagate it out.
-					if (cancellationToken.IsCancellationRequested) {
-						throw;
-					}
-				}
-			}
+			return inboxResults.Items;
 		}
 
 		/// <summary>Logs a message.</summary>
