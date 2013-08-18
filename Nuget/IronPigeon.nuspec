@@ -15,7 +15,7 @@
 		<description>
 			An open source generic message passing protocol with focus on confidentiality and authentication.
 		</description>
-		<releaseNotes>Basic message passing protocol implemented.</releaseNotes>
+		<releaseNotes>Adds Windows Phone 8 support. Makes avoiding HttpClient timeout exceptions easier.</releaseNotes>
 		<copyright>Copyright © Andrew Arnott</copyright>
 		<tags>crypto cryptography mail email privacy</tags>
 		<dependencies>
