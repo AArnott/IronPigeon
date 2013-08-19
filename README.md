@@ -182,7 +182,7 @@ Either way, processing the incoming messages is simple:
 
 Finally, if you're building a Windows 8 app, you can employ the 
 Windows Push Notification service and avoid using a long poll connection
-yourself, allowing your application to receiving notifications even when it is
+yourself, allowing your application to receive notifications even when it is
 not running, or when the computer is in a low power state:
 
 	[Import]
