@@ -125,9 +125,9 @@
 		/// <remarks>
 		/// Useful when a data contract is serialized to a stream but is not the only member of that stream.
 		/// </remarks>
-		public static void SerializeDataContract<T>(this BinaryWriter writer, T graph) where T : class {
+		public static void SerializeDataContract<T>(this BinaryWriter writer, T graph) {
 			Requires.NotNull(writer, "writer");
-			Requires.NotNull(graph, "graph");
+			Requires.NotNullAllowStructs(graph, "graph");
 
 			var serializer = new DataContractSerializer(typeof(T));
 			var ms = new MemoryStream();
