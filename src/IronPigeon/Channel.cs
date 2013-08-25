@@ -115,26 +115,36 @@
 			var payloads = new List<Payload>();
 			foreach (var item in inboxItems) {
 				try {
-					var invite = await this.DownloadPayloadReferenceAsync(item, cancellationToken);
-					if (invite == null) {
-						continue;
-					}
+					try {
+						var invite = await this.DownloadPayloadReferenceAsync(item, cancellationToken);
+						if (invite == null) {
+							continue;
+						}
 
-					var message = await this.DownloadPayloadAsync(invite, cancellationToken);
-					payloads.Add(message);
-					if (progress != null) {
-						progress.Report(message);
+						var message = await this.DownloadPayloadAsync(invite, cancellationToken);
+						payloads.Add(message);
+						if (progress != null) {
+							progress.Report(message);
+						}
+					} catch (SerializationException ex) {
+						throw new InvalidMessageException(Strings.InvalidMessage, ex);
+					} catch (DecoderFallbackException ex) {
+						throw new InvalidMessageException(Strings.InvalidMessage, ex);
+					} catch (OverflowException ex) {
+						throw new InvalidMessageException(Strings.InvalidMessage, ex);
+					} catch (OutOfMemoryException ex) {
+						throw new InvalidMessageException(Strings.InvalidMessage, ex);
+					} catch (InvalidMessageException) {
+						throw;
+					} catch (Exception ex) {
+						// all those platform-specific exceptions that aren't available to portable libraries.
+						throw new InvalidMessageException(Strings.InvalidMessage, ex);
 					}
-				} catch (SerializationException ex) {
-					throw new InvalidMessageException(Strings.InvalidMessage, ex);
-				} catch (DecoderFallbackException ex) {
-					throw new InvalidMessageException(Strings.InvalidMessage, ex);
-				} catch (OverflowException ex) {
-					throw new InvalidMessageException(Strings.InvalidMessage, ex);
-				} catch (OutOfMemoryException ex) {
-					throw new InvalidMessageException(Strings.InvalidMessage, ex);
-				} catch (Exception ex) { // all those platform-specific exceptions that aren't available to portable libraries.
-					throw new InvalidMessageException(Strings.InvalidMessage, ex);
+				} catch (InvalidMessageException ex) {
+					Debug.WriteLine(ex);
+
+					// Delete the payload reference since it was an invalid message.
+					var nowait = this.DeletePayloadReferenceAsync(item.Location, cancellationToken);
 				}
 			}
 
