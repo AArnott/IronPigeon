@@ -109,7 +109,9 @@
 					// Tamper with the payload reference.
 					TestUtilities.ApplyFuzzing(inboxMock.Inboxes[receiver.PublicEndpoint][0].Item2, 1);
 
-					Assert.Throws<InvalidMessageException>(() => this.ReceiveMessageAsync(cloudStorage, inboxMock, this.desktopCryptoProvider, receiver).GetAwaiter().GetResult());
+					var receivedMessages =
+						await this.ReceiveMessageAsync(cloudStorage, inboxMock, this.desktopCryptoProvider, receiver, expectMessage: false);
+					Assert.AreEqual(0, receivedMessages.Count);
 				}
 			}).GetAwaiter().GetResult();
 		}
@@ -130,7 +132,9 @@
 					// Tamper with the payload itself.
 					TestUtilities.ApplyFuzzing(cloudStorage.Blobs.Single().Value, 1);
 
-					Assert.Throws<InvalidMessageException>(() => this.ReceiveMessageAsync(cloudStorage, inboxMock, this.desktopCryptoProvider, receiver).GetAwaiter().GetResult());
+					var receivedMessages =
+						await this.ReceiveMessageAsync(cloudStorage, inboxMock, this.desktopCryptoProvider, receiver, expectMessage: false);
+					Assert.AreEqual(0, receivedMessages.Count);
 				}
 			}).GetAwaiter().GetResult();
 		}
@@ -156,7 +160,7 @@
 			await channel.PostAsync(Valid.Message, new[] { receiver }, Valid.ExpirationUtc);
 		}
 
-		private async Task<IReadOnlyCollection<Payload>> ReceiveMessageAsync(Mocks.CloudBlobStorageProviderMock cloudBlobStorage, Mocks.InboxHttpHandlerMock inboxMock, ICryptoProvider cryptoProvider, OwnEndpoint receiver) {
+		private async Task<IReadOnlyCollection<Payload>> ReceiveMessageAsync(Mocks.CloudBlobStorageProviderMock cloudBlobStorage, Mocks.InboxHttpHandlerMock inboxMock, ICryptoProvider cryptoProvider, OwnEndpoint receiver, bool expectMessage = true) {
 			Requires.NotNull(cloudBlobStorage, "cloudBlobStorage");
 			Requires.NotNull(receiver, "receiver");
 
@@ -178,9 +182,14 @@
 			var progress = new Progress<Payload>(m => progressMessage.SetResult(m));
 
 			var messages = await channel.ReceiveAsync(progress: progress);
-			Assert.That(messages.Count, Is.EqualTo(1));
-			await progressMessage.Task;
-			Assert.That(progressMessage.Task.Result, Is.SameAs(messages.Single()));
+			if (expectMessage) {
+				Assert.That(messages.Count, Is.EqualTo(1));
+				await progressMessage.Task;
+				Assert.That(progressMessage.Task.Result, Is.SameAs(messages.Single()));
+			} else {
+				Assert.That(messages.Count, Is.EqualTo(0));
+			}
+
 			return messages;
 		}
 	}
