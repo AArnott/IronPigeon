@@ -34,8 +34,10 @@
     <BootstrapperEnabled>true</BootstrapperEnabled>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DocumentationFile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DocumentationFile />
   </PropertyGroup>
   <PropertyGroup>
     <ManifestCertificateThumbprint>BAA3581E31E8A6C79353005557F5851795E6867B</ManifestCertificateThumbprint>

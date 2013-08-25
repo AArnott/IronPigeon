@@ -28,6 +28,25 @@
 	/// </summary>
 	public partial class MainWindow : Window {
 		/// <summary>
+		/// Initializes a new instance of the <see cref="MainWindow"/> class.
+		/// </summary>
+		public MainWindow() {
+			this.InitializeComponent();
+
+			var configuration =
+				new ContainerConfiguration().WithAssembly(typeof(Channel).Assembly)
+											.WithPart(typeof(DesktopCryptoProvider))
+											.WithPart(typeof(DesktopChannel))
+											.WithAssembly(Assembly.GetExecutingAssembly());
+			var container = configuration.CreateContainer();
+			container.SatisfyImports(this);
+
+			this.MessageRelayService.BlobPostUrl = new Uri(ConfigurationManager.ConnectionStrings["RelayBlobService"].ConnectionString);
+			this.MessageRelayService.InboxServiceUrl = new Uri(ConfigurationManager.ConnectionStrings["RelayInboxService"].ConnectionString);
+			this.CryptoProvider.ApplySecurityLevel(SecurityLevel.Minimum);
+		}
+
+		/// <summary>
 		/// Gets or sets the own endpoint services.
 		/// </summary>
 		[Import]
@@ -45,6 +64,12 @@
 		[Import]
 		public ICryptoProvider CryptoProvider { get; set; }
 
+		/// <summary>
+		/// Gets or sets the chatroom window factory.
+		/// </summary>
+		/// <value>
+		/// The chatroom window factory.
+		/// </value>
 		[Import]
 		public ExportFactory<ChatroomWindow> ChatroomWindowFactory { get; set; }
 
@@ -53,22 +78,6 @@
 		/// </summary>
 		[Import]
 		public Channel Channel { get; set; }
-
-		public MainWindow() {
-			InitializeComponent();
-
-			var configuration =
-				new ContainerConfiguration().WithAssembly(typeof(Channel).Assembly)
-											.WithPart(typeof(DesktopCryptoProvider))
-											.WithPart(typeof(DesktopChannel))
-											.WithAssembly(Assembly.GetExecutingAssembly());
-			var container = configuration.CreateContainer();
-			container.SatisfyImports(this);
-
-			this.MessageRelayService.BlobPostUrl = new Uri(ConfigurationManager.ConnectionStrings["RelayBlobService"].ConnectionString);
-			this.MessageRelayService.InboxServiceUrl = new Uri(ConfigurationManager.ConnectionStrings["RelayInboxService"].ConnectionString);
-			this.CryptoProvider.ApplySecurityLevel(SecurityLevel.Minimum);
-		}
 
 		private async void CreateNewEndpoint_OnClick(object sender, RoutedEventArgs e) {
 			this.CreateNewEndpoint.IsEnabled = false;

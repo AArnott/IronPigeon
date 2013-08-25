@@ -21,11 +21,15 @@
 	public partial class InviteMember : Window {
 		private readonly ChatroomWindow chatroom;
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="InviteMember"/> class.
+		/// </summary>
+		/// <param name="chatroom">The chatroom.</param>
 		public InviteMember(ChatroomWindow chatroom) {
 			Requires.NotNull(chatroom, "chatroom");
 
 			this.chatroom = chatroom;
-			InitializeComponent();
+			this.InitializeComponent();
 		}
 
 		private async void InviteButton_OnClick(object sender, RoutedEventArgs e) {

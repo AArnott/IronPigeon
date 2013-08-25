@@ -26,6 +26,13 @@
 		private Dictionary<string, Endpoint> members = new Dictionary<string, Endpoint>();
 
 		/// <summary>
+		/// Initializes a new instance of the <see cref="ChatroomWindow"/> class.
+		/// </summary>
+		public ChatroomWindow() {
+			this.InitializeComponent();
+		}
+
+		/// <summary>
 		/// Gets or sets the channel.
 		/// </summary>
 		[Import]
@@ -36,10 +43,6 @@
 		/// </summary>
 		[Import]
 		public ICryptoProvider CryptoProvider { get; set; }
-
-		public ChatroomWindow() {
-			InitializeComponent();
-		}
 
 		internal async Task InvitingMemberAsync(InviteMember inviteWindow) {
 			var addressBook = new DirectEntryAddressBook(this.CryptoProvider, new HttpClient());
@@ -55,6 +58,18 @@
 			inviteWindow.Close();
 		}
 
+		/// <summary>
+		/// Raises the <see cref="E:System.Windows.FrameworkElement.Initialized" /> event. This method is invoked whenever <see cref="P:System.Windows.FrameworkElement.IsInitialized" /> is set to true internally.
+		/// </summary>
+		/// <param name="e">The <see cref="T:System.Windows.RoutedEventArgs" /> that contains the event data.</param>
+		protected override async void OnInitialized(EventArgs e) {
+			base.OnInitialized(e);
+
+			await Task.Yield();
+			this.AddMember("You", this.Channel.Endpoint.PublicEndpoint);
+			await this.ReceiveMessageLoopAsync();
+		}
+
 		private void AddMember(string friendlyName, Endpoint endpoint) {
 			if (this.members.Values.Contains(endpoint)) {
 				throw new InvalidOperationException("That member is already in the chatroom.");
@@ -62,14 +77,6 @@
 
 			this.members.Add(friendlyName, endpoint);
 			this.ChatroomMembersList.Items.Add(friendlyName);
-		}
-
-		protected override async void OnInitialized(EventArgs e) {
-			base.OnInitialized(e);
-
-			await Task.Yield();
-			this.AddMember("You", this.Channel.Endpoint.PublicEndpoint);
-			await this.ReceiveMessageLoopAsync();
 		}
 
 		private async Task ReceiveMessageLoopAsync() {
