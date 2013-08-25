@@ -35,5 +35,28 @@
 			byte[] decryptedPlaintext = this.CryptoProvider.Decrypt(cipherPacket);
 			CollectionAssert.AreEqual(plaintext, decryptedPlaintext);
 		}
+
+		[TestMethod]
+		public void AsymmetricSignatures() {
+			var data = new byte[] { 0x1, 0x2, 0x3 };
+			var tamperedData = new byte[] { 0x1, 0x2, 0x4 };
+			byte[] keyPair, publicKey;
+			this.CryptoProvider.GenerateSigningKeyPair(out keyPair, out publicKey);
+			byte[] signature = this.CryptoProvider.Sign(data, keyPair);
+			Assert.IsTrue(this.CryptoProvider.VerifySignature(publicKey, data, signature));
+			Assert.IsFalse(this.CryptoProvider.VerifySignature(publicKey, tamperedData, signature));
+		}
+
+		[TestMethod]
+		public void AsymmetricSignaturesMinimumSecurity() {
+			var data = new byte[] { 0x1, 0x2, 0x3 };
+			var tamperedData = new byte[] { 0x1, 0x2, 0x4 };
+			byte[] keyPair, publicKey;
+			this.CryptoProvider.ApplySecurityLevel(SecurityLevel.Minimum);
+			this.CryptoProvider.GenerateSigningKeyPair(out keyPair, out publicKey);
+			byte[] signature = this.CryptoProvider.Sign(data, keyPair);
+			Assert.IsTrue(this.CryptoProvider.VerifySignature(publicKey, data, signature));
+			Assert.IsFalse(this.CryptoProvider.VerifySignature(publicKey, tamperedData, signature));
+		}
 	}
 }

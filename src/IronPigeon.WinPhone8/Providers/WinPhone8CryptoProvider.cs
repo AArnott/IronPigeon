@@ -52,7 +52,7 @@
 		public override byte[] Sign(byte[] data, byte[] signingPrivateKey) {
 			using (var rsa = new RSACryptoServiceProvider()) {
 				rsa.ImportCspBlob(signingPrivateKey);
-				return rsa.SignData(data, this.HashAlgorithmName);
+				return rsa.SignData(data, this.GetHashAlgorithm());
 			}
 		}
 
@@ -68,7 +68,7 @@
 		public override bool VerifySignature(byte[] signingPublicKey, byte[] data, byte[] signature) {
 			using (var rsa = new RSACryptoServiceProvider()) {
 				rsa.ImportCspBlob(signingPublicKey);
-				return rsa.VerifyData(data, this.HashAlgorithmName, signature);
+				return rsa.VerifyData(data, this.GetHashAlgorithm(), signature);
 			}
 		}
 
@@ -189,6 +189,20 @@
 						this.SymmetricEncryptionConfiguration.AlgorithmName,
 						this.SymmetricEncryptionConfiguration.BlockMode,
 						this.SymmetricEncryptionConfiguration.Padding));
+		}
+
+		/// <summary>
+		/// Gets the hash algorithm to use.
+		/// </summary>
+		protected virtual HashAlgorithm GetHashAlgorithm() {
+			switch (this.HashAlgorithmName) {
+				case "SHA1":
+					return new SHA1Managed();
+				case "SHA256":
+					return new SHA256Managed();
+				default:
+					throw new NotSupportedException();
+			}
 		}
 	}
 }
