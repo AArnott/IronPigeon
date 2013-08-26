@@ -149,6 +149,10 @@
 		/// </returns>
 		public override byte[] Hash(byte[] data) {
 			using (var hasher = HashAlgorithm.Create(this.HashAlgorithmName)) {
+				if (hasher == null) {
+					throw new NotSupportedException();
+				}
+
 				return hasher.ComputeHash(data);
 			}
 		}

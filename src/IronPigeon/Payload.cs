@@ -12,7 +12,7 @@
 	/// or after they are removed.
 	/// </summary>
 	[DataContract]
-	public class Payload {
+	public class Payload : IEquatable<Payload> {
 		/// <summary>
 		/// Initializes a new instance of the <see cref="Payload" /> class.
 		/// </summary>
@@ -43,5 +43,42 @@
 		/// Gets or sets the location of the payload reference that led to the discovery of this payload.
 		/// </summary>
 		internal Uri PayloadReferenceUri { get; set; }
+
+		/// <summary>
+		/// Indicates whether the current object is equal to another object of the same type.
+		/// </summary>
+		/// <param name="other">An object to compare with this object.</param>
+		/// <returns>
+		/// true if the current object is equal to the <paramref name="other" /> parameter; otherwise, false.
+		/// </returns>
+		public bool Equals(Payload other) {
+			if (other == null) {
+				return false;
+			}
+
+			if (this.ContentType != other.ContentType) {
+				return false;
+			}
+
+			if (this.Content == other.Content) {
+				return true;
+			}
+
+			if (this.Content == null || other.Content == null) {
+				return false;
+			}
+
+			if (this.Content.Length != other.Content.Length) {
+				return false;
+			}
+
+			for (int i = 0; i < this.Content.Length; i++) {
+				if (this.Content[i] != other.Content[i]) {
+					return false;
+				}
+			}
+
+			return true;
+		}
 	}
 }
