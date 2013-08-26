@@ -194,6 +194,8 @@
 		/// <summary>
 		/// Gets the hash algorithm to use.
 		/// </summary>
+		/// <returns>The hash algorithm.</returns>
+		/// <exception cref="System.NotSupportedException">Thrown when the hash algorithm is not recognized or supported.</exception>
 		protected virtual HashAlgorithm GetHashAlgorithm() {
 			switch (this.HashAlgorithmName) {
 				case "SHA1":
