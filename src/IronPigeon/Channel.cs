@@ -244,7 +244,8 @@
 			var plainTextPayloadBuffer = this.CryptoServices.Decrypt(encryptedPayload);
 
 			var plainTextPayloadStream = new MemoryStream(plainTextPayloadBuffer);
-			var signature = await plainTextPayloadStream.ReadSizeAndBufferAsync(cancellationToken);
+			string signingHashAlgorithm = null; //// Encoding.UTF8.GetString(await plainTextPayloadStream.ReadSizeAndBufferAsync(cancellationToken));
+			byte[] signature = await plainTextPayloadStream.ReadSizeAndBufferAsync(cancellationToken);
 			long payloadStartPosition = plainTextPayloadStream.Position;
 			var signedBytes = new byte[plainTextPayloadStream.Length - plainTextPayloadStream.Position];
 			await plainTextPayloadStream.ReadAsync(signedBytes, 0, signedBytes.Length);
@@ -257,8 +258,11 @@
 			var notificationAuthor = Utilities.DeserializeDataContract<Endpoint>(plainTextPayloadReader);
 			var messageReference = Utilities.DeserializeDataContract<PayloadReference>(plainTextPayloadReader);
 			messageReference.ReferenceLocation = inboxItem.Location;
+			if (messageReference.HashAlgorithmName == null) {
+				messageReference.HashAlgorithmName = Utilities.GuessHashAlgorithmFromLength(messageReference.Hash.Length);
+			}
 
-			if (!this.CryptoServices.VerifySignature(notificationAuthor.SigningKeyPublicMaterial, signedBytes, signature)) {
+			if (!this.CryptoServices.VerifySignatureWithTolerantHashAlgorithm(notificationAuthor.SigningKeyPublicMaterial, signedBytes, signature, signingHashAlgorithm)) {
 				throw new InvalidMessageException();
 			}
 
@@ -282,8 +286,7 @@
 			var messageBuffer = await responseMessage.Content.ReadAsByteArrayAsync();
 
 			// Calculate hash of downloaded message and check that it matches the referenced message hash.
-			var messageHash = this.CryptoServices.Hash(messageBuffer);
-			if (!Utilities.AreEquivalent(messageHash, notification.Hash)) {
+			if (!this.CryptoServices.IsHashMatchWithTolerantHashAlgorithm(messageBuffer, notification.Hash, notification.HashAlgorithmName)) {
 				throw new InvalidMessageException();
 			}
 
@@ -326,12 +329,12 @@
 			this.Log("Message symmetric key", encryptionResult.Key);
 			this.Log("Message symmetric IV", encryptionResult.IV);
 
-			var messageHash = this.CryptoServices.Hash(encryptionResult.Ciphertext);
+			var messageHash = this.CryptoServices.Hash(encryptionResult.Ciphertext, this.CryptoServices.SymmetricHashAlgorithmName);
 			this.Log("Encrypted message hash", messageHash);
 
 			using (MemoryStream cipherTextStream = new MemoryStream(encryptionResult.Ciphertext)) {
 				Uri blobUri = await this.CloudBlobStorage.UploadMessageAsync(cipherTextStream, expiresUtc, cancellationToken: cancellationToken);
-				return new PayloadReference(blobUri, messageHash, encryptionResult.Key, encryptionResult.IV, expiresUtc);
+				return new PayloadReference(blobUri, messageHash, this.CryptoServices.SymmetricHashAlgorithmName, encryptionResult.Key, encryptionResult.IV, expiresUtc);
 			}
 		}
 
@@ -386,6 +389,7 @@
 
 			byte[] notificationSignature = this.CryptoServices.Sign(plainTextPayloadStream.ToArray(), this.Endpoint.SigningKeyPrivateMaterial);
 			var signedPlainTextPayloadStream = new MemoryStream((int)plainTextPayloadStream.Length + notificationSignature.Length + 4);
+			////await signedPlainTextPayloadStream.WriteSizeAndBufferAsync(Encoding.UTF8.GetBytes(this.CryptoServices.HashAlgorithmName), cancellationToken);
 			await signedPlainTextPayloadStream.WriteSizeAndBufferAsync(notificationSignature, cancellationToken);
 			plainTextPayloadStream.Position = 0;
 			await plainTextPayloadStream.CopyToAsync(signedPlainTextPayloadStream, 4096, cancellationToken);

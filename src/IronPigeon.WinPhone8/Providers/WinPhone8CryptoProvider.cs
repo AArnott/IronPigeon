@@ -52,7 +52,7 @@
 		public override byte[] Sign(byte[] data, byte[] signingPrivateKey) {
 			using (var rsa = new RSACryptoServiceProvider()) {
 				rsa.ImportCspBlob(signingPrivateKey);
-				return rsa.SignData(data, this.GetHashAlgorithm());
+				return rsa.SignData(data, this.GetHashAlgorithm(this.AsymmetricHashAlgorithmName));
 			}
 		}
 
@@ -62,13 +62,14 @@
 		/// <param name="signingPublicKey">The public key used to verify the signature.</param>
 		/// <param name="data">The data that was signed.</param>
 		/// <param name="signature">The signature.</param>
+		/// <param name="hashAlgorithm">The hash algorithm used to hash the data.</param>
 		/// <returns>
 		/// A value indicating whether the signature is valid.
 		/// </returns>
-		public override bool VerifySignature(byte[] signingPublicKey, byte[] data, byte[] signature) {
+		public override bool VerifySignature(byte[] signingPublicKey, byte[] data, byte[] signature, string hashAlgorithm) {
 			using (var rsa = new RSACryptoServiceProvider()) {
 				rsa.ImportCspBlob(signingPublicKey);
-				return rsa.VerifyData(data, this.GetHashAlgorithm(), signature);
+				return rsa.VerifyData(data, this.GetHashAlgorithm(hashAlgorithm), signature);
 			}
 		}
 
@@ -145,11 +146,12 @@
 		/// Computes the hash of the specified buffer.
 		/// </summary>
 		/// <param name="data">The data to hash.</param>
+		/// <param name="hashAlgorithmName">Name of the hash algorithm.</param>
 		/// <returns>
 		/// The computed hash.
 		/// </returns>
-		public override byte[] Hash(byte[] data) {
-			return DigestUtilities.CalculateDigest(this.HashAlgorithmName, data);
+		public override byte[] Hash(byte[] data, string hashAlgorithmName) {
+			return DigestUtilities.CalculateDigest(hashAlgorithmName, data);
 		}
 
 		/// <summary>
@@ -194,10 +196,11 @@
 		/// <summary>
 		/// Gets the hash algorithm to use.
 		/// </summary>
+		/// <param name="hashAlgorithm">The hash algorithm used to hash the data.</param>
 		/// <returns>The hash algorithm.</returns>
 		/// <exception cref="System.NotSupportedException">Thrown when the hash algorithm is not recognized or supported.</exception>
-		protected virtual HashAlgorithm GetHashAlgorithm() {
-			switch (this.HashAlgorithmName) {
+		protected virtual HashAlgorithm GetHashAlgorithm(string hashAlgorithm) {
+			switch (hashAlgorithm) {
 				case "SHA1":
 					return new SHA1Managed();
 				case "SHA256":

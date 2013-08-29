@@ -24,12 +24,20 @@
 		public static readonly SecurityLevel Minimum = new MinimumLevel();
 
 		/// <summary>
-		/// Gets the name of the hash algorithm.
+		/// Gets the name of the hash algorithm to use for symmetric signatures.
 		/// </summary>
 		/// <value>
 		/// The name of the hash algorithm.
 		/// </value>
-		public abstract string HashAlgorithmName { get; }
+		public abstract string SymmetricHashAlgorithmName { get; }
+
+		/// <summary>
+		/// Gets the name of the hash algorithm to use for asymmetric signatures.
+		/// </summary>
+		/// <value>
+		/// The name of the hash algorithm.
+		/// </value>
+		public abstract string AsymmetricHashAlgorithmName { get; }
 
 		/// <summary>
 		/// Gets the symmetric encryption configuration.
@@ -67,7 +75,8 @@
 		public void Apply(ICryptoProvider cryptoProvider) {
 			Requires.NotNull(cryptoProvider, "cryptoProvider");
 
-			cryptoProvider.HashAlgorithmName = this.HashAlgorithmName;
+			cryptoProvider.SymmetricHashAlgorithmName = this.SymmetricHashAlgorithmName;
+			cryptoProvider.AsymmetricHashAlgorithmName = this.AsymmetricHashAlgorithmName;
 			cryptoProvider.SymmetricEncryptionConfiguration = this.SymmetricEncryptionConfiguration;
 			cryptoProvider.EncryptionAsymmetricKeySize = this.EncryptionAsymmetricKeySize;
 			cryptoProvider.SignatureAsymmetricKeySize = this.SignatureAsymmetricKeySize;
@@ -79,12 +88,22 @@
 		/// </summary>
 		private class MinimumLevel : SecurityLevel {
 			/// <summary>
-			/// Gets the name of the hash algorithm.
+			/// Gets the name of the hash algorithm to use for symmetric signatures.
 			/// </summary>
 			/// <value>
 			/// The name of the hash algorithm.
 			/// </value>
-			public override string HashAlgorithmName {
+			public override string SymmetricHashAlgorithmName {
+				get { return "SHA1"; }
+			}
+
+			/// <summary>
+			/// Gets the name of the hash algorithm to use for asymmetric signatures.
+			/// </summary>
+			/// <value>
+			/// The name of the hash algorithm.
+			/// </value>
+			public override string AsymmetricHashAlgorithmName {
 				get { return "SHA1"; }
 			}
 
@@ -131,13 +150,23 @@
 		/// </summary>
 		private class MaximumLevel : SecurityLevel {
 			/// <summary>
-			/// Gets the name of the hash algorithm.
+			/// Gets the name of the hash algorithm to use for symmetric signatures.
 			/// </summary>
 			/// <value>
 			/// The name of the hash algorithm.
 			/// </value>
-			public override string HashAlgorithmName {
+			public override string SymmetricHashAlgorithmName {
 				get { return "SHA256"; }
+			}
+
+			/// <summary>
+			/// Gets the name of the hash algorithm to use for asymmetric signatures.
+			/// </summary>
+			/// <value>
+			/// The name of the hash algorithm.
+			/// </value>
+			public override string AsymmetricHashAlgorithmName {
+				get { return "SHA1"; } // temporarily while we upgrade older clients
 			}
 
 			/// <summary>

@@ -18,18 +18,21 @@
 		/// </summary>
 		/// <param name="location">The URL where the payload of the message may be downloaded.</param>
 		/// <param name="hash">The hash of the encrypted bytes of the payload.</param>
+		/// <param name="hashAlgorithmName">Name of the hash algorithm.</param>
 		/// <param name="key">The symmetric key used to encrypt the payload.</param>
 		/// <param name="iv">The initialization vector used to encrypt the payload.</param>
 		/// <param name="expiresUtc">The time beyond which the payload is expected to be deleted.</param>
-		public PayloadReference(Uri location, byte[] hash, byte[] key, byte[] iv, DateTime expiresUtc) {
+		public PayloadReference(Uri location, byte[] hash, string hashAlgorithmName, byte[] key, byte[] iv, DateTime expiresUtc) {
 			Requires.NotNull(location, "location");
 			Requires.NotNullOrEmpty(hash, "hash");
+			Requires.NotNullOrEmpty(hashAlgorithmName, "hashAlgorithmName");
 			Requires.NotNullOrEmpty(key, "key");
 			Requires.NotNullOrEmpty(iv, "iv");
 			Requires.That(expiresUtc.Kind == DateTimeKind.Utc, "expiresUtc", Strings.UTCTimeRequired);
 
 			this.Location = location;
 			this.Hash = hash;
+			this.HashAlgorithmName = hashAlgorithmName;
 			this.Key = key;
 			this.IV = iv;
 			this.ExpiresUtc = expiresUtc;
@@ -50,6 +53,13 @@
 		/// </remarks>
 		[DataMember]
 		public byte[] Hash { get; private set; }
+
+		/// <summary>
+		/// Gets or sets the name of the hash algorithm used to sign the message's encrypted bytes.
+		/// </summary>
+		/// <value>May be <c>null</c> for older remote parties.</value>
+		[DataMember]
+		public string HashAlgorithmName { get; set; }
 
 		/// <summary>
 		/// Gets the material to reconstruct the symmetric key to decrypt the referenced message.

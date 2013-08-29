@@ -25,6 +25,12 @@
 		public byte[] SerializedEndpoint { get; set; }
 
 		/// <summary>
+		/// Gets or sets the hash algorithm used to sign the serialized endpoint.
+		/// </summary>
+		[DataMember]
+		public string HashAlgorithmName { get; set; }
+
+		/// <summary>
 		/// Gets or sets the signature of the <see cref="SerializedEndpoint"/> bytes,
 		/// as signed by the private counterpart to the 
 		/// public key stored in <see cref="Endpoint.SigningKeyPublicMaterial"/>.
@@ -57,7 +63,7 @@
 			}
 
 			try {
-				if (!cryptoProvider.VerifySignature(endpoint.SigningKeyPublicMaterial, this.SerializedEndpoint, this.Signature)) {
+				if (!cryptoProvider.VerifySignatureWithTolerantHashAlgorithm(endpoint.SigningKeyPublicMaterial, this.SerializedEndpoint, this.Signature, this.HashAlgorithmName)) {
 					throw new BadAddressBookEntryException(Strings.AddressBookEntrySignatureDoesNotMatch);
 				}
 			} catch (Exception ex) { // all those platform-specific exceptions that aren't available to portable libraries.

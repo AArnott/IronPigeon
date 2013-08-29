@@ -19,12 +19,12 @@
 			this.logger = new Mocks.LoggerMock();
 		}
 
-		[Fact(Skip = "Currently fails")]
+		[Fact]
 		public async Task CrossSecurityLevelAddressBookExchange() {
-			var lowLevelCrypto = new DesktopCryptoProvider(SecurityLevel.Minimum);
+			var lowLevelCrypto = new DesktopCryptoProvider(new Level1());
 			var lowLevelEndpoint = Valid.GenerateOwnEndpoint(lowLevelCrypto);
 
-			var highLevelCrypto = new DesktopCryptoProvider(new SlightlyAboveMinimumSecurity());
+			var highLevelCrypto = new DesktopCryptoProvider(new Level2());
 			var highLevelEndpoint = Valid.GenerateOwnEndpoint(highLevelCrypto);
 
 			await this.TestSendAndReceiveAsync(lowLevelCrypto, lowLevelEndpoint, highLevelCrypto, highLevelEndpoint);
@@ -90,18 +90,88 @@
 		}
 
 		/// <summary>
-		/// A custom security level that is enough different from minimum that any 
-		/// interop issues should come up, but close enough to minimum that the tests
-		/// don't waste time needlessly generating very strong keys.
+		/// A security level using SHA1 and RSA keys just under 1024 in size.
 		/// </summary>
-		private class SlightlyAboveMinimumSecurity : SecurityLevel {
+		private class Level1 : SecurityLevel {
 			/// <summary>
-			/// Gets the name of the hash algorithm.
+			/// Gets the name of the hash algorithm to use for symmetric signatures.
 			/// </summary>
 			/// <value>
 			/// The name of the hash algorithm.
 			/// </value>
-			public override string HashAlgorithmName {
+			public override string SymmetricHashAlgorithmName {
+				get { return "SHA1"; }
+			}
+
+			/// <summary>
+			/// Gets the name of the hash algorithm to use for asymmetric signatures.
+			/// </summary>
+			/// <value>
+			/// The name of the hash algorithm.
+			/// </value>
+			public override string AsymmetricHashAlgorithmName {
+				get { return "SHA1"; }
+			}
+
+			/// <summary>
+			/// Gets the name of the symmetric algorithm to use.
+			/// </summary>
+			public override EncryptionConfiguration SymmetricEncryptionConfiguration {
+				get { return new EncryptionConfiguration("Rijndael", "CBC", "PKCS7"); }
+			}
+
+			/// <summary>
+			/// Gets the size of the encryption asymmetric key.
+			/// </summary>
+			/// <value>
+			/// The size of the encryption asymmetric key.
+			/// </value>
+			public override int EncryptionAsymmetricKeySize {
+				get { return 1016; }
+			}
+
+			/// <summary>
+			/// Gets the size of the signature asymmetric key.
+			/// </summary>
+			/// <value>
+			/// The size of the signature asymmetric key.
+			/// </value>
+			public override int SignatureAsymmetricKeySize {
+				get { return 1016; }
+			}
+
+			/// <summary>
+			/// Gets the size of the BLOB symmetric key.
+			/// </summary>
+			/// <value>
+			/// The size of the BLOB symmetric key.
+			/// </value>
+			public override int BlobSymmetricKeySize {
+				get { return 128; }
+			}
+		}
+
+		/// <summary>
+		/// A security level using SHA156 and RSA keys of 1024 in size.
+		/// </summary>
+		private class Level2 : SecurityLevel {
+			/// <summary>
+			/// Gets the name of the hash algorithm to use for symmetric signatures.
+			/// </summary>
+			/// <value>
+			/// The name of the hash algorithm.
+			/// </value>
+			public override string SymmetricHashAlgorithmName {
+				get { return "SHA256"; }
+			}
+
+			/// <summary>
+			/// Gets the name of the hash algorithm to use for asymmetric signatures.
+			/// </summary>
+			/// <value>
+			/// The name of the hash algorithm.
+			/// </value>
+			public override string AsymmetricHashAlgorithmName {
 				get { return "SHA256"; }
 			}
 
