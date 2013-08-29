@@ -23,7 +23,7 @@
 
 		[TestMethod]
 		public void HashAlgorithmName() {
-			Assert.AreEqual("SHA256", this.provider.HashAlgorithmName); // default
+			Assert.AreEqual("SHA1", this.provider.HashAlgorithmName); // default
 			this.provider.HashAlgorithmName = "SHA111";
 			Assert.AreEqual("SHA111", this.provider.HashAlgorithmName);
 		}
