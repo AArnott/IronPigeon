@@ -137,7 +137,8 @@
 			/// The name of the hash algorithm.
 			/// </value>
 			public override string HashAlgorithmName {
-				get { return "SHA256"; }
+				get { return "SHA1"; }
+				////get { return "SHA256"; } // temporarily not used while older clients get upgraded.
 			}
 
 			/// <summary>
