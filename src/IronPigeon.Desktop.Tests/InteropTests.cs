@@ -94,12 +94,22 @@
 		/// </summary>
 		private class Level1 : SecurityLevel {
 			/// <summary>
-			/// Gets the name of the hash algorithm.
+			/// Gets the name of the hash algorithm to use for symmetric signatures.
 			/// </summary>
 			/// <value>
 			/// The name of the hash algorithm.
 			/// </value>
-			public override string HashAlgorithmName {
+			public override string SymmetricHashAlgorithmName {
+				get { return "SHA1"; }
+			}
+
+			/// <summary>
+			/// Gets the name of the hash algorithm to use for asymmetric signatures.
+			/// </summary>
+			/// <value>
+			/// The name of the hash algorithm.
+			/// </value>
+			public override string AsymmetricHashAlgorithmName {
 				get { return "SHA1"; }
 			}
 
@@ -146,12 +156,22 @@
 		/// </summary>
 		private class Level2 : SecurityLevel {
 			/// <summary>
-			/// Gets the name of the hash algorithm.
+			/// Gets the name of the hash algorithm to use for symmetric signatures.
 			/// </summary>
 			/// <value>
 			/// The name of the hash algorithm.
 			/// </value>
-			public override string HashAlgorithmName {
+			public override string SymmetricHashAlgorithmName {
+				get { return "SHA256"; }
+			}
+
+			/// <summary>
+			/// Gets the name of the hash algorithm to use for asymmetric signatures.
+			/// </summary>
+			/// <value>
+			/// The name of the hash algorithm.
+			/// </value>
+			public override string AsymmetricHashAlgorithmName {
 				get { return "SHA256"; }
 			}
 

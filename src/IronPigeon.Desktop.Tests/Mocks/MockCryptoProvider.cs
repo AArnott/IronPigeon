@@ -11,7 +11,12 @@
 
 		#region ICryptoProvider Members
 
-		public string HashAlgorithmName {
+		public string SymmetricHashAlgorithmName {
+			get { return "mock"; }
+			set { throw new NotSupportedException(); }
+		}
+
+		public string AsymmetricHashAlgorithmName {
 			get { return "mock"; }
 			set { throw new NotSupportedException(); }
 		}

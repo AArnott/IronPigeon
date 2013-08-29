@@ -34,7 +34,7 @@
 		/// The signature.
 		/// </returns>
 		public override byte[] Sign(byte[] data, byte[] signingPrivateKey) {
-			var signer = this.GetSignatureProvider(this.HashAlgorithmName);
+			var signer = this.GetSignatureProvider(this.AsymmetricHashAlgorithmName);
 			var key = signer.ImportKeyPair(signingPrivateKey.ToBuffer());
 			var signatureBuffer = CryptographicEngine.Sign(key, data.ToBuffer());
 			return signatureBuffer.ToArray();
@@ -134,7 +134,7 @@
 		/// <param name="keyPair">Receives the serialized key pair (includes private key).</param>
 		/// <param name="publicKey">Receives the public key.</param>
 		public override void GenerateSigningKeyPair(out byte[] keyPair, out byte[] publicKey) {
-			var signer = this.GetSignatureProvider(this.HashAlgorithmName);
+			var signer = this.GetSignatureProvider(this.AsymmetricHashAlgorithmName);
 			var key = signer.CreateKeyPair((uint)this.SignatureAsymmetricKeySize);
 			keyPair = key.Export().ToArray();
 			publicKey = key.ExportPublicKey(CryptographicPublicKeyBlobType.Capi1PublicKey).ToArray();

@@ -21,7 +21,7 @@
 			Requires.NotNull(cryptoProvider, "cryptoProvider");
 			Requires.NotNull(buffer, "buffer");
 
-			var hash = cryptoProvider.Hash(buffer, cryptoProvider.HashAlgorithmName);
+			var hash = cryptoProvider.Hash(buffer, cryptoProvider.SymmetricHashAlgorithmName);
 			return Utilities.ToBase64WebSafe(hash);
 		}
 

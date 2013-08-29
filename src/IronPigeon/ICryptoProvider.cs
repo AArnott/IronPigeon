@@ -4,9 +4,14 @@
 	/// </summary>
 	public interface ICryptoProvider {
 		/// <summary>
-		/// Gets or sets the name of the hash algorithm to use.
+		/// Gets or sets the name of the hash algorithm to use for symmetric signatures.
 		/// </summary>
-		string HashAlgorithmName { get; set; }
+		string SymmetricHashAlgorithmName { get; set; }
+
+		/// <summary>
+		/// Gets or sets the name of the algorithm to use for asymmetric signatures.
+		/// </summary>
+		string AsymmetricHashAlgorithmName { get; set; }
 
 		/// <summary>
 		/// Gets or sets the configuration to use for symmetric encryption.

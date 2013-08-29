@@ -11,10 +11,16 @@
 	/// </summary>
 	public abstract class CryptoProviderBase : ICryptoProvider {
 		/// <summary>
-		/// Backing field for the <see cref="HashAlgorithmName"/> property.
+		/// Backing field for the <see cref="SymmetricHashAlgorithmName"/> property.
 		/// </summary>
 		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
-		private string hashAlgorithmName = SecurityLevel.Maximum.HashAlgorithmName;
+		private string symmetricHashAlgorithmName = SecurityLevel.Maximum.SymmetricHashAlgorithmName;
+
+		/// <summary>
+		/// Backing field for the <see cref="AsymmetricHashAlgorithmName"/> property.
+		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
+		private string asymmetricHashAlgorithmName = SecurityLevel.Maximum.AsymmetricHashAlgorithmName;
 
 		/// <summary>
 		/// Backing field for the <see cref="SymmetricEncryptionConfiguration"/> property.
@@ -41,11 +47,19 @@
 		private int blobSymmetricKeySize = SecurityLevel.Maximum.BlobSymmetricKeySize;
 
 		/// <summary>
-		/// Gets or sets the name of the hash algorithm to use.
+		/// Gets or sets the name of the hash algorithm to use for symmetric signatures.
 		/// </summary>
-		public string HashAlgorithmName {
-			get { return this.hashAlgorithmName; }
-			set { this.hashAlgorithmName = value; }
+		public string SymmetricHashAlgorithmName {
+			get { return this.symmetricHashAlgorithmName; }
+			set { this.symmetricHashAlgorithmName = value; }
+		}
+
+		/// <summary>
+		/// Gets or sets the name of the algorithm to use for asymmetric signatures.
+		/// </summary>
+		public string AsymmetricHashAlgorithmName {
+			get { return this.asymmetricHashAlgorithmName; }
+			set { this.asymmetricHashAlgorithmName = value; }
 		}
 
 		/// <summary>

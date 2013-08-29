@@ -329,12 +329,12 @@
 			this.Log("Message symmetric key", encryptionResult.Key);
 			this.Log("Message symmetric IV", encryptionResult.IV);
 
-			var messageHash = this.CryptoServices.Hash(encryptionResult.Ciphertext, this.CryptoServices.HashAlgorithmName);
+			var messageHash = this.CryptoServices.Hash(encryptionResult.Ciphertext, this.CryptoServices.SymmetricHashAlgorithmName);
 			this.Log("Encrypted message hash", messageHash);
 
 			using (MemoryStream cipherTextStream = new MemoryStream(encryptionResult.Ciphertext)) {
 				Uri blobUri = await this.CloudBlobStorage.UploadMessageAsync(cipherTextStream, expiresUtc, cancellationToken: cancellationToken);
-				return new PayloadReference(blobUri, messageHash, this.CryptoServices.HashAlgorithmName, encryptionResult.Key, encryptionResult.IV, expiresUtc);
+				return new PayloadReference(blobUri, messageHash, this.CryptoServices.SymmetricHashAlgorithmName, encryptionResult.Key, encryptionResult.IV, expiresUtc);
 			}
 		}
 

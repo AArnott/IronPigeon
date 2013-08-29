@@ -52,7 +52,7 @@
 		public override byte[] Sign(byte[] data, byte[] signingPrivateKey) {
 			using (var rsa = new RSACryptoServiceProvider()) {
 				rsa.ImportCspBlob(signingPrivateKey);
-				return rsa.SignData(data, this.GetHashAlgorithm(this.HashAlgorithmName));
+				return rsa.SignData(data, this.GetHashAlgorithm(this.AsymmetricHashAlgorithmName));
 			}
 		}
 
