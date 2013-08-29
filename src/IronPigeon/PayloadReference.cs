@@ -57,6 +57,7 @@
 		/// <summary>
 		/// Gets or sets the name of the hash algorithm used to sign the message's encrypted bytes.
 		/// </summary>
+		/// <value>May be <c>null</c> for older remote parties.</value>
 		[DataMember]
 		public string HashAlgorithmName { get; set; }
 

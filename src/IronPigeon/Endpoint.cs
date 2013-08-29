@@ -38,12 +38,6 @@
 		public byte[] SigningKeyPublicMaterial { get; set; }
 
 		/// <summary>
-		/// Gets or sets the name of the hash algorithm used in signing.
-		/// </summary>
-		[DataMember]
-		public string HashAlgorithmName { get; set; }
-
-		/// <summary>
 		/// Gets or sets the key material for the public key used to encrypt messages for this contact.
 		/// </summary>
 		[DataMember]
@@ -107,8 +101,7 @@
 
 			return this.MessageReceivingEndpoint == other.MessageReceivingEndpoint
 				&& Utilities.AreEquivalent(this.SigningKeyPublicMaterial, other.SigningKeyPublicMaterial)
-				&& Utilities.AreEquivalent(this.EncryptionKeyPublicMaterial, other.EncryptionKeyPublicMaterial)
-				&& this.HashAlgorithmName == other.HashAlgorithmName;
+				&& Utilities.AreEquivalent(this.EncryptionKeyPublicMaterial, other.EncryptionKeyPublicMaterial);
 		}
 	}
 }

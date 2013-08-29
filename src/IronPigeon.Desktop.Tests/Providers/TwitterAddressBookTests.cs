@@ -27,7 +27,7 @@
 			Assert.That(endpoint, Is.Null);
 		}
 
-		[Test, Ignore("Old address book entry online needs to be updated.")]
+		[Test]
 		public void LookupEntryAsyncExistingUser() {
 			this.twitter.CryptoServices.ApplySecurityLevel(SecurityLevel.Maximum);
 			var endpoint = this.twitter.LookupAsync("@PrivacyNotFound").Result;

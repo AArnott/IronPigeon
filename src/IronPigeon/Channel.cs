@@ -244,8 +244,7 @@
 			var plainTextPayloadBuffer = this.CryptoServices.Decrypt(encryptedPayload);
 
 			var plainTextPayloadStream = new MemoryStream(plainTextPayloadBuffer);
-			byte[] nextBuffer = await plainTextPayloadStream.ReadSizeAndBufferAsync(cancellationToken);
-			string signingHashAlgorithm = Encoding.UTF8.GetString(nextBuffer);
+			////string signingHashAlgorithm = Encoding.UTF8.GetString(await plainTextPayloadStream.ReadSizeAndBufferAsync(cancellationToken));
 			byte[] signature = await plainTextPayloadStream.ReadSizeAndBufferAsync(cancellationToken);
 			long payloadStartPosition = plainTextPayloadStream.Position;
 			var signedBytes = new byte[plainTextPayloadStream.Length - plainTextPayloadStream.Position];
@@ -263,7 +262,7 @@
 				messageReference.HashAlgorithmName = Utilities.GuessHashAlgorithmFromLength(messageReference.Hash.Length);
 			}
 
-			if (!this.CryptoServices.VerifySignature(notificationAuthor.SigningKeyPublicMaterial, signedBytes, signature, signingHashAlgorithm)) {
+			if (!this.CryptoServices.VerifySignatureWithTolerantHashAlgorithm(notificationAuthor.SigningKeyPublicMaterial, signedBytes, signature, null)) {
 				throw new InvalidMessageException();
 			}
 
@@ -287,8 +286,7 @@
 			var messageBuffer = await responseMessage.Content.ReadAsByteArrayAsync();
 
 			// Calculate hash of downloaded message and check that it matches the referenced message hash.
-			var messageHash = this.CryptoServices.Hash(messageBuffer, notification.HashAlgorithmName);
-			if (!Utilities.AreEquivalent(messageHash, notification.Hash)) {
+			if (!this.CryptoServices.IsHashMatchWithTolerantHashAlgorithm(messageBuffer, notification.Hash, notification.HashAlgorithmName)) {
 				throw new InvalidMessageException();
 			}
 
@@ -391,7 +389,7 @@
 
 			byte[] notificationSignature = this.CryptoServices.Sign(plainTextPayloadStream.ToArray(), this.Endpoint.SigningKeyPrivateMaterial);
 			var signedPlainTextPayloadStream = new MemoryStream((int)plainTextPayloadStream.Length + notificationSignature.Length + 4);
-			await signedPlainTextPayloadStream.WriteSizeAndBufferAsync(Encoding.UTF8.GetBytes(this.CryptoServices.HashAlgorithmName), cancellationToken);
+			////await signedPlainTextPayloadStream.WriteSizeAndBufferAsync(Encoding.UTF8.GetBytes(this.CryptoServices.HashAlgorithmName), cancellationToken);
 			await signedPlainTextPayloadStream.WriteSizeAndBufferAsync(notificationSignature, cancellationToken);
 			plainTextPayloadStream.Position = 0;
 			await plainTextPayloadStream.CopyToAsync(signedPlainTextPayloadStream, 4096, cancellationToken);
