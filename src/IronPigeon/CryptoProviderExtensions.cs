@@ -45,16 +45,26 @@
 			return Utilities.AreEquivalent(actualThumbprint, allegedThumbprint);
 		}
 
-		internal static bool IsHashMatchWithTolerantHashAlgorithm(this ICryptoProvider cryptoProvider, byte[] data, byte[] expectedHash, string hashAlgorithm) {
+		/// <summary>
+		/// Computes the hash of the specified buffer and checks for a match to an expected hash.
+		/// </summary>
+		/// <param name="cryptoProvider">The crypto provider.</param>
+		/// <param name="data">The data to hash.</param>
+		/// <param name="expectedHash">The expected hash.</param>
+		/// <param name="hashAlgorithmName">Name of the hash algorithm. If <c>null</c>, the algorithm is guessed from the length of the hash.</param>
+		/// <returns>
+		/// <c>true</c> if the hashes came out equal; <c>false</c> otherwise.
+		/// </returns>
+		internal static bool IsHashMatchWithTolerantHashAlgorithm(this ICryptoProvider cryptoProvider, byte[] data, byte[] expectedHash, string hashAlgorithmName) {
 			Requires.NotNull(cryptoProvider, "cryptoProvider");
 			Requires.NotNull(data, "data");
 			Requires.NotNull(expectedHash, "expectedHash");
 
-			if (hashAlgorithm == null) {
-				hashAlgorithm = Utilities.GuessHashAlgorithmFromLength(expectedHash.Length);
+			if (hashAlgorithmName == null) {
+				hashAlgorithmName = Utilities.GuessHashAlgorithmFromLength(expectedHash.Length);
 			}
 
-			byte[] actualHash = cryptoProvider.Hash(data, hashAlgorithm);
+			byte[] actualHash = cryptoProvider.Hash(data, hashAlgorithmName);
 			return Utilities.AreEquivalent(expectedHash, actualHash);
 		}
 
