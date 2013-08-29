@@ -96,10 +96,11 @@
 		/// <param name="signingPublicKey">The public key used to verify the signature.</param>
 		/// <param name="data">The data that was signed.</param>
 		/// <param name="signature">The signature.</param>
+		/// <param name="hashAlgorithm">The hash algorithm used to hash the data.</param>
 		/// <returns>
 		/// A value indicating whether the signature is valid.
 		/// </returns>
-		public abstract bool VerifySignature(byte[] signingPublicKey, byte[] data, byte[] signature);
+		public abstract bool VerifySignature(byte[] signingPublicKey, byte[] data, byte[] signature, string hashAlgorithm);
 
 		/// <summary>
 		/// Symmetrically encrypts the specified buffer using a randomly generated key.
@@ -143,10 +144,11 @@
 		/// Computes the hash of the specified buffer.
 		/// </summary>
 		/// <param name="data">The data to hash.</param>
+		/// <param name="hashAlgorithmName">Name of the hash algorithm.</param>
 		/// <returns>
 		/// The computed hash.
 		/// </returns>
-		public abstract byte[] Hash(byte[] data);
+		public abstract byte[] Hash(byte[] data, string hashAlgorithmName);
 
 		/// <summary>
 		/// Generates a key pair for asymmetric cryptography.

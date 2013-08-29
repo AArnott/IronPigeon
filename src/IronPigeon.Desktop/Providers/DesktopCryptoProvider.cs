@@ -53,13 +53,14 @@
 		/// <param name="signingPublicKey">The public key used to verify the signature.</param>
 		/// <param name="data">The data that was signed.</param>
 		/// <param name="signature">The signature.</param>
+		/// <param name="hashAlgorithm">The hash algorithm used to hash the data.</param>
 		/// <returns>
 		/// A value indicating whether the signature is valid.
 		/// </returns>
-		public override bool VerifySignature(byte[] signingPublicKey, byte[] data, byte[] signature) {
+		public override bool VerifySignature(byte[] signingPublicKey, byte[] data, byte[] signature, string hashAlgorithm) {
 			using (var rsa = new RSACryptoServiceProvider()) {
 				rsa.ImportCspBlob(signingPublicKey);
-				return rsa.VerifyData(data, this.HashAlgorithmName, signature);
+				return rsa.VerifyData(data, hashAlgorithm, signature);
 			}
 		}
 
@@ -144,11 +145,12 @@
 		/// Computes the hash of the specified buffer.
 		/// </summary>
 		/// <param name="data">The data to hash.</param>
+		/// <param name="hashAlgorithmName">Name of the hash algorithm.</param>
 		/// <returns>
 		/// The computed hash.
 		/// </returns>
-		public override byte[] Hash(byte[] data) {
-			using (var hasher = HashAlgorithm.Create(this.HashAlgorithmName)) {
+		public override byte[] Hash(byte[] data, string hashAlgorithmName) {
+			using (var hasher = HashAlgorithm.Create(hashAlgorithmName)) {
 				if (hasher == null) {
 					throw new NotSupportedException();
 				}

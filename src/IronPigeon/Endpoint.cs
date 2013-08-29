@@ -17,7 +17,7 @@
 	/// </summary>
 	[DataContract]
 	[DebuggerDisplay("{MessageReceivingEndpoint}")]
-	public class Endpoint {
+	public class Endpoint : IEquatable<Endpoint> {
 		/// <summary>
 		/// Initializes a new instance of the <see cref="Endpoint"/> class.
 		/// </summary>
@@ -36,6 +36,12 @@
 		/// </summary>
 		[DataMember]
 		public byte[] SigningKeyPublicMaterial { get; set; }
+
+		/// <summary>
+		/// Gets or sets the name of the hash algorithm used in signing.
+		/// </summary>
+		[DataMember]
+		public string HashAlgorithmName { get; set; }
 
 		/// <summary>
 		/// Gets or sets the key material for the public key used to encrypt messages for this contact.
@@ -74,14 +80,7 @@
 		///   <c>true</c> if the specified <see cref="System.Object" /> is equal to this instance; otherwise, <c>false</c>.
 		/// </returns>
 		public override bool Equals(object obj) {
-			var other = obj as Endpoint;
-			if (other == null) {
-				return false;
-			}
-
-			return this.MessageReceivingEndpoint == other.MessageReceivingEndpoint
-				&& Utilities.AreEquivalent(this.SigningKeyPublicMaterial, other.SigningKeyPublicMaterial)
-				&& Utilities.AreEquivalent(this.EncryptionKeyPublicMaterial, other.EncryptionKeyPublicMaterial);
+			return this.Equals(obj as Endpoint);
 		}
 
 		/// <summary>
@@ -92,6 +91,24 @@
 		/// </returns>
 		public override int GetHashCode() {
 			return this.MessageReceivingEndpoint != null ? this.MessageReceivingEndpoint.GetHashCode() : 0;
+		}
+
+		/// <summary>
+		/// Indicates whether the current object is equal to another object of the same type.
+		/// </summary>
+		/// <param name="other">An object to compare with this object.</param>
+		/// <returns>
+		/// true if the current object is equal to the <paramref name="other" /> parameter; otherwise, false.
+		/// </returns>
+		public bool Equals(Endpoint other) {
+			if (other == null) {
+				return false;
+			}
+
+			return this.MessageReceivingEndpoint == other.MessageReceivingEndpoint
+				&& Utilities.AreEquivalent(this.SigningKeyPublicMaterial, other.SigningKeyPublicMaterial)
+				&& Utilities.AreEquivalent(this.EncryptionKeyPublicMaterial, other.EncryptionKeyPublicMaterial)
+				&& this.HashAlgorithmName == other.HashAlgorithmName;
 		}
 	}
 }

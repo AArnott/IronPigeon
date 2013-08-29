@@ -52,12 +52,15 @@
 			Endpoint endpoint;
 			try {
 				endpoint = reader.DeserializeDataContract<Endpoint>();
+				if (endpoint.HashAlgorithmName == null) {
+					throw new BadAddressBookEntryException("Incompatible old version of address book entry.");
+				}
 			} catch (SerializationException ex) {
 				throw new BadAddressBookEntryException(ex.Message, ex);
 			}
 
 			try {
-				if (!cryptoProvider.VerifySignature(endpoint.SigningKeyPublicMaterial, this.SerializedEndpoint, this.Signature)) {
+				if (!cryptoProvider.VerifySignature(endpoint.SigningKeyPublicMaterial, this.SerializedEndpoint, this.Signature, endpoint.HashAlgorithmName)) {
 					throw new BadAddressBookEntryException(Strings.AddressBookEntrySignatureDoesNotMatch);
 				}
 			} catch (Exception ex) { // all those platform-specific exceptions that aren't available to portable libraries.

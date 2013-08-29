@@ -114,6 +114,7 @@
 			var contact = new Endpoint() {
 				EncryptionKeyPublicMaterial = publicEncryptionKey,
 				SigningKeyPublicMaterial = publicSigningKey,
+				HashAlgorithmName = this.CryptoProvider.HashAlgorithmName,
 			};
 
 			var ownContact = new OwnEndpoint(contact, privateSigningKey, privateEncryptionKey);

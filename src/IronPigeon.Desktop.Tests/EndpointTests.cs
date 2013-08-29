@@ -27,6 +27,7 @@
 			contact1.MessageReceivingEndpoint = Valid.PublicEndpoint.MessageReceivingEndpoint;
 			contact1.SigningKeyPublicMaterial = Valid.PublicEndpoint.SigningKeyPublicMaterial;
 			contact1.EncryptionKeyPublicMaterial = Valid.PublicEndpoint.EncryptionKeyPublicMaterial;
+			contact1.HashAlgorithmName = Valid.PublicEndpoint.HashAlgorithmName;
 			Assert.That(contact1, Is.EqualTo(Valid.PublicEndpoint));
 
 			contact1.MessageReceivingEndpoint = null;

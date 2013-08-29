@@ -43,8 +43,8 @@
 			byte[] keyPair, publicKey;
 			this.CryptoProvider.GenerateSigningKeyPair(out keyPair, out publicKey);
 			byte[] signature = this.CryptoProvider.Sign(data, keyPair);
-			Assert.IsTrue(this.CryptoProvider.VerifySignature(publicKey, data, signature));
-			Assert.IsFalse(this.CryptoProvider.VerifySignature(publicKey, tamperedData, signature));
+			Assert.IsTrue(this.CryptoProvider.VerifySignature(publicKey, data, signature, this.CryptoProvider.HashAlgorithmName));
+			Assert.IsFalse(this.CryptoProvider.VerifySignature(publicKey, tamperedData, signature, this.CryptoProvider.HashAlgorithmName));
 		}
 
 		[TestMethod]
@@ -55,8 +55,8 @@
 			this.CryptoProvider.ApplySecurityLevel(SecurityLevel.Minimum);
 			this.CryptoProvider.GenerateSigningKeyPair(out keyPair, out publicKey);
 			byte[] signature = this.CryptoProvider.Sign(data, keyPair);
-			Assert.IsTrue(this.CryptoProvider.VerifySignature(publicKey, data, signature));
-			Assert.IsFalse(this.CryptoProvider.VerifySignature(publicKey, tamperedData, signature));
+			Assert.IsTrue(this.CryptoProvider.VerifySignature(publicKey, data, signature, this.CryptoProvider.HashAlgorithmName));
+			Assert.IsFalse(this.CryptoProvider.VerifySignature(publicKey, tamperedData, signature, this.CryptoProvider.HashAlgorithmName));
 		}
 	}
 }
