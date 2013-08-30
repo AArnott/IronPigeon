@@ -27,17 +27,17 @@
 		}
 
 		/// <summary>
-		/// Gets the blob that constitutes the payload.
+		/// Gets or sets the blob that constitutes the payload.
 		/// </summary>
 		[DataMember]
-		public byte[] Content { get; private set; }
+		public byte[] Content { get; set; }
 
 		/// <summary>
-		/// Gets the content-type that describes the type of data that is
+		/// Gets or sets the content-type that describes the type of data that is
 		/// serialized in the <see cref="Content"/> property.
 		/// </summary>
 		[DataMember]
-		public string ContentType { get; private set; }
+		public string ContentType { get; set; }
 
 		/// <summary>
 		/// Gets or sets the location of the payload reference that led to the discovery of this payload.
