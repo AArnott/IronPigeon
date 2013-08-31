@@ -184,6 +184,7 @@
 			} while (longPoll && blobs.Count == 0);
 
 			var list = new IncomingList() { Items = blobs };
+			this.Response.CacheControl = "no-cache"; // Help prevent clients such as WP8 from caching the result since they operate on it, then call us again
 			return new JsonResult() {
 				Data = list,
 				JsonRequestBehavior = JsonRequestBehavior.AllowGet

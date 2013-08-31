@@ -505,6 +505,18 @@
 
 			var request = new HttpRequestMessage(HttpMethod.Get, location);
 			request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", bearerToken);
+
+			// Aggressively disable caching since WP8 is rather aggressive at enabling it.
+			// Disabling is important because this method is used to retrieve inbox items,
+			// and in processing them, the clients tend to delete inbox items from the server
+			// which would change the output of a future request to the server with the same URL.
+			// But if a cached result is used instead of a real request to the server then we get
+			// the same result back.
+			// The no-cache headers don't seem to impact the client at all, but perhaps they prevent any intermediaries from caching?
+			request.Headers.CacheControl = new CacheControlHeaderValue() { NoCache = true };
+			request.Headers.Pragma.Add(new NameValueHeaderValue("no-cache"));
+			request.Headers.IfModifiedSince = DateTime.UtcNow; // This last one seems to be the trick that actually works.
+
 			return httpClient.SendAsync(request, cancellationToken);
 		}
 
