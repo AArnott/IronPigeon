@@ -10,6 +10,7 @@
 	using System.Runtime.Serialization;
 	using System.Runtime.Serialization.Json;
 	using System.Text;
+	using System.Threading;
 	using System.Threading.Tasks;
 	using Validation;
 
@@ -40,10 +41,11 @@
 		/// Shortens the specified long URL.
 		/// </summary>
 		/// <param name="longUrl">The long URL.</param>
+		/// <param name="cancellationToken">The cancellation token.</param>
 		/// <returns>
 		/// The short URL.
 		/// </returns>
-		public async Task<Uri> ShortenAsync(Uri longUrl) {
+		public async Task<Uri> ShortenAsync(Uri longUrl, CancellationToken cancellationToken) {
 			Requires.NotNull(longUrl, "longUrl");
 
 			var requestSerializer = new DataContractJsonSerializer(typeof(ShortenRequest));
@@ -54,7 +56,7 @@
 			var requestContent = new StreamContent(requestStream);
 			requestContent.Headers.ContentType = new MediaTypeHeaderValue("application/json");
 
-			var postResponse = await this.HttpClient.PostAsync(ShorteningService, requestContent);
+			var postResponse = await this.HttpClient.PostAsync(ShorteningService, requestContent, cancellationToken);
 
 			postResponse.EnsureSuccessStatusCode();
 			var responseStream = await postResponse.Content.ReadAsStreamAsync();

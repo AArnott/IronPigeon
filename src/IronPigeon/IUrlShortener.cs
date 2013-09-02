@@ -3,6 +3,7 @@
 	using System.Collections.Generic;
 	using System.Linq;
 	using System.Text;
+	using System.Threading;
 	using System.Threading.Tasks;
 
 	/// <summary>
@@ -13,7 +14,10 @@
 		/// Shortens the specified long URL.
 		/// </summary>
 		/// <param name="longUrl">The long URL.</param>
-		/// <returns>The short URL.</returns>
-		Task<Uri> ShortenAsync(Uri longUrl);
+		/// <param name="cancellationToken">The cancellation token.</param>
+		/// <returns>
+		/// A task whose result is the shortened URL.
+		/// </returns>
+		Task<Uri> ShortenAsync(Uri longUrl, CancellationToken cancellationToken = default(CancellationToken));
 	}
 }
