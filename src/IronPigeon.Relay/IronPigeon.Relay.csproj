@@ -264,6 +264,9 @@
   <ItemGroup>
     <Content Include="Views\Privacy\Index.cshtml" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Views\AddressBook\DeepLinkRedirect.cshtml" />
+  </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
     <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>

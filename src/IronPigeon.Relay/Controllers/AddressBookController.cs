@@ -129,6 +129,11 @@
 			return this.Redirect(entry.AddressBookUrl);
 		}
 
+		[HttpGet]
+		public ActionResult DeepLinkRedirect() {
+			return new ViewResult();
+		}
+
 		internal static async Task OneTimeInitializeAsync(CloudStorageAccount azureAccount) {
 			var tableClient = azureAccount.CreateCloudTableClient();
 			await Task.WhenAll(
