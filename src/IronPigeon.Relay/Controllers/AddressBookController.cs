@@ -129,7 +129,7 @@
 			return this.Redirect(entry.AddressBookUrl);
 		}
 
-		[HttpGet, ActionName("dlr")]
+		[HttpGet]
 		public ActionResult DeepLinkRedirect() {
 			return new ViewResult();
 		}

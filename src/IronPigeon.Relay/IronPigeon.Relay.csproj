@@ -265,7 +265,7 @@
     <Content Include="Views\Privacy\Index.cshtml" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Views\AddressBook\DeepLinkRedirect.html" />
+    <None Include="Views\AddressBook\DeepLinkRedirect.cshtml" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>
