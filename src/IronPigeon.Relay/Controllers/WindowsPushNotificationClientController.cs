@@ -9,6 +9,7 @@
 	using System.Web.Mvc;
 	using IronPigeon.Relay.Models;
 	using Microsoft.WindowsAzure;
+	using Microsoft.WindowsAzure.Storage;
 	using Microsoft.WindowsAzure.StorageClient;
 	using Newtonsoft.Json.Linq;
 	using Validation;
@@ -26,7 +27,7 @@
 		public WindowsPushNotificationClientController(string tableName, string cloudConfigurationName) {
 			Requires.NotNullOrEmpty(cloudConfigurationName, "cloudConfigurationName");
 
-			var storage = CloudStorageAccount.FromConfigurationSetting(cloudConfigurationName);
+			var storage = CloudStorageAccount.Parse(ConfigurationManager.ConnectionStrings[cloudConfigurationName].ConnectionString);
 			var tableClient = storage.CreateCloudTableClient();
 			this.ClientTable = new PushNotificationContext(tableClient, tableName);
 			this.HttpClient = new HttpClient();
@@ -111,7 +112,7 @@
 
 		internal static async Task OneTimeInitializeAsync(CloudStorageAccount azureAccount) {
 			var tableClient = azureAccount.CreateCloudTableClient();
-			await tableClient.CreateTableIfNotExistAsync(DefaultTableName);
+			await tableClient.GetTableReference(DefaultTableName).CreateIfNotExistsAsync();
 		}
 	}
 }

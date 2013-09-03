@@ -8,9 +8,7 @@
 	using System.Threading;
 	using System.Threading.Tasks;
 	using Validation;
-#if !NET40
 	using TaskEx = System.Threading.Tasks.Task;
-#endif
 
 	/// <summary>
 	/// The personal contact information for receiving one's own messages.

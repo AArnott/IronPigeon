@@ -13,9 +13,7 @@
 	using System.Threading;
 	using System.Threading.Tasks;
 	using Validation;
-#if !NET40
 	using TaskEx = System.Threading.Tasks.Task;
-#endif
 
 	/// <summary>
 	/// Common utilities for IronPigeon apps.
@@ -115,7 +113,7 @@
 			var random = new Random();
 			var buffer = new byte[length];
 			random.NextBytes(buffer);
-			return Utilities.ToBase64WebSafe(buffer).Substring(0, length);
+			return ToBase64WebSafe(buffer).Substring(0, length);
 		}
 
 		/// <summary>
@@ -127,9 +125,9 @@
 		/// <remarks>
 		/// Useful when a data contract is serialized to a stream but is not the only member of that stream.
 		/// </remarks>
-		public static void SerializeDataContract<T>(this BinaryWriter writer, T graph) where T : class {
+		public static void SerializeDataContract<T>(this BinaryWriter writer, T graph) {
 			Requires.NotNull(writer, "writer");
-			Requires.NotNull(graph, "graph");
+			Requires.NotNullAllowStructs(graph, "graph");
 
 			var serializer = new DataContractSerializer(typeof(T));
 			var ms = new MemoryStream();
@@ -170,7 +168,7 @@
 
 			var ms = new MemoryStream();
 			var binaryWriter = new BinaryWriter(ms);
-			SerializeDataContract<T>(binaryWriter, graph);
+			SerializeDataContract(binaryWriter, graph);
 			binaryWriter.Flush();
 			ms.Position = 0;
 
@@ -321,7 +319,7 @@
 			// NOTE: we could optimize this to return as soon as the *first* address book
 			// returned a non-null result, and cancel the rest, rather than wait for
 			// results from all of them.
-			var results = await TaskEx.WhenAll(addressBooks.Select(ab => ab.LookupAsync(identifier, cancellationToken)));
+			var results = await Task.WhenAll(addressBooks.Select(ab => ab.LookupAsync(identifier, cancellationToken)));
 			return results.FirstOrDefault(result => result != null);
 		}
 
@@ -359,7 +357,7 @@
 			if (cancellationToken.CanBeCanceled) {
 				var tcs = new TaskCompletionSource<bool>();
 				using (cancellationToken.Register(s => ((TaskCompletionSource<bool>)s).TrySetResult(true), tcs)) {
-					if (task != await TaskEx.WhenAny(task, tcs.Task)) {
+					if (task != await Task.WhenAny(task, tcs.Task)) {
 						cancellationToken.ThrowIfCancellationRequested();
 					}
 				}
@@ -380,7 +378,7 @@
 			if (cancellationToken.CanBeCanceled) {
 				var tcs = new TaskCompletionSource<bool>();
 				using (cancellationToken.Register(s => ((TaskCompletionSource<bool>)s).TrySetResult(true), tcs)) {
-					if (task != await TaskEx.WhenAny(task, tcs.Task)) {
+					if (task != await Task.WhenAny(task, tcs.Task)) {
 						cancellationToken.ThrowIfCancellationRequested();
 					}
 				}
@@ -406,7 +404,7 @@
 			List<Task<TOutput>> tasks = inputs.Select(i => asyncOperation(cts.Token, i)).ToList();
 
 			while (tasks.Count > 0) {
-				var completingTask = await TaskEx.WhenAny(tasks);
+				var completingTask = await Task.WhenAny(tasks);
 				if (qualifyingTest(completingTask.Result)) {
 					cts.Cancel();
 					return completingTask.Result;
@@ -416,6 +414,23 @@
 			}
 
 			return default(TOutput);
+		}
+
+		/// <summary>
+		/// Guesses the hash algorithm used given the length of the result.
+		/// </summary>
+		/// <param name="hashLengthInBytes">The length of the output of the hash functino bytes.</param>
+		/// <returns>The probable hash algorithm.</returns>
+		/// <exception cref="System.NotSupportedException">Thrown when an unrecognized length is specified.</exception>
+		internal static string GuessHashAlgorithmFromLength(int hashLengthInBytes) {
+			switch (hashLengthInBytes) {
+				case 160 / 8:
+					return "SHA1";
+				case 256 / 8:
+					return "SHA256";
+				default:
+					throw new NotSupportedException();
+			}
 		}
 
 		/// <summary>
@@ -490,6 +505,18 @@
 
 			var request = new HttpRequestMessage(HttpMethod.Get, location);
 			request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", bearerToken);
+
+			// Aggressively disable caching since WP8 is rather aggressive at enabling it.
+			// Disabling is important because this method is used to retrieve inbox items,
+			// and in processing them, the clients tend to delete inbox items from the server
+			// which would change the output of a future request to the server with the same URL.
+			// But if a cached result is used instead of a real request to the server then we get
+			// the same result back.
+			// The no-cache headers don't seem to impact the client at all, but perhaps they prevent any intermediaries from caching?
+			request.Headers.CacheControl = new CacheControlHeaderValue() { NoCache = true };
+			request.Headers.Pragma.Add(new NameValueHeaderValue("no-cache"));
+			request.Headers.IfModifiedSince = DateTime.UtcNow; // This last one seems to be the trick that actually works.
+
 			return httpClient.SendAsync(request, cancellationToken);
 		}
 
@@ -511,15 +538,17 @@
 			return httpClient.SendAsync(request, cancellationToken);
 		}
 
-#if NET40
 		/// <summary>
-		/// Fills in for a method that only exists in .NET 4.5.
+		/// Gets the string form of the specified buffer.
 		/// </summary>
-		/// <param name="type">The type to return.</param>
-		/// <returns>The type passed in as a parameter.</returns>
-		internal static Type GetTypeInfo(this Type type) {
-			return type;
+		/// <param name="encoding">The encoding.</param>
+		/// <param name="buffer">The buffer.</param>
+		/// <returns>A string.</returns>
+		internal static string GetString(this Encoding encoding, byte[] buffer) {
+			Requires.NotNull(encoding, "encoding");
+			Requires.NotNull(buffer, "buffer");
+
+			return encoding.GetString(buffer, 0, buffer.Length);
 		}
-#endif
 	}
 }

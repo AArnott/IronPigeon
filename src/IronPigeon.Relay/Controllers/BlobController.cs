@@ -1,6 +1,7 @@
 ﻿namespace IronPigeon.Relay.Controllers {
 	using System;
 	using System.Collections.Generic;
+	using System.Configuration;
 	using System.IO;
 	using System.Linq;
 	using System.Net;
@@ -10,11 +11,9 @@
 	using System.Web.Mvc;
 	using IronPigeon.Providers;
 	using Microsoft.WindowsAzure;
+	using Microsoft.WindowsAzure.Storage;
 	using Microsoft.WindowsAzure.StorageClient;
 	using Validation;
-#if !NET40
-	using TaskEx = System.Threading.Tasks.Task;
-#endif
 
 #if !DEBUG
 	[RequireHttps]
@@ -47,11 +46,11 @@
 		public BlobController(string cloudConfigurationName, string containerName = DefaultContainerName) {
 			Requires.NotNullOrEmpty(cloudConfigurationName, "cloudConfigurationName");
 
-			var storage = CloudStorageAccount.FromConfigurationSetting(cloudConfigurationName);
+			var storage = CloudStorageAccount.Parse(ConfigurationManager.ConnectionStrings[cloudConfigurationName].ConnectionString);
 			this.CloudBlobStorageProvider = new AzureBlobStorage(storage, containerName);
 
 			////var p = new AzureBlobStorage(storage, containerName);
-			////TaskEx.Run(async delegate { await p.CreateContainerIfNotExistAsync(); });
+			////Task.Run(async delegate { await p.CreateContainerIfNotExistAsync(); });
 		}
 
 		/// <summary>
@@ -84,10 +83,10 @@
 			var blobStorage = new AzureBlobStorage(azureAccount, BlobController.DefaultContainerName);
 			await blobStorage.CreateContainerIfNotExistAsync();
 
-			TaskEx.Run(async delegate {
+			Task.Run(async delegate {
 				while (true) {
 					await blobStorage.PurgeBlobsExpiringBeforeAsync();
-					await TaskEx.Delay(AzureStorageConfig.PurgeExpiredBlobsInterval);
+					await Task.Delay(AzureStorageConfig.PurgeExpiredBlobsInterval);
 				}
 			});
 		}

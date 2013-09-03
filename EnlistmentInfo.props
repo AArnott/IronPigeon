@@ -23,7 +23,7 @@
 		<WarningLevel>4</WarningLevel>
 
 		<SignAssembly>true</SignAssembly>
-		<AssemblyOriginatorKeyFile>$(ProjectRoot)src\Release.pfx</AssemblyOriginatorKeyFile>
+		<AssemblyOriginatorKeyFile>$(ProjectRoot)src\opensource.snk</AssemblyOriginatorKeyFile>
 	</PropertyGroup>
 
 	<PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">

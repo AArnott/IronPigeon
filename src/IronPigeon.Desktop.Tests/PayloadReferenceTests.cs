@@ -10,20 +10,23 @@
 	public class PayloadReferenceTests {
 		[Test]
 		public void CtorInvalidInputs() {
-			Assert.Throws<ArgumentNullException>(() => new PayloadReference(null, Valid.Hash, Valid.Key, Valid.IV, Valid.ExpirationUtc));
-			Assert.Throws<ArgumentNullException>(() => new PayloadReference(Valid.Location, null, Valid.Key, Valid.IV, Valid.ExpirationUtc));
-			Assert.Throws<ArgumentNullException>(() => new PayloadReference(Valid.Location, Valid.Hash, null, Valid.Key, Valid.ExpirationUtc));
-			Assert.Throws<ArgumentNullException>(() => new PayloadReference(Valid.Location, Valid.Hash, Valid.Key, null, Valid.ExpirationUtc));
-			Assert.Throws<ArgumentException>(() => new PayloadReference(Valid.Location, Valid.Hash, Valid.Key, Valid.IV, Invalid.ExpirationUtc));
-			Assert.Throws<ArgumentException>(() => new PayloadReference(Valid.Location, Invalid.Hash, Valid.Key, Valid.IV, Valid.ExpirationUtc));
-			Assert.Throws<ArgumentException>(() => new PayloadReference(Valid.Location, Valid.Hash, Invalid.Key, Valid.IV, Valid.ExpirationUtc));
-			Assert.Throws<ArgumentException>(() => new PayloadReference(Valid.Location, Valid.Hash, Valid.Key, Invalid.IV, Valid.ExpirationUtc));
+			Assert.Throws<ArgumentNullException>(() => new PayloadReference(null, Valid.Hash, Valid.HashAlgorithmName, Valid.Key, Valid.IV, Valid.ExpirationUtc));
+			Assert.Throws<ArgumentNullException>(() => new PayloadReference(Valid.Location, null, Valid.HashAlgorithmName, Valid.Key, Valid.IV, Valid.ExpirationUtc));
+			Assert.Throws<ArgumentNullException>(() => new PayloadReference(Valid.Location, Valid.Hash, null, Valid.Key, Valid.IV, Valid.ExpirationUtc));
+			Assert.Throws<ArgumentException>(() => new PayloadReference(Valid.Location, Valid.Hash, string.Empty, Valid.Key, Valid.IV, Valid.ExpirationUtc));
+			Assert.Throws<ArgumentNullException>(() => new PayloadReference(Valid.Location, Valid.Hash, Valid.HashAlgorithmName, null, Valid.Key, Valid.ExpirationUtc));
+			Assert.Throws<ArgumentNullException>(() => new PayloadReference(Valid.Location, Valid.Hash, Valid.HashAlgorithmName, Valid.Key, null, Valid.ExpirationUtc));
+			Assert.Throws<ArgumentException>(() => new PayloadReference(Valid.Location, Valid.Hash, Valid.HashAlgorithmName, Valid.Key, Valid.IV, Invalid.ExpirationUtc));
+			Assert.Throws<ArgumentException>(() => new PayloadReference(Valid.Location, Invalid.Hash, Valid.HashAlgorithmName, Valid.Key, Valid.IV, Valid.ExpirationUtc));
+			Assert.Throws<ArgumentException>(() => new PayloadReference(Valid.Location, Valid.Hash, Valid.HashAlgorithmName, Invalid.Key, Valid.IV, Valid.ExpirationUtc));
+			Assert.Throws<ArgumentException>(() => new PayloadReference(Valid.Location, Valid.Hash, Valid.HashAlgorithmName, Valid.Key, Invalid.IV, Valid.ExpirationUtc));
 		}
 
 		[Test]
 		public void Ctor() {
-			var reference = new PayloadReference(Valid.Location, Valid.Hash, Valid.Key, Valid.IV, Valid.ExpirationUtc);
+			var reference = new PayloadReference(Valid.Location, Valid.Hash, Valid.HashAlgorithmName, Valid.Key, Valid.IV, Valid.ExpirationUtc);
 			Assert.That(reference.Location, Is.SameAs(Valid.Location));
+			Assert.That(reference.HashAlgorithmName, Is.EqualTo(Valid.HashAlgorithmName));
 			Assert.That(reference.Hash, Is.SameAs(Valid.Hash));
 			Assert.That(reference.Key, Is.SameAs(Valid.Key));
 			Assert.That(reference.IV, Is.SameAs(Valid.IV));

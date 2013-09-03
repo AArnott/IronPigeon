@@ -21,11 +21,6 @@
 		protected static readonly AsymmetricKeyAlgorithmProvider EncryptionProvider = AsymmetricKeyAlgorithmProvider.OpenAlgorithm(AsymmetricAlgorithmNames.RsaOaepSha1);
 
 		/// <summary>
-		/// The asymmetric signing algorithm provider to use.
-		/// </summary>
-		protected static readonly AsymmetricKeyAlgorithmProvider SignatureProvider = AsymmetricKeyAlgorithmProvider.OpenAlgorithm(AsymmetricAlgorithmNames.RsaSignPkcs1Sha1);
-
-		/// <summary>
 		/// The symmetric encryption algorithm provider to use.
 		/// </summary>
 		protected static readonly SymmetricKeyAlgorithmProvider SymmetricAlgorithm = SymmetricKeyAlgorithmProvider.OpenAlgorithm(SymmetricAlgorithmNames.AesCbcPkcs7);
@@ -39,7 +34,8 @@
 		/// The signature.
 		/// </returns>
 		public override byte[] Sign(byte[] data, byte[] signingPrivateKey) {
-			var key = SignatureProvider.ImportKeyPair(signingPrivateKey.ToBuffer());
+			var signer = this.GetSignatureProvider(this.AsymmetricHashAlgorithmName);
+			var key = signer.ImportKeyPair(signingPrivateKey.ToBuffer());
 			var signatureBuffer = CryptographicEngine.Sign(key, data.ToBuffer());
 			return signatureBuffer.ToArray();
 		}
@@ -50,11 +46,13 @@
 		/// <param name="signingPublicKey">The public key used to verify the signature.</param>
 		/// <param name="data">The data that was signed.</param>
 		/// <param name="signature">The signature.</param>
+		/// <param name="hashAlgorithm">The hash algorithm used to hash the data.</param>
 		/// <returns>
 		/// A value indicating whether the signature is valid.
 		/// </returns>
-		public override bool VerifySignature(byte[] signingPublicKey, byte[] data, byte[] signature) {
-			var key = SignatureProvider.ImportPublicKey(signingPublicKey.ToBuffer(), CryptographicPublicKeyBlobType.Capi1PublicKey);
+		public override bool VerifySignature(byte[] signingPublicKey, byte[] data, byte[] signature, string hashAlgorithm) {
+			var signer = this.GetSignatureProvider(hashAlgorithm);
+			var key = signer.ImportPublicKey(signingPublicKey.ToBuffer(), CryptographicPublicKeyBlobType.Capi1PublicKey);
 			return CryptographicEngine.VerifySignature(key, data.ToBuffer(), signature.ToBuffer());
 		}
 
@@ -67,7 +65,7 @@
 		/// </returns>
 		public override SymmetricEncryptionResult Encrypt(byte[] data) {
 			IBuffer plainTextBuffer = CryptographicBuffer.CreateFromByteArray(data);
-			IBuffer symmetricKeyMaterial = CryptographicBuffer.GenerateRandom((uint)this.BlobSymmetricKeySize / 8);
+			IBuffer symmetricKeyMaterial = CryptographicBuffer.GenerateRandom((uint)this.SymmetricEncryptionKeySize / 8);
 			var symmetricKey = SymmetricAlgorithm.CreateSymmetricKey(symmetricKeyMaterial);
 			IBuffer ivBuffer = CryptographicBuffer.GenerateRandom(SymmetricAlgorithm.BlockLength);
 
@@ -120,11 +118,12 @@
 		/// Computes the hash of the specified buffer.
 		/// </summary>
 		/// <param name="data">The data to hash.</param>
+		/// <param name="hashAlgorithmName">Name of the hash algorithm.</param>
 		/// <returns>
 		/// The computed hash.
 		/// </returns>
-		public override byte[] Hash(byte[] data) {
-			var hashAlgorithm = HashAlgorithmProvider.OpenAlgorithm(this.HashAlgorithmName);
+		public override byte[] Hash(byte[] data, string hashAlgorithmName) {
+			var hashAlgorithm = HashAlgorithmProvider.OpenAlgorithm(hashAlgorithmName);
 			var hash = hashAlgorithm.HashData(data.ToBuffer()).ToArray();
 			return hash;
 		}
@@ -135,7 +134,8 @@
 		/// <param name="keyPair">Receives the serialized key pair (includes private key).</param>
 		/// <param name="publicKey">Receives the public key.</param>
 		public override void GenerateSigningKeyPair(out byte[] keyPair, out byte[] publicKey) {
-			var key = SignatureProvider.CreateKeyPair((uint)this.SignatureAsymmetricKeySize);
+			var signer = this.GetSignatureProvider(this.AsymmetricHashAlgorithmName);
+			var key = signer.CreateKeyPair((uint)this.SignatureAsymmetricKeySize);
 			keyPair = key.Export().ToArray();
 			publicKey = key.ExportPublicKey(CryptographicPublicKeyBlobType.Capi1PublicKey).ToArray();
 		}
@@ -149,6 +149,27 @@
 			var key = EncryptionProvider.CreateKeyPair((uint)this.EncryptionAsymmetricKeySize);
 			keyPair = key.Export().ToArray();
 			publicKey = key.ExportPublicKey(CryptographicPublicKeyBlobType.Capi1PublicKey).ToArray();
+		}
+
+		/// <summary>
+		/// Gets the signature provider.
+		/// </summary>
+		/// <param name="hashAlgorithm">The hash algorithm to use.</param>
+		/// <returns>The asymmetric key provider.</returns>
+		/// <exception cref="System.NotSupportedException">Thrown if the arguments are not supported.</exception>
+		protected virtual AsymmetricKeyAlgorithmProvider GetSignatureProvider(string hashAlgorithm) {
+			switch (hashAlgorithm) {
+				case "SHA1":
+					return AsymmetricKeyAlgorithmProvider.OpenAlgorithm(AsymmetricAlgorithmNames.RsaSignPkcs1Sha1);
+				case "SHA256":
+					return AsymmetricKeyAlgorithmProvider.OpenAlgorithm(AsymmetricAlgorithmNames.RsaSignPkcs1Sha256);
+				case "SHA384":
+					return AsymmetricKeyAlgorithmProvider.OpenAlgorithm(AsymmetricAlgorithmNames.RsaSignPkcs1Sha384);
+				case "SHA512":
+					return AsymmetricKeyAlgorithmProvider.OpenAlgorithm(AsymmetricAlgorithmNames.RsaSignPkcs1Sha512);
+				default:
+					throw new NotSupportedException();
+			}
 		}
 	}
 }

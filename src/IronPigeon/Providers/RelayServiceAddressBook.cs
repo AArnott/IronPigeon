@@ -1,11 +1,7 @@
 ﻿namespace IronPigeon.Providers {
 	using System;
 	using System.Collections.Generic;
-#if NET40
-	using System.ComponentModel.Composition;
-#else
 	using System.Composition;
-#endif
 	using System.Linq;
 	using System.Net.Http;
 	using System.Text;
@@ -20,9 +16,7 @@
 	/// </summary>
 	[Export(typeof(AddressBook))]
 	[Export]
-#if !NET40
 	[Shared]
-#endif
 	public class RelayServiceAddressBook : OnlineAddressBook {
 		/// <summary>
 		/// A regular expression that matches 64-character hex sequences (the type and length of a Microsoft account friend's hashed email).

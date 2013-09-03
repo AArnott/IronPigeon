@@ -11,20 +11,18 @@
 	using System.Text.RegularExpressions;
 	using System.Threading;
 	using System.Threading.Tasks;
-#if !NET40
 	using System.Threading.Tasks.Dataflow;
-#endif
 	using System.Web;
 	using System.Web.Mvc;
 	using IronPigeon.Relay.Models;
 	using Microsoft.WindowsAzure;
+	using Microsoft.WindowsAzure.Storage;
+	using Microsoft.WindowsAzure.Storage.Blob;
+	using Microsoft.WindowsAzure.Storage.Table.DataServices;
 	using Microsoft.WindowsAzure.StorageClient;
 	using Newtonsoft.Json;
 	using Newtonsoft.Json.Linq;
 	using Validation;
-#if !NET40
-	using TaskEx = System.Threading.Tasks.Task;
-#endif
 
 #if !DEBUG
 	[RequireHttps]
@@ -71,7 +69,7 @@
 			Requires.NotNullOrEmpty(containerName, "containerName");
 			Requires.NotNullOrEmpty(cloudConfigurationName, "cloudConfigurationName");
 
-			var storage = CloudStorageAccount.FromConfigurationSetting(cloudConfigurationName);
+			var storage = CloudStorageAccount.Parse(ConfigurationManager.ConnectionStrings[cloudConfigurationName].ConnectionString);
 			var blobClient = storage.CreateCloudBlobClient();
 			this.InboxContainer = blobClient.GetContainerReference(containerName);
 			var tableClient = storage.CreateCloudTableClient();
@@ -98,47 +96,28 @@
 			Requires.NotNull(inboxContainer, "inboxContainer");
 
 			var deleteBlobsExpiringBefore = DateTime.UtcNow;
-			var requestOptions = new BlobRequestOptions {
-				UseFlatBlobListing = true,
-				BlobListingDetails = BlobListingDetails.Metadata,
-			};
-#if NET40
-			try {
-				var items = await inboxContainer.ListBlobsSegmentedAsync(50, requestOptions);
-				var blobs = (from blob in items.OfType<CloudBlob>()
-							 let expires = DateTime.Parse(blob.Metadata[ExpirationDateMetadataKey])
-							 where expires < deleteBlobsExpiringBefore
-							 select blob).ToArray();
-				await TaskEx.WhenAll(blobs.Select(blob => blob.DeleteAsync()));
-			} catch (StorageClientException ex) {
-				var webException = ex.InnerException as WebException;
-				if (webException != null) {
-					var httpResponse = (HttpWebResponse)webException.Response;
-					if (httpResponse.StatusCode == HttpStatusCode.NotFound) {
-						// it's legit that some tests never created the container to begin with.
-						return;
-					}
-				}
-
-				throw;
-			}
-#else
 			int purgedBlobCount = 0;
-			var searchExpiredBlobs = new TransformManyBlock<CloudBlobContainer, CloudBlob>(
+			var searchExpiredBlobs = new TransformManyBlock<CloudBlobContainer, ICloudBlob>(
 				async c => {
 					try {
-						var results = await c.ListBlobsSegmentedAsync(10, requestOptions);
-						return from blob in results.OfType<CloudBlob>()
+						var results = await c.ListBlobsSegmentedAsync(
+							string.Empty,
+							useFlatBlobListing: true,
+							pageSize: 50,
+							details: BlobListingDetails.Metadata,
+							options: new BlobRequestOptions(),
+							operationContext: null);
+						return from blob in results.OfType<ICloudBlob>()
 							   let expires = DateTime.Parse(blob.Metadata[ExpirationDateMetadataKey])
 							   where expires < deleteBlobsExpiringBefore
 							   select blob;
-					} catch (StorageClientException ex) {
+					} catch (StorageException ex) {
 						var webException = ex.InnerException as WebException;
 						if (webException != null) {
 							var httpResponse = (HttpWebResponse)webException.Response;
 							if (httpResponse.StatusCode == HttpStatusCode.NotFound) {
 								// it's legit that some tests never created the container to begin with.
-								return Enumerable.Empty<CloudBlob>();
+								return Enumerable.Empty<ICloudBlob>();
 							}
 						}
 
@@ -148,7 +127,7 @@
 				new ExecutionDataflowBlockOptions {
 					BoundedCapacity = 4,
 				});
-			var deleteBlobBlock = new ActionBlock<CloudBlob>(
+			var deleteBlobBlock = new ActionBlock<ICloudBlob>(
 				blob => {
 					Interlocked.Increment(ref purgedBlobCount);
 					return blob.DeleteAsync();
@@ -163,7 +142,6 @@
 			searchExpiredBlobs.Post(inboxContainer);
 			searchExpiredBlobs.Complete();
 			await deleteBlobBlock.Completion;
-#endif
 		}
 
 		[HttpPost, ActionName("Create")]
@@ -182,27 +160,15 @@
 
 		[HttpGet, ActionName("Slot"), InboxOwnerAuthorize]
 		public async Task<ActionResult> GetInboxItemsAsync(string id, bool longPoll = false) {
-			var directory = this.InboxContainer.GetDirectoryReference(id);
-			var blobs = new List<IncomingList.IncomingItem>();
-			do {
-				try {
-					var blobRequestOptions = new BlobRequestOptions { BlobListingDetails = BlobListingDetails.Metadata };
-					var directoryListing = await directory.ListBlobsSegmentedAsync(50, blobRequestOptions);
-					var notExpiringBefore = DateTime.UtcNow;
-					blobs.AddRange(
-						from blob in directoryListing.OfType<CloudBlob>()
-						let expirationString = blob.Metadata[ExpirationDateMetadataKey]
-						where expirationString != null && DateTime.Parse(expirationString) > notExpiringBefore
-						select new IncomingList.IncomingItem { Location = blob.Uri, DatePostedUtc = blob.Properties.LastModifiedUtc });
-				} catch (StorageClientException) {
-				}
-
-				if (longPoll && blobs.Count == 0) {
-					await WaitIncomingMessageAsync(id).WithCancellation(this.Response.GetClientDisconnectedToken());
-				}
-			} while (longPoll && blobs.Count == 0);
-
+			var blobs = await this.RetrieveInboxItemsAsync(id, longPoll);
 			var list = new IncomingList() { Items = blobs };
+			
+			// Unit tests may not set this.Response
+			if (this.Response != null) {
+				// Help prevent clients such as WP8 from caching the result since they operate on it, then call us again
+				this.Response.CacheControl = "no-cache";
+			}
+
 			return new JsonResult() {
 				Data = list,
 				JsonRequestBehavior = JsonRequestBehavior.AllowGet
@@ -224,7 +190,7 @@
 			}
 
 			var directory = this.InboxContainer.GetDirectoryReference(id);
-			var blob = directory.GetBlobReference(Utilities.CreateRandomWebSafeName(24));
+			var blob = directory.GetBlockBlobReference(Utilities.CreateRandomWebSafeName(24));
 
 			var requestedLifeSpan = TimeSpan.FromMinutes(lifetime);
 			var actualLifespan = requestedLifeSpan > MaxLifetimeCeiling ? MaxLifetimeCeiling : requestedLifeSpan;
@@ -247,14 +213,28 @@
 
 		[HttpPut, ActionName("Slot"), InboxOwnerAuthorize]
 		public async Task<ActionResult> PushChannelAsync(string id) {
-			var channelUri = new Uri(this.Request.Form["channel_uri"], UriKind.Absolute);
-			var content = this.Request.Form["channel_content"];
-			Requires.Argument(content == null || content.Length <= 4096, "content", "Push content too large");
-
 			var inbox = await this.GetInboxAsync(id);
-			inbox.PushChannelUri = channelUri.AbsoluteUri;
-			inbox.PushChannelContent = content;
-			inbox.ClientPackageSecurityIdentifier = this.Request.Form["package_security_identifier"];
+
+			if (this.Request.Form["channel_uri"] != null) {
+				var channelUri = new Uri(this.Request.Form["channel_uri"], UriKind.Absolute);
+				var content = this.Request.Form["channel_content"];
+				Requires.Argument(content == null || content.Length <= 4096, "content", "Push content too large");
+
+				inbox.PushChannelUri = channelUri.AbsoluteUri;
+				inbox.PushChannelContent = content;
+				inbox.ClientPackageSecurityIdentifier = this.Request.Form["package_security_identifier"];
+			} else if (this.Request.Form["wp8_channel_uri"] != null) {
+				var channelUri = new Uri(this.Request.Form["wp8_channel_uri"], UriKind.Absolute);
+				var content = this.Request.Form["wp8_channel_content"];
+				Requires.Argument(content == null || content.Length <= 4096, "content", "Push content too large");
+
+				inbox.WinPhone8PushChannelUri = channelUri.AbsoluteUri;
+				inbox.WinPhone8PushChannelContent = content;
+			} else {
+				// No data was posted. So skip updating the entity.
+				return new EmptyResult();
+			}
+
 			this.InboxTable.UpdateObject(inbox);
 			await this.InboxTable.SaveChangesAsync();
 			return new EmptyResult();
@@ -292,11 +272,11 @@
 			// can't delete another user's notifications.
 			var directory = this.InboxContainer.GetDirectoryReference(id);
 			if (directory.Uri.IsBaseOf(new Uri(notification, UriKind.Absolute))) {
-				var blob = this.InboxContainer.GetBlobReference(notification);
+				var blob = this.InboxContainer.GetBlockBlobReference(notification);
 				try {
 					await blob.DeleteAsync();
-				} catch (StorageClientException ex) {
-					if (ex.StatusCode == HttpStatusCode.NotFound) {
+				} catch (StorageException ex) {
+					if (ex.RequestInformation.HttpStatusCode == (int)HttpStatusCode.NotFound) {
 						return new HttpNotFoundResult(ex.Message);
 					}
 
@@ -315,15 +295,15 @@
 			var blobClient = azureAccount.CreateCloudBlobClient();
 			var inboxContainer = blobClient.GetContainerReference(DefaultInboxContainerName);
 
-			await TaskEx.WhenAll(
+			await Task.WhenAll(
 					inboxContainer.CreateContainerWithPublicBlobsIfNotExistAsync(),
-					inboxTable.CreateTableIfNotExistAsync(DefaultInboxTableName));
+					inboxTable.GetTableReference(DefaultInboxTableName).CreateIfNotExistsAsync());
 
-			TaskEx.Run(
+			Task.Run(
 				async delegate {
 					while (true) {
 						await PurgeExpiredAsync(inboxContainer);
-						await TaskEx.Delay(AzureStorageConfig.PurgeExpiredBlobsInterval);
+						await Task.Delay(AzureStorageConfig.PurgeExpiredBlobsInterval);
 					}
 				});
 		}
@@ -343,10 +323,52 @@
 			return tcs.Task;
 		}
 
-		private async Task PushNotifyInboxMessageAsync(InboxEntity inbox, int failedAttempts = 0) {
+		private async Task<int> RetrieveInboxItemsCountAsync(string id) {
+			int inboxCount = (await this.RetrieveInboxItemsAsync(id, longPoll: false)).Count;
+			return inboxCount;
+		}
+
+		private async Task<List<IncomingList.IncomingItem>> RetrieveInboxItemsAsync(string id, bool longPoll) {
+			var directory = this.InboxContainer.GetDirectoryReference(id);
+			var blobs = new List<IncomingList.IncomingItem>();
+			do {
+				try {
+					var directoryListing = await directory.ListBlobsSegmentedAsync(
+						useFlatBlobListing: true,
+						pageSize: 50,
+						details: BlobListingDetails.Metadata,
+						options: new BlobRequestOptions(),
+						operationContext: null);
+					var notExpiringBefore = DateTime.UtcNow;
+					blobs.AddRange(
+						from blob in directoryListing.OfType<ICloudBlob>()
+						let expirationString = blob.Metadata[ExpirationDateMetadataKey]
+						where expirationString != null && DateTime.Parse(expirationString) > notExpiringBefore
+						select
+							new IncomingList.IncomingItem {
+								Location = blob.Uri,
+								DatePostedUtc = blob.Properties.LastModified.Value.UtcDateTime
+							});
+				} catch (StorageException) {
+				}
+
+				if (longPoll && blobs.Count == 0) {
+					await WaitIncomingMessageAsync(id).WithCancellation(this.Response.GetClientDisconnectedToken());
+				}
+			} while (longPoll && blobs.Count == 0);
+			return blobs;
+		}
+
+		private async Task PushNotifyInboxMessageAsync(InboxEntity inbox) {
 			Requires.NotNull(inbox, "inbox");
 
-			if (string.IsNullOrEmpty(inbox.ClientPackageSecurityIdentifier)) {
+			await Task.WhenAll(
+				this.PushNotifyInboxMessageWinStoreAsync(inbox),
+				this.PushNotifyInboxMessageWinPhoneAsync(inbox));
+		}
+
+		private async Task PushNotifyInboxMessageWinStoreAsync(InboxEntity inbox, int failedAttempts = 0) {
+			if (string.IsNullOrEmpty(inbox.ClientPackageSecurityIdentifier) || string.IsNullOrEmpty(inbox.PushChannelUri)) {
 				return;
 			}
 
@@ -356,7 +378,9 @@
 			pushNotifyRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", bearerToken);
 			pushNotifyRequest.Headers.Add("X-WNS-Type", "wns/raw");
 			pushNotifyRequest.Content = new StringContent(inbox.PushChannelContent ?? string.Empty);
-			pushNotifyRequest.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream"); // yes, it's a string, but we must claim it's an octet-stream
+
+			// yes, it's a string, but we must claim it's an octet-stream
+			pushNotifyRequest.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
 
 			var response = await this.HttpClient.SendAsync(pushNotifyRequest);
 			if (!response.IsSuccessStatusCode) {
@@ -367,7 +391,7 @@
 							await client.AcquireWnsPushBearerTokenAsync(this.HttpClient);
 							this.ClientTable.UpdateObject(client);
 							await this.ClientTable.SaveChangesAsync();
-							await this.PushNotifyInboxMessageAsync(inbox, failedAttempts + 1);
+							await this.PushNotifyInboxMessageWinStoreAsync(inbox, failedAttempts + 1);
 							return;
 						}
 					}
@@ -378,12 +402,31 @@
 			}
 		}
 
+		private async Task PushNotifyInboxMessageWinPhoneAsync(InboxEntity inbox) {
+			if (!string.IsNullOrEmpty(inbox.WinPhone8PushChannelUri)) {
+				var notifications = new WinPhonePushNotifications(this.HttpClient, new Uri(inbox.WinPhone8PushChannelUri));
+
+				int count = await this.RetrieveInboxItemsCountAsync(inbox.RowKey);
+				bool invalidChannel = false;
+				try {
+					await notifications.PushWinPhoneTileAsync(count: count);
+				} catch (HttpRequestException) {
+					invalidChannel = true;
+				}
+
+				if (invalidChannel) {
+					inbox.WinPhone8PushChannelUri = null;
+					inbox.WinPhone8PushChannelContent = null;
+					this.InboxTable.UpdateObject(inbox);
+					await this.InboxTable.SaveChangesAsync();
+				}
+			}
+		}
+
 		private async Task AlertLongPollWaiterAsync(InboxEntity inbox) {
 			Requires.NotNull(inbox, "inbox");
 
-			if (inbox.PushChannelUri != null) {
-				await this.PushNotifyInboxMessageAsync(inbox);
-			}
+			await this.PushNotifyInboxMessageAsync(inbox);
 
 			var id = inbox.RowKey;
 			TaskCompletionSource<object> tcs;
@@ -399,7 +442,7 @@
 		}
 
 		private async Task<InboxEntity> GetInboxAsync(string id) {
-			var queryResults = await this.InboxTable.Get(id).ExecuteAsync();
+			var queryResults = await this.InboxTable.Get(id).ExecuteSegmentedAsync();
 			return queryResults.FirstOrDefault();
 		}
 	}

@@ -1,6 +1,7 @@
 ﻿namespace IronPigeon.Relay.Controllers {
 	using System;
 	using System.Collections.Generic;
+	using System.Configuration;
 	using System.IO;
 	using System.Linq;
 	using System.Net;
@@ -10,12 +11,10 @@
 	using System.Web.Mvc;
 	using IronPigeon.Relay.Models;
 	using Microsoft.WindowsAzure;
+	using Microsoft.WindowsAzure.Storage;
 	using Microsoft.WindowsAzure.StorageClient;
 	using Newtonsoft.Json;
 	using Validation;
-#if !NET40
-	using TaskEx = System.Threading.Tasks.Task;
-#endif
 
 	/// <summary>
 	/// This controller serves URLs that may appear to the user, but represent the downloadable address book entry
@@ -48,7 +47,7 @@
 		public AddressBookController(string tableName, string emailTableName, string cloudConfigurationName) {
 			Requires.NotNullOrEmpty(cloudConfigurationName, "cloudConfigurationName");
 
-			var storage = CloudStorageAccount.FromConfigurationSetting(cloudConfigurationName);
+			var storage = CloudStorageAccount.Parse(ConfigurationManager.ConnectionStrings[cloudConfigurationName].ConnectionString);
 			var tableClient = storage.CreateCloudTableClient();
 			this.ClientTable = new AddressBookContext(tableClient, tableName, emailTableName);
 			this.HttpClient = new HttpClient();
@@ -130,11 +129,16 @@
 			return this.Redirect(entry.AddressBookUrl);
 		}
 
+		[HttpGet]
+		public ActionResult DeepLinkRedirect() {
+			return new ViewResult();
+		}
+
 		internal static async Task OneTimeInitializeAsync(CloudStorageAccount azureAccount) {
 			var tableClient = azureAccount.CreateCloudTableClient();
-			await TaskEx.WhenAll(
-				tableClient.CreateTableIfNotExistAsync(DefaultTableName),
-				tableClient.CreateTableIfNotExistAsync(EmailTableName));
+			await Task.WhenAll(
+				tableClient.GetTableReference(DefaultTableName).CreateIfNotExistsAsync(),
+				tableClient.GetTableReference(EmailTableName).CreateIfNotExistsAsync());
 		}
 	}
 }

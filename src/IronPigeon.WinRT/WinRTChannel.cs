@@ -15,10 +15,8 @@
 	/// <summary>
 	/// A channel for sending or receiving secure messages with additional WinRT specific functionality.
 	/// </summary>
-	[Export(typeof(Channel)), Export]
-#if !NET40
+	[Export(typeof(Channel))]
 	[Shared]
-#endif
 	public class WinRTChannel : Channel {
 		/// <summary>
 		/// Gets or sets the package security identifier of the app.

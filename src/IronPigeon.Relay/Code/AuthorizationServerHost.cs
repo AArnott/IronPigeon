@@ -47,11 +47,11 @@
 			throw new NotImplementedException();
 		}
 
-		public bool TryAuthorizeClientCredentialsGrant(IAccessTokenRequest accessRequest) {
+		public AutomatedAuthorizationCheckResponse CheckAuthorizeClientCredentialsGrant(IAccessTokenRequest accessRequest) {
 			throw new NotImplementedException();
 		}
 
-		public bool TryAuthorizeResourceOwnerCredentialGrant(string userName, string password, IAccessTokenRequest accessRequest, out string canonicalUserName) {
+		public AutomatedUserAuthorizationCheckResponse CheckAuthorizeResourceOwnerCredentialGrant(string userName, string password, IAccessTokenRequest accessRequest) {
 			throw new NotImplementedException();
 		}
 	}

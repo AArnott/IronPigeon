@@ -1,11 +1,7 @@
 ﻿namespace IronPigeon.Providers {
 	using System;
 	using System.Collections.Generic;
-#if NET40
-	using System.ComponentModel.Composition;
-#else
 	using System.Composition;
-#endif
 	using System.Diagnostics;
 	using System.IO;
 	using System.Linq;
@@ -14,6 +10,7 @@
 	using System.Runtime.Serialization;
 	using System.Runtime.Serialization.Json;
 	using System.Text;
+	using System.Threading;
 	using System.Threading.Tasks;
 	using Validation;
 
@@ -21,9 +18,7 @@
 	/// Shortens URLs using the goo.gl URL shortener service.
 	/// </summary>
 	[Export(typeof(IUrlShortener))]
-#if !NET40
 	[Shared]
-#endif
 	public class GoogleUrlShortener : IUrlShortener {
 		/// <summary>
 		/// The URL to the goog.gl shortening service.
@@ -46,10 +41,11 @@
 		/// Shortens the specified long URL.
 		/// </summary>
 		/// <param name="longUrl">The long URL.</param>
+		/// <param name="cancellationToken">The cancellation token.</param>
 		/// <returns>
 		/// The short URL.
 		/// </returns>
-		public async Task<Uri> ShortenAsync(Uri longUrl) {
+		public async Task<Uri> ShortenAsync(Uri longUrl, CancellationToken cancellationToken) {
 			Requires.NotNull(longUrl, "longUrl");
 
 			var requestSerializer = new DataContractJsonSerializer(typeof(ShortenRequest));
@@ -60,7 +56,7 @@
 			var requestContent = new StreamContent(requestStream);
 			requestContent.Headers.ContentType = new MediaTypeHeaderValue("application/json");
 
-			var postResponse = await this.HttpClient.PostAsync(ShorteningService, requestContent);
+			var postResponse = await this.HttpClient.PostAsync(ShorteningService, requestContent, cancellationToken);
 
 			postResponse.EnsureSuccessStatusCode();
 			var responseStream = await postResponse.Content.ReadAsStreamAsync();

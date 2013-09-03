@@ -4,12 +4,16 @@
 	using System.IO;
 	using System.Net;
 	using System.Net.Http;
+	using System.Text;
 	using System.Threading.Tasks;
 	using System.Web;
 	using System.Web.Mvc;
 	using System.Web.Routing;
 	using IronPigeon.Relay.Controllers;
 	using Microsoft.WindowsAzure;
+	using Microsoft.WindowsAzure.Storage;
+	using Microsoft.WindowsAzure.Storage.Blob;
+	using Microsoft.WindowsAzure.Storage.Table;
 	using Microsoft.WindowsAzure.StorageClient;
 	using Moq;
 	using Newtonsoft.Json;
@@ -38,10 +42,10 @@
 
 			var testContainerName = "unittests" + Guid.NewGuid().ToString();
 			var testTableName = "unittests" + Guid.NewGuid().ToString().Replace("-", string.Empty);
-			var account = CloudStorageAccount.FromConfigurationSetting(CloudConfigurationName);
+			var account = CloudStorageAccount.DevelopmentStorageAccount;
 			var client = account.CreateCloudBlobClient();
 			this.tableClient = account.CreateCloudTableClient();
-			this.tableClient.CreateTableIfNotExist(testTableName);
+			this.tableClient.GetTableReference(testTableName).CreateIfNotExists();
 			this.container = client.GetContainerReference(testContainerName);
 			this.container.CreateContainerWithPublicBlobsIfNotExistAsync();
 			this.controller = new InboxControllerForTest(this.container.Name, testTableName, CloudConfigurationName);
@@ -51,8 +55,9 @@
 		public void TearDown() {
 			try {
 				this.container.Delete();
-				this.tableClient.DeleteTableIfExist(this.controller.InboxTable.TableName);
-			} catch (StorageClientException ex) {
+				var table = this.tableClient.GetTableReference(this.controller.InboxTable.TableName);
+				table.DeleteIfExists();
+			} catch (StorageException ex) {
 				bool handled = false;
 				var webException = ex.InnerException as WebException;
 				if (webException != null) {
@@ -89,12 +94,12 @@
 		public void GetInboxItemsOnlyReturnsUnexpiredItems() {
 			this.CreateInboxHelperAsync().Wait();
 			var dir = this.container.GetDirectoryReference(this.inboxId);
-			var expiredBlob = dir.GetBlobReference("expiredBlob");
-			var freshBlob = dir.GetBlobReference("freshBlob");
-			expiredBlob.UploadText("content");
+			var expiredBlob = dir.GetBlockBlobReference("expiredBlob");
+			var freshBlob = dir.GetBlockBlobReference("freshBlob");
+			expiredBlob.UploadFromStream(new MemoryStream(Encoding.ASCII.GetBytes("content")));
 			expiredBlob.Metadata[InboxController.ExpirationDateMetadataKey] = (DateTime.UtcNow - TimeSpan.FromDays(1)).ToString(CultureInfo.InvariantCulture);
 			expiredBlob.SetMetadata();
-			freshBlob.UploadText("content");
+			freshBlob.UploadFromStream(new MemoryStream(Encoding.ASCII.GetBytes("content")));
 			freshBlob.Metadata[InboxController.ExpirationDateMetadataKey] = (DateTime.UtcNow + TimeSpan.FromDays(1)).ToString(CultureInfo.InvariantCulture);
 			freshBlob.SetMetadata();
 
@@ -110,7 +115,7 @@
 			var inbox = this.GetInboxItemsAsyncHelper().Result;
 			this.controller.DeleteAsync(this.inboxId, inbox.Items[0].Location.AbsoluteUri).GetAwaiter().GetResult();
 
-			var blobReference = this.container.GetBlobReference(inbox.Items[0].Location.AbsoluteUri);
+			var blobReference = this.container.GetBlockBlobReference(inbox.Items[0].Location.AbsoluteUri);
 			Assert.That(blobReference.DeleteIfExists(), Is.False, "The blob should have already been deleted.");
 			inbox = this.GetInboxItemsAsyncHelper().Result;
 			Assert.That(inbox.Items, Is.Empty);
@@ -140,7 +145,7 @@
 			this.PostNotificationHelper(lifetimeInMinutes: (int)InboxController.MaxLifetimeCeiling.TotalMinutes + 5).Wait();
 
 			var results = this.GetInboxItemsAsyncHelper().Result;
-			var blob = this.container.GetBlobReference(results.Items[0].Location.AbsoluteUri);
+			var blob = this.container.GetBlockBlobReference(results.Items[0].Location.AbsoluteUri);
 			blob.FetchAttributes();
 			Assert.That(
 				DateTime.Parse(blob.Metadata[InboxController.ExpirationDateMetadataKey]),
@@ -156,15 +161,15 @@
 
 		[Test]
 		public void PurgeExpiredAsync() {
-			this.container.CreateIfNotExist();
+			this.container.CreateIfNotExists();
 
-			var expiredBlob = this.container.GetBlobReference(Utilities.CreateRandomWebSafeName(5));
-			expiredBlob.UploadText("some content");
+			var expiredBlob = this.container.GetBlockBlobReference(Utilities.CreateRandomWebSafeName(5));
+			expiredBlob.UploadFromStream(new MemoryStream(Encoding.ASCII.GetBytes("some content")));
 			expiredBlob.Metadata[InboxController.ExpirationDateMetadataKey] = (DateTime.UtcNow - TimeSpan.FromDays(1)).ToString();
 			expiredBlob.SetMetadata();
 
-			var freshBlob = this.container.GetBlobReference(Utilities.CreateRandomWebSafeName(5));
-			freshBlob.UploadText("some more content");
+			var freshBlob = this.container.GetBlockBlobReference(Utilities.CreateRandomWebSafeName(5));
+			freshBlob.UploadFromStream(new MemoryStream(Encoding.ASCII.GetBytes("some more content")));
 			freshBlob.Metadata[InboxController.ExpirationDateMetadataKey] = (DateTime.UtcNow + TimeSpan.FromDays(1)).ToString();
 			freshBlob.SetMetadata();
 

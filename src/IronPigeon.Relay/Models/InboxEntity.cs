@@ -37,6 +37,23 @@
 		/// </summary>
 		public string PushChannelContent { get; set; }
 
+		/// <summary>
+		/// Gets or sets the URI of the WinPhone8 notification service to push to when a message arrives.
+		/// </summary>
+		public string WinPhone8PushChannelUri { get; set; }
+
+		/// <summary>
+		/// Gets or sets the content of the POST when sending push notifications to WinPhone8.
+		/// </summary>
+		public string WinPhone8PushChannelContent { get; set; }
+
+		/// <summary>
+		/// Gets a value indicating whether push notification is enabled.
+		/// </summary>
+		internal bool IsPushNotificationEnabled {
+			get { return this.PushChannelUri != null || this.WinPhone8PushChannelUri != null; }
+		}
+
 		public static InboxEntity Create() {
 			var entity = new InboxEntity();
 

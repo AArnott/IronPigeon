@@ -33,7 +33,7 @@
 			Assert.Throws<ArgumentNullException>(() => CryptoProviderExtensions.CreateWebSafeBase64Thumbprint(mockCrypto, null));
 
 			string thumbprint = CryptoProviderExtensions.CreateWebSafeBase64Thumbprint(mockCrypto, buffer);
-			Assert.That(thumbprint, Is.EqualTo(Utilities.ToBase64WebSafe(mockCrypto.Hash(buffer))));
+			Assert.That(thumbprint, Is.EqualTo(Utilities.ToBase64WebSafe(mockCrypto.Hash(buffer, mockCrypto.SymmetricHashAlgorithmName))));
 		}
 
 		[Test]

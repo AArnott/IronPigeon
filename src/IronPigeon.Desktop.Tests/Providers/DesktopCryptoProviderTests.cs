@@ -5,16 +5,30 @@
 	using System.Text;
 	using System.Threading.Tasks;
 	using IronPigeon.Providers;
-	using NUnit.Framework;
 
-	[TestFixture]
-	public class DesktopCryptoProviderTests {
-		[Test]
+	using Microsoft.VisualStudio.TestTools.UnitTesting;
+
+	[TestClass]
+	public class DesktopCryptoProviderTests : CryptoProviderTests {
+		private DesktopCryptoProvider provider;
+
+		protected override ICryptoProvider CryptoProvider {
+			get { return this.provider; }
+		}
+
+		[TestInitialize]
+		public void Setup() {
+			this.provider = new DesktopCryptoProvider();
+		}
+
+		[TestMethod]
 		public void HashAlgorithmName() {
-			var provider = new DesktopCryptoProvider();
-			Assert.That(provider.HashAlgorithmName, Is.EqualTo("SHA256")); // default
-			provider.HashAlgorithmName = "SHA111";
-			Assert.That(provider.HashAlgorithmName, Is.EqualTo("SHA111"));
+			Assert.AreEqual("SHA256", this.provider.SymmetricHashAlgorithmName); // default
+			Assert.AreEqual("SHA1", this.provider.AsymmetricHashAlgorithmName); // default
+			this.provider.SymmetricHashAlgorithmName = "SHA111";
+			this.provider.AsymmetricHashAlgorithmName = "SHA222";
+			Assert.AreEqual("SHA111", this.provider.SymmetricHashAlgorithmName);
+			Assert.AreEqual("SHA222", this.provider.AsymmetricHashAlgorithmName);
 		}
 	}
 }

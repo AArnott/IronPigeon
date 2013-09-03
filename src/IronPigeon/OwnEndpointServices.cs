@@ -1,11 +1,7 @@
 ﻿namespace IronPigeon {
 	using System;
 	using System.Collections.Generic;
-#if NET40
-	using System.ComponentModel.Composition;
-#else
 	using System.Composition;
-#endif
 	using System.IO;
 	using System.Linq;
 	using System.Net.Http;
@@ -15,17 +11,13 @@
 	using System.Threading.Tasks;
 	using IronPigeon.Relay;
 	using Validation;
-#if !NET40
 	using TaskEx = System.Threading.Tasks.Task;
-#endif
 
 	/// <summary>
 	/// Creates and services <see cref="OwnEndpoint"/> instances.
 	/// </summary>
 	[Export]
-#if !NET40
 	[Shared]
-#endif
 	public class OwnEndpointServices {
 		/// <summary>
 		/// Gets or sets the crypto provider.
@@ -42,8 +34,8 @@
 		/// <summary>
 		/// Gets or sets the URL shortener.
 		/// </summary>
-		[Import(AllowDefault = true)]
-		public IUrlShortener UrlShortener { get; set; }
+		[ImportMany]
+		public IList<IUrlShortener> UrlShorteners { get; set; }
 
 		/// <summary>
 		/// Gets or sets the HTTP client.
@@ -94,8 +86,9 @@
 			await Utilities.SerializeDataContractAsBase64Async(abeWriter, abe);
 			var ms = new MemoryStream(Encoding.UTF8.GetBytes(abeWriter.ToString()));
 			var location = await this.CloudBlobStorage.UploadMessageAsync(ms, DateTime.MaxValue, AddressBookEntry.ContentType, cancellationToken: cancellationToken);
-			if (this.UrlShortener != null) {
-				location = await this.UrlShortener.ShortenAsync(location);
+			var urlShortener = this.UrlShorteners.FirstOrDefault();
+			if (urlShortener != null) {
+				location = await urlShortener.ShortenAsync(location);
 			}
 
 			var fullLocationWithFragment = new Uri(

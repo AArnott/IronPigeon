@@ -1,11 +1,7 @@
 ﻿namespace IronPigeon.Providers {
 	using System;
 	using System.Collections.Generic;
-#if NET40
-	using System.ComponentModel.Composition;
-#else
 	using System.Composition;
-#endif
 	using System.Globalization;
 	using System.IO;
 	using System.Linq;
@@ -23,9 +19,7 @@
 	/// </summary>
 	[Export(typeof(AddressBook))]
 	[Export]
-#if !NET40
 	[Shared]
-#endif
 	public class TwitterAddressBook : OnlineAddressBook {
 		/// <summary>
 		/// The unformatted string that serves as the template for the URL that downloads user information from Twitter.

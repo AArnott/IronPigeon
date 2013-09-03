@@ -8,17 +8,21 @@
 
 	internal class MockCryptoProvider : ICryptoProvider {
 		internal const int KeyLengthInBytes = 5;
-		internal const string HashAlgorithmName = "sha1";
 
 		#region ICryptoProvider Members
 
-		string ICryptoProvider.HashAlgorithmName {
+		public string SymmetricHashAlgorithmName {
 			get { return "mock"; }
 			set { throw new NotSupportedException(); }
 		}
 
-		string ICryptoProvider.SymmetricAlgorithmName {
+		public string AsymmetricHashAlgorithmName {
 			get { return "mock"; }
+			set { throw new NotSupportedException(); }
+		}
+
+		EncryptionConfiguration ICryptoProvider.SymmetricEncryptionConfiguration {
+			get { return new EncryptionConfiguration("mock", "mock", "mock"); }
 			set { throw new NotSupportedException(); }
 		}
 
@@ -32,7 +36,7 @@
 			set { throw new NotSupportedException(); }
 		}
 
-		public int BlobSymmetricKeySize {
+		public int SymmetricEncryptionKeySize {
 			get { return KeyLengthInBytes; }
 			set { throw new NotSupportedException(); }
 		}
@@ -41,7 +45,7 @@
 			return data;
 		}
 
-		public bool VerifySignature(byte[] signingPublicKey, byte[] data, byte[] signature) {
+		public bool VerifySignature(byte[] signingPublicKey, byte[] data, byte[] signature, string hashAlgorithm) {
 			return true;
 		}
 
@@ -89,7 +93,7 @@
 			return buffer;
 		}
 
-		public byte[] Hash(byte[] data) {
+		public byte[] Hash(byte[] data, string hashAlgorithmName) {
 			int hash = 22;
 			for (int i = 0; i < data.Length; i++) {
 				unchecked {

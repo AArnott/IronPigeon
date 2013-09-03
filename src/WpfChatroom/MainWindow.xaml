@@ -1,0 +1,14 @@
+﻿<Window x:Class="WpfChatroom.MainWindow"
+		xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+		xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+		Title="IronPigeon" Height="350" Width="525">
+	<StackPanel>
+		<Button x:Name="CreateNewEndpoint" Click="CreateNewEndpoint_OnClick">Create new endpoint</Button>
+		<Button x:Name="OpenOwnEndpoint" Click="OpenOwnEndpoint_OnClick">Open a previously saved endpoint</Button>
+		<Button x:Name="OpenChatroom" Click="OpenChatroom_OnClick" IsEnabled="False">Visit chatroom</Button>
+		<WrapPanel>
+			<TextBlock Padding="0,0,10,0">Public endpoint URL:</TextBlock>
+			<TextBlock x:Name="PublicEndpointUrlTextBlock" ToolTip="Click to copy to clipboard" MouseLeftButtonDown="PublicEndpointUrlTextBlock_OnMouseLeftButtonDown"/>
+		</WrapPanel>
+	</StackPanel>
+</Window>

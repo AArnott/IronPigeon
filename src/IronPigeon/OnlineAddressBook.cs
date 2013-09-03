@@ -1,11 +1,7 @@
 ﻿namespace IronPigeon {
 	using System;
 	using System.Collections.Generic;
-#if NET40
-	using System.ComponentModel.Composition;
-#else
 	using System.Composition;
-#endif
 	using System.IO;
 	using System.Linq;
 	using System.Net.Http;
@@ -92,7 +88,7 @@
 			var endpoint = entry.ExtractEndpoint(this.CryptoServices);
 
 			if (!string.IsNullOrEmpty(entryLocation.Fragment)) {
-				if (this.CryptoServices.CreateWebSafeBase64Thumbprint(endpoint.SigningKeyPublicMaterial) != entryLocation.Fragment.Substring(1)) {
+				if (!this.CryptoServices.IsThumbprintMatch(endpoint.SigningKeyPublicMaterial, entryLocation.Fragment.Substring(1))) {
 					throw new BadAddressBookEntryException("Fragment thumbprint mismatch.");
 				}
 			}

@@ -1,11 +1,7 @@
 ﻿namespace IronPigeon.Providers {
 	using System;
 	using System.Collections.Generic;
-#if NET40
-	using System.ComponentModel.Composition;
-#else
 	using System.Composition;
-#endif
 	using System.IO;
 	using System.Linq;
 	using System.Security.Cryptography;
@@ -17,9 +13,7 @@
 	/// The (full) .NET Framework implementation of cryptography.
 	/// </summary>
 	[Export(typeof(ICryptoProvider))]
-#if !NET40
 	[Shared]
-#endif
 	public class DesktopCryptoProvider : CryptoProviderBase {
 		/// <summary>
 		/// Initializes a new instance of the <see cref="DesktopCryptoProvider" /> class
@@ -49,7 +43,7 @@
 		public override byte[] Sign(byte[] data, byte[] signingPrivateKey) {
 			using (var rsa = new RSACryptoServiceProvider()) {
 				rsa.ImportCspBlob(signingPrivateKey);
-				return rsa.SignData(data, this.HashAlgorithmName);
+				return rsa.SignData(data, this.AsymmetricHashAlgorithmName);
 			}
 		}
 
@@ -59,13 +53,14 @@
 		/// <param name="signingPublicKey">The public key used to verify the signature.</param>
 		/// <param name="data">The data that was signed.</param>
 		/// <param name="signature">The signature.</param>
+		/// <param name="hashAlgorithm">The hash algorithm used to hash the data.</param>
 		/// <returns>
 		/// A value indicating whether the signature is valid.
 		/// </returns>
-		public override bool VerifySignature(byte[] signingPublicKey, byte[] data, byte[] signature) {
+		public override bool VerifySignature(byte[] signingPublicKey, byte[] data, byte[] signature, string hashAlgorithm) {
 			using (var rsa = new RSACryptoServiceProvider()) {
 				rsa.ImportCspBlob(signingPublicKey);
-				return rsa.VerifyData(data, this.HashAlgorithmName, signature);
+				return rsa.VerifyData(data, hashAlgorithm, signature);
 			}
 		}
 
@@ -77,8 +72,10 @@
 		/// The result of the encryption.
 		/// </returns>
 		public override SymmetricEncryptionResult Encrypt(byte[] data) {
-			using (var alg = SymmetricAlgorithm.Create(this.SymmetricAlgorithmName)) {
-				alg.KeySize = this.BlobSymmetricKeySize;
+			using (var alg = SymmetricAlgorithm.Create(this.SymmetricEncryptionConfiguration.AlgorithmName)) {
+				alg.Mode = (CipherMode)Enum.Parse(typeof(CipherMode), this.SymmetricEncryptionConfiguration.BlockMode);
+				alg.Padding = (PaddingMode)Enum.Parse(typeof(PaddingMode), this.SymmetricEncryptionConfiguration.Padding);
+				alg.KeySize = this.SymmetricEncryptionKeySize;
 				using (var encryptor = alg.CreateEncryptor()) {
 					using (var memoryStream = new MemoryStream()) {
 						using (var cryptoStream = new CryptoStream(memoryStream, encryptor, CryptoStreamMode.Write)) {
@@ -99,7 +96,9 @@
 		/// The decrypted buffer.
 		/// </returns>
 		public override byte[] Decrypt(SymmetricEncryptionResult data) {
-			using (var alg = SymmetricAlgorithm.Create(this.SymmetricAlgorithmName)) {
+			using (var alg = SymmetricAlgorithm.Create(this.SymmetricEncryptionConfiguration.AlgorithmName)) {
+				alg.Mode = (CipherMode)Enum.Parse(typeof(CipherMode), this.SymmetricEncryptionConfiguration.BlockMode);
+				alg.Padding = (PaddingMode)Enum.Parse(typeof(PaddingMode), this.SymmetricEncryptionConfiguration.Padding);
 				using (var decryptor = alg.CreateDecryptor(data.Key, data.IV)) {
 					using (var plaintextStream = new MemoryStream()) {
 						using (var cryptoStream = new CryptoStream(plaintextStream, decryptor, CryptoStreamMode.Write)) {
@@ -146,11 +145,16 @@
 		/// Computes the hash of the specified buffer.
 		/// </summary>
 		/// <param name="data">The data to hash.</param>
+		/// <param name="hashAlgorithmName">Name of the hash algorithm.</param>
 		/// <returns>
 		/// The computed hash.
 		/// </returns>
-		public override byte[] Hash(byte[] data) {
-			using (var hasher = HashAlgorithm.Create(this.HashAlgorithmName)) {
+		public override byte[] Hash(byte[] data, string hashAlgorithmName) {
+			using (var hasher = HashAlgorithm.Create(hashAlgorithmName)) {
+				if (hasher == null) {
+					throw new NotSupportedException();
+				}
+
 				return hasher.ComputeHash(data);
 			}
 		}

@@ -11,16 +11,22 @@
 	/// </summary>
 	public abstract class CryptoProviderBase : ICryptoProvider {
 		/// <summary>
-		/// Backing field for the <see cref="HashAlgorithmName"/> property.
+		/// Backing field for the <see cref="SymmetricHashAlgorithmName"/> property.
 		/// </summary>
 		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
-		private string hashAlgorithmName = SecurityLevel.Maximum.HashAlgorithmName;
+		private string symmetricHashAlgorithmName = SecurityLevel.Maximum.SymmetricHashAlgorithmName;
 
 		/// <summary>
-		/// Backing field for the <see cref="SymmetricAlgorithmName"/> property.
+		/// Backing field for the <see cref="AsymmetricHashAlgorithmName"/> property.
 		/// </summary>
 		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
-		private string symmetricAlgorithmName = SecurityLevel.Maximum.SymmetricAlgorithmName;
+		private string asymmetricHashAlgorithmName = SecurityLevel.Maximum.AsymmetricHashAlgorithmName;
+
+		/// <summary>
+		/// Backing field for the <see cref="SymmetricEncryptionConfiguration"/> property.
+		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
+		private EncryptionConfiguration symmetricEncryptionConfiguration = SecurityLevel.Maximum.SymmetricEncryptionConfiguration;
 
 		/// <summary>
 		/// Backing field for the <see cref="EncryptionAsymmetricKeySize"/> property.
@@ -35,29 +41,37 @@
 		private int signatureAsymmetricKeySize = SecurityLevel.Maximum.SignatureAsymmetricKeySize;
 
 		/// <summary>
-		/// Backing field for the <see cref="BlobSymmetricKeySize"/> property.
+		/// Backing field for the <see cref="SymmetricEncryptionKeySize"/> property.
 		/// </summary>
 		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private int blobSymmetricKeySize = SecurityLevel.Maximum.BlobSymmetricKeySize;
 
 		/// <summary>
-		/// Gets or sets the name of the hash algorithm to use.
+		/// Gets or sets the name of the hash algorithm to use for symmetric signatures.
 		/// </summary>
-		public string HashAlgorithmName {
-			get { return this.hashAlgorithmName; }
-			set { this.hashAlgorithmName = value; }
+		public string SymmetricHashAlgorithmName {
+			get { return this.symmetricHashAlgorithmName; }
+			set { this.symmetricHashAlgorithmName = value; }
 		}
 
 		/// <summary>
-		/// Gets or sets the name of the symmetric algorithm to use.
+		/// Gets or sets the name of the algorithm to use for asymmetric signatures.
 		/// </summary>
-		public string SymmetricAlgorithmName {
-			get { return this.symmetricAlgorithmName; }
-			set { this.symmetricAlgorithmName = value; }
+		public string AsymmetricHashAlgorithmName {
+			get { return this.asymmetricHashAlgorithmName; }
+			set { this.asymmetricHashAlgorithmName = value; }
 		}
 
 		/// <summary>
-		/// Gets or sets the size of the key used for asymmetric signatures.
+		/// Gets or sets the configuration to use for symmetric encryption.
+		/// </summary>
+		public EncryptionConfiguration SymmetricEncryptionConfiguration {
+			get { return this.symmetricEncryptionConfiguration; }
+			set { this.symmetricEncryptionConfiguration = value; }
+		}
+
+		/// <summary>
+		/// Gets or sets the size of the key (in bits) used for asymmetric signatures.
 		/// </summary>
 		public int SignatureAsymmetricKeySize {
 			get { return this.signatureAsymmetricKeySize; }
@@ -65,7 +79,7 @@
 		}
 
 		/// <summary>
-		/// Gets or sets the size of the key used for asymmetric encryption.
+		/// Gets or sets the size of the key (in bits) used for asymmetric encryption.
 		/// </summary>
 		public int EncryptionAsymmetricKeySize {
 			get { return this.encryptionAsymmetricKeySize; }
@@ -73,9 +87,9 @@
 		}
 
 		/// <summary>
-		/// Gets or sets the size of the key used for symmetric blob encryption.
+		/// Gets or sets the size of the key (in bits) used for symmetric blob encryption.
 		/// </summary>
-		public int BlobSymmetricKeySize {
+		public int SymmetricEncryptionKeySize {
 			get { return this.blobSymmetricKeySize; }
 			set { this.blobSymmetricKeySize = value; }
 		}
@@ -96,10 +110,11 @@
 		/// <param name="signingPublicKey">The public key used to verify the signature.</param>
 		/// <param name="data">The data that was signed.</param>
 		/// <param name="signature">The signature.</param>
+		/// <param name="hashAlgorithm">The hash algorithm used to hash the data.</param>
 		/// <returns>
 		/// A value indicating whether the signature is valid.
 		/// </returns>
-		public abstract bool VerifySignature(byte[] signingPublicKey, byte[] data, byte[] signature);
+		public abstract bool VerifySignature(byte[] signingPublicKey, byte[] data, byte[] signature, string hashAlgorithm);
 
 		/// <summary>
 		/// Symmetrically encrypts the specified buffer using a randomly generated key.
@@ -143,10 +158,11 @@
 		/// Computes the hash of the specified buffer.
 		/// </summary>
 		/// <param name="data">The data to hash.</param>
+		/// <param name="hashAlgorithmName">Name of the hash algorithm.</param>
 		/// <returns>
 		/// The computed hash.
 		/// </returns>
-		public abstract byte[] Hash(byte[] data);
+		public abstract byte[] Hash(byte[] data, string hashAlgorithmName);
 
 		/// <summary>
 		/// Generates a key pair for asymmetric cryptography.

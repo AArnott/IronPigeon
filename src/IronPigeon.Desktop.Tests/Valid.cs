@@ -8,6 +8,7 @@
 
 	internal static class Valid {
 		internal const string ContentType = "some type";
+		internal const string HashAlgorithmName = "SHA1";
 		internal static readonly byte[] Hash = new byte[1];
 		internal static readonly byte[] Key = new byte[1];
 		internal static readonly byte[] IV = new byte[1];

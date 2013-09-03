@@ -1,15 +1,12 @@
 ﻿namespace IronPigeon {
 	using System;
-	using System.Collections.Concurrent;
 	using System.Collections.Generic;
 	using System.Linq;
 	using System.Text;
 	using System.Threading;
 	using System.Threading.Tasks;
 	using Validation;
-#if !NET40
 	using TaskEx = System.Threading.Tasks.Task;
-#endif
 
 	/// <summary>
 	/// An incremental progress reporting mechanism that also allows

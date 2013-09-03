@@ -41,7 +41,11 @@
 		public static string AbsoluteAction(
 			this UrlHelper url, string actionName, string controllerName, object routeValues, string protocol) {
 			Uri requestUrl = url.RequestContext.HttpContext.Request.Url;
-			return url.Action(actionName, controllerName, new RouteValueDictionary(routeValues), protocol, null);
+			var builder = new UriBuilder(url.Action(actionName, controllerName, new RouteValueDictionary(routeValues), protocol, null));
+			builder.Scheme = protocol ?? requestUrl.Scheme;
+			builder.Host = requestUrl.Host;
+			builder.Port = requestUrl.Port;
+			return builder.Uri.AbsoluteUri;
 		}
 
 		public static string AbsoluteRouteUrl(this UrlHelper url, string routeName, object routeValues, string protocol = null) {

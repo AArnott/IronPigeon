@@ -1,13 +1,8 @@
 ﻿namespace IronPigeon {
 	using System;
-	using System.Collections.Concurrent;
 	using System.Collections.Generic;
 	using System.Collections.ObjectModel;
-#if NET40
-	using System.ComponentModel.Composition;
-#else
 	using System.Composition;
-#endif
 	using System.Diagnostics;
 	using System.Globalization;
 	using System.IO;
@@ -20,23 +15,14 @@
 	using System.Text;
 	using System.Threading;
 	using System.Threading.Tasks;
-
 	using IronPigeon.Providers;
 	using IronPigeon.Relay;
-
 	using Validation;
-#if NET40
-	using ReadOnlyCollectionOfEndpoint = System.Collections.ObjectModel.ReadOnlyCollection<Endpoint>;
-	using ReadOnlyCollectionOfString = System.Collections.ObjectModel.ReadOnlyCollection<string>;
-	using ReadOnlyListOfInboxItem = System.Collections.ObjectModel.ReadOnlyCollection<IncomingList.IncomingItem>;
-	using ReadOnlyListOfPayload = System.Collections.ObjectModel.ReadOnlyCollection<Payload>;
-#else
 	using ReadOnlyCollectionOfEndpoint = System.Collections.Generic.IReadOnlyCollection<Endpoint>;
 	using ReadOnlyCollectionOfString = System.Collections.Generic.IReadOnlyCollection<string>;
 	using ReadOnlyListOfInboxItem = System.Collections.Generic.IReadOnlyList<IncomingList.IncomingItem>;
 	using ReadOnlyListOfPayload = System.Collections.Generic.IReadOnlyList<Payload>;
 	using TaskEx = System.Threading.Tasks.Task;
-#endif
 
 	/// <summary>
 	/// A channel for sending or receiving secure messages.
@@ -45,14 +31,20 @@
 		/// <summary>
 		/// A cache of identifiers and their resolved endpoints.
 		/// </summary>
-		private readonly ConcurrentDictionary<string, Endpoint> resolvedIdentifiersCache =
-			new ConcurrentDictionary<string, Endpoint>();
+		private readonly Dictionary<string, Endpoint> resolvedIdentifiersCache =
+			new Dictionary<string, Endpoint>();
 
 		/// <summary>
 		/// The HTTP client to use for long poll HTTP requests.
 		/// </summary>
 		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private HttpClient httpClientLongPoll;
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="Channel" /> class.
+		/// </summary>
+		public Channel() {
+		}
 
 		/// <summary>
 		/// Gets or sets the provider of blob storage.
@@ -123,34 +115,40 @@
 			var payloads = new List<Payload>();
 			foreach (var item in inboxItems) {
 				try {
-					var invite = await this.DownloadPayloadReferenceAsync(item, cancellationToken);
-					if (invite == null) {
-						continue;
-					}
+					try {
+						var invite = await this.DownloadPayloadReferenceAsync(item, cancellationToken);
+						if (invite == null) {
+							continue;
+						}
 
-					var message = await this.DownloadPayloadAsync(invite, cancellationToken);
-					payloads.Add(message);
-					if (progress != null) {
-						progress.Report(message);
+						var message = await this.DownloadPayloadAsync(invite, cancellationToken);
+						payloads.Add(message);
+						if (progress != null) {
+							progress.Report(message);
+						}
+					} catch (SerializationException ex) {
+						throw new InvalidMessageException(Strings.InvalidMessage, ex);
+					} catch (DecoderFallbackException ex) {
+						throw new InvalidMessageException(Strings.InvalidMessage, ex);
+					} catch (OverflowException ex) {
+						throw new InvalidMessageException(Strings.InvalidMessage, ex);
+					} catch (OutOfMemoryException ex) {
+						throw new InvalidMessageException(Strings.InvalidMessage, ex);
+					} catch (InvalidMessageException) {
+						throw;
+					} catch (Exception ex) {
+						// all those platform-specific exceptions that aren't available to portable libraries.
+						throw new InvalidMessageException(Strings.InvalidMessage, ex);
 					}
-				} catch (SerializationException ex) {
-					throw new InvalidMessageException(Strings.InvalidMessage, ex);
-				} catch (DecoderFallbackException ex) {
-					throw new InvalidMessageException(Strings.InvalidMessage, ex);
-				} catch (OverflowException ex) {
-					throw new InvalidMessageException(Strings.InvalidMessage, ex);
-				} catch (OutOfMemoryException ex) {
-					throw new InvalidMessageException(Strings.InvalidMessage, ex);
-				} catch (Exception ex) { // all those platform-specific exceptions that aren't available to portable libraries.
-					throw new InvalidMessageException(Strings.InvalidMessage, ex);
+				} catch (InvalidMessageException ex) {
+					Debug.WriteLine(ex);
+
+					// Delete the payload reference since it was an invalid message.
+					var nowait = this.DeletePayloadReferenceAsync(item.Location, cancellationToken);
 				}
 			}
 
-#if NET40
-			return new ReadOnlyCollection<Payload>(payloads);
-#else
 			return payloads;
-#endif
 		}
 
 		/// <summary>
@@ -209,11 +207,7 @@
 				}
 			}
 
-#if NET40
-			return new ReadOnlyCollection<string>(verifiedIdentifiers);
-#else
 			return verifiedIdentifiers;
-#endif
 		}
 
 		#region Protected message sending/receiving methods
@@ -250,7 +244,8 @@
 			var plainTextPayloadBuffer = this.CryptoServices.Decrypt(encryptedPayload);
 
 			var plainTextPayloadStream = new MemoryStream(plainTextPayloadBuffer);
-			var signature = await plainTextPayloadStream.ReadSizeAndBufferAsync(cancellationToken);
+			string signingHashAlgorithm = null; //// Encoding.UTF8.GetString(await plainTextPayloadStream.ReadSizeAndBufferAsync(cancellationToken));
+			byte[] signature = await plainTextPayloadStream.ReadSizeAndBufferAsync(cancellationToken);
 			long payloadStartPosition = plainTextPayloadStream.Position;
 			var signedBytes = new byte[plainTextPayloadStream.Length - plainTextPayloadStream.Position];
 			await plainTextPayloadStream.ReadAsync(signedBytes, 0, signedBytes.Length);
@@ -263,8 +258,11 @@
 			var notificationAuthor = Utilities.DeserializeDataContract<Endpoint>(plainTextPayloadReader);
 			var messageReference = Utilities.DeserializeDataContract<PayloadReference>(plainTextPayloadReader);
 			messageReference.ReferenceLocation = inboxItem.Location;
+			if (messageReference.HashAlgorithmName == null) {
+				messageReference.HashAlgorithmName = Utilities.GuessHashAlgorithmFromLength(messageReference.Hash.Length);
+			}
 
-			if (!this.CryptoServices.VerifySignature(notificationAuthor.SigningKeyPublicMaterial, signedBytes, signature)) {
+			if (!this.CryptoServices.VerifySignatureWithTolerantHashAlgorithm(notificationAuthor.SigningKeyPublicMaterial, signedBytes, signature, signingHashAlgorithm)) {
 				throw new InvalidMessageException();
 			}
 
@@ -288,8 +286,7 @@
 			var messageBuffer = await responseMessage.Content.ReadAsByteArrayAsync();
 
 			// Calculate hash of downloaded message and check that it matches the referenced message hash.
-			var messageHash = this.CryptoServices.Hash(messageBuffer);
-			if (!Utilities.AreEquivalent(messageHash, notification.Hash)) {
+			if (!this.CryptoServices.IsHashMatchWithTolerantHashAlgorithm(messageBuffer, notification.Hash, notification.HashAlgorithmName)) {
 				throw new InvalidMessageException();
 			}
 
@@ -332,12 +329,12 @@
 			this.Log("Message symmetric key", encryptionResult.Key);
 			this.Log("Message symmetric IV", encryptionResult.IV);
 
-			var messageHash = this.CryptoServices.Hash(encryptionResult.Ciphertext);
+			var messageHash = this.CryptoServices.Hash(encryptionResult.Ciphertext, this.CryptoServices.SymmetricHashAlgorithmName);
 			this.Log("Encrypted message hash", messageHash);
 
 			using (MemoryStream cipherTextStream = new MemoryStream(encryptionResult.Ciphertext)) {
 				Uri blobUri = await this.CloudBlobStorage.UploadMessageAsync(cipherTextStream, expiresUtc, cancellationToken: cancellationToken);
-				return new PayloadReference(blobUri, messageHash, encryptionResult.Key, encryptionResult.IV, expiresUtc);
+				return new PayloadReference(blobUri, messageHash, this.CryptoServices.SymmetricHashAlgorithmName, encryptionResult.Key, encryptionResult.IV, expiresUtc);
 			}
 		}
 
@@ -392,6 +389,7 @@
 
 			byte[] notificationSignature = this.CryptoServices.Sign(plainTextPayloadStream.ToArray(), this.Endpoint.SigningKeyPrivateMaterial);
 			var signedPlainTextPayloadStream = new MemoryStream((int)plainTextPayloadStream.Length + notificationSignature.Length + 4);
+			////await signedPlainTextPayloadStream.WriteSizeAndBufferAsync(Encoding.UTF8.GetBytes(this.CryptoServices.HashAlgorithmName), cancellationToken);
 			await signedPlainTextPayloadStream.WriteSizeAndBufferAsync(notificationSignature, cancellationToken);
 			plainTextPayloadStream.Position = 0;
 			await plainTextPayloadStream.CopyToAsync(signedPlainTextPayloadStream, 4096, cancellationToken);
@@ -432,8 +430,10 @@
 			Requires.NotNullOrEmpty(claimedIdentifier, "claimedIdentifier");
 
 			Endpoint cachedEndpoint;
-			if (this.resolvedIdentifiersCache.TryGetValue(claimedIdentifier, out cachedEndpoint)) {
-				return cachedEndpoint.Equals(claimingEndpoint);
+			lock (this.resolvedIdentifiersCache) {
+				if (this.resolvedIdentifiersCache.TryGetValue(claimedIdentifier, out cachedEndpoint)) {
+					return cachedEndpoint.Equals(claimingEndpoint);
+				}
 			}
 
 			var matchingEndpoint = await Utilities.FastestQualifyingResultAsync(
@@ -443,7 +443,11 @@
 				cancellationToken);
 
 			if (matchingEndpoint != null) {
-				this.resolvedIdentifiersCache.TryAdd(claimedIdentifier, matchingEndpoint);
+				lock (this.resolvedIdentifiersCache) {
+					if (!this.resolvedIdentifiersCache.ContainsKey(claimedIdentifier)) {
+						this.resolvedIdentifiersCache.Add(claimedIdentifier, matchingEndpoint);
+					}
+				}
 			}
 
 			return matchingEndpoint != null;
@@ -485,26 +489,12 @@
 				httpClient = this.httpClientLongPoll;
 			}
 
-			while (true) {
-				try {
-					var responseMessage = await httpClient.GetAsync(requestUri, this.Endpoint.InboxOwnerCode, cancellationToken);
-					responseMessage.EnsureSuccessStatusCode();
-					var responseStream = await responseMessage.Content.ReadAsStreamAsync();
-					var inboxResults = (IncomingList)deserializer.ReadObject(responseStream);
+			var responseMessage = await httpClient.GetAsync(requestUri, this.Endpoint.InboxOwnerCode, cancellationToken);
+			responseMessage.EnsureSuccessStatusCode();
+			var responseStream = await responseMessage.Content.ReadAsStreamAsync();
+			var inboxResults = (IncomingList)deserializer.ReadObject(responseStream);
 
-#if NET40
-					return new ReadOnlyCollection<IncomingList.IncomingItem>(inboxResults.Items);
-#else
-					return inboxResults.Items;
-#endif
-				} catch (OperationCanceledException) {
-					// This can occur if the caller cancelled or if our HTTP client timed out.
-					// On time-outs, we want to re-establish.  For caller cancellation, propagate it out.
-					if (cancellationToken.IsCancellationRequested) {
-						throw;
-					}
-				}
-			}
+			return inboxResults.Items;
 		}
 
 		/// <summary>Logs a message.</summary>
