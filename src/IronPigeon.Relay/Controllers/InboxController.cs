@@ -162,7 +162,13 @@
 		public async Task<ActionResult> GetInboxItemsAsync(string id, bool longPoll = false) {
 			var blobs = await this.RetrieveInboxItemsAsync(id, longPoll);
 			var list = new IncomingList() { Items = blobs };
-			this.Response.CacheControl = "no-cache"; // Help prevent clients such as WP8 from caching the result since they operate on it, then call us again
+			
+			// Unit tests may not set this.Response
+			if (this.Response != null) {
+				// Help prevent clients such as WP8 from caching the result since they operate on it, then call us again
+				this.Response.CacheControl = "no-cache";
+			}
+
 			return new JsonResult() {
 				Data = list,
 				JsonRequestBehavior = JsonRequestBehavior.AllowGet
