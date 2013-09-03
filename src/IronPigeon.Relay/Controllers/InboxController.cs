@@ -18,6 +18,7 @@
 	using Microsoft.WindowsAzure;
 	using Microsoft.WindowsAzure.Storage;
 	using Microsoft.WindowsAzure.Storage.Blob;
+	using Microsoft.WindowsAzure.Storage.Table.DataServices;
 	using Microsoft.WindowsAzure.StorageClient;
 	using Newtonsoft.Json;
 	using Newtonsoft.Json.Linq;
@@ -159,30 +160,7 @@
 
 		[HttpGet, ActionName("Slot"), InboxOwnerAuthorize]
 		public async Task<ActionResult> GetInboxItemsAsync(string id, bool longPoll = false) {
-			var directory = this.InboxContainer.GetDirectoryReference(id);
-			var blobs = new List<IncomingList.IncomingItem>();
-			do {
-				try {
-					var directoryListing = await directory.ListBlobsSegmentedAsync(
-						useFlatBlobListing: true,
-						pageSize: 50,
-						details: BlobListingDetails.Metadata,
-						options: new BlobRequestOptions(),
-						operationContext: null);
-					var notExpiringBefore = DateTime.UtcNow;
-					blobs.AddRange(
-						from blob in directoryListing.OfType<ICloudBlob>()
-						let expirationString = blob.Metadata[ExpirationDateMetadataKey]
-						where expirationString != null && DateTime.Parse(expirationString) > notExpiringBefore
-						select new IncomingList.IncomingItem { Location = blob.Uri, DatePostedUtc = blob.Properties.LastModified.Value.UtcDateTime });
-				} catch (StorageException) {
-				}
-
-				if (longPoll && blobs.Count == 0) {
-					await WaitIncomingMessageAsync(id).WithCancellation(this.Response.GetClientDisconnectedToken());
-				}
-			} while (longPoll && blobs.Count == 0);
-
+			var blobs = await this.RetrieveInboxItemsAsync(id, longPoll);
 			var list = new IncomingList() { Items = blobs };
 			this.Response.CacheControl = "no-cache"; // Help prevent clients such as WP8 from caching the result since they operate on it, then call us again
 			return new JsonResult() {
@@ -229,14 +207,28 @@
 
 		[HttpPut, ActionName("Slot"), InboxOwnerAuthorize]
 		public async Task<ActionResult> PushChannelAsync(string id) {
-			var channelUri = new Uri(this.Request.Form["channel_uri"], UriKind.Absolute);
-			var content = this.Request.Form["channel_content"];
-			Requires.Argument(content == null || content.Length <= 4096, "content", "Push content too large");
-
 			var inbox = await this.GetInboxAsync(id);
-			inbox.PushChannelUri = channelUri.AbsoluteUri;
-			inbox.PushChannelContent = content;
-			inbox.ClientPackageSecurityIdentifier = this.Request.Form["package_security_identifier"];
+
+			if (this.Request.Form["channel_uri"] != null) {
+				var channelUri = new Uri(this.Request.Form["channel_uri"], UriKind.Absolute);
+				var content = this.Request.Form["channel_content"];
+				Requires.Argument(content == null || content.Length <= 4096, "content", "Push content too large");
+
+				inbox.PushChannelUri = channelUri.AbsoluteUri;
+				inbox.PushChannelContent = content;
+				inbox.ClientPackageSecurityIdentifier = this.Request.Form["package_security_identifier"];
+			} else if (this.Request.Form["wp8_channel_uri"] != null) {
+				var channelUri = new Uri(this.Request.Form["wp8_channel_uri"], UriKind.Absolute);
+				var content = this.Request.Form["wp8_channel_content"];
+				Requires.Argument(content == null || content.Length <= 4096, "content", "Push content too large");
+
+				inbox.WinPhone8PushChannelUri = channelUri.AbsoluteUri;
+				inbox.WinPhone8PushChannelContent = content;
+			} else {
+				// No data was posted. So skip updating the entity.
+				return new EmptyResult();
+			}
+
 			this.InboxTable.UpdateObject(inbox);
 			await this.InboxTable.SaveChangesAsync();
 			return new EmptyResult();
@@ -325,10 +317,52 @@
 			return tcs.Task;
 		}
 
-		private async Task PushNotifyInboxMessageAsync(InboxEntity inbox, int failedAttempts = 0) {
+		private async Task<int> RetrieveInboxItemsCountAsync(string id) {
+			int inboxCount = (await this.RetrieveInboxItemsAsync(id, longPoll: false)).Count;
+			return inboxCount;
+		}
+
+		private async Task<List<IncomingList.IncomingItem>> RetrieveInboxItemsAsync(string id, bool longPoll) {
+			var directory = this.InboxContainer.GetDirectoryReference(id);
+			var blobs = new List<IncomingList.IncomingItem>();
+			do {
+				try {
+					var directoryListing = await directory.ListBlobsSegmentedAsync(
+						useFlatBlobListing: true,
+						pageSize: 50,
+						details: BlobListingDetails.Metadata,
+						options: new BlobRequestOptions(),
+						operationContext: null);
+					var notExpiringBefore = DateTime.UtcNow;
+					blobs.AddRange(
+						from blob in directoryListing.OfType<ICloudBlob>()
+						let expirationString = blob.Metadata[ExpirationDateMetadataKey]
+						where expirationString != null && DateTime.Parse(expirationString) > notExpiringBefore
+						select
+							new IncomingList.IncomingItem {
+								Location = blob.Uri,
+								DatePostedUtc = blob.Properties.LastModified.Value.UtcDateTime
+							});
+				} catch (StorageException) {
+				}
+
+				if (longPoll && blobs.Count == 0) {
+					await WaitIncomingMessageAsync(id).WithCancellation(this.Response.GetClientDisconnectedToken());
+				}
+			} while (longPoll && blobs.Count == 0);
+			return blobs;
+		}
+
+		private async Task PushNotifyInboxMessageAsync(InboxEntity inbox) {
 			Requires.NotNull(inbox, "inbox");
 
-			if (string.IsNullOrEmpty(inbox.ClientPackageSecurityIdentifier)) {
+			await Task.WhenAll(
+				this.PushNotifyInboxMessageWinStoreAsync(inbox),
+				this.PushNotifyInboxMessageWinPhoneAsync(inbox));
+		}
+
+		private async Task PushNotifyInboxMessageWinStoreAsync(InboxEntity inbox, int failedAttempts = 0) {
+			if (string.IsNullOrEmpty(inbox.ClientPackageSecurityIdentifier) || string.IsNullOrEmpty(inbox.PushChannelUri)) {
 				return;
 			}
 
@@ -338,7 +372,9 @@
 			pushNotifyRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", bearerToken);
 			pushNotifyRequest.Headers.Add("X-WNS-Type", "wns/raw");
 			pushNotifyRequest.Content = new StringContent(inbox.PushChannelContent ?? string.Empty);
-			pushNotifyRequest.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream"); // yes, it's a string, but we must claim it's an octet-stream
+
+			// yes, it's a string, but we must claim it's an octet-stream
+			pushNotifyRequest.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
 
 			var response = await this.HttpClient.SendAsync(pushNotifyRequest);
 			if (!response.IsSuccessStatusCode) {
@@ -349,7 +385,7 @@
 							await client.AcquireWnsPushBearerTokenAsync(this.HttpClient);
 							this.ClientTable.UpdateObject(client);
 							await this.ClientTable.SaveChangesAsync();
-							await this.PushNotifyInboxMessageAsync(inbox, failedAttempts + 1);
+							await this.PushNotifyInboxMessageWinStoreAsync(inbox, failedAttempts + 1);
 							return;
 						}
 					}
@@ -360,12 +396,31 @@
 			}
 		}
 
+		private async Task PushNotifyInboxMessageWinPhoneAsync(InboxEntity inbox) {
+			if (!string.IsNullOrEmpty(inbox.WinPhone8PushChannelUri)) {
+				var notifications = new WinPhonePushNotifications(this.HttpClient, new Uri(inbox.WinPhone8PushChannelUri));
+
+				int count = await this.RetrieveInboxItemsCountAsync(inbox.RowKey);
+				bool invalidChannel = false;
+				try {
+					await notifications.PushWinPhoneTileAsync(count: count);
+				} catch (HttpRequestException) {
+					invalidChannel = true;
+				}
+
+				if (invalidChannel) {
+					inbox.WinPhone8PushChannelUri = null;
+					inbox.WinPhone8PushChannelContent = null;
+					this.InboxTable.UpdateObject(inbox);
+					await this.InboxTable.SaveChangesAsync();
+				}
+			}
+		}
+
 		private async Task AlertLongPollWaiterAsync(InboxEntity inbox) {
 			Requires.NotNull(inbox, "inbox");
 
-			if (inbox.PushChannelUri != null) {
-				await this.PushNotifyInboxMessageAsync(inbox);
-			}
+			await this.PushNotifyInboxMessageAsync(inbox);
 
 			var id = inbox.RowKey;
 			TaskCompletionSource<object> tcs;

@@ -197,6 +197,7 @@
     <Compile Include="Code\AuthorizationServerHost.cs" />
     <Compile Include="Code\MicrosoftTools.cs" />
     <Compile Include="Code\OAuthAuthorize.cs" />
+    <Compile Include="Code\WinPhonePushNotifications.cs" />
     <Compile Include="Controllers\AddressBookController.cs" />
     <Compile Include="Controllers\BlobController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
