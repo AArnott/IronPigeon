@@ -67,7 +67,7 @@
 			Requires.NotNullOrEmpty(blob, "blob");
 
 			var blobUri = new Uri(blob, UriKind.Absolute);
-			if (!this.Request.AcceptTypes.Contains(AddressBookEntry.ContentType) && this.Request.AcceptTypes.Contains("text/html")) {
+			if (this.Request.AcceptTypes != null && !this.Request.AcceptTypes.Contains(AddressBookEntry.ContentType) && this.Request.AcceptTypes.Contains("text/html")) {
 				// This looks like a browser rather than an IronPigeon client.
 				// Return an HTML page that describes what IronPigeon is.
 				return this.View();
