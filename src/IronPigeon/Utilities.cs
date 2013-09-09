@@ -417,6 +417,19 @@
 		}
 
 		/// <summary>
+		/// Applies the appropriate headers to an HTTP request so that the response will not be cached.
+		/// </summary>
+		/// <param name="request">The request.</param>
+		public static void ApplyNoCachePolicy(this HttpRequestMessage request) {
+			Requires.NotNull(request, "request");
+
+			// The no-cache headers don't seem to impact the client at all, but perhaps they prevent any intermediaries from caching?
+			request.Headers.CacheControl = new CacheControlHeaderValue() { NoCache = true };
+			request.Headers.Pragma.Add(new NameValueHeaderValue("no-cache"));
+			request.Headers.IfModifiedSince = DateTime.UtcNow; // This last one seems to be the trick that actually works.
+		}
+
+		/// <summary>
 		/// Guesses the hash algorithm used given the length of the result.
 		/// </summary>
 		/// <param name="hashLengthInBytes">The length of the output of the hash functino bytes.</param>
@@ -512,10 +525,7 @@
 			// which would change the output of a future request to the server with the same URL.
 			// But if a cached result is used instead of a real request to the server then we get
 			// the same result back.
-			// The no-cache headers don't seem to impact the client at all, but perhaps they prevent any intermediaries from caching?
-			request.Headers.CacheControl = new CacheControlHeaderValue() { NoCache = true };
-			request.Headers.Pragma.Add(new NameValueHeaderValue("no-cache"));
-			request.Headers.IfModifiedSince = DateTime.UtcNow; // This last one seems to be the trick that actually works.
+			ApplyNoCachePolicy(request);
 
 			return httpClient.SendAsync(request, cancellationToken);
 		}

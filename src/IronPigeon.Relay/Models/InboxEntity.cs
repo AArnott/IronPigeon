@@ -48,6 +48,16 @@
 		public string WinPhone8PushChannelContent { get; set; }
 
 		/// <summary>
+		/// Gets or sets the first line of text to include in the toast notification when a message comes in.
+		/// </summary>
+		public string WinPhone8ToastText1 { get; set; }
+
+		/// <summary>
+		/// Gets or sets the second line of text to include in the toast notification when a message comes in.
+		/// </summary>
+		public string WinPhone8ToastText2 { get; set; }
+
+		/// <summary>
 		/// Gets a value indicating whether push notification is enabled.
 		/// </summary>
 		internal bool IsPushNotificationEnabled {
