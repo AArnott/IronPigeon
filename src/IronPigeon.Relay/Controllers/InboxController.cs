@@ -162,7 +162,7 @@
 		public async Task<ActionResult> GetInboxItemsAsync(string id, bool longPoll = false) {
 			var blobs = await this.RetrieveInboxItemsAsync(id, longPoll);
 			var list = new IncomingList() { Items = blobs };
-			
+
 			// Unit tests may not set this.Response
 			if (this.Response != null) {
 				// Help prevent clients such as WP8 from caching the result since they operate on it, then call us again
@@ -230,6 +230,8 @@
 
 				inbox.WinPhone8PushChannelUri = channelUri.AbsoluteUri;
 				inbox.WinPhone8PushChannelContent = content;
+				inbox.WinPhone8ToastText1 = this.Request.Form["wp8_channel_toast_text1"];
+				inbox.WinPhone8ToastText2 = this.Request.Form["wp8_channel_toast_text2"];
 			} else {
 				// No data was posted. So skip updating the entity.
 				return new EmptyResult();
@@ -409,7 +411,21 @@
 				int count = await this.RetrieveInboxItemsCountAsync(inbox.RowKey);
 				bool invalidChannel = false;
 				try {
-					await notifications.PushWinPhoneTileAsync(count: count);
+					var pushTile = notifications.PushWinPhoneTileAsync(count: count);
+					Task<bool> pushToast = Task.FromResult(false);
+					if (!string.IsNullOrEmpty(inbox.WinPhone8ToastText1) || !string.IsNullOrEmpty(inbox.WinPhone8ToastText2)) {
+						var line1 = string.Format(CultureInfo.InvariantCulture, inbox.WinPhone8ToastText1 ?? string.Empty, count);
+						var line2 = string.Format(CultureInfo.InvariantCulture, inbox.WinPhone8ToastText2 ?? string.Empty, count);
+						pushToast = notifications.PushWinPhoneToastAsync(line1, line2);
+					}
+
+					Task<bool> pushRaw = Task.FromResult(false);
+					if (!string.IsNullOrEmpty(inbox.WinPhone8PushChannelContent)) {
+						pushRaw = notifications.PushWinPhonRawNotificationAsync(inbox.WinPhone8PushChannelContent);
+					}
+
+					await Task.WhenAll(pushTile, pushToast, pushRaw);
+					invalidChannel |= !(pushTile.Result || pushToast.Result || pushRaw.Result);
 				} catch (HttpRequestException) {
 					invalidChannel = true;
 				}
@@ -417,6 +433,8 @@
 				if (invalidChannel) {
 					inbox.WinPhone8PushChannelUri = null;
 					inbox.WinPhone8PushChannelContent = null;
+					inbox.WinPhone8ToastText1 = null;
+					inbox.WinPhone8ToastText2 = null;
 					this.InboxTable.UpdateObject(inbox);
 					await this.InboxTable.SaveChangesAsync();
 				}
