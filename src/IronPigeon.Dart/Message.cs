@@ -73,6 +73,12 @@
 		public Endpoint Author { get; set; }
 
 		/// <summary>
+		/// Gets or sets the author's self-proclaimed name.
+		/// </summary>
+		[DataMember]
+		public string AuthorName { get; set; }
+
+		/// <summary>
 		/// Gets or sets the set of recipients this message claims to have received this message.
 		/// </summary>
 		[DataMember]

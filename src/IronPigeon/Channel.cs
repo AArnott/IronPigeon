@@ -196,7 +196,7 @@
 
 			var verifiedIdentifiers = new List<string>();
 			if (endpoint.AuthorizedIdentifiers != null) {
-				var map = endpoint.AuthorizedIdentifiers.ToDictionary(
+				var map = endpoint.AuthorizedIdentifiers.Where(id => id != null).ToDictionary(
 					id => id,
 					id => this.IsVerifiableIdentifierAsync(endpoint, id, cancellationToken));
 				await TaskEx.WhenAll(map.Values);
