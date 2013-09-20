@@ -88,8 +88,8 @@
 
 				Assert.That(messages.Count, Is.EqualTo(1));
 				var receivedMessage = messages.Single();
-				Assert.That(receivedMessage.ContentType, Is.EqualTo(sentMessage.ContentType));
-				Assert.That(receivedMessage.Content, Is.EqualTo(sentMessage.Content));
+				Assert.That(receivedMessage.Payload.ContentType, Is.EqualTo(sentMessage.ContentType));
+				Assert.That(receivedMessage.Payload.Content, Is.EqualTo(sentMessage.Content));
 			}).GetAwaiter().GetResult();
 		}
 
@@ -160,7 +160,7 @@
 			await channel.PostAsync(Valid.Message, new[] { receiver }, Valid.ExpirationUtc);
 		}
 
-		private async Task<IReadOnlyCollection<Payload>> ReceiveMessageAsync(Mocks.CloudBlobStorageProviderMock cloudBlobStorage, Mocks.InboxHttpHandlerMock inboxMock, ICryptoProvider cryptoProvider, OwnEndpoint receiver, bool expectMessage = true) {
+		private async Task<IReadOnlyCollection<Channel.PayloadReceipt>> ReceiveMessageAsync(Mocks.CloudBlobStorageProviderMock cloudBlobStorage, Mocks.InboxHttpHandlerMock inboxMock, ICryptoProvider cryptoProvider, OwnEndpoint receiver, bool expectMessage = true) {
 			Requires.NotNull(cloudBlobStorage, "cloudBlobStorage");
 			Requires.NotNull(receiver, "receiver");
 
@@ -179,7 +179,7 @@
 			};
 
 			var progressMessage = new TaskCompletionSource<Payload>();
-			var progress = new Progress<Payload>(m => progressMessage.SetResult(m));
+			var progress = new Progress<Channel.PayloadReceipt>(m => progressMessage.SetResult(m.Payload));
 
 			var messages = await channel.ReceiveAsync(progress: progress);
 			if (expectMessage) {

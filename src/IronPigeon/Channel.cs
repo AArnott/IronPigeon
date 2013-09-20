@@ -104,10 +104,10 @@
 		/// <param name="cancellationToken">A token whose cancellation signals lost interest in the result of this method.</param>
 		/// <returns>A collection of all messages that were waiting at the time this method was invoked.</returns>
 		/// <exception cref="HttpRequestException">Thrown when a connection to the server could not be established, or was terminated.</exception>
-		public async Task<IReadOnlyList<Payload>> ReceiveAsync(bool longPoll = false, IProgress<Payload> progress = null, CancellationToken cancellationToken = default(CancellationToken)) {
+		public async Task<IReadOnlyList<PayloadReceipt>> ReceiveAsync(bool longPoll = false, IProgress<PayloadReceipt> progress = null, CancellationToken cancellationToken = default(CancellationToken)) {
 			var inboxItems = await this.DownloadIncomingItemsAsync(longPoll, cancellationToken);
 
-			var payloads = new List<Payload>();
+			var payloads = new List<PayloadReceipt>();
 			foreach (var item in inboxItems) {
 				try {
 					try {
@@ -117,9 +117,10 @@
 						}
 
 						var message = await this.DownloadPayloadAsync(invite, cancellationToken);
-						payloads.Add(message);
+						var receipt = new PayloadReceipt(message, item.DatePostedUtc);
+						payloads.Add(receipt);
 						if (progress != null) {
-							progress.Report(message);
+							progress.Report(receipt);
 						}
 					} catch (SerializationException ex) {
 						throw new InvalidMessageException(Strings.InvalidMessage, ex);
@@ -500,6 +501,33 @@
 			if (logger != null) {
 				logger.WriteLine(caption, buffer);
 			}
+		}
+
+		/// <summary>
+		/// A message payload and the time notification of it was received by the cloud inbox.
+		/// </summary>
+		public class PayloadReceipt {
+			/// <summary>
+			/// Initializes a new instance of the <see cref="PayloadReceipt"/> class.
+			/// </summary>
+			/// <param name="payload">The payload itself.</param>
+			/// <param name="dateNotificationPosted">The date the cloud inbox received notification of the payload.</param>
+			public PayloadReceipt(Payload payload, DateTime dateNotificationPosted) {
+				Requires.NotNull(payload, "payload");
+				Requires.Argument(dateNotificationPosted.Kind == DateTimeKind.Utc, "dateNotificationPosted", "UTC time expected.");
+				this.Payload = payload;
+				this.DateNotificationPosted = dateNotificationPosted;
+			}
+
+			/// <summary>
+			/// Gets or sets the payload itself.
+			/// </summary>
+			public Payload Payload { get; set; }
+
+			/// <summary>
+			/// Gets or sets the time the cloud inbox received notification of the payload.
+			/// </summary>
+			public DateTime DateNotificationPosted { get; set; }
 		}
 	}
 }

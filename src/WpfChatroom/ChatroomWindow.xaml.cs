@@ -86,7 +86,7 @@
 					await Task.Delay(delay);
 					bool lastTimeFailed = delay > TimeSpan.Zero;
 					delay = TimeSpan.Zero;
-					var progress = new ProgressWithCompletion<Payload>(m => this.ProcessReceivedMessagedAsync(m));
+					var progress = new ProgressWithCompletion<Channel.PayloadReceipt>(m => this.ProcessReceivedMessagedAsync(m.Payload));
 					await this.Channel.ReceiveAsync(longPoll: !lastTimeFailed, progress: progress);
 					this.TopInfoBar.Visibility = Visibility.Collapsed;
 				} catch (HttpRequestException) {

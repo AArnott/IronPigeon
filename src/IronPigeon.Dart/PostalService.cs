@@ -56,24 +56,26 @@
 		/// <returns>
 		/// A task whose result is the complete list of received messages.
 		/// </returns>
-		public virtual async Task<IReadOnlyList<Message>> ReceiveAsync(bool longPoll = false, IProgress<Message> progress = null, CancellationToken cancellationToken = default(CancellationToken)) {
-			var messages = new List<Message>();
-			IReadOnlyList<Payload> payloads = null;
-			var payloadProgress = new ProgressWithCompletion<Payload>(
+		public virtual async Task<IReadOnlyList<MessageReceipt>> ReceiveAsync(bool longPoll = false, IProgress<MessageReceipt> progress = null, CancellationToken cancellationToken = default(CancellationToken)) {
+			var messages = new List<MessageReceipt>();
+			IReadOnlyList<Channel.PayloadReceipt> payloads = null;
+			var payloadProgress = new ProgressWithCompletion<Channel.PayloadReceipt>(
 				async payload => {
-					var message = FromPayload(payload);
-					if (message != null) {
+					var messageReceipt = FromPayload(payload);
+					if (messageReceipt != null) {
+						var message = messageReceipt.Message;
+
 						// Sterilize the message of its claimed endpoint's claimed identifiers,
 						// so that only verifiable identifiers are passed onto our application.
 						var verifiedIdentifiers = await this.Channel.GetVerifiableIdentifiersAsync(message.Author, cancellationToken);
 						message.Author.AuthorizedIdentifiers = verifiedIdentifiers.ToArray();
 
 						lock (messages) {
-							messages.Add(message);
+							messages.Add(messageReceipt);
 						}
 
 						if (progress != null) {
-							progress.Report(message);
+							progress.Report(messageReceipt);
 						}
 					}
 				});
@@ -102,11 +104,12 @@
 		/// <summary>
 		/// Extracts a message from its serialized payload wrapper.
 		/// </summary>
-		/// <param name="payload">The payload to extract the message from.</param>
+		/// <param name="payloadReceipt">The payload to extract the message from.</param>
 		/// <returns>The extracted message.</returns>
-		private static Message FromPayload(Payload payload) {
-			Requires.NotNull(payload, "payload");
+		private static MessageReceipt FromPayload(Channel.PayloadReceipt payloadReceipt) {
+			Requires.NotNull(payloadReceipt, "payloadReceipt");
 
+			var payload = payloadReceipt.Payload;
 			if (payload.ContentType != Message.ContentType) {
 				return null;
 			}
@@ -114,8 +117,35 @@
 			using (var reader = new BinaryReader(new MemoryStream(payload.Content))) {
 				var message = reader.DeserializeDataContract<Message>();
 				message.OriginatingPayload = payload;
-				return message;
+				return new MessageReceipt(message, payloadReceipt.DateNotificationPosted);
 			}
+		}
+
+		/// <summary>
+		/// A message and the time notification of it was received by the cloud inbox.
+		/// </summary>
+		public class MessageReceipt {
+			/// <summary>
+			/// Initializes a new instance of the <see cref="MessageReceipt"/> class.
+			/// </summary>
+			/// <param name="message">The message itself.</param>
+			/// <param name="dateNotificationPosted">The date the cloud inbox received notification of the payload.</param>
+			public MessageReceipt(Message message, DateTime dateNotificationPosted) {
+				Requires.NotNull(message, "message");
+				Requires.Argument(dateNotificationPosted.Kind == DateTimeKind.Utc, "dateNotificationPosted", "UTC time expected.");
+				this.Message = message;
+				this.DateNotificationPosted = dateNotificationPosted;
+			}
+
+			/// <summary>
+			/// Gets or sets the payload itself.
+			/// </summary>
+			public Message Message { get; set; }
+
+			/// <summary>
+			/// Gets or sets the time the cloud inbox received notification of the payload.
+			/// </summary>
+			public DateTime DateNotificationPosted { get; set; }
 		}
 	}
 }
