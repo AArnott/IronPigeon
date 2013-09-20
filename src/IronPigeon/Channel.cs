@@ -155,13 +155,13 @@
 		/// <param name="expiresUtc">The date after which the message may be destroyed.</param>
 		/// <param name="cancellationToken">The cancellation token.</param>
 		/// <returns>The task representing the asynchronous operation.</returns>
-		public async Task PostAsync(Payload message, IReadOnlyCollection<Endpoint> recipients, DateTime expiresUtc, CancellationToken cancellationToken = default(CancellationToken)) {
+		public async Task<IReadOnlyCollection<NotificationPostedReceipt>> PostAsync(Payload message, IReadOnlyCollection<Endpoint> recipients, DateTime expiresUtc, CancellationToken cancellationToken = default(CancellationToken)) {
 			Requires.NotNull(message, "message");
 			Requires.That(expiresUtc.Kind == DateTimeKind.Utc, "expiresUtc", Strings.UTCTimeRequired);
 			Requires.NotNullOrEmpty(recipients, "recipients");
 
 			var payloadReference = await this.PostPayloadAsync(message, expiresUtc, cancellationToken);
-			await this.PostPayloadReferenceAsync(payloadReference, recipients, cancellationToken);
+			return await this.PostPayloadReferenceAsync(payloadReference, recipients, cancellationToken);
 		}
 
 		/// <summary>
@@ -341,14 +341,14 @@
 		/// <param name="recipients">The set of recipients that should be notified of the message.</param>
 		/// <param name="cancellationToken">The cancellation token.</param>
 		/// <returns>The task representing the asynchronous operation.</returns>
-		protected virtual async Task PostPayloadReferenceAsync(PayloadReference messageReference, IReadOnlyCollection<Endpoint> recipients, CancellationToken cancellationToken = default(CancellationToken)) {
+		protected virtual async Task<IReadOnlyCollection<NotificationPostedReceipt>> PostPayloadReferenceAsync(PayloadReference messageReference, IReadOnlyCollection<Endpoint> recipients, CancellationToken cancellationToken = default(CancellationToken)) {
 			Requires.NotNull(messageReference, "messageReference");
 			Requires.NotNullOrEmpty(recipients, "recipients");
 
 			// Kick off individual tasks concurrently for each recipient.
 			// Each recipient requires cryptography (CPU intensive) to be performed, so don't block the calling thread.
-			await Task.WhenAll(
-				recipients.Select(recipient => Task.Run(() => this.PostPayloadReferenceAsync(messageReference, recipient, cancellationToken))));
+			var postTasks = recipients.Select(recipient => Task.Run(() => this.PostPayloadReferenceAsync(messageReference, recipient, cancellationToken))).ToList();
+			return await Task.WhenAll(postTasks);
 		}
 
 		/// <summary>
@@ -358,7 +358,7 @@
 		/// <param name="recipient">The recipient that should be notified of the message.</param>
 		/// <param name="cancellationToken">The cancellation token.</param>
 		/// <returns>The task representing the asynchronous operation.</returns>
-		protected virtual async Task PostPayloadReferenceAsync(PayloadReference messageReference, Endpoint recipient, CancellationToken cancellationToken) {
+		protected virtual async Task<NotificationPostedReceipt> PostPayloadReferenceAsync(PayloadReference messageReference, Endpoint recipient, CancellationToken cancellationToken) {
 			Requires.NotNull(recipient, "recipient");
 			Requires.NotNull(messageReference, "messageReference");
 
@@ -409,6 +409,8 @@
 
 			using (var response = await this.HttpClient.PostAsync(builder.Uri, new StreamContent(postContent), cancellationToken)) {
 				response.EnsureSuccessStatusCode();
+				var receipt = new NotificationPostedReceipt(recipient, response.Headers.Date);
+				return receipt;
 			}
 		}
 
@@ -512,22 +514,48 @@
 			/// </summary>
 			/// <param name="payload">The payload itself.</param>
 			/// <param name="dateNotificationPosted">The date the cloud inbox received notification of the payload.</param>
-			public PayloadReceipt(Payload payload, DateTime dateNotificationPosted) {
+			public PayloadReceipt(Payload payload, DateTimeOffset dateNotificationPosted) {
 				Requires.NotNull(payload, "payload");
-				Requires.Argument(dateNotificationPosted.Kind == DateTimeKind.Utc, "dateNotificationPosted", "UTC time expected.");
 				this.Payload = payload;
 				this.DateNotificationPosted = dateNotificationPosted;
 			}
 
 			/// <summary>
-			/// Gets or sets the payload itself.
+			/// Gets the payload itself.
 			/// </summary>
-			public Payload Payload { get; set; }
+			public Payload Payload { get; private set; }
 
 			/// <summary>
-			/// Gets or sets the time the cloud inbox received notification of the payload.
+			/// Gets the time the cloud inbox received notification of the payload.
 			/// </summary>
-			public DateTime DateNotificationPosted { get; set; }
+			public DateTimeOffset DateNotificationPosted { get; private set; }
+		}
+
+		/// <summary>
+		/// The result of posting a message notification to a cloud inbox.
+		/// </summary>
+		public class NotificationPostedReceipt {
+			/// <summary>
+			/// Initializes a new instance of the <see cref="NotificationPostedReceipt"/> class.
+			/// </summary>
+			/// <param name="recipient">The inbox that received the notification.</param>
+			/// <param name="cloudInboxReceiptTimestamp">The timestamp included in the HTTP response from the server.</param>
+			public NotificationPostedReceipt(Endpoint recipient, DateTimeOffset? cloudInboxReceiptTimestamp) {
+				Requires.NotNull(recipient, "recipient");
+
+				this.Recipient = recipient;
+				this.CloudInboxReceiptTimestamp = cloudInboxReceiptTimestamp;
+			}
+
+			/// <summary>
+			/// Gets the receiver of the notification.
+			/// </summary>
+			public Endpoint Recipient { get; private set; }
+
+			/// <summary>
+			/// Gets the timestamp the receiving cloud inbox returned after receiving the notification.
+			/// </summary>
+			public DateTimeOffset? CloudInboxReceiptTimestamp { get; private set; }
 		}
 	}
 }

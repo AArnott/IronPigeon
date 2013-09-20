@@ -28,7 +28,7 @@
 		/// <param name="message">The dart to send.</param>
 		/// <param name="cancellationToken">The cancellation token.</param>
 		/// <returns>The asynchronous result.</returns>
-		public virtual Task PostAsync(Message message, CancellationToken cancellationToken = default(CancellationToken)) {
+		public virtual Task<IReadOnlyCollection<Channel.NotificationPostedReceipt>> PostAsync(Message message, CancellationToken cancellationToken = default(CancellationToken)) {
 			Requires.NotNull(message, "message");
 
 			var ms = new MemoryStream();
@@ -130,22 +130,21 @@
 			/// </summary>
 			/// <param name="message">The message itself.</param>
 			/// <param name="dateNotificationPosted">The date the cloud inbox received notification of the payload.</param>
-			public MessageReceipt(Message message, DateTime dateNotificationPosted) {
+			public MessageReceipt(Message message, DateTimeOffset dateNotificationPosted) {
 				Requires.NotNull(message, "message");
-				Requires.Argument(dateNotificationPosted.Kind == DateTimeKind.Utc, "dateNotificationPosted", "UTC time expected.");
 				this.Message = message;
 				this.DateNotificationPosted = dateNotificationPosted;
 			}
 
 			/// <summary>
-			/// Gets or sets the payload itself.
+			/// Gets the payload itself.
 			/// </summary>
-			public Message Message { get; set; }
+			public Message Message { get; private set; }
 
 			/// <summary>
-			/// Gets or sets the time the cloud inbox received notification of the payload.
+			/// Gets the time the cloud inbox received notification of the payload.
 			/// </summary>
-			public DateTime DateNotificationPosted { get; set; }
+			public DateTimeOffset DateNotificationPosted { get; private set; }
 		}
 	}
 }
