@@ -8,10 +8,7 @@
 	using System.Text;
 	using System.Threading;
 	using System.Threading.Tasks;
-
 	using Validation;
-	using ReadOnlyListOfMessage = System.Collections.Generic.IReadOnlyList<Message>;
-	using ReadOnlyListOfPayload = System.Collections.Generic.IReadOnlyList<Payload>;
 
 	/// <summary>
 	/// An email sending and receiving service.
@@ -59,9 +56,9 @@
 		/// <returns>
 		/// A task whose result is the complete list of received messages.
 		/// </returns>
-		public virtual async Task<ReadOnlyListOfMessage> ReceiveAsync(bool longPoll = false, IProgress<Message> progress = null, CancellationToken cancellationToken = default(CancellationToken)) {
+		public virtual async Task<IReadOnlyList<Message>> ReceiveAsync(bool longPoll = false, IProgress<Message> progress = null, CancellationToken cancellationToken = default(CancellationToken)) {
 			var messages = new List<Message>();
-			ReadOnlyListOfPayload payloads = null;
+			IReadOnlyList<Payload> payloads = null;
 			var payloadProgress = new ProgressWithCompletion<Payload>(
 				async payload => {
 					var message = FromPayload(payload);
