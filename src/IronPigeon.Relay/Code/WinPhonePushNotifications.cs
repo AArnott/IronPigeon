@@ -52,7 +52,7 @@
 			return await this.PushWinPhoneUpdate(pushNotifyRequest);
 		}
 
-		public async Task<bool> PushWinPhonRawNotificationAsync(string content) {
+		public async Task<bool> PushWinPhoneRawNotificationAsync(string content) {
 			Requires.ValidState(this.ChannelUri != null, "ChannelUri must be set.");
 
 			var pushNotifyRequest = new HttpRequestMessage(HttpMethod.Post, this.ChannelUri);

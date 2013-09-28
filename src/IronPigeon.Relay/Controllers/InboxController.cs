@@ -421,7 +421,7 @@
 
 					Task<bool> pushRaw = Task.FromResult(false);
 					if (!string.IsNullOrEmpty(inbox.WinPhone8PushChannelContent)) {
-						pushRaw = notifications.PushWinPhonRawNotificationAsync(inbox.WinPhone8PushChannelContent);
+						pushRaw = notifications.PushWinPhoneRawNotificationAsync(inbox.WinPhone8PushChannelContent);
 					}
 
 					await Task.WhenAll(pushTile, pushToast, pushRaw);
