@@ -166,7 +166,7 @@
 			/// The name of the hash algorithm.
 			/// </value>
 			public override string AsymmetricHashAlgorithmName {
-				get { return "SHA1"; } // temporarily while we upgrade older clients
+				get { return "SHA256"; }
 			}
 
 			/// <summary>

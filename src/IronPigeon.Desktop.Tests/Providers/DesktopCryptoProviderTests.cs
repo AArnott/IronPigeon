@@ -24,7 +24,7 @@
 		[TestMethod]
 		public void HashAlgorithmName() {
 			Assert.AreEqual("SHA256", this.provider.SymmetricHashAlgorithmName); // default
-			Assert.AreEqual("SHA1", this.provider.AsymmetricHashAlgorithmName); // default
+			Assert.AreEqual("SHA256", this.provider.AsymmetricHashAlgorithmName); // default
 			this.provider.SymmetricHashAlgorithmName = "SHA111";
 			this.provider.AsymmetricHashAlgorithmName = "SHA222";
 			Assert.AreEqual("SHA111", this.provider.SymmetricHashAlgorithmName);

@@ -18,11 +18,6 @@
 	using IronPigeon.Providers;
 	using IronPigeon.Relay;
 	using Validation;
-	using ReadOnlyCollectionOfEndpoint = System.Collections.Generic.IReadOnlyCollection<Endpoint>;
-	using ReadOnlyCollectionOfString = System.Collections.Generic.IReadOnlyCollection<string>;
-	using ReadOnlyListOfInboxItem = System.Collections.Generic.IReadOnlyList<IncomingList.IncomingItem>;
-	using ReadOnlyListOfPayload = System.Collections.Generic.IReadOnlyList<Payload>;
-	using TaskEx = System.Threading.Tasks.Task;
 
 	/// <summary>
 	/// A channel for sending or receiving secure messages.
@@ -109,10 +104,10 @@
 		/// <param name="cancellationToken">A token whose cancellation signals lost interest in the result of this method.</param>
 		/// <returns>A collection of all messages that were waiting at the time this method was invoked.</returns>
 		/// <exception cref="HttpRequestException">Thrown when a connection to the server could not be established, or was terminated.</exception>
-		public async Task<ReadOnlyListOfPayload> ReceiveAsync(bool longPoll = false, IProgress<Payload> progress = null, CancellationToken cancellationToken = default(CancellationToken)) {
+		public async Task<IReadOnlyList<PayloadReceipt>> ReceiveAsync(bool longPoll = false, IProgress<PayloadReceipt> progress = null, CancellationToken cancellationToken = default(CancellationToken)) {
 			var inboxItems = await this.DownloadIncomingItemsAsync(longPoll, cancellationToken);
 
-			var payloads = new List<Payload>();
+			var payloads = new List<PayloadReceipt>();
 			foreach (var item in inboxItems) {
 				try {
 					try {
@@ -122,9 +117,10 @@
 						}
 
 						var message = await this.DownloadPayloadAsync(invite, cancellationToken);
-						payloads.Add(message);
+						var receipt = new PayloadReceipt(message, item.DatePostedUtc);
+						payloads.Add(receipt);
 						if (progress != null) {
-							progress.Report(message);
+							progress.Report(receipt);
 						}
 					} catch (SerializationException ex) {
 						throw new InvalidMessageException(Strings.InvalidMessage, ex);
@@ -159,13 +155,13 @@
 		/// <param name="expiresUtc">The date after which the message may be destroyed.</param>
 		/// <param name="cancellationToken">The cancellation token.</param>
 		/// <returns>The task representing the asynchronous operation.</returns>
-		public async Task PostAsync(Payload message, ReadOnlyCollectionOfEndpoint recipients, DateTime expiresUtc, CancellationToken cancellationToken = default(CancellationToken)) {
+		public async Task<IReadOnlyCollection<NotificationPostedReceipt>> PostAsync(Payload message, IReadOnlyCollection<Endpoint> recipients, DateTime expiresUtc, CancellationToken cancellationToken = default(CancellationToken)) {
 			Requires.NotNull(message, "message");
 			Requires.That(expiresUtc.Kind == DateTimeKind.Utc, "expiresUtc", Strings.UTCTimeRequired);
 			Requires.NotNullOrEmpty(recipients, "recipients");
 
 			var payloadReference = await this.PostPayloadAsync(message, expiresUtc, cancellationToken);
-			await this.PostPayloadReferenceAsync(payloadReference, recipients, cancellationToken);
+			return await this.PostPayloadReferenceAsync(payloadReference, recipients, cancellationToken);
 		}
 
 		/// <summary>
@@ -191,15 +187,15 @@
 		/// <param name="endpoint">The endpoint whose authorized identifiers are to be verified.</param>
 		/// <param name="cancellationToken">A general cancellation token on the request.</param>
 		/// <returns>A task whose result is the set of verified identifiers.</returns>
-		public async Task<ReadOnlyCollectionOfString> GetVerifiableIdentifiersAsync(Endpoint endpoint, CancellationToken cancellationToken = default(CancellationToken)) {
+		public async Task<IReadOnlyCollection<string>> GetVerifiableIdentifiersAsync(Endpoint endpoint, CancellationToken cancellationToken = default(CancellationToken)) {
 			Requires.NotNull(endpoint, "endpoint");
 
 			var verifiedIdentifiers = new List<string>();
 			if (endpoint.AuthorizedIdentifiers != null) {
-				var map = endpoint.AuthorizedIdentifiers.ToDictionary(
+				var map = endpoint.AuthorizedIdentifiers.Where(id => id != null).ToDictionary(
 					id => id,
 					id => this.IsVerifiableIdentifierAsync(endpoint, id, cancellationToken));
-				await TaskEx.WhenAll(map.Values);
+				await Task.WhenAll(map.Values);
 				foreach (var result in map) {
 					if (result.Value.Result) {
 						verifiedIdentifiers.Add(result.Key);
@@ -345,14 +341,14 @@
 		/// <param name="recipients">The set of recipients that should be notified of the message.</param>
 		/// <param name="cancellationToken">The cancellation token.</param>
 		/// <returns>The task representing the asynchronous operation.</returns>
-		protected virtual async Task PostPayloadReferenceAsync(PayloadReference messageReference, ReadOnlyCollectionOfEndpoint recipients, CancellationToken cancellationToken = default(CancellationToken)) {
+		protected virtual async Task<IReadOnlyCollection<NotificationPostedReceipt>> PostPayloadReferenceAsync(PayloadReference messageReference, IReadOnlyCollection<Endpoint> recipients, CancellationToken cancellationToken = default(CancellationToken)) {
 			Requires.NotNull(messageReference, "messageReference");
 			Requires.NotNullOrEmpty(recipients, "recipients");
 
 			// Kick off individual tasks concurrently for each recipient.
 			// Each recipient requires cryptography (CPU intensive) to be performed, so don't block the calling thread.
-			await TaskEx.WhenAll(
-				recipients.Select(recipient => TaskEx.Run(() => this.PostPayloadReferenceAsync(messageReference, recipient, cancellationToken))));
+			var postTasks = recipients.Select(recipient => Task.Run(() => this.PostPayloadReferenceAsync(messageReference, recipient, cancellationToken))).ToList();
+			return await Task.WhenAll(postTasks);
 		}
 
 		/// <summary>
@@ -362,7 +358,7 @@
 		/// <param name="recipient">The recipient that should be notified of the message.</param>
 		/// <param name="cancellationToken">The cancellation token.</param>
 		/// <returns>The task representing the asynchronous operation.</returns>
-		protected virtual async Task PostPayloadReferenceAsync(PayloadReference messageReference, Endpoint recipient, CancellationToken cancellationToken) {
+		protected virtual async Task<NotificationPostedReceipt> PostPayloadReferenceAsync(PayloadReference messageReference, Endpoint recipient, CancellationToken cancellationToken) {
 			Requires.NotNull(recipient, "recipient");
 			Requires.NotNull(messageReference, "messageReference");
 
@@ -413,6 +409,8 @@
 
 			using (var response = await this.HttpClient.PostAsync(builder.Uri, new StreamContent(postContent), cancellationToken)) {
 				response.EnsureSuccessStatusCode();
+				var receipt = new NotificationPostedReceipt(recipient, response.Headers.Date);
+				return receipt;
 			}
 		}
 
@@ -480,7 +478,7 @@
 		/// <param name="longPoll"><c>true</c> to asynchronously wait for messages if there are none immediately available for download.</param>
 		/// <param name="cancellationToken">The cancellation token.</param>
 		/// <returns>The task whose result is the list of downloaded inbox items.</returns>
-		private async Task<ReadOnlyListOfInboxItem> DownloadIncomingItemsAsync(bool longPoll, CancellationToken cancellationToken) {
+		private async Task<IReadOnlyList<IncomingList.IncomingItem>> DownloadIncomingItemsAsync(bool longPoll, CancellationToken cancellationToken) {
 			var deserializer = new DataContractJsonSerializer(typeof(IncomingList));
 			var requestUri = this.Endpoint.PublicEndpoint.MessageReceivingEndpoint;
 			var httpClient = this.HttpClient;
@@ -505,6 +503,59 @@
 			if (logger != null) {
 				logger.WriteLine(caption, buffer);
 			}
+		}
+
+		/// <summary>
+		/// A message payload and the time notification of it was received by the cloud inbox.
+		/// </summary>
+		public class PayloadReceipt {
+			/// <summary>
+			/// Initializes a new instance of the <see cref="PayloadReceipt"/> class.
+			/// </summary>
+			/// <param name="payload">The payload itself.</param>
+			/// <param name="dateNotificationPosted">The date the cloud inbox received notification of the payload.</param>
+			public PayloadReceipt(Payload payload, DateTimeOffset dateNotificationPosted) {
+				Requires.NotNull(payload, "payload");
+				this.Payload = payload;
+				this.DateNotificationPosted = dateNotificationPosted;
+			}
+
+			/// <summary>
+			/// Gets the payload itself.
+			/// </summary>
+			public Payload Payload { get; private set; }
+
+			/// <summary>
+			/// Gets the time the cloud inbox received notification of the payload.
+			/// </summary>
+			public DateTimeOffset DateNotificationPosted { get; private set; }
+		}
+
+		/// <summary>
+		/// The result of posting a message notification to a cloud inbox.
+		/// </summary>
+		public class NotificationPostedReceipt {
+			/// <summary>
+			/// Initializes a new instance of the <see cref="NotificationPostedReceipt"/> class.
+			/// </summary>
+			/// <param name="recipient">The inbox that received the notification.</param>
+			/// <param name="cloudInboxReceiptTimestamp">The timestamp included in the HTTP response from the server.</param>
+			public NotificationPostedReceipt(Endpoint recipient, DateTimeOffset? cloudInboxReceiptTimestamp) {
+				Requires.NotNull(recipient, "recipient");
+
+				this.Recipient = recipient;
+				this.CloudInboxReceiptTimestamp = cloudInboxReceiptTimestamp;
+			}
+
+			/// <summary>
+			/// Gets the receiver of the notification.
+			/// </summary>
+			public Endpoint Recipient { get; private set; }
+
+			/// <summary>
+			/// Gets the timestamp the receiving cloud inbox returned after receiving the notification.
+			/// </summary>
+			public DateTimeOffset? CloudInboxReceiptTimestamp { get; private set; }
 		}
 	}
 }

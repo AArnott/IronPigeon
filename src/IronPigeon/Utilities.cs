@@ -278,8 +278,9 @@
 		/// </summary>
 		/// <param name="shortener">The URL shortening service to use.</param>
 		/// <param name="longUrl">The long URL.</param>
+		/// <param name="cancellationToken">A cancellation token.</param>
 		/// <returns>The short URL.</returns>
-		public static async Task<Uri> ShortenExcludeFragmentAsync(this IUrlShortener shortener, Uri longUrl) {
+		public static async Task<Uri> ShortenExcludeFragmentAsync(this IUrlShortener shortener, Uri longUrl, CancellationToken cancellationToken = default(CancellationToken)) {
 			Requires.NotNull(shortener, "shortener");
 
 			Uri longUriWithoutFragment;
@@ -291,7 +292,7 @@
 				longUriWithoutFragment = removeFragmentBuilder.Uri;
 			}
 
-			var shortUrl = await shortener.ShortenAsync(longUriWithoutFragment);
+			var shortUrl = await shortener.ShortenAsync(longUriWithoutFragment, cancellationToken);
 
 			if (longUrl.Fragment.Length > 0) {
 				var addFragmentBuilder = new UriBuilder(shortUrl);

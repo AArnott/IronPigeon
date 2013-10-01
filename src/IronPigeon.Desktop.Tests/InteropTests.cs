@@ -86,7 +86,7 @@
 
 			var messages = await channel.ReceiveAsync();
 			Assert.Equal(1, messages.Count);
-			Assert.Equal(Valid.Message, messages[0]);
+			Assert.Equal(Valid.Message, messages[0].Payload);
 		}
 
 		/// <summary>

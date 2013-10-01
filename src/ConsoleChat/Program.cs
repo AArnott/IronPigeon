@@ -221,12 +221,12 @@
 
 				Console.WriteLine("Awaiting friend's reply...");
 				var incoming = await this.Channel.ReceiveAsync(longPoll: true);
-				foreach (var payload in incoming) {
-					var message = Encoding.UTF8.GetString(payload.Content);
+				foreach (var payloadReceipt in incoming) {
+					var message = Encoding.UTF8.GetString(payloadReceipt.Payload.Content);
 					Console.WriteLine("< {0}", message);
 				}
 
-				await Task.WhenAll(incoming.Select(payload => this.Channel.DeleteInboxItemAsync(payload)));
+				await Task.WhenAll(incoming.Select(receipt => this.Channel.DeleteInboxItemAsync(receipt.Payload)));
 			}
 		}
 	}
