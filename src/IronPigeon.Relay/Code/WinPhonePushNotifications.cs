@@ -56,7 +56,6 @@
 			Requires.ValidState(this.ChannelUri != null, "ChannelUri must be set.");
 
 			var pushNotifyRequest = new HttpRequestMessage(HttpMethod.Post, this.ChannelUri);
-			pushNotifyRequest.Headers.Add("X-WindowsPhone-Target", "raw");
 			pushNotifyRequest.Headers.Add("X-NotificationClass", "3");
 			pushNotifyRequest.Content = new StringContent(content);
 			pushNotifyRequest.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
