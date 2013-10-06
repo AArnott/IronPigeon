@@ -48,7 +48,7 @@
 			rng.NextBytes(iv);
 			rng.NextBytes(plaintext);
 
-			var cipherPacket = this.CryptoProvider.Encrypt(plaintext, key, iv);
+			var cipherPacket = this.CryptoProvider.Encrypt(plaintext, new SymmetricEncryptionVariables(key, iv));
 			CollectionAssert.AreEqual(key, cipherPacket.Key);
 			CollectionAssert.AreEqual(iv, cipherPacket.IV);
 

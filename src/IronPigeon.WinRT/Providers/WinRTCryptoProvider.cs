@@ -69,23 +69,26 @@
 		/// Symmetrically encrypts the specified buffer using a randomly generated key.
 		/// </summary>
 		/// <param name="data">The data to encrypt.</param>
-		/// <param name="key">The key used to encrypt the data. May be <c>null</c> to automatically generate a cryptographically strong random key.</param>
-		/// <param name="iv">The initialization vector to use when encrypting the first block. May be <c>null</c> to automatically generate one.</param>
+		/// <param name="encryptionVariables">Optional encryption variables to use; or <c>null</c> to use randomly generated ones.</param>
 		/// <returns>
 		/// The result of the encryption.
 		/// </returns>
-		public override SymmetricEncryptionResult Encrypt(byte[] data, byte[] key, byte[] iv) {
+		public override SymmetricEncryptionResult Encrypt(byte[] data, SymmetricEncryptionVariables encryptionVariables) {
 			Requires.NotNull(data, "data");
 
 			IBuffer plainTextBuffer = CryptographicBuffer.CreateFromByteArray(data);
-			IBuffer symmetricKeyMaterial = key != null
-				? CryptographicBuffer.CreateFromByteArray(key)
-				: CryptographicBuffer.GenerateRandom((uint)this.SymmetricEncryptionKeySize / 8);
-			var symmetricKey = SymmetricAlgorithm.CreateSymmetricKey(symmetricKeyMaterial);
-			IBuffer ivBuffer = iv != null
-				? CryptographicBuffer.CreateFromByteArray(iv)
-				: CryptographicBuffer.GenerateRandom(SymmetricAlgorithm.BlockLength);
+			IBuffer symmetricKeyMaterial, ivBuffer;
+			if (encryptionVariables == null) {
+				symmetricKeyMaterial = CryptographicBuffer.GenerateRandom((uint)this.SymmetricEncryptionKeySize / 8);
+				ivBuffer = CryptographicBuffer.GenerateRandom(SymmetricAlgorithm.BlockLength);
+			} else {
+				Requires.Argument(encryptionVariables.Key.Length == this.SymmetricEncryptionKeySize / 8, "key", "Incorrect length.");
+				Requires.Argument(encryptionVariables.IV.Length == this.SymmetricEncryptionBlockSize / 8, "iv", "Incorrect length.");
+				symmetricKeyMaterial = CryptographicBuffer.CreateFromByteArray(encryptionVariables.Key);
+				ivBuffer = CryptographicBuffer.CreateFromByteArray(encryptionVariables.IV);
+			}
 
+			var symmetricKey = SymmetricAlgorithm.CreateSymmetricKey(symmetricKeyMaterial);
 			var cipherTextBuffer = CryptographicEngine.Encrypt(symmetricKey, plainTextBuffer, ivBuffer);
 			return new SymmetricEncryptionResult(
 				symmetricKeyMaterial.ToArray(),

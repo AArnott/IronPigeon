@@ -56,14 +56,17 @@
 			return true;
 		}
 
-		public SymmetricEncryptionResult Encrypt(byte[] data, byte[] key, byte[] iv) {
+		public SymmetricEncryptionResult Encrypt(byte[] data, SymmetricEncryptionVariables encryptionVariables) {
 			var rng = new Random();
-			if (key == null) {
+
+			byte[] key, iv;
+			if (encryptionVariables != null) {
+				key = encryptionVariables.Key;
+				iv = encryptionVariables.IV;
+			} else {
 				key = new byte[KeyLengthInBytes];
 				rng.NextBytes(key);
-			}
 
-			if (iv == null) {
 				iv = new byte[KeyLengthInBytes];
 				rng.NextBytes(iv);
 			}

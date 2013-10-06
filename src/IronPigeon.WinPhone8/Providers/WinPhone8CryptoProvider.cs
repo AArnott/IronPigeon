@@ -85,34 +85,32 @@
 		/// Symmetrically encrypts the specified buffer using a randomly generated key.
 		/// </summary>
 		/// <param name="data">The data to encrypt.</param>
-		/// <param name="key">The key used to encrypt the data. May be <c>null</c> to automatically generate a cryptographically strong random key.</param>
-		/// <param name="iv">The initialization vector to use when encrypting the first block. May be <c>null</c> to automatically generate one.</param>
+		/// <param name="encryptionVariables">Optional encryption variables to use; or <c>null</c> to use randomly generated ones.</param>
 		/// <returns>
 		/// The result of the encryption.
 		/// </returns>
-		public override SymmetricEncryptionResult Encrypt(byte[] data, byte[] key, byte[] iv) {
+		public override SymmetricEncryptionResult Encrypt(byte[] data, SymmetricEncryptionVariables encryptionVariables) {
 			var encryptor = this.GetCipher();
 
-			if (key == null) {
+			if (encryptionVariables == null) {
 				var secureRandom = new SecureRandom();
-				key = new byte[this.SymmetricEncryptionKeySize / 8];
+				byte[] key = new byte[this.SymmetricEncryptionKeySize / 8];
 				secureRandom.NextBytes(key);
-			} else {
-				Requires.Argument(key.Length == this.SymmetricEncryptionKeySize / 8, "key", "Incorrect length.");
-			}
 
-			if (iv == null) {
 				var random = new Random();
-				iv = new byte[encryptor.GetBlockSize()];
+				byte[] iv = new byte[encryptor.GetBlockSize()];
 				random.NextBytes(iv);
+
+				encryptionVariables = new SymmetricEncryptionVariables(key, iv);
 			} else {
-				Requires.Argument(iv.Length == encryptor.GetBlockSize(), "iv", "Incorrect length.");
+				Requires.Argument(encryptionVariables.Key.Length == this.SymmetricEncryptionKeySize / 8, "key", "Incorrect length.");
+				Requires.Argument(encryptionVariables.IV.Length == encryptor.GetBlockSize(), "iv", "Incorrect length.");
 			}
 
-			var parameters = new ParametersWithIV(new KeyParameter(key), iv);
+			var parameters = new ParametersWithIV(new KeyParameter(encryptionVariables.Key), encryptionVariables.IV);
 			encryptor.Init(true, parameters);
 			byte[] ciphertext = encryptor.DoFinal(data);
-			return new SymmetricEncryptionResult(key, iv, ciphertext);
+			return new SymmetricEncryptionResult(encryptionVariables.Key, encryptionVariables.IV, ciphertext);
 		}
 
 		/// <summary>

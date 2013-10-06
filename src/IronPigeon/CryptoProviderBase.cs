@@ -126,12 +126,11 @@
 		/// Symmetrically encrypts the specified buffer using a randomly generated key.
 		/// </summary>
 		/// <param name="data">The data to encrypt.</param>
-		/// <param name="key">The key used to encrypt the data. May be <c>null</c> to automatically generate a cryptographically strong random key.</param>
-		/// <param name="iv">The initialization vector to use when encrypting the first block. May be <c>null</c> to automatically generate one.</param>
+		/// <param name="encryptionVariables">Optional encryption variables to use; or <c>null</c> to use randomly generated ones.</param>
 		/// <returns>
 		/// The result of the encryption.
 		/// </returns>
-		public abstract SymmetricEncryptionResult Encrypt(byte[] data, byte[] key, byte[] iv);
+		public abstract SymmetricEncryptionResult Encrypt(byte[] data, SymmetricEncryptionVariables encryptionVariables);
 
 		/// <summary>
 		/// Symmetrically encrypts a stream.
