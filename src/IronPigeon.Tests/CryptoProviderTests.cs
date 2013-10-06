@@ -67,6 +67,7 @@
 			var cipherPacket = this.CryptoProvider.EncryptAsync(plaintextStream, cipherStream).Result;
 
 			var decryptedStream = new MemoryStream();
+			cipherStream.Position = 0;
 			this.CryptoProvider.DecryptAsync(cipherStream, decryptedStream, cipherPacket).Wait();
 			CollectionAssert.AreEqual(plaintext, decryptedStream.ToArray());
 		}

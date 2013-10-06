@@ -1,6 +1,7 @@
-﻿using System.IO;
-using System.Threading.Tasks;
-namespace IronPigeon {
+﻿namespace IronPigeon {
+	using System.IO;
+	using System.Threading.Tasks;
+
 	/// <summary>
 	/// Implements the cryptographic algorithms that protect users and data required by the IronPigeon protocol.
 	/// </summary>
@@ -83,6 +84,7 @@ namespace IronPigeon {
 		/// <param name="ciphertext">The stream of ciphertext to decrypt.</param>
 		/// <param name="plaintext">The stream to receive the plaintext.</param>
 		/// <param name="encryptionVariables">The key and IV to use.</param>
+		/// <returns>A task that represents the asynchronous operation.</returns>
 		Task DecryptAsync(Stream ciphertext, Stream plaintext, SymmetricEncryptionVariables encryptionVariables);
 
 		/// <summary>

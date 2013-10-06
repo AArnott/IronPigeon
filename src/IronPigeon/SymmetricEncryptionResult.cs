@@ -23,6 +23,15 @@
 		}
 
 		/// <summary>
+		/// Initializes a new instance of the <see cref="SymmetricEncryptionResult"/> class.
+		/// </summary>
+		/// <param name="encryptionVariables">The key and IV used to encrypt the ciphertext.</param>
+		/// <param name="ciphertext">The encrypted data.</param>
+		public SymmetricEncryptionResult(SymmetricEncryptionVariables encryptionVariables, byte[] ciphertext)
+			: this(Requires.NotNull(encryptionVariables, "encryptionVariables").Key, encryptionVariables.IV, ciphertext) {
+		}
+
+		/// <summary>
 		/// Gets the encrypted data.
 		/// </summary>
 		public byte[] Ciphertext { get; private set; }

@@ -6,6 +6,7 @@
 	using System.Linq;
 	using System.Text;
 	using System.Threading.Tasks;
+	using Validation;
 
 	/// <summary>
 	/// A common base class for implementations of the <see cref="ICryptoProvider" /> interface.
@@ -130,7 +131,30 @@
 		/// <returns>
 		/// The result of the encryption.
 		/// </returns>
-		public abstract SymmetricEncryptionResult Encrypt(byte[] data, SymmetricEncryptionVariables encryptionVariables);
+		public virtual SymmetricEncryptionResult Encrypt(byte[] data, SymmetricEncryptionVariables encryptionVariables) {
+			Requires.NotNull(data, "data");
+
+			var plaintext = new MemoryStream(data);
+			var ciphertext = new MemoryStream();
+			var result = this.EncryptAsync(plaintext, ciphertext, encryptionVariables).Result;
+			return new SymmetricEncryptionResult(result, ciphertext.ToArray());
+		}
+
+		/// <summary>
+		/// Symmetrically decrypts a buffer using the specified key.
+		/// </summary>
+		/// <param name="data">The encrypted data and the key and IV used to encrypt it.</param>
+		/// <returns>
+		/// The decrypted buffer.
+		/// </returns>
+		public virtual byte[] Decrypt(SymmetricEncryptionResult data) {
+			Requires.NotNull(data, "data");
+
+			var plaintext = new MemoryStream();
+			var ciphertext = new MemoryStream(data.Ciphertext);
+			this.DecryptAsync(ciphertext, plaintext, data).Wait();
+			return plaintext.ToArray();
+		}
 
 		/// <summary>
 		/// Symmetrically encrypts a stream.
@@ -147,16 +171,8 @@
 		/// <param name="ciphertext">The stream of ciphertext to decrypt.</param>
 		/// <param name="plaintext">The stream to receive the plaintext.</param>
 		/// <param name="encryptionVariables">The key and IV to use.</param>
+		/// <returns>A task that represents the asynchronous operation.</returns>
 		public abstract Task DecryptAsync(Stream ciphertext, Stream plaintext, SymmetricEncryptionVariables encryptionVariables);
-
-		/// <summary>
-		/// Symmetrically decrypts a buffer using the specified key.
-		/// </summary>
-		/// <param name="data">The encrypted data and the key and IV used to encrypt it.</param>
-		/// <returns>
-		/// The decrypted buffer.
-		/// </returns>
-		public abstract byte[] Decrypt(SymmetricEncryptionResult data);
 
 		/// <summary>
 		/// Asymmetrically encrypts the specified buffer using the provided public key.

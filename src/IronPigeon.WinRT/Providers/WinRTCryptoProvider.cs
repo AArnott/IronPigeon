@@ -103,8 +103,16 @@
 		/// <param name="ciphertext">The stream to receive the ciphertext.</param>
 		/// <param name="encryptionVariables">An optional key and IV to use. May be <c>null</c> to use randomly generated values.</param>
 		/// <returns>A task that completes when encryption has completed, whose result is the key and IV to use to decrypt the ciphertext.</returns>
-		public override Task<SymmetricEncryptionVariables> EncryptAsync(Stream plaintext, Stream ciphertext, SymmetricEncryptionVariables encryptionVariables) {
-			throw new NotImplementedException();
+		public override async Task<SymmetricEncryptionVariables> EncryptAsync(Stream plaintext, Stream ciphertext, SymmetricEncryptionVariables encryptionVariables) {
+			Requires.NotNull(plaintext, "plaintext");
+			Requires.NotNull(ciphertext, "ciphertext");
+
+			var plaintextMemoryStream = new MemoryStream();
+			await plaintext.CopyToAsync(plaintextMemoryStream);
+
+			var result = this.Encrypt(plaintextMemoryStream.ToArray(), encryptionVariables);
+			await ciphertext.WriteAsync(result.Ciphertext, 0, result.Ciphertext.Length);
+			return result;
 		}
 
 		/// <summary>
@@ -113,8 +121,16 @@
 		/// <param name="ciphertext">The stream of ciphertext to decrypt.</param>
 		/// <param name="plaintext">The stream to receive the plaintext.</param>
 		/// <param name="encryptionVariables">The key and IV to use.</param>
-		public override Task DecryptAsync(Stream ciphertext, Stream plaintext, SymmetricEncryptionVariables encryptionVariables) {
-			throw new NotImplementedException();
+		/// <returns>A task that represents the asynchronous operation.</returns>
+		public override async Task DecryptAsync(Stream ciphertext, Stream plaintext, SymmetricEncryptionVariables encryptionVariables) {
+			Requires.NotNull(ciphertext, "ciphertext");
+			Requires.NotNull(plaintext, "plaintext");
+			Requires.NotNull(encryptionVariables, "encryptionVariables");
+
+			var ciphertextMemoryStream = new MemoryStream();
+			await ciphertext.CopyToAsync(ciphertextMemoryStream);
+			byte[] plaintextBytes = this.Decrypt(new SymmetricEncryptionResult(encryptionVariables, ciphertextMemoryStream.ToArray()));
+			await plaintext.WriteAsync(plaintextBytes, 0, plaintextBytes.Length);
 		}
 
 		/// <summary>
