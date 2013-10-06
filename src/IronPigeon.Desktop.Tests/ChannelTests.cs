@@ -185,7 +185,7 @@
 			if (expectMessage) {
 				Assert.That(messages.Count, Is.EqualTo(1));
 				await progressMessage.Task;
-				Assert.That(progressMessage.Task.Result, Is.SameAs(messages.Single()));
+				Assert.That(progressMessage.Task.Result, Is.SameAs(messages.Single().Payload));
 			} else {
 				Assert.That(messages.Count, Is.EqualTo(0));
 			}
