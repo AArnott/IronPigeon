@@ -2,9 +2,11 @@
 	using System;
 	using System.Collections.Generic;
 	using System.Diagnostics;
+	using System.IO;
 	using System.Linq;
 	using System.Text;
 	using System.Threading.Tasks;
+	using Validation;
 
 	/// <summary>
 	/// A common base class for implementations of the <see cref="ICryptoProvider" /> interface.
@@ -125,12 +127,18 @@
 		/// Symmetrically encrypts the specified buffer using a randomly generated key.
 		/// </summary>
 		/// <param name="data">The data to encrypt.</param>
-		/// <param name="key">The key used to encrypt the data. May be <c>null</c> to automatically generate a cryptographically strong random key.</param>
-		/// <param name="iv">The initialization vector to use when encrypting the first block. May be <c>null</c> to automatically generate one.</param>
+		/// <param name="encryptionVariables">Optional encryption variables to use; or <c>null</c> to use randomly generated ones.</param>
 		/// <returns>
 		/// The result of the encryption.
 		/// </returns>
-		public abstract SymmetricEncryptionResult Encrypt(byte[] data, byte[] key, byte[] iv);
+		public virtual SymmetricEncryptionResult Encrypt(byte[] data, SymmetricEncryptionVariables encryptionVariables) {
+			Requires.NotNull(data, "data");
+
+			var plaintext = new MemoryStream(data);
+			var ciphertext = new MemoryStream();
+			var result = this.EncryptAsync(plaintext, ciphertext, encryptionVariables).Result;
+			return new SymmetricEncryptionResult(result, ciphertext.ToArray());
+		}
 
 		/// <summary>
 		/// Symmetrically decrypts a buffer using the specified key.
@@ -139,7 +147,32 @@
 		/// <returns>
 		/// The decrypted buffer.
 		/// </returns>
-		public abstract byte[] Decrypt(SymmetricEncryptionResult data);
+		public virtual byte[] Decrypt(SymmetricEncryptionResult data) {
+			Requires.NotNull(data, "data");
+
+			var plaintext = new MemoryStream();
+			var ciphertext = new MemoryStream(data.Ciphertext);
+			this.DecryptAsync(ciphertext, plaintext, data).Wait();
+			return plaintext.ToArray();
+		}
+
+		/// <summary>
+		/// Symmetrically encrypts a stream.
+		/// </summary>
+		/// <param name="plaintext">The stream of plaintext to encrypt.</param>
+		/// <param name="ciphertext">The stream to receive the ciphertext.</param>
+		/// <param name="encryptionVariables">An optional key and IV to use. May be <c>null</c> to use randomly generated values.</param>
+		/// <returns>A task that completes when encryption has completed, whose result is the key and IV to use to decrypt the ciphertext.</returns>
+		public abstract Task<SymmetricEncryptionVariables> EncryptAsync(Stream plaintext, Stream ciphertext, SymmetricEncryptionVariables encryptionVariables);
+
+		/// <summary>
+		/// Symmetrically decrypts a stream.
+		/// </summary>
+		/// <param name="ciphertext">The stream of ciphertext to decrypt.</param>
+		/// <param name="plaintext">The stream to receive the plaintext.</param>
+		/// <param name="encryptionVariables">The key and IV to use.</param>
+		/// <returns>A task that represents the asynchronous operation.</returns>
+		public abstract Task DecryptAsync(Stream ciphertext, Stream plaintext, SymmetricEncryptionVariables encryptionVariables);
 
 		/// <summary>
 		/// Asymmetrically encrypts the specified buffer using the provided public key.

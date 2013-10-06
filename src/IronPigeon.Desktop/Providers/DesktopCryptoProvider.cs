@@ -76,59 +76,58 @@
 		}
 
 		/// <summary>
-		/// Symmetrically encrypts the specified buffer using a randomly generated key.
+		/// Symmetrically encrypts a stream.
 		/// </summary>
-		/// <param name="data">The data to encrypt.</param>
-		/// <param name="key">The key used to encrypt the data. May be <c>null</c> to automatically generate a cryptographically strong random key.</param>
-		/// <param name="iv">The initialization vector to use when encrypting the first block. May be <c>null</c> to automatically generate one.</param>
-		/// <returns>
-		/// The result of the encryption.
-		/// </returns>
-		public override SymmetricEncryptionResult Encrypt(byte[] data, byte[] key, byte[] iv) {
-			Requires.NotNull(data, "data");
+		/// <param name="plaintext">The stream of plaintext to encrypt.</param>
+		/// <param name="ciphertext">The stream to receive the ciphertext.</param>
+		/// <param name="encryptionVariables">An optional key and IV to use. May be <c>null</c> to use randomly generated values.</param>
+		/// <returns>A task that completes when encryption has completed, whose result is the key and IV to use to decrypt the ciphertext.</returns>
+		public override async Task<SymmetricEncryptionVariables> EncryptAsync(Stream plaintext, Stream ciphertext, SymmetricEncryptionVariables encryptionVariables) {
+			Requires.NotNull(plaintext, "plaintext");
+			Requires.NotNull(ciphertext, "ciphertext");
 
 			using (var alg = SymmetricAlgorithm.Create(this.SymmetricEncryptionConfiguration.AlgorithmName)) {
 				alg.Mode = (CipherMode)Enum.Parse(typeof(CipherMode), this.SymmetricEncryptionConfiguration.BlockMode);
 				alg.Padding = (PaddingMode)Enum.Parse(typeof(PaddingMode), this.SymmetricEncryptionConfiguration.Padding);
 				alg.KeySize = this.SymmetricEncryptionKeySize;
-				if (key != null) {
-					alg.Key = key;
-				}
 
-				if (iv != null) {
-					alg.IV = iv;
+				if (encryptionVariables != null) {
+					Requires.Argument(encryptionVariables.Key.Length == this.SymmetricEncryptionKeySize / 8, "key", "Incorrect length.");
+					Requires.Argument(encryptionVariables.IV.Length == this.SymmetricEncryptionBlockSize / 8, "iv", "Incorrect length.");
+					alg.Key = encryptionVariables.Key;
+					alg.IV = encryptionVariables.IV;
+				} else {
+					encryptionVariables = new SymmetricEncryptionVariables(alg.Key, alg.IV);
 				}
 
 				using (var encryptor = alg.CreateEncryptor()) {
-					using (var memoryStream = new MemoryStream()) {
-						using (var cryptoStream = new CryptoStream(memoryStream, encryptor, CryptoStreamMode.Write)) {
-							cryptoStream.Write(data, 0, data.Length);
-							cryptoStream.FlushFinalBlock();
-							return new SymmetricEncryptionResult(alg.Key, alg.IV, memoryStream.ToArray());
-						}
-					}
+					var cryptoStream = new CryptoStream(ciphertext, encryptor, CryptoStreamMode.Write); // DON'T dispose this, or it dipsoses of the ciphertext stream.
+					await plaintext.CopyToAsync(cryptoStream, alg.BlockSize);
+					cryptoStream.FlushFinalBlock();
+					return encryptionVariables;
 				}
 			}
 		}
 
 		/// <summary>
-		/// Symmetrically decrypts a buffer using the specified key.
+		/// Symmetrically decrypts a stream.
 		/// </summary>
-		/// <param name="data">The encrypted data and the key and IV used to encrypt it.</param>
-		/// <returns>
-		/// The decrypted buffer.
-		/// </returns>
-		public override byte[] Decrypt(SymmetricEncryptionResult data) {
+		/// <param name="ciphertext">The stream of ciphertext to decrypt.</param>
+		/// <param name="plaintext">The stream to receive the plaintext.</param>
+		/// <param name="encryptionVariables">The key and IV to use.</param>
+		/// <returns>A task that represents the asynchronous operation.</returns>
+		public override async Task DecryptAsync(Stream ciphertext, Stream plaintext, SymmetricEncryptionVariables encryptionVariables) {
+			Requires.NotNull(ciphertext, "ciphertext");
+			Requires.NotNull(plaintext, "plaintext");
+			Requires.NotNull(encryptionVariables, "encryptionVariables");
+
 			using (var alg = SymmetricAlgorithm.Create(this.SymmetricEncryptionConfiguration.AlgorithmName)) {
 				alg.Mode = (CipherMode)Enum.Parse(typeof(CipherMode), this.SymmetricEncryptionConfiguration.BlockMode);
 				alg.Padding = (PaddingMode)Enum.Parse(typeof(PaddingMode), this.SymmetricEncryptionConfiguration.Padding);
-				using (var decryptor = alg.CreateDecryptor(data.Key, data.IV)) {
-					using (var plaintextStream = new MemoryStream()) {
-						using (var cryptoStream = new CryptoStream(plaintextStream, decryptor, CryptoStreamMode.Write)) {
-							cryptoStream.Write(data.Ciphertext, 0, data.Ciphertext.Length);
-						}
-
-						return plaintextStream.ToArray();
+				using (var decryptor = alg.CreateDecryptor(encryptionVariables.Key, encryptionVariables.IV)) {
+					using (var cryptoStream = new CryptoStream(plaintext, decryptor, CryptoStreamMode.Write)) {
+						await ciphertext.CopyToAsync(cryptoStream);
+						cryptoStream.FlushFinalBlock();
 					}
 				}
 			}

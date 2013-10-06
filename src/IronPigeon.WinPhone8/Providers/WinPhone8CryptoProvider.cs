@@ -3,6 +3,7 @@
 	using System.Collections.Generic;
 	using System.Composition;
 	using System.Globalization;
+	using System.IO;
 	using System.Linq;
 	using System.Security.Cryptography;
 	using System.Text;
@@ -15,7 +16,6 @@
 	using Org.BouncyCastle.Crypto.Paddings;
 	using Org.BouncyCastle.Crypto.Parameters;
 	using Org.BouncyCastle.Security;
-
 	using Validation;
 
 	/// <summary>
@@ -81,52 +81,52 @@
 		}
 
 		/// <summary>
-		/// Symmetrically encrypts the specified buffer using a randomly generated key.
+		/// Symmetrically encrypts a stream.
 		/// </summary>
-		/// <param name="data">The data to encrypt.</param>
-		/// <param name="key">The key used to encrypt the data. May be <c>null</c> to automatically generate a cryptographically strong random key.</param>
-		/// <param name="iv">The initialization vector to use when encrypting the first block. May be <c>null</c> to automatically generate one.</param>
-		/// <returns>
-		/// The result of the encryption.
-		/// </returns>
-		public override SymmetricEncryptionResult Encrypt(byte[] data, byte[] key, byte[] iv) {
+		/// <param name="plaintext">The stream of plaintext to encrypt.</param>
+		/// <param name="ciphertext">The stream to receive the ciphertext.</param>
+		/// <param name="encryptionVariables">An optional key and IV to use. May be <c>null</c> to use randomly generated values.</param>
+		/// <returns>A task that completes when encryption has completed, whose result is the key and IV to use to decrypt the ciphertext.</returns>
+		public override async Task<SymmetricEncryptionVariables> EncryptAsync(Stream plaintext, Stream ciphertext, SymmetricEncryptionVariables encryptionVariables) {
 			var encryptor = this.GetCipher();
 
-			if (key == null) {
+			if (encryptionVariables == null) {
 				var secureRandom = new SecureRandom();
-				key = new byte[this.SymmetricEncryptionKeySize / 8];
+				byte[] key = new byte[this.SymmetricEncryptionKeySize / 8];
 				secureRandom.NextBytes(key);
-			} else {
-				Requires.Argument(key.Length == this.SymmetricEncryptionKeySize / 8, "key", "Incorrect length.");
-			}
 
-			if (iv == null) {
 				var random = new Random();
-				iv = new byte[encryptor.GetBlockSize()];
+				byte[] iv = new byte[encryptor.GetBlockSize()];
 				random.NextBytes(iv);
+
+				encryptionVariables = new SymmetricEncryptionVariables(key, iv);
 			} else {
-				Requires.Argument(iv.Length == encryptor.GetBlockSize(), "iv", "Incorrect length.");
+				Requires.Argument(encryptionVariables.Key.Length == this.SymmetricEncryptionKeySize / 8, "key", "Incorrect length.");
+				Requires.Argument(encryptionVariables.IV.Length == encryptor.GetBlockSize(), "iv", "Incorrect length.");
 			}
 
-			var parameters = new ParametersWithIV(new KeyParameter(key), iv);
+			var parameters = new ParametersWithIV(new KeyParameter(encryptionVariables.Key), encryptionVariables.IV);
 			encryptor.Init(true, parameters);
-			byte[] ciphertext = encryptor.DoFinal(data);
-			return new SymmetricEncryptionResult(key, iv, ciphertext);
+			await CipherStreamCopyAsync(plaintext, ciphertext, encryptor);
+			return encryptionVariables;
 		}
 
 		/// <summary>
-		/// Symmetrically decrypts a buffer using the specified key.
+		/// Symmetrically decrypts a stream.
 		/// </summary>
-		/// <param name="data">The encrypted data and the key and IV used to encrypt it.</param>
-		/// <returns>
-		/// The decrypted buffer.
-		/// </returns>
-		public override byte[] Decrypt(SymmetricEncryptionResult data) {
-			var parameters = new ParametersWithIV(new KeyParameter(data.Key), data.IV);
+		/// <param name="ciphertext">The stream of ciphertext to decrypt.</param>
+		/// <param name="plaintext">The stream to receive the plaintext.</param>
+		/// <param name="encryptionVariables">The key and IV to use.</param>
+		/// <returns>A task that represents the asynchronous operation.</returns>
+		public override async Task DecryptAsync(Stream ciphertext, Stream plaintext, SymmetricEncryptionVariables encryptionVariables) {
+			Requires.NotNull(ciphertext, "ciphertext");
+			Requires.NotNull(plaintext, "plaintext");
+			Requires.NotNull(encryptionVariables, "encryptionVariables");
+
+			var parameters = new ParametersWithIV(new KeyParameter(encryptionVariables.Key), encryptionVariables.IV);
 			var decryptor = this.GetCipher();
 			decryptor.Init(false, parameters);
-			byte[] plaintext = decryptor.DoFinal(data.Ciphertext);
-			return plaintext;
+			await CipherStreamCopyAsync(ciphertext, plaintext, decryptor);
 		}
 
 		/// <summary>
@@ -225,6 +225,34 @@
 				default:
 					throw new NotSupportedException();
 			}
+		}
+
+		/// <summary>
+		/// Copies the contents of one stream to another, transforming it with the specified cipher.
+		/// </summary>
+		/// <param name="source">The source stream.</param>
+		/// <param name="destination">The destination stream.</param>
+		/// <param name="cipher">The cipher to use.</param>
+		/// <returns>A task that completes with the completion of the async work.</returns>
+		private static async Task CipherStreamCopyAsync(Stream source, Stream destination, IBufferedCipher cipher) {
+			Requires.NotNull(source, "source");
+			Requires.NotNull(destination, "destination");
+			Requires.NotNull(cipher, "cipher");
+
+			byte[] sourceBuffer = new byte[cipher.GetBlockSize()];
+			byte[] destinationBuffer = new byte[cipher.GetBlockSize() * 2];
+			while (true) {
+				int bytesRead = await source.ReadAsync(sourceBuffer, 0, sourceBuffer.Length);
+				if (bytesRead == 0) {
+					break;
+				}
+
+				int bytesWritten = cipher.ProcessBytes(sourceBuffer, 0, bytesRead, destinationBuffer, 0);
+				await destination.WriteAsync(destinationBuffer, 0, bytesWritten);
+			}
+
+			int finalBytes = cipher.DoFinal(destinationBuffer, 0);
+			await destination.WriteAsync(destinationBuffer, 0, finalBytes);
 		}
 	}
 }

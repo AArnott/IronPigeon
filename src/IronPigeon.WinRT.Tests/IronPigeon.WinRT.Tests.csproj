@@ -21,6 +21,7 @@
     <UseVSHostingProcess>false</UseVSHostingProcess>
     <NonShipping>true</NonShipping>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
+    <PackageCertificateThumbprint>E7C0A44AD37FD7CEA475A330549ACD60CE662C99</PackageCertificateThumbprint>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
   </PropertyGroup>

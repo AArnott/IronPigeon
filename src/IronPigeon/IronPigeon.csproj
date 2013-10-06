@@ -60,6 +60,7 @@
     </Compile>
     <Compile Include="SymmetricEncryptionResult.cs" />
     <Compile Include="Providers\TwitterAddressBook.cs" />
+    <Compile Include="SymmetricEncryptionVariables.cs" />
     <Compile Include="Utilities.cs" />
   </ItemGroup>
   <ItemGroup>

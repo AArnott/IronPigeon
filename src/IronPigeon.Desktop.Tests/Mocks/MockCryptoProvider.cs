@@ -56,14 +56,17 @@
 			return true;
 		}
 
-		public SymmetricEncryptionResult Encrypt(byte[] data, byte[] key, byte[] iv) {
+		public SymmetricEncryptionResult Encrypt(byte[] data, SymmetricEncryptionVariables encryptionVariables) {
 			var rng = new Random();
-			if (key == null) {
+
+			byte[] key, iv;
+			if (encryptionVariables != null) {
+				key = encryptionVariables.Key;
+				iv = encryptionVariables.IV;
+			} else {
 				key = new byte[KeyLengthInBytes];
 				rng.NextBytes(key);
-			}
 
-			if (iv == null) {
 				iv = new byte[KeyLengthInBytes];
 				rng.NextBytes(iv);
 			}
@@ -73,6 +76,14 @@
 			Array.Copy(iv, 0, ciphertext, key.Length, iv.Length);
 			Array.Copy(data, 0, ciphertext, key.Length + iv.Length, data.Length);
 			return new SymmetricEncryptionResult(key, iv, ciphertext);
+		}
+
+		public Task<SymmetricEncryptionVariables> EncryptAsync(System.IO.Stream plaintext, System.IO.Stream ciphertext, SymmetricEncryptionVariables encryptionVariables = null) {
+			throw new NotImplementedException();
+		}
+
+		public Task DecryptAsync(System.IO.Stream ciphertext, System.IO.Stream plaintext, SymmetricEncryptionVariables encryptionVariables) {
+			throw new NotImplementedException();
 		}
 
 		public byte[] Decrypt(SymmetricEncryptionResult data) {
