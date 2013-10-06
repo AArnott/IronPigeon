@@ -5,6 +5,7 @@
 	using System.Linq;
 	using System.Text;
 	using System.Threading.Tasks;
+	using Validation;
 	using Windows.Security.Cryptography;
 	using Windows.Security.Cryptography.Core;
 	using Windows.Storage.Streams;
@@ -24,6 +25,13 @@
 		/// The symmetric encryption algorithm provider to use.
 		/// </summary>
 		protected static readonly SymmetricKeyAlgorithmProvider SymmetricAlgorithm = SymmetricKeyAlgorithmProvider.OpenAlgorithm(SymmetricAlgorithmNames.AesCbcPkcs7);
+
+		/// <summary>
+		/// Gets the length (in bits) of the symmetric encryption cipher block.
+		/// </summary>
+		public override int SymmetricEncryptionBlockSize {
+			get { return (int)SymmetricAlgorithm.BlockLength * 8; }
+		}
 
 		/// <summary>
 		/// Asymmetrically signs a data blob.
@@ -60,14 +68,22 @@
 		/// Symmetrically encrypts the specified buffer using a randomly generated key.
 		/// </summary>
 		/// <param name="data">The data to encrypt.</param>
+		/// <param name="key">The key used to encrypt the data. May be <c>null</c> to automatically generate a cryptographically strong random key.</param>
+		/// <param name="iv">The initialization vector to use when encrypting the first block. May be <c>null</c> to automatically generate one.</param>
 		/// <returns>
 		/// The result of the encryption.
 		/// </returns>
-		public override SymmetricEncryptionResult Encrypt(byte[] data) {
+		public override SymmetricEncryptionResult Encrypt(byte[] data, byte[] key, byte[] iv) {
+			Requires.NotNull(data, "data");
+
 			IBuffer plainTextBuffer = CryptographicBuffer.CreateFromByteArray(data);
-			IBuffer symmetricKeyMaterial = CryptographicBuffer.GenerateRandom((uint)this.SymmetricEncryptionKeySize / 8);
+			IBuffer symmetricKeyMaterial = key != null
+				? CryptographicBuffer.CreateFromByteArray(key)
+				: CryptographicBuffer.GenerateRandom((uint)this.SymmetricEncryptionKeySize / 8);
 			var symmetricKey = SymmetricAlgorithm.CreateSymmetricKey(symmetricKeyMaterial);
-			IBuffer ivBuffer = CryptographicBuffer.GenerateRandom(SymmetricAlgorithm.BlockLength);
+			IBuffer ivBuffer = iv != null
+				? CryptographicBuffer.CreateFromByteArray(iv)
+				: CryptographicBuffer.GenerateRandom(SymmetricAlgorithm.BlockLength);
 
 			var cipherTextBuffer = CryptographicEngine.Encrypt(symmetricKey, plainTextBuffer, ivBuffer);
 			return new SymmetricEncryptionResult(

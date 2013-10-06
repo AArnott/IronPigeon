@@ -19,17 +19,22 @@
 		EncryptionConfiguration SymmetricEncryptionConfiguration { get; set; }
 
 		/// <summary>
-		/// Gets or sets the size of the key used for symmetric blob encryption.
+		/// Gets or sets the size of the key (in bits) used for symmetric blob encryption.
 		/// </summary>
 		int SymmetricEncryptionKeySize { get; set; }
 
 		/// <summary>
-		/// Gets or sets the size of the key used for asymmetric signatures.
+		/// Gets the length (in bits) of the symmetric encryption cipher block.
+		/// </summary>
+		int SymmetricEncryptionBlockSize { get; }
+
+		/// <summary>
+		/// Gets or sets the size of the key (in bits) used for asymmetric signatures.
 		/// </summary>
 		int SignatureAsymmetricKeySize { get; set; }
 
 		/// <summary>
-		/// Gets or sets the size of the key used for asymmetric encryption.
+		/// Gets or sets the size of the key (in bits) used for asymmetric encryption.
 		/// </summary>
 		int EncryptionAsymmetricKeySize { get; set; }
 
@@ -57,8 +62,10 @@
 		/// Symmetrically encrypts the specified buffer using a randomly generated key.
 		/// </summary>
 		/// <param name="data">The data to encrypt.</param>
+		/// <param name="key">The key used to encrypt the data. May be <c>null</c> to automatically generate a cryptographically strong random key.</param>
+		/// <param name="iv">The initialization vector to use when encrypting the first block. May be <c>null</c> to automatically generate one.</param>
 		/// <returns>The result of the encryption.</returns>
-		SymmetricEncryptionResult Encrypt(byte[] data);
+		SymmetricEncryptionResult Encrypt(byte[] data, byte[] key = null, byte[] iv = null);
 
 		/// <summary>
 		/// Symmetrically decrypts a buffer using the specified key.

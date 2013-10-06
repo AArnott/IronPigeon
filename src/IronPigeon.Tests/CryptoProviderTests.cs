@@ -37,6 +37,25 @@
 		}
 
 		[TestMethod]
+		public void SymmetricEncryptionRoundtripExplicitKeyAndIV() {
+			byte[] key = new byte[this.CryptoProvider.SymmetricEncryptionKeySize / 8];
+			byte[] iv = new byte[this.CryptoProvider.SymmetricEncryptionBlockSize / 8];
+			byte[] plaintext = new byte[10000];
+
+			var rng = new Random();
+			rng.NextBytes(key);
+			rng.NextBytes(iv);
+			rng.NextBytes(plaintext);
+
+			var cipherPacket = this.CryptoProvider.Encrypt(plaintext, key, iv);
+			CollectionAssert.AreEqual(key, cipherPacket.Key);
+			CollectionAssert.AreEqual(iv, cipherPacket.IV);
+
+			byte[] decryptedPlaintext = this.CryptoProvider.Decrypt(cipherPacket);
+			CollectionAssert.AreEqual(plaintext, decryptedPlaintext);
+		}
+
+		[TestMethod]
 		public void AsymmetricSignatures() {
 			var data = new byte[] { 0x1, 0x2, 0x3 };
 			var tamperedData = new byte[] { 0x1, 0x2, 0x4 };

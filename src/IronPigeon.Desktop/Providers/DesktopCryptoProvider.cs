@@ -33,6 +33,17 @@
 		}
 
 		/// <summary>
+		/// Gets the length (in bits) of the symmetric encryption cipher block.
+		/// </summary>
+		public override int SymmetricEncryptionBlockSize {
+			get {
+				using (var alg = SymmetricAlgorithm.Create(this.SymmetricEncryptionConfiguration.AlgorithmName)) {
+					return alg.BlockSize;
+				}
+			}
+		}
+
+		/// <summary>
 		/// Asymmetrically signs a data blob.
 		/// </summary>
 		/// <param name="data">The data to sign.</param>
@@ -68,14 +79,26 @@
 		/// Symmetrically encrypts the specified buffer using a randomly generated key.
 		/// </summary>
 		/// <param name="data">The data to encrypt.</param>
+		/// <param name="key">The key used to encrypt the data. May be <c>null</c> to automatically generate a cryptographically strong random key.</param>
+		/// <param name="iv">The initialization vector to use when encrypting the first block. May be <c>null</c> to automatically generate one.</param>
 		/// <returns>
 		/// The result of the encryption.
 		/// </returns>
-		public override SymmetricEncryptionResult Encrypt(byte[] data) {
+		public override SymmetricEncryptionResult Encrypt(byte[] data, byte[] key, byte[] iv) {
+			Requires.NotNull(data, "data");
+
 			using (var alg = SymmetricAlgorithm.Create(this.SymmetricEncryptionConfiguration.AlgorithmName)) {
 				alg.Mode = (CipherMode)Enum.Parse(typeof(CipherMode), this.SymmetricEncryptionConfiguration.BlockMode);
 				alg.Padding = (PaddingMode)Enum.Parse(typeof(PaddingMode), this.SymmetricEncryptionConfiguration.Padding);
 				alg.KeySize = this.SymmetricEncryptionKeySize;
+				if (key != null) {
+					alg.Key = key;
+				}
+
+				if (iv != null) {
+					alg.IV = iv;
+				}
+
 				using (var encryptor = alg.CreateEncryptor()) {
 					using (var memoryStream = new MemoryStream()) {
 						using (var cryptoStream = new CryptoStream(memoryStream, encryptor, CryptoStreamMode.Write)) {

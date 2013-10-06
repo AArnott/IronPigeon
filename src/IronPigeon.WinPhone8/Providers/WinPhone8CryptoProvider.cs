@@ -42,6 +42,13 @@
 		}
 
 		/// <summary>
+		/// Gets the length (in bits) of the symmetric encryption cipher block.
+		/// </summary>
+		public override int SymmetricEncryptionBlockSize {
+			get { return this.GetCipher().GetBlockSize() * 8; }
+		}
+
+		/// <summary>
 		/// Asymmetrically signs a data blob.
 		/// </summary>
 		/// <param name="data">The data to sign.</param>
@@ -77,19 +84,29 @@
 		/// Symmetrically encrypts the specified buffer using a randomly generated key.
 		/// </summary>
 		/// <param name="data">The data to encrypt.</param>
+		/// <param name="key">The key used to encrypt the data. May be <c>null</c> to automatically generate a cryptographically strong random key.</param>
+		/// <param name="iv">The initialization vector to use when encrypting the first block. May be <c>null</c> to automatically generate one.</param>
 		/// <returns>
 		/// The result of the encryption.
 		/// </returns>
-		public override SymmetricEncryptionResult Encrypt(byte[] data) {
+		public override SymmetricEncryptionResult Encrypt(byte[] data, byte[] key, byte[] iv) {
 			var encryptor = this.GetCipher();
 
-			var secureRandom = new SecureRandom();
-			byte[] key = new byte[this.SymmetricEncryptionKeySize / 8];
-			secureRandom.NextBytes(key);
+			if (key == null) {
+				var secureRandom = new SecureRandom();
+				key = new byte[this.SymmetricEncryptionKeySize / 8];
+				secureRandom.NextBytes(key);
+			} else {
+				Requires.Argument(key.Length == this.SymmetricEncryptionKeySize / 8, "key", "Incorrect length.");
+			}
 
-			var random = new Random();
-			byte[] iv = new byte[encryptor.GetBlockSize()];
-			random.NextBytes(iv);
+			if (iv == null) {
+				var random = new Random();
+				iv = new byte[encryptor.GetBlockSize()];
+				random.NextBytes(iv);
+			} else {
+				Requires.Argument(iv.Length == encryptor.GetBlockSize(), "iv", "Incorrect length.");
+			}
 
 			var parameters = new ParametersWithIV(new KeyParameter(key), iv);
 			encryptor.Init(true, parameters);

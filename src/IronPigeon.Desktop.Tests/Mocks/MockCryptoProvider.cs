@@ -41,6 +41,13 @@
 			set { throw new NotSupportedException(); }
 		}
 
+		/// <summary>
+		/// Gets the length of the symmetric encryption cipher block.
+		/// </summary>
+		public int SymmetricEncryptionBlockSize {
+			get { return 5; }
+		}
+
 		public byte[] Sign(byte[] data, byte[] signingPrivateKey) {
 			return data;
 		}
@@ -49,12 +56,18 @@
 			return true;
 		}
 
-		public SymmetricEncryptionResult Encrypt(byte[] data) {
+		public SymmetricEncryptionResult Encrypt(byte[] data, byte[] key, byte[] iv) {
 			var rng = new Random();
-			var key = new byte[KeyLengthInBytes];
-			var iv = new byte[KeyLengthInBytes];
-			rng.NextBytes(key);
-			rng.NextBytes(iv);
+			if (key == null) {
+				key = new byte[KeyLengthInBytes];
+				rng.NextBytes(key);
+			}
+
+			if (iv == null) {
+				iv = new byte[KeyLengthInBytes];
+				rng.NextBytes(iv);
+			}
+
 			var ciphertext = new byte[key.Length + iv.Length + data.Length];
 			Array.Copy(key, ciphertext, key.Length);
 			Array.Copy(iv, 0, ciphertext, key.Length, iv.Length);
