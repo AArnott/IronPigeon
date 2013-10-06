@@ -6,6 +6,7 @@
 	using System.Linq;
 	using System.Security.Cryptography;
 	using System.Text;
+	using System.Threading;
 	using System.Threading.Tasks;
 	using Validation;
 
@@ -81,8 +82,9 @@
 		/// <param name="plaintext">The stream of plaintext to encrypt.</param>
 		/// <param name="ciphertext">The stream to receive the ciphertext.</param>
 		/// <param name="encryptionVariables">An optional key and IV to use. May be <c>null</c> to use randomly generated values.</param>
+		/// <param name="cancellationToken">A cancellation token.</param>
 		/// <returns>A task that completes when encryption has completed, whose result is the key and IV to use to decrypt the ciphertext.</returns>
-		public override async Task<SymmetricEncryptionVariables> EncryptAsync(Stream plaintext, Stream ciphertext, SymmetricEncryptionVariables encryptionVariables) {
+		public override async Task<SymmetricEncryptionVariables> EncryptAsync(Stream plaintext, Stream ciphertext, SymmetricEncryptionVariables encryptionVariables, CancellationToken cancellationToken) {
 			Requires.NotNull(plaintext, "plaintext");
 			Requires.NotNull(ciphertext, "ciphertext");
 
@@ -102,7 +104,7 @@
 
 				using (var encryptor = alg.CreateEncryptor()) {
 					var cryptoStream = new CryptoStream(ciphertext, encryptor, CryptoStreamMode.Write); // DON'T dispose this, or it dipsoses of the ciphertext stream.
-					await plaintext.CopyToAsync(cryptoStream, alg.BlockSize);
+					await plaintext.CopyToAsync(cryptoStream, alg.BlockSize, cancellationToken);
 					cryptoStream.FlushFinalBlock();
 					return encryptionVariables;
 				}
@@ -115,8 +117,9 @@
 		/// <param name="ciphertext">The stream of ciphertext to decrypt.</param>
 		/// <param name="plaintext">The stream to receive the plaintext.</param>
 		/// <param name="encryptionVariables">The key and IV to use.</param>
+		/// <param name="cancellationToken">A cancellation token.</param>
 		/// <returns>A task that represents the asynchronous operation.</returns>
-		public override async Task DecryptAsync(Stream ciphertext, Stream plaintext, SymmetricEncryptionVariables encryptionVariables) {
+		public override async Task DecryptAsync(Stream ciphertext, Stream plaintext, SymmetricEncryptionVariables encryptionVariables, CancellationToken cancellationToken) {
 			Requires.NotNull(ciphertext, "ciphertext");
 			Requires.NotNull(plaintext, "plaintext");
 			Requires.NotNull(encryptionVariables, "encryptionVariables");
@@ -126,7 +129,7 @@
 				alg.Padding = (PaddingMode)Enum.Parse(typeof(PaddingMode), this.SymmetricEncryptionConfiguration.Padding);
 				using (var decryptor = alg.CreateDecryptor(encryptionVariables.Key, encryptionVariables.IV)) {
 					using (var cryptoStream = new CryptoStream(plaintext, decryptor, CryptoStreamMode.Write)) {
-						await ciphertext.CopyToAsync(cryptoStream);
+						await ciphertext.CopyToAsync(cryptoStream, 4096, cancellationToken);
 						cryptoStream.FlushFinalBlock();
 					}
 				}

@@ -5,6 +5,7 @@
 	using System.IO;
 	using System.Linq;
 	using System.Text;
+	using System.Threading;
 	using System.Threading.Tasks;
 	using Validation;
 	using Windows.Security.Cryptography;
@@ -102,16 +103,17 @@
 		/// <param name="plaintext">The stream of plaintext to encrypt.</param>
 		/// <param name="ciphertext">The stream to receive the ciphertext.</param>
 		/// <param name="encryptionVariables">An optional key and IV to use. May be <c>null</c> to use randomly generated values.</param>
+		/// <param name="cancellationToken">A cancellation token.</param>
 		/// <returns>A task that completes when encryption has completed, whose result is the key and IV to use to decrypt the ciphertext.</returns>
-		public override async Task<SymmetricEncryptionVariables> EncryptAsync(Stream plaintext, Stream ciphertext, SymmetricEncryptionVariables encryptionVariables) {
+		public override async Task<SymmetricEncryptionVariables> EncryptAsync(Stream plaintext, Stream ciphertext, SymmetricEncryptionVariables encryptionVariables, CancellationToken cancellationToken) {
 			Requires.NotNull(plaintext, "plaintext");
 			Requires.NotNull(ciphertext, "ciphertext");
 
 			var plaintextMemoryStream = new MemoryStream();
-			await plaintext.CopyToAsync(plaintextMemoryStream);
-
+			await plaintext.CopyToAsync(plaintextMemoryStream, 4096, cancellationToken);
+			cancellationToken.ThrowIfCancellationRequested();
 			var result = this.Encrypt(plaintextMemoryStream.ToArray(), encryptionVariables);
-			await ciphertext.WriteAsync(result.Ciphertext, 0, result.Ciphertext.Length);
+			await ciphertext.WriteAsync(result.Ciphertext, 0, result.Ciphertext.Length, cancellationToken);
 			return result;
 		}
 
@@ -121,16 +123,18 @@
 		/// <param name="ciphertext">The stream of ciphertext to decrypt.</param>
 		/// <param name="plaintext">The stream to receive the plaintext.</param>
 		/// <param name="encryptionVariables">The key and IV to use.</param>
+		/// <param name="cancellationToken">A cancellation token.</param>
 		/// <returns>A task that represents the asynchronous operation.</returns>
-		public override async Task DecryptAsync(Stream ciphertext, Stream plaintext, SymmetricEncryptionVariables encryptionVariables) {
+		public override async Task DecryptAsync(Stream ciphertext, Stream plaintext, SymmetricEncryptionVariables encryptionVariables, CancellationToken cancellationToken) {
 			Requires.NotNull(ciphertext, "ciphertext");
 			Requires.NotNull(plaintext, "plaintext");
 			Requires.NotNull(encryptionVariables, "encryptionVariables");
 
 			var ciphertextMemoryStream = new MemoryStream();
-			await ciphertext.CopyToAsync(ciphertextMemoryStream);
+			await ciphertext.CopyToAsync(ciphertextMemoryStream, 4096, cancellationToken);
+			cancellationToken.ThrowIfCancellationRequested();
 			byte[] plaintextBytes = this.Decrypt(new SymmetricEncryptionResult(encryptionVariables, ciphertextMemoryStream.ToArray()));
-			await plaintext.WriteAsync(plaintextBytes, 0, plaintextBytes.Length);
+			await plaintext.WriteAsync(plaintextBytes, 0, plaintextBytes.Length, cancellationToken);
 		}
 
 		/// <summary>

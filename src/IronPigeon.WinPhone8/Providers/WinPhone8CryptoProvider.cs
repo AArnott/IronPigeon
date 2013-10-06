@@ -7,6 +7,7 @@
 	using System.Linq;
 	using System.Security.Cryptography;
 	using System.Text;
+	using System.Threading;
 	using System.Threading.Tasks;
 	using Org.BouncyCastle.Asn1;
 	using Org.BouncyCastle.Asn1.X509;
@@ -86,8 +87,9 @@
 		/// <param name="plaintext">The stream of plaintext to encrypt.</param>
 		/// <param name="ciphertext">The stream to receive the ciphertext.</param>
 		/// <param name="encryptionVariables">An optional key and IV to use. May be <c>null</c> to use randomly generated values.</param>
+		/// <param name="cancellationToken">A cancellation token.</param>
 		/// <returns>A task that completes when encryption has completed, whose result is the key and IV to use to decrypt the ciphertext.</returns>
-		public override async Task<SymmetricEncryptionVariables> EncryptAsync(Stream plaintext, Stream ciphertext, SymmetricEncryptionVariables encryptionVariables) {
+		public override async Task<SymmetricEncryptionVariables> EncryptAsync(Stream plaintext, Stream ciphertext, SymmetricEncryptionVariables encryptionVariables, CancellationToken cancellationToken) {
 			var encryptor = this.GetCipher();
 
 			if (encryptionVariables == null) {
@@ -107,7 +109,7 @@
 
 			var parameters = new ParametersWithIV(new KeyParameter(encryptionVariables.Key), encryptionVariables.IV);
 			encryptor.Init(true, parameters);
-			await CipherStreamCopyAsync(plaintext, ciphertext, encryptor);
+			await CipherStreamCopyAsync(plaintext, ciphertext, encryptor, cancellationToken);
 			return encryptionVariables;
 		}
 
@@ -117,8 +119,9 @@
 		/// <param name="ciphertext">The stream of ciphertext to decrypt.</param>
 		/// <param name="plaintext">The stream to receive the plaintext.</param>
 		/// <param name="encryptionVariables">The key and IV to use.</param>
+		/// <param name="cancellationToken">A cancellation token.</param>
 		/// <returns>A task that represents the asynchronous operation.</returns>
-		public override async Task DecryptAsync(Stream ciphertext, Stream plaintext, SymmetricEncryptionVariables encryptionVariables) {
+		public override async Task DecryptAsync(Stream ciphertext, Stream plaintext, SymmetricEncryptionVariables encryptionVariables, CancellationToken cancellationToken) {
 			Requires.NotNull(ciphertext, "ciphertext");
 			Requires.NotNull(plaintext, "plaintext");
 			Requires.NotNull(encryptionVariables, "encryptionVariables");
@@ -126,7 +129,7 @@
 			var parameters = new ParametersWithIV(new KeyParameter(encryptionVariables.Key), encryptionVariables.IV);
 			var decryptor = this.GetCipher();
 			decryptor.Init(false, parameters);
-			await CipherStreamCopyAsync(ciphertext, plaintext, decryptor);
+			await CipherStreamCopyAsync(ciphertext, plaintext, decryptor, cancellationToken);
 		}
 
 		/// <summary>
@@ -233,8 +236,9 @@
 		/// <param name="source">The source stream.</param>
 		/// <param name="destination">The destination stream.</param>
 		/// <param name="cipher">The cipher to use.</param>
+		/// <param name="cancellationToken">The cancellation token.</param>
 		/// <returns>A task that completes with the completion of the async work.</returns>
-		private static async Task CipherStreamCopyAsync(Stream source, Stream destination, IBufferedCipher cipher) {
+		private static async Task CipherStreamCopyAsync(Stream source, Stream destination, IBufferedCipher cipher, CancellationToken cancellationToken) {
 			Requires.NotNull(source, "source");
 			Requires.NotNull(destination, "destination");
 			Requires.NotNull(cipher, "cipher");
@@ -242,13 +246,14 @@
 			byte[] sourceBuffer = new byte[cipher.GetBlockSize()];
 			byte[] destinationBuffer = new byte[cipher.GetBlockSize() * 2];
 			while (true) {
-				int bytesRead = await source.ReadAsync(sourceBuffer, 0, sourceBuffer.Length);
+				cancellationToken.ThrowIfCancellationRequested();
+				int bytesRead = await source.ReadAsync(sourceBuffer, 0, sourceBuffer.Length, cancellationToken);
 				if (bytesRead == 0) {
 					break;
 				}
 
 				int bytesWritten = cipher.ProcessBytes(sourceBuffer, 0, bytesRead, destinationBuffer, 0);
-				await destination.WriteAsync(destinationBuffer, 0, bytesWritten);
+				await destination.WriteAsync(destinationBuffer, 0, bytesWritten, cancellationToken);
 			}
 
 			int finalBytes = cipher.DoFinal(destinationBuffer, 0);

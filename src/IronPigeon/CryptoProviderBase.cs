@@ -5,6 +5,7 @@
 	using System.IO;
 	using System.Linq;
 	using System.Text;
+	using System.Threading;
 	using System.Threading.Tasks;
 	using Validation;
 
@@ -136,7 +137,7 @@
 
 			var plaintext = new MemoryStream(data);
 			var ciphertext = new MemoryStream();
-			var result = this.EncryptAsync(plaintext, ciphertext, encryptionVariables).Result;
+			var result = this.EncryptAsync(plaintext, ciphertext, encryptionVariables, CancellationToken.None).Result;
 			return new SymmetricEncryptionResult(result, ciphertext.ToArray());
 		}
 
@@ -152,7 +153,7 @@
 
 			var plaintext = new MemoryStream();
 			var ciphertext = new MemoryStream(data.Ciphertext);
-			this.DecryptAsync(ciphertext, plaintext, data).Wait();
+			this.DecryptAsync(ciphertext, plaintext, data, CancellationToken.None).Wait();
 			return plaintext.ToArray();
 		}
 
@@ -162,8 +163,9 @@
 		/// <param name="plaintext">The stream of plaintext to encrypt.</param>
 		/// <param name="ciphertext">The stream to receive the ciphertext.</param>
 		/// <param name="encryptionVariables">An optional key and IV to use. May be <c>null</c> to use randomly generated values.</param>
+		/// <param name="cancellationToken">A cancellation token.</param>
 		/// <returns>A task that completes when encryption has completed, whose result is the key and IV to use to decrypt the ciphertext.</returns>
-		public abstract Task<SymmetricEncryptionVariables> EncryptAsync(Stream plaintext, Stream ciphertext, SymmetricEncryptionVariables encryptionVariables);
+		public abstract Task<SymmetricEncryptionVariables> EncryptAsync(Stream plaintext, Stream ciphertext, SymmetricEncryptionVariables encryptionVariables, CancellationToken cancellationToken);
 
 		/// <summary>
 		/// Symmetrically decrypts a stream.
@@ -171,8 +173,9 @@
 		/// <param name="ciphertext">The stream of ciphertext to decrypt.</param>
 		/// <param name="plaintext">The stream to receive the plaintext.</param>
 		/// <param name="encryptionVariables">The key and IV to use.</param>
+		/// <param name="cancellationToken">A cancellation token.</param>
 		/// <returns>A task that represents the asynchronous operation.</returns>
-		public abstract Task DecryptAsync(Stream ciphertext, Stream plaintext, SymmetricEncryptionVariables encryptionVariables);
+		public abstract Task DecryptAsync(Stream ciphertext, Stream plaintext, SymmetricEncryptionVariables encryptionVariables, CancellationToken cancellationToken);
 
 		/// <summary>
 		/// Asymmetrically encrypts the specified buffer using the provided public key.
