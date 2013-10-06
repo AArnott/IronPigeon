@@ -1,4 +1,6 @@
-﻿namespace IronPigeon {
+﻿using System.IO;
+using System.Threading.Tasks;
+namespace IronPigeon {
 	/// <summary>
 	/// Implements the cryptographic algorithms that protect users and data required by the IronPigeon protocol.
 	/// </summary>
@@ -66,6 +68,23 @@
 		/// <param name="iv">The initialization vector to use when encrypting the first block. May be <c>null</c> to automatically generate one.</param>
 		/// <returns>The result of the encryption.</returns>
 		SymmetricEncryptionResult Encrypt(byte[] data, byte[] key = null, byte[] iv = null);
+
+		/// <summary>
+		/// Symmetrically encrypts a stream.
+		/// </summary>
+		/// <param name="plaintext">The stream of plaintext to encrypt.</param>
+		/// <param name="ciphertext">The stream to receive the ciphertext.</param>
+		/// <param name="encryptionVariables">An optional key and IV to use. May be <c>null</c> to use randomly generated values.</param>
+		/// <returns>A task that completes when encryption has completed, whose result is the key and IV to use to decrypt the ciphertext.</returns>
+		Task<SymmetricEncryptionVariables> EncryptAsync(Stream plaintext, Stream ciphertext, SymmetricEncryptionVariables encryptionVariables = null);
+
+		/// <summary>
+		/// Symmetrically decrypts a stream.
+		/// </summary>
+		/// <param name="ciphertext">The stream of ciphertext to decrypt.</param>
+		/// <param name="plaintext">The stream to receive the plaintext.</param>
+		/// <param name="encryptionVariables">The key and IV to use.</param>
+		Task DecryptAsync(Stream ciphertext, Stream plaintext, SymmetricEncryptionVariables encryptionVariables);
 
 		/// <summary>
 		/// Symmetrically decrypts a buffer using the specified key.

@@ -75,6 +75,14 @@
 			return new SymmetricEncryptionResult(key, iv, ciphertext);
 		}
 
+		public Task<SymmetricEncryptionVariables> EncryptAsync(System.IO.Stream plaintext, System.IO.Stream ciphertext, SymmetricEncryptionVariables encryptionVariables = null) {
+			throw new NotImplementedException();
+		}
+
+		public Task DecryptAsync(System.IO.Stream ciphertext, System.IO.Stream plaintext, SymmetricEncryptionVariables encryptionVariables) {
+			throw new NotImplementedException();
+		}
+
 		public byte[] Decrypt(SymmetricEncryptionResult data) {
 			for (int i = 0; i < data.Key.Length; i++) {
 				Assert.That(data.Ciphertext[i], Is.EqualTo(data.Key[i]));

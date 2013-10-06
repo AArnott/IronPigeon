@@ -112,6 +112,27 @@
 		}
 
 		/// <summary>
+		/// Symmetrically encrypts a stream.
+		/// </summary>
+		/// <param name="plaintext">The stream of plaintext to encrypt.</param>
+		/// <param name="ciphertext">The stream to receive the ciphertext.</param>
+		/// <param name="encryptionVariables">An optional key and IV to use. May be <c>null</c> to use randomly generated values.</param>
+		/// <returns>A task that completes when encryption has completed, whose result is the key and IV to use to decrypt the ciphertext.</returns>
+		public override Task<SymmetricEncryptionVariables> EncryptAsync(Stream plaintext, Stream ciphertext, SymmetricEncryptionVariables encryptionVariables) {
+			throw new NotImplementedException();
+		}
+
+		/// <summary>
+		/// Symmetrically decrypts a stream.
+		/// </summary>
+		/// <param name="ciphertext">The stream of ciphertext to decrypt.</param>
+		/// <param name="plaintext">The stream to receive the plaintext.</param>
+		/// <param name="encryptionVariables">The key and IV to use.</param>
+		public override Task DecryptAsync(Stream ciphertext, Stream plaintext, SymmetricEncryptionVariables encryptionVariables) {
+			throw new NotImplementedException();
+		}
+
+		/// <summary>
 		/// Symmetrically decrypts a buffer using the specified key.
 		/// </summary>
 		/// <param name="data">The encrypted data and the key and IV used to encrypt it.</param>

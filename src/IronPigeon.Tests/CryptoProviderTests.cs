@@ -1,5 +1,6 @@
 ﻿namespace IronPigeon.Tests {
 	using System;
+	using System.IO;
 #if NETFX_CORE || WINDOWS_PHONE
 	using Microsoft.VisualStudio.TestPlatform.UnitTestFramework;
 #else
@@ -53,6 +54,21 @@
 
 			byte[] decryptedPlaintext = this.CryptoProvider.Decrypt(cipherPacket);
 			CollectionAssert.AreEqual(plaintext, decryptedPlaintext);
+		}
+
+		[TestMethod]
+		public void SymmetricEncryptionAsStreamRoundtrip() {
+			var rng = new Random();
+			byte[] plaintext = new byte[10000];
+			rng.NextBytes(plaintext);
+
+			var plaintextStream = new MemoryStream(plaintext);
+			var cipherStream = new MemoryStream();
+			var cipherPacket = this.CryptoProvider.EncryptAsync(plaintextStream, cipherStream).Result;
+
+			var decryptedStream = new MemoryStream();
+			this.CryptoProvider.DecryptAsync(cipherStream, decryptedStream, cipherPacket).Wait();
+			CollectionAssert.AreEqual(plaintext, decryptedStream.ToArray());
 		}
 
 		[TestMethod]
