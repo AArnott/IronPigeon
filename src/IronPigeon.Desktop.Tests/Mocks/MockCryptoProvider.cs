@@ -1,8 +1,10 @@
 ﻿namespace IronPigeon.Tests.Mocks {
 	using System;
 	using System.Collections.Generic;
+	using System.IO;
 	using System.Linq;
 	using System.Text;
+	using System.Threading;
 	using System.Threading.Tasks;
 	using NUnit.Framework;
 
@@ -78,11 +80,11 @@
 			return new SymmetricEncryptionResult(key, iv, ciphertext);
 		}
 
-		public Task<SymmetricEncryptionVariables> EncryptAsync(System.IO.Stream plaintext, System.IO.Stream ciphertext, SymmetricEncryptionVariables encryptionVariables = null) {
+		public Task<SymmetricEncryptionVariables> EncryptAsync(Stream plaintext, Stream ciphertext, SymmetricEncryptionVariables encryptionVariables = null, CancellationToken cancellationToken = default(CancellationToken)) {
 			throw new NotImplementedException();
 		}
 
-		public Task DecryptAsync(System.IO.Stream ciphertext, System.IO.Stream plaintext, SymmetricEncryptionVariables encryptionVariables) {
+		public Task DecryptAsync(Stream ciphertext, Stream plaintext, SymmetricEncryptionVariables encryptionVariables, CancellationToken cancellationToken = default(CancellationToken)) {
 			throw new NotImplementedException();
 		}
 
