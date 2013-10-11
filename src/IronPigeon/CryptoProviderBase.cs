@@ -103,6 +103,15 @@
 		public abstract int SymmetricEncryptionBlockSize { get; }
 
 		/// <summary>
+		/// Computes the authentication code for the contents of a stream given the specified symmetric key.
+		/// </summary>
+		/// <param name="data">The data to compute the HMAC for.</param>
+		/// <param name="key">The key to use in hashing.</param>
+		/// <param name="hashAlgorithmName">The hash algorithm to use.</param>
+		/// <returns>The authentication code.</returns>
+		public abstract Task<byte[]> ComputeAuthenticationCodeAsync(Stream data, byte[] key, string hashAlgorithmName);
+
+		/// <summary>
 		/// Asymmetrically signs a data blob.
 		/// </summary>
 		/// <param name="data">The data to sign.</param>

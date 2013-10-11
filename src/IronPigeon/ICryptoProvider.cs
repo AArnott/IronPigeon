@@ -1,7 +1,7 @@
 ﻿namespace IronPigeon {
 	using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
+	using System.Threading;
+	using System.Threading.Tasks;
 
 	/// <summary>
 	/// Implements the cryptographic algorithms that protect users and data required by the IronPigeon protocol.
@@ -41,6 +41,15 @@ using System.Threading.Tasks;
 		/// Gets or sets the size of the key (in bits) used for asymmetric encryption.
 		/// </summary>
 		int EncryptionAsymmetricKeySize { get; set; }
+
+		/// <summary>
+		/// Computes the authentication code for the contents of a stream given the specified symmetric key.
+		/// </summary>
+		/// <param name="data">The data to compute the HMAC for.</param>
+		/// <param name="key">The key to use in hashing.</param>
+		/// <param name="hashAlgorithmName">The hash algorithm to use.</param>
+		/// <returns>The authentication code.</returns>
+		Task<byte[]> ComputeAuthenticationCodeAsync(Stream data, byte[] key, string hashAlgorithmName);
 
 		/// <summary>
 		/// Asymmetrically signs a data blob.

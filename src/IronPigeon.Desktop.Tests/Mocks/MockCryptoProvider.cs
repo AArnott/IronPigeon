@@ -50,6 +50,10 @@
 			get { return 5; }
 		}
 
+		public Task<byte[]> ComputeAuthenticationCodeAsync(Stream data, byte[] key, string hashAlgorithmName) {
+			throw new NotImplementedException();
+		}
+
 		public byte[] Sign(byte[] data, byte[] signingPrivateKey) {
 			return data;
 		}

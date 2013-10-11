@@ -104,5 +104,16 @@
 			string hash = Convert.ToBase64String(await this.CryptoProvider.HashAsync(stream, "SHA256"));
 			Assert.AreEqual("Dt3SUt9aw0h0ALEcIPIw8G6pIZA84nUF6jzUcPEaick=", hash);
 		}
+
+		[TestMethod]
+		public async Task ComputeAuthenticationCodeAsync() {
+			var streamContent = new byte[5000]; // not aligned with natural 4096 block sizes deliberately.
+			streamContent[0] = 0x22;
+			byte[] key = new byte[16];
+			key[1] = 0x44;
+			var stream = new MemoryStream(streamContent);
+			string code = Convert.ToBase64String(await this.CryptoProvider.ComputeAuthenticationCodeAsync(stream, key, "SHA256"));
+			Assert.AreEqual("uEkw2LhaJ8X5PIIdFaQZJOQclqmUdCavVVrtAoh/vCY=", code);
+		}
 	}
 }

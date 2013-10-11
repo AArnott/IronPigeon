@@ -45,6 +45,28 @@
 		}
 
 		/// <summary>
+		/// Computes the authentication code for the contents of a stream given the specified symmetric key.
+		/// </summary>
+		/// <param name="data">The data to compute the HMAC for.</param>
+		/// <param name="key">The key to use in hashing.</param>
+		/// <param name="hashAlgorithmName">The hash algorithm to use.</param>
+		/// <returns>The authentication code.</returns>
+		public override async Task<byte[]> ComputeAuthenticationCodeAsync(Stream data, byte[] key, string hashAlgorithmName) {
+			Requires.NotNull(data, "data");
+			Requires.NotNull(key, "key");
+			Requires.NotNullOrEmpty(hashAlgorithmName, "hashAlgorithmName");
+
+			var hmac = this.GetHmacAlgorithm(hashAlgorithmName);
+			hmac.Key = key;
+			using (var cryptoStream = new CryptoStream(Stream.Null, hmac, CryptoStreamMode.Write)) {
+				await data.CopyToAsync(cryptoStream);
+				cryptoStream.FlushFinalBlock();
+			}
+
+			return hmac.Hash;
+		}
+
+		/// <summary>
 		/// Asymmetrically signs a data blob.
 		/// </summary>
 		/// <param name="data">The data to sign.</param>
@@ -136,7 +158,7 @@
 				}
 
 				using (var encryptor = alg.CreateEncryptor()) {
-					var cryptoStream = new CryptoStream(ciphertext, encryptor, CryptoStreamMode.Write); // DON'T dispose this, or it dipsoses of the ciphertext stream.
+					var cryptoStream = new CryptoStream(ciphertext, encryptor, CryptoStreamMode.Write); // DON'T dispose this, or it disposes of the ciphertext stream.
 					await plaintext.CopyToAsync(cryptoStream, alg.BlockSize, cancellationToken);
 					cryptoStream.FlushFinalBlock();
 					return encryptionVariables;
@@ -161,10 +183,9 @@
 				alg.Mode = (CipherMode)Enum.Parse(typeof(CipherMode), this.SymmetricEncryptionConfiguration.BlockMode);
 				alg.Padding = (PaddingMode)Enum.Parse(typeof(PaddingMode), this.SymmetricEncryptionConfiguration.Padding);
 				using (var decryptor = alg.CreateDecryptor(encryptionVariables.Key, encryptionVariables.IV)) {
-					using (var cryptoStream = new CryptoStream(plaintext, decryptor, CryptoStreamMode.Write)) {
-						await ciphertext.CopyToAsync(cryptoStream, 4096, cancellationToken);
-						cryptoStream.FlushFinalBlock();
-					}
+					var cryptoStream = new CryptoStream(plaintext, decryptor, CryptoStreamMode.Write); // don't dispose this or it disposes the target stream.
+					await ciphertext.CopyToAsync(cryptoStream, 4096, cancellationToken);
+					cryptoStream.FlushFinalBlock();
 				}
 			}
 		}
@@ -260,6 +281,23 @@
 			using (var rsa = new RSACryptoServiceProvider(this.EncryptionAsymmetricKeySize)) {
 				keyPair = rsa.ExportCspBlob(true);
 				publicKey = rsa.ExportCspBlob(false);
+			}
+		}
+
+		/// <summary>
+		/// Gets the HMAC algorithm to use.
+		/// </summary>
+		/// <param name="hashAlgorithm">The hash algorithm used to hash the data (SHA1, SHA256).</param>
+		/// <returns>The hash algorithm.</returns>
+		/// <exception cref="System.NotSupportedException">Thrown when the hash algorithm is not recognized or supported.</exception>
+		protected virtual HMAC GetHmacAlgorithm(string hashAlgorithm) {
+			switch (hashAlgorithm) {
+				case "SHA1":
+					return new HMACSHA1();
+				case "SHA256":
+					return new HMACSHA256();
+				default:
+					throw new NotSupportedException();
 			}
 		}
 	}

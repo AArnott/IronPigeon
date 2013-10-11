@@ -36,6 +36,26 @@
 		}
 
 		/// <summary>
+		/// Computes the authentication code for the contents of a stream given the specified symmetric key.
+		/// </summary>
+		/// <param name="data">The data to compute the HMAC for.</param>
+		/// <param name="key">The key to use in hashing.</param>
+		/// <param name="hashAlgorithmName">The hash algorithm to use.</param>
+		/// <returns>The authentication code.</returns>
+		public override async Task<byte[]> ComputeAuthenticationCodeAsync(Stream data, byte[] key, string hashAlgorithmName) {
+			Requires.NotNull(data, "data");
+			Requires.NotNull(key, "key");
+			Requires.NotNullOrEmpty(hashAlgorithmName, "hashAlgorithmName");
+
+			var algorithm = this.GetHmacAlgorithmProvider(hashAlgorithmName);
+			var cryptoKey = algorithm.CreateKey(key.ToBuffer());
+			var memoryStream = new MemoryStream();
+			await data.CopyToAsync(memoryStream);
+			IBuffer code = CryptographicEngine.Sign(cryptoKey, memoryStream.ToArray().ToBuffer());
+			return code.ToArray();
+		}
+
+		/// <summary>
 		/// Asymmetrically signs a data blob.
 		/// </summary>
 		/// <param name="data">The data to sign.</param>
@@ -282,6 +302,26 @@
 					return AsymmetricKeyAlgorithmProvider.OpenAlgorithm(AsymmetricAlgorithmNames.RsaSignPkcs1Sha384);
 				case "SHA512":
 					return AsymmetricKeyAlgorithmProvider.OpenAlgorithm(AsymmetricAlgorithmNames.RsaSignPkcs1Sha512);
+				default:
+					throw new NotSupportedException();
+			}
+		}
+
+		/// <summary>
+		/// Gets the HMAC algorithm provider for the given hash algorithm.
+		/// </summary>
+		/// <param name="hashAlgorithm">The hash algorithm (SHA1, SHA256, etc.)</param>
+		/// <returns>The algorithm provider.</returns>
+		protected virtual MacAlgorithmProvider GetHmacAlgorithmProvider(string hashAlgorithm) {
+			switch (hashAlgorithm) {
+				case "SHA1":
+					return MacAlgorithmProvider.OpenAlgorithm(MacAlgorithmNames.HmacSha1);
+				case "SHA256":
+					return MacAlgorithmProvider.OpenAlgorithm(MacAlgorithmNames.HmacSha256);
+				case "SHA384":
+					return MacAlgorithmProvider.OpenAlgorithm(MacAlgorithmNames.HmacSha384);
+				case "SHA512":
+					return MacAlgorithmProvider.OpenAlgorithm(MacAlgorithmNames.HmacSha512);
 				default:
 					throw new NotSupportedException();
 			}
