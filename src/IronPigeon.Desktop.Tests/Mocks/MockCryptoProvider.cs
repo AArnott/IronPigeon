@@ -50,7 +50,7 @@
 			get { return 5; }
 		}
 
-		public Task<byte[]> ComputeAuthenticationCodeAsync(Stream data, byte[] key, string hashAlgorithmName) {
+		public Task<byte[]> ComputeAuthenticationCodeAsync(Stream data, byte[] key, string hashAlgorithmName, CancellationToken cancellationToken) {
 			throw new NotImplementedException();
 		}
 

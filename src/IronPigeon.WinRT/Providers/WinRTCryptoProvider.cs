@@ -41,8 +41,9 @@
 		/// <param name="data">The data to compute the HMAC for.</param>
 		/// <param name="key">The key to use in hashing.</param>
 		/// <param name="hashAlgorithmName">The hash algorithm to use.</param>
+		/// <param name="cancellationToken">The cancellation token.</param>
 		/// <returns>The authentication code.</returns>
-		public override async Task<byte[]> ComputeAuthenticationCodeAsync(Stream data, byte[] key, string hashAlgorithmName) {
+		public override async Task<byte[]> ComputeAuthenticationCodeAsync(Stream data, byte[] key, string hashAlgorithmName, CancellationToken cancellationToken) {
 			Requires.NotNull(data, "data");
 			Requires.NotNull(key, "key");
 			Requires.NotNullOrEmpty(hashAlgorithmName, "hashAlgorithmName");
@@ -50,7 +51,7 @@
 			var algorithm = this.GetHmacAlgorithmProvider(hashAlgorithmName);
 			var cryptoKey = algorithm.CreateKey(key.ToBuffer());
 			var memoryStream = new MemoryStream();
-			await data.CopyToAsync(memoryStream);
+			await data.CopyToAsync(memoryStream, 4096, cancellationToken);
 			IBuffer code = CryptographicEngine.Sign(cryptoKey, memoryStream.ToArray().ToBuffer());
 			return code.ToArray();
 		}

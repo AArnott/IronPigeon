@@ -50,8 +50,9 @@
 		/// <param name="data">The data to compute the HMAC for.</param>
 		/// <param name="key">The key to use in hashing.</param>
 		/// <param name="hashAlgorithmName">The hash algorithm to use.</param>
+		/// <param name="cancellationToken">The cancellation token.</param>
 		/// <returns>The authentication code.</returns>
-		public override async Task<byte[]> ComputeAuthenticationCodeAsync(Stream data, byte[] key, string hashAlgorithmName) {
+		public override async Task<byte[]> ComputeAuthenticationCodeAsync(Stream data, byte[] key, string hashAlgorithmName, CancellationToken cancellationToken) {
 			Requires.NotNull(data, "data");
 			Requires.NotNull(key, "key");
 			Requires.NotNullOrEmpty(hashAlgorithmName, "hashAlgorithmName");
@@ -59,7 +60,7 @@
 			var hmac = this.GetHmacAlgorithm(hashAlgorithmName);
 			hmac.Key = key;
 			using (var cryptoStream = new CryptoStream(Stream.Null, hmac, CryptoStreamMode.Write)) {
-				await data.CopyToAsync(cryptoStream);
+				await data.CopyToAsync(cryptoStream, 4096, cancellationToken);
 				cryptoStream.FlushFinalBlock();
 			}
 
