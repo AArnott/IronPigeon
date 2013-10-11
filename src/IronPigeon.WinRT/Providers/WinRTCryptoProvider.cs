@@ -51,6 +51,21 @@
 		}
 
 		/// <summary>
+		/// Asymmetrically signs the hash of data.
+		/// </summary>
+		/// <param name="hash">The hash to sign.</param>
+		/// <param name="signingPrivateKey">The private key used to sign the data.</param>
+		/// <param name="hashAlgorithmName">The hash algorithm name.</param>
+		/// <returns>
+		/// The signature.
+		/// </returns>
+		public override byte[] SignHash(byte[] hash, byte[] signingPrivateKey, string hashAlgorithmName) {
+			// WinRT 8.0 doesn't expose a way to sign hashes.
+			// This will either require depending on WinRT 8.1, or switching to BouncyCastle.
+			throw new NotSupportedException();
+		}
+
+		/// <summary>
 		/// Verifies the asymmetric signature of some data blob.
 		/// </summary>
 		/// <param name="signingPublicKey">The public key used to verify the signature.</param>
@@ -64,6 +79,22 @@
 			var signer = this.GetSignatureProvider(hashAlgorithm);
 			var key = signer.ImportPublicKey(signingPublicKey.ToBuffer(), CryptographicPublicKeyBlobType.Capi1PublicKey);
 			return CryptographicEngine.VerifySignature(key, data.ToBuffer(), signature.ToBuffer());
+		}
+
+		/// <summary>
+		/// Verifies the asymmetric signature of the hash of some data blob.
+		/// </summary>
+		/// <param name="signingPublicKey">The public key used to verify the signature.</param>
+		/// <param name="hash">The hash of the data that was signed.</param>
+		/// <param name="signature">The signature.</param>
+		/// <param name="hashAlgorithm">The hash algorithm used to hash the data.</param>
+		/// <returns>
+		/// A value indicating whether the signature is valid.
+		/// </returns>
+		public override bool VerifyHash(byte[] signingPublicKey, byte[] hash, byte[] signature, string hashAlgorithm) {
+			// WinRT 8.0 doesn't expose a way to verify hashes.
+			// This will either require depending on WinRT 8.1, or switching to BouncyCastle.
+			throw new NotSupportedException();
 		}
 
 		/// <summary>
@@ -187,6 +218,29 @@
 			var hashAlgorithm = HashAlgorithmProvider.OpenAlgorithm(hashAlgorithmName);
 			var hash = hashAlgorithm.HashData(data.ToBuffer()).ToArray();
 			return hash;
+		}
+
+		/// <summary>
+		/// Hashes the contents of a stream.
+		/// </summary>
+		/// <param name="source">The stream to hash.</param>
+		/// <param name="hashAlgorithmName">The hash algorithm to use.</param>
+		/// <param name="cancellationToken">The cancellation token.</param>
+		/// <returns>A task whose result is the hash.</returns>
+		public override async Task<byte[]> HashAsync(Stream source, string hashAlgorithmName, CancellationToken cancellationToken) {
+			var hashAlgorithm = HashAlgorithmProvider.OpenAlgorithm(hashAlgorithmName);
+			var hasher = hashAlgorithm.CreateHash();
+			IBuffer buffer = new Windows.Storage.Streams.Buffer(4096);
+			var inputStream = source.AsInputStream();
+			do {
+				// We re-assign the buffer because WinRT can return a new buffer, and reusing the last one they issued
+				// will avoid reallocating a new buffer on each call.
+				buffer = await inputStream.ReadAsync(buffer, buffer.Capacity, InputStreamOptions.None).AsTask(cancellationToken);
+				hasher.Append(buffer);
+			}
+			while (buffer.Length > 0);
+			var hash = hasher.GetValueAndReset();
+			return hash.ToArray();
 		}
 
 		/// <summary>

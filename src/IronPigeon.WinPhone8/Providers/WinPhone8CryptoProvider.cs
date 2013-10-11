@@ -65,6 +65,22 @@
 		}
 
 		/// <summary>
+		/// Asymmetrically signs the hash of data.
+		/// </summary>
+		/// <param name="hash">The hash to sign.</param>
+		/// <param name="signingPrivateKey">The private key used to sign the data.</param>
+		/// <param name="hashAlgorithmName">The hash algorithm name.</param>
+		/// <returns>
+		/// The signature.
+		/// </returns>
+		public override byte[] SignHash(byte[] hash, byte[] signingPrivateKey, string hashAlgorithmName) {
+			using (var rsa = new RSACryptoServiceProvider()) {
+				rsa.ImportCspBlob(signingPrivateKey);
+				return rsa.SignHash(hash, this.AsymmetricHashAlgorithmName);
+			}
+		}
+
+		/// <summary>
 		/// Verifies the asymmetric signature of some data blob.
 		/// </summary>
 		/// <param name="signingPublicKey">The public key used to verify the signature.</param>
@@ -78,6 +94,23 @@
 			using (var rsa = new RSACryptoServiceProvider()) {
 				rsa.ImportCspBlob(signingPublicKey);
 				return rsa.VerifyData(data, this.GetHashAlgorithm(hashAlgorithm), signature);
+			}
+		}
+
+		/// <summary>
+		/// Verifies the asymmetric signature of the hash of some data blob.
+		/// </summary>
+		/// <param name="signingPublicKey">The public key used to verify the signature.</param>
+		/// <param name="hash">The hash of the data that was signed.</param>
+		/// <param name="signature">The signature.</param>
+		/// <param name="hashAlgorithm">The hash algorithm used to hash the data.</param>
+		/// <returns>
+		/// A value indicating whether the signature is valid.
+		/// </returns>
+		public override bool VerifyHash(byte[] signingPublicKey, byte[] hash, byte[] signature, string hashAlgorithm) {
+			using (var rsa = new RSACryptoServiceProvider()) {
+				rsa.ImportCspBlob(signingPublicKey);
+				return rsa.VerifyHash(hash, hashAlgorithm, signature);
 			}
 		}
 
@@ -172,6 +205,29 @@
 		/// </returns>
 		public override byte[] Hash(byte[] data, string hashAlgorithmName) {
 			return DigestUtilities.CalculateDigest(hashAlgorithmName, data);
+		}
+
+		/// <summary>
+		/// Hashes the contents of a stream.
+		/// </summary>
+		/// <param name="source">The stream to hash.</param>
+		/// <param name="hashAlgorithmName">The hash algorithm to use.</param>
+		/// <param name="cancellationToken">The cancellation token.</param>
+		/// <returns>A task whose result is the hash.</returns>
+		public override async Task<byte[]> HashAsync(Stream source, string hashAlgorithmName, CancellationToken cancellationToken) {
+			Requires.NotNull(source, "source");
+			Requires.NotNullOrEmpty(hashAlgorithmName, "hashAlgorithmName");
+
+			var digest = DigestUtilities.GetDigest(hashAlgorithmName);
+			byte[] buffer = new byte[digest.GetDigestSize()]; // no idea what the optimal block size is for hashing
+			while (source.Position < source.Length) {
+				int bytesRead = await source.ReadAsync(buffer, 0, buffer.Length, cancellationToken);
+				digest.BlockUpdate(buffer, 0, bytesRead);
+			}
+
+			int hashLength = digest.DoFinal(buffer, 0);
+			Assumes.True(hashLength == buffer.Length); // we created the buffer to be the digest size exactly.
+			return buffer;
 		}
 
 		/// <summary>

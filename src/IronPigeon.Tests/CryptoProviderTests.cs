@@ -1,6 +1,7 @@
 ﻿namespace IronPigeon.Tests {
 	using System;
 	using System.IO;
+	using System.Threading.Tasks;
 #if NETFX_CORE || WINDOWS_PHONE
 	using Microsoft.VisualStudio.TestPlatform.UnitTestFramework;
 #else
@@ -93,6 +94,15 @@
 			byte[] signature = this.CryptoProvider.Sign(data, keyPair);
 			Assert.IsTrue(this.CryptoProvider.VerifySignature(publicKey, data, signature, this.CryptoProvider.AsymmetricHashAlgorithmName));
 			Assert.IsFalse(this.CryptoProvider.VerifySignature(publicKey, tamperedData, signature, this.CryptoProvider.AsymmetricHashAlgorithmName));
+		}
+
+		[TestMethod]
+		public async Task HashAsync() {
+			var streamContent = new byte[5000]; // not aligned with natural 4096 block sizes deliberately.
+			streamContent[0] = 0x22;
+			var stream = new MemoryStream(streamContent);
+			string hash = Convert.ToBase64String(await this.CryptoProvider.HashAsync(stream, "SHA256"));
+			Assert.AreEqual("Dt3SUt9aw0h0ALEcIPIw8G6pIZA84nUF6jzUcPEaick=", hash);
 		}
 	}
 }

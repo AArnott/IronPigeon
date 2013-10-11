@@ -1,9 +1,8 @@
 ﻿namespace IronPigeon.WinPhone8.Tests {
 	using System;
-
+	using System.Security.Cryptography;
 	using IronPigeon.Tests;
 	using IronPigeon.WinPhone8.Providers;
-
 	using Microsoft.VisualStudio.TestPlatform.UnitTestFramework;
 
 	[TestClass]

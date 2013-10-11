@@ -54,6 +54,14 @@
 			return data;
 		}
 
+		public byte[] SignHash(byte[] hash, byte[] signingPrivateKey, string hashAlgorithmName) {
+			throw new NotImplementedException();
+		}
+
+		public bool VerifyHash(byte[] signingPublicKey, byte[] hash, byte[] signature, string hashAlgorithm) {
+			throw new NotImplementedException();
+		}
+
 		public bool VerifySignature(byte[] signingPublicKey, byte[] data, byte[] signature, string hashAlgorithm) {
 			return true;
 		}
@@ -128,6 +136,10 @@
 			}
 
 			return BitConverter.GetBytes(hash);
+		}
+
+		public Task<byte[]> HashAsync(Stream source, string hashAlgorithmName, CancellationToken cancellationToken = default(CancellationToken)) {
+			throw new NotImplementedException();
 		}
 
 		public void GenerateSigningKeyPair(out byte[] keyPair, out byte[] publicKey) {
