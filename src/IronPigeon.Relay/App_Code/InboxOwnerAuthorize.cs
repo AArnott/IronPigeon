@@ -1,6 +1,7 @@
 ﻿namespace IronPigeon.Relay {
 	using System;
 	using System.Collections.Generic;
+	using System.Data.Services.Client;
 	using System.Linq;
 	using System.Web;
 	using System.Web.Mvc;
@@ -44,6 +45,16 @@
 						var inboxEntity = controller.InboxTable.Get(id).FirstOrDefault();
 						if (inboxEntity != null) {
 							bool match = bearerToken == inboxEntity.InboxOwnerCode;
+							if (match) {
+								inboxEntity.LastAuthenticatedInteractionUtc = DateTime.UtcNow;
+								controller.InboxTable.UpdateObject(inboxEntity);
+								try {
+									controller.InboxTable.SaveChanges();
+								} catch (DataServiceRequestException) {
+									// Optimistic locking failed. No problem. It was probably a race with someone else who updated this field.
+								}
+							}
+
 							return match;
 						}
 					}

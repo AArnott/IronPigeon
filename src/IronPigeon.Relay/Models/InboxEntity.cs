@@ -58,6 +58,21 @@
 		public string WinPhone8ToastText2 { get; set; }
 
 		/// <summary>
+		/// Gets or sets the timestamp for when the inbox was last accessed by its owner.
+		/// </summary>
+		public DateTime? LastAuthenticatedInteractionUtc { get; set; }
+
+		/// <summary>
+		/// Gets or sets the timestamp for when the last push notification was sent to a Windows 8 client.
+		/// </summary>
+		public DateTime? LastWindows8PushNotificationUtc { get; set; }
+
+		/// <summary>
+		/// Gets or sets the timestamp for when the last push notification was sent to a Windows Phone 8 client.
+		/// </summary>
+		public DateTime? LastWinPhone8PushNotificationUtc { get; set; }
+
+		/// <summary>
 		/// Gets a value indicating whether push notification is enabled.
 		/// </summary>
 		internal bool IsPushNotificationEnabled {
