@@ -8,32 +8,28 @@
 	/// <summary>
 	/// The result of symmetric encryption using a random key, IV.
 	/// </summary>
-	public class SymmetricEncryptionResult {
+	public class SymmetricEncryptionResult : SymmetricEncryptionVariables {
 		/// <summary>
 		/// Initializes a new instance of the <see cref="SymmetricEncryptionResult"/> class.
 		/// </summary>
 		/// <param name="key">The randomly generated symmetric key used to encrypt the data.</param>
 		/// <param name="iv">The initialization vector used to encrypt the data.</param>
 		/// <param name="ciphertext">The encrypted data.</param>
-		public SymmetricEncryptionResult(byte[] key, byte[] iv, byte[] ciphertext) {
-			Requires.NotNullOrEmpty(key, "key");
-			Requires.NotNullOrEmpty(iv, "iv");
+		public SymmetricEncryptionResult(byte[] key, byte[] iv, byte[] ciphertext)
+			: base(key, iv) {
 			Requires.NotNullOrEmpty(ciphertext, "ciphertext");
 
-			this.Key = key;
-			this.IV = iv;
 			this.Ciphertext = ciphertext;
 		}
 
 		/// <summary>
-		/// Gets the symmetric key used to encrypt the data.
+		/// Initializes a new instance of the <see cref="SymmetricEncryptionResult"/> class.
 		/// </summary>
-		public byte[] Key { get; private set; }
-
-		/// <summary>
-		/// Gets the initialization vector used to encrypt the data.
-		/// </summary>
-		public byte[] IV { get; private set; }
+		/// <param name="encryptionVariables">The key and IV used to encrypt the ciphertext.</param>
+		/// <param name="ciphertext">The encrypted data.</param>
+		public SymmetricEncryptionResult(SymmetricEncryptionVariables encryptionVariables, byte[] ciphertext)
+			: this(Requires.NotNull(encryptionVariables, "encryptionVariables").Key, encryptionVariables.IV, ciphertext) {
+		}
 
 		/// <summary>
 		/// Gets the encrypted data.

@@ -3,9 +3,11 @@
 	using System.Collections.Generic;
 	using System.Composition;
 	using System.Globalization;
+	using System.IO;
 	using System.Linq;
 	using System.Security.Cryptography;
 	using System.Text;
+	using System.Threading;
 	using System.Threading.Tasks;
 	using Org.BouncyCastle.Asn1;
 	using Org.BouncyCastle.Asn1.X509;
@@ -15,7 +17,6 @@
 	using Org.BouncyCastle.Crypto.Paddings;
 	using Org.BouncyCastle.Crypto.Parameters;
 	using Org.BouncyCastle.Security;
-
 	using Validation;
 
 	/// <summary>
@@ -42,6 +43,36 @@
 		}
 
 		/// <summary>
+		/// Gets the length (in bits) of the symmetric encryption cipher block.
+		/// </summary>
+		public override int SymmetricEncryptionBlockSize {
+			get { return this.GetCipher().GetBlockSize() * 8; }
+		}
+
+		/// <summary>
+		/// Computes the authentication code for the contents of a stream given the specified symmetric key.
+		/// </summary>
+		/// <param name="data">The data to compute the HMAC for.</param>
+		/// <param name="key">The key to use in hashing.</param>
+		/// <param name="hashAlgorithmName">The hash algorithm to use.</param>
+		/// <param name="cancellationToken">The cancellation token.</param>
+		/// <returns>The authentication code.</returns>
+		public override async Task<byte[]> ComputeAuthenticationCodeAsync(Stream data, byte[] key, string hashAlgorithmName, CancellationToken cancellationToken) {
+			Requires.NotNull(data, "data");
+			Requires.NotNull(key, "key");
+			Requires.NotNullOrEmpty(hashAlgorithmName, "hashAlgorithmName");
+
+			var hmac = this.GetHmacAlgorithm(hashAlgorithmName);
+			hmac.Key = key;
+			using (var cryptoStream = new CryptoStream(Stream.Null, hmac, CryptoStreamMode.Write)) {
+				await data.CopyToAsync(cryptoStream, 4096, cancellationToken);
+				cryptoStream.FlushFinalBlock();
+			}
+
+			return hmac.Hash;
+		}
+
+		/// <summary>
 		/// Asymmetrically signs a data blob.
 		/// </summary>
 		/// <param name="data">The data to sign.</param>
@@ -53,6 +84,22 @@
 			using (var rsa = new RSACryptoServiceProvider()) {
 				rsa.ImportCspBlob(signingPrivateKey);
 				return rsa.SignData(data, this.GetHashAlgorithm(this.AsymmetricHashAlgorithmName));
+			}
+		}
+
+		/// <summary>
+		/// Asymmetrically signs the hash of data.
+		/// </summary>
+		/// <param name="hash">The hash to sign.</param>
+		/// <param name="signingPrivateKey">The private key used to sign the data.</param>
+		/// <param name="hashAlgorithmName">The hash algorithm name.</param>
+		/// <returns>
+		/// The signature.
+		/// </returns>
+		public override byte[] SignHash(byte[] hash, byte[] signingPrivateKey, string hashAlgorithmName) {
+			using (var rsa = new RSACryptoServiceProvider()) {
+				rsa.ImportCspBlob(signingPrivateKey);
+				return rsa.SignHash(hash, this.AsymmetricHashAlgorithmName);
 			}
 		}
 
@@ -74,42 +121,71 @@
 		}
 
 		/// <summary>
-		/// Symmetrically encrypts the specified buffer using a randomly generated key.
+		/// Verifies the asymmetric signature of the hash of some data blob.
 		/// </summary>
-		/// <param name="data">The data to encrypt.</param>
+		/// <param name="signingPublicKey">The public key used to verify the signature.</param>
+		/// <param name="hash">The hash of the data that was signed.</param>
+		/// <param name="signature">The signature.</param>
+		/// <param name="hashAlgorithm">The hash algorithm used to hash the data.</param>
 		/// <returns>
-		/// The result of the encryption.
+		/// A value indicating whether the signature is valid.
 		/// </returns>
-		public override SymmetricEncryptionResult Encrypt(byte[] data) {
-			var encryptor = this.GetCipher();
-
-			var secureRandom = new SecureRandom();
-			byte[] key = new byte[this.SymmetricEncryptionKeySize / 8];
-			secureRandom.NextBytes(key);
-
-			var random = new Random();
-			byte[] iv = new byte[encryptor.GetBlockSize()];
-			random.NextBytes(iv);
-
-			var parameters = new ParametersWithIV(new KeyParameter(key), iv);
-			encryptor.Init(true, parameters);
-			byte[] ciphertext = encryptor.DoFinal(data);
-			return new SymmetricEncryptionResult(key, iv, ciphertext);
+		public override bool VerifyHash(byte[] signingPublicKey, byte[] hash, byte[] signature, string hashAlgorithm) {
+			using (var rsa = new RSACryptoServiceProvider()) {
+				rsa.ImportCspBlob(signingPublicKey);
+				return rsa.VerifyHash(hash, hashAlgorithm, signature);
+			}
 		}
 
 		/// <summary>
-		/// Symmetrically decrypts a buffer using the specified key.
+		/// Symmetrically encrypts a stream.
 		/// </summary>
-		/// <param name="data">The encrypted data and the key and IV used to encrypt it.</param>
-		/// <returns>
-		/// The decrypted buffer.
-		/// </returns>
-		public override byte[] Decrypt(SymmetricEncryptionResult data) {
-			var parameters = new ParametersWithIV(new KeyParameter(data.Key), data.IV);
+		/// <param name="plaintext">The stream of plaintext to encrypt.</param>
+		/// <param name="ciphertext">The stream to receive the ciphertext.</param>
+		/// <param name="encryptionVariables">An optional key and IV to use. May be <c>null</c> to use randomly generated values.</param>
+		/// <param name="cancellationToken">A cancellation token.</param>
+		/// <returns>A task that completes when encryption has completed, whose result is the key and IV to use to decrypt the ciphertext.</returns>
+		public override async Task<SymmetricEncryptionVariables> EncryptAsync(Stream plaintext, Stream ciphertext, SymmetricEncryptionVariables encryptionVariables, CancellationToken cancellationToken) {
+			var encryptor = this.GetCipher();
+
+			if (encryptionVariables == null) {
+				var secureRandom = new SecureRandom();
+				byte[] key = new byte[this.SymmetricEncryptionKeySize / 8];
+				secureRandom.NextBytes(key);
+
+				var random = new Random();
+				byte[] iv = new byte[encryptor.GetBlockSize()];
+				random.NextBytes(iv);
+
+				encryptionVariables = new SymmetricEncryptionVariables(key, iv);
+			} else {
+				Requires.Argument(encryptionVariables.Key.Length == this.SymmetricEncryptionKeySize / 8, "key", "Incorrect length.");
+				Requires.Argument(encryptionVariables.IV.Length == encryptor.GetBlockSize(), "iv", "Incorrect length.");
+			}
+
+			var parameters = new ParametersWithIV(new KeyParameter(encryptionVariables.Key), encryptionVariables.IV);
+			encryptor.Init(true, parameters);
+			await CipherStreamCopyAsync(plaintext, ciphertext, encryptor, cancellationToken);
+			return encryptionVariables;
+		}
+
+		/// <summary>
+		/// Symmetrically decrypts a stream.
+		/// </summary>
+		/// <param name="ciphertext">The stream of ciphertext to decrypt.</param>
+		/// <param name="plaintext">The stream to receive the plaintext.</param>
+		/// <param name="encryptionVariables">The key and IV to use.</param>
+		/// <param name="cancellationToken">A cancellation token.</param>
+		/// <returns>A task that represents the asynchronous operation.</returns>
+		public override async Task DecryptAsync(Stream ciphertext, Stream plaintext, SymmetricEncryptionVariables encryptionVariables, CancellationToken cancellationToken) {
+			Requires.NotNull(ciphertext, "ciphertext");
+			Requires.NotNull(plaintext, "plaintext");
+			Requires.NotNull(encryptionVariables, "encryptionVariables");
+
+			var parameters = new ParametersWithIV(new KeyParameter(encryptionVariables.Key), encryptionVariables.IV);
 			var decryptor = this.GetCipher();
 			decryptor.Init(false, parameters);
-			byte[] plaintext = decryptor.DoFinal(data.Ciphertext);
-			return plaintext;
+			await CipherStreamCopyAsync(ciphertext, plaintext, decryptor, cancellationToken);
 		}
 
 		/// <summary>
@@ -152,6 +228,29 @@
 		/// </returns>
 		public override byte[] Hash(byte[] data, string hashAlgorithmName) {
 			return DigestUtilities.CalculateDigest(hashAlgorithmName, data);
+		}
+
+		/// <summary>
+		/// Hashes the contents of a stream.
+		/// </summary>
+		/// <param name="source">The stream to hash.</param>
+		/// <param name="hashAlgorithmName">The hash algorithm to use.</param>
+		/// <param name="cancellationToken">The cancellation token.</param>
+		/// <returns>A task whose result is the hash.</returns>
+		public override async Task<byte[]> HashAsync(Stream source, string hashAlgorithmName, CancellationToken cancellationToken) {
+			Requires.NotNull(source, "source");
+			Requires.NotNullOrEmpty(hashAlgorithmName, "hashAlgorithmName");
+
+			var digest = DigestUtilities.GetDigest(hashAlgorithmName);
+			byte[] buffer = new byte[digest.GetDigestSize()]; // no idea what the optimal block size is for hashing
+			while (source.Position < source.Length) {
+				int bytesRead = await source.ReadAsync(buffer, 0, buffer.Length, cancellationToken);
+				digest.BlockUpdate(buffer, 0, bytesRead);
+			}
+
+			int hashLength = digest.DoFinal(buffer, 0);
+			Assumes.True(hashLength == buffer.Length); // we created the buffer to be the digest size exactly.
+			return buffer;
 		}
 
 		/// <summary>
@@ -208,6 +307,53 @@
 				default:
 					throw new NotSupportedException();
 			}
+		}
+
+		/// <summary>
+		/// Gets the HMAC algorithm to use.
+		/// </summary>
+		/// <param name="hashAlgorithm">The hash algorithm used to hash the data (SHA1, SHA256).</param>
+		/// <returns>The hash algorithm.</returns>
+		/// <exception cref="System.NotSupportedException">Thrown when the hash algorithm is not recognized or supported.</exception>
+		protected virtual HMAC GetHmacAlgorithm(string hashAlgorithm) {
+			switch (hashAlgorithm) {
+				case "SHA1":
+					return new HMACSHA1();
+				case "SHA256":
+					return new HMACSHA256();
+				default:
+					throw new NotSupportedException();
+			}
+		}
+
+		/// <summary>
+		/// Copies the contents of one stream to another, transforming it with the specified cipher.
+		/// </summary>
+		/// <param name="source">The source stream.</param>
+		/// <param name="destination">The destination stream.</param>
+		/// <param name="cipher">The cipher to use.</param>
+		/// <param name="cancellationToken">The cancellation token.</param>
+		/// <returns>A task that completes with the completion of the async work.</returns>
+		private static async Task CipherStreamCopyAsync(Stream source, Stream destination, IBufferedCipher cipher, CancellationToken cancellationToken) {
+			Requires.NotNull(source, "source");
+			Requires.NotNull(destination, "destination");
+			Requires.NotNull(cipher, "cipher");
+
+			byte[] sourceBuffer = new byte[cipher.GetBlockSize()];
+			byte[] destinationBuffer = new byte[cipher.GetBlockSize() * 2];
+			while (true) {
+				cancellationToken.ThrowIfCancellationRequested();
+				int bytesRead = await source.ReadAsync(sourceBuffer, 0, sourceBuffer.Length, cancellationToken);
+				if (bytesRead == 0) {
+					break;
+				}
+
+				int bytesWritten = cipher.ProcessBytes(sourceBuffer, 0, bytesRead, destinationBuffer, 0);
+				await destination.WriteAsync(destinationBuffer, 0, bytesWritten, cancellationToken);
+			}
+
+			int finalBytes = cipher.DoFinal(destinationBuffer, 0);
+			await destination.WriteAsync(destinationBuffer, 0, finalBytes);
 		}
 	}
 }

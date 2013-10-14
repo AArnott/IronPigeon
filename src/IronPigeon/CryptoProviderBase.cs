@@ -2,9 +2,12 @@
 	using System;
 	using System.Collections.Generic;
 	using System.Diagnostics;
+	using System.IO;
 	using System.Linq;
 	using System.Text;
+	using System.Threading;
 	using System.Threading.Tasks;
+	using Validation;
 
 	/// <summary>
 	/// A common base class for implementations of the <see cref="ICryptoProvider" /> interface.
@@ -95,6 +98,21 @@
 		}
 
 		/// <summary>
+		/// Gets the length (in bits) of the symmetric encryption cipher block.
+		/// </summary>
+		public abstract int SymmetricEncryptionBlockSize { get; }
+
+		/// <summary>
+		/// Computes the authentication code for the contents of a stream given the specified symmetric key.
+		/// </summary>
+		/// <param name="data">The data to compute the HMAC for.</param>
+		/// <param name="key">The key to use in hashing.</param>
+		/// <param name="hashAlgorithmName">The hash algorithm to use.</param>
+		/// <param name="cancellationToken">The cancellation token.</param>
+		/// <returns>The authentication code.</returns>
+		public abstract Task<byte[]> ComputeAuthenticationCodeAsync(Stream data, byte[] key, string hashAlgorithmName, CancellationToken cancellationToken);
+
+		/// <summary>
 		/// Asymmetrically signs a data blob.
 		/// </summary>
 		/// <param name="data">The data to sign.</param>
@@ -103,6 +121,17 @@
 		/// The signature.
 		/// </returns>
 		public abstract byte[] Sign(byte[] data, byte[] signingPrivateKey);
+
+		/// <summary>
+		/// Asymmetrically signs the hash of data.
+		/// </summary>
+		/// <param name="hash">The hash to sign.</param>
+		/// <param name="signingPrivateKey">The private key used to sign the data.</param>
+		/// <param name="hashAlgorithmName">The hash algorithm name.</param>
+		/// <returns>
+		/// The signature.
+		/// </returns>
+		public abstract byte[] SignHash(byte[] hash, byte[] signingPrivateKey, string hashAlgorithmName);
 
 		/// <summary>
 		/// Verifies the asymmetric signature of some data blob.
@@ -117,13 +146,33 @@
 		public abstract bool VerifySignature(byte[] signingPublicKey, byte[] data, byte[] signature, string hashAlgorithm);
 
 		/// <summary>
+		/// Verifies the asymmetric signature of the hash of some data blob.
+		/// </summary>
+		/// <param name="signingPublicKey">The public key used to verify the signature.</param>
+		/// <param name="hash">The hash of the data that was signed.</param>
+		/// <param name="signature">The signature.</param>
+		/// <param name="hashAlgorithm">The hash algorithm used to hash the data.</param>
+		/// <returns>
+		/// A value indicating whether the signature is valid.
+		/// </returns>
+		public abstract bool VerifyHash(byte[] signingPublicKey, byte[] hash, byte[] signature, string hashAlgorithm);
+
+		/// <summary>
 		/// Symmetrically encrypts the specified buffer using a randomly generated key.
 		/// </summary>
 		/// <param name="data">The data to encrypt.</param>
+		/// <param name="encryptionVariables">Optional encryption variables to use; or <c>null</c> to use randomly generated ones.</param>
 		/// <returns>
 		/// The result of the encryption.
 		/// </returns>
-		public abstract SymmetricEncryptionResult Encrypt(byte[] data);
+		public virtual SymmetricEncryptionResult Encrypt(byte[] data, SymmetricEncryptionVariables encryptionVariables) {
+			Requires.NotNull(data, "data");
+
+			var plaintext = new MemoryStream(data);
+			var ciphertext = new MemoryStream();
+			var result = this.EncryptAsync(plaintext, ciphertext, encryptionVariables, CancellationToken.None).Result;
+			return new SymmetricEncryptionResult(result, ciphertext.ToArray());
+		}
 
 		/// <summary>
 		/// Symmetrically decrypts a buffer using the specified key.
@@ -132,7 +181,34 @@
 		/// <returns>
 		/// The decrypted buffer.
 		/// </returns>
-		public abstract byte[] Decrypt(SymmetricEncryptionResult data);
+		public virtual byte[] Decrypt(SymmetricEncryptionResult data) {
+			Requires.NotNull(data, "data");
+
+			var plaintext = new MemoryStream();
+			var ciphertext = new MemoryStream(data.Ciphertext);
+			this.DecryptAsync(ciphertext, plaintext, data, CancellationToken.None).Wait();
+			return plaintext.ToArray();
+		}
+
+		/// <summary>
+		/// Symmetrically encrypts a stream.
+		/// </summary>
+		/// <param name="plaintext">The stream of plaintext to encrypt.</param>
+		/// <param name="ciphertext">The stream to receive the ciphertext.</param>
+		/// <param name="encryptionVariables">An optional key and IV to use. May be <c>null</c> to use randomly generated values.</param>
+		/// <param name="cancellationToken">A cancellation token.</param>
+		/// <returns>A task that completes when encryption has completed, whose result is the key and IV to use to decrypt the ciphertext.</returns>
+		public abstract Task<SymmetricEncryptionVariables> EncryptAsync(Stream plaintext, Stream ciphertext, SymmetricEncryptionVariables encryptionVariables, CancellationToken cancellationToken);
+
+		/// <summary>
+		/// Symmetrically decrypts a stream.
+		/// </summary>
+		/// <param name="ciphertext">The stream of ciphertext to decrypt.</param>
+		/// <param name="plaintext">The stream to receive the plaintext.</param>
+		/// <param name="encryptionVariables">The key and IV to use.</param>
+		/// <param name="cancellationToken">A cancellation token.</param>
+		/// <returns>A task that represents the asynchronous operation.</returns>
+		public abstract Task DecryptAsync(Stream ciphertext, Stream plaintext, SymmetricEncryptionVariables encryptionVariables, CancellationToken cancellationToken);
 
 		/// <summary>
 		/// Asymmetrically encrypts the specified buffer using the provided public key.
@@ -163,6 +239,15 @@
 		/// The computed hash.
 		/// </returns>
 		public abstract byte[] Hash(byte[] data, string hashAlgorithmName);
+
+		/// <summary>
+		/// Hashes the contents of a stream.
+		/// </summary>
+		/// <param name="source">The stream to hash.</param>
+		/// <param name="hashAlgorithmName">The hash algorithm to use.</param>
+		/// <param name="cancellationToken">The cancellation token.</param>
+		/// <returns>A task whose result is the hash.</returns>
+		public abstract Task<byte[]> HashAsync(Stream source, string hashAlgorithmName, CancellationToken cancellationToken);
 
 		/// <summary>
 		/// Generates a key pair for asymmetric cryptography.

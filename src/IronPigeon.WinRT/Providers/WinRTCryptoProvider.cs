@@ -2,9 +2,12 @@
 	using System;
 	using System.Collections.Generic;
 	using System.Composition;
+	using System.IO;
 	using System.Linq;
 	using System.Text;
+	using System.Threading;
 	using System.Threading.Tasks;
+	using Validation;
 	using Windows.Security.Cryptography;
 	using Windows.Security.Cryptography.Core;
 	using Windows.Storage.Streams;
@@ -26,6 +29,34 @@
 		protected static readonly SymmetricKeyAlgorithmProvider SymmetricAlgorithm = SymmetricKeyAlgorithmProvider.OpenAlgorithm(SymmetricAlgorithmNames.AesCbcPkcs7);
 
 		/// <summary>
+		/// Gets the length (in bits) of the symmetric encryption cipher block.
+		/// </summary>
+		public override int SymmetricEncryptionBlockSize {
+			get { return (int)SymmetricAlgorithm.BlockLength * 8; }
+		}
+
+		/// <summary>
+		/// Computes the authentication code for the contents of a stream given the specified symmetric key.
+		/// </summary>
+		/// <param name="data">The data to compute the HMAC for.</param>
+		/// <param name="key">The key to use in hashing.</param>
+		/// <param name="hashAlgorithmName">The hash algorithm to use.</param>
+		/// <param name="cancellationToken">The cancellation token.</param>
+		/// <returns>The authentication code.</returns>
+		public override async Task<byte[]> ComputeAuthenticationCodeAsync(Stream data, byte[] key, string hashAlgorithmName, CancellationToken cancellationToken) {
+			Requires.NotNull(data, "data");
+			Requires.NotNull(key, "key");
+			Requires.NotNullOrEmpty(hashAlgorithmName, "hashAlgorithmName");
+
+			var algorithm = this.GetHmacAlgorithmProvider(hashAlgorithmName);
+			var cryptoKey = algorithm.CreateKey(key.ToBuffer());
+			var memoryStream = new MemoryStream();
+			await data.CopyToAsync(memoryStream, 4096, cancellationToken);
+			IBuffer code = CryptographicEngine.Sign(cryptoKey, memoryStream.ToArray().ToBuffer());
+			return code.ToArray();
+		}
+
+		/// <summary>
 		/// Asymmetrically signs a data blob.
 		/// </summary>
 		/// <param name="data">The data to sign.</param>
@@ -38,6 +69,21 @@
 			var key = signer.ImportKeyPair(signingPrivateKey.ToBuffer());
 			var signatureBuffer = CryptographicEngine.Sign(key, data.ToBuffer());
 			return signatureBuffer.ToArray();
+		}
+
+		/// <summary>
+		/// Asymmetrically signs the hash of data.
+		/// </summary>
+		/// <param name="hash">The hash to sign.</param>
+		/// <param name="signingPrivateKey">The private key used to sign the data.</param>
+		/// <param name="hashAlgorithmName">The hash algorithm name.</param>
+		/// <returns>
+		/// The signature.
+		/// </returns>
+		public override byte[] SignHash(byte[] hash, byte[] signingPrivateKey, string hashAlgorithmName) {
+			// WinRT 8.0 doesn't expose a way to sign hashes.
+			// This will either require depending on WinRT 8.1, or switching to BouncyCastle.
+			throw new NotSupportedException();
 		}
 
 		/// <summary>
@@ -57,23 +103,90 @@
 		}
 
 		/// <summary>
+		/// Verifies the asymmetric signature of the hash of some data blob.
+		/// </summary>
+		/// <param name="signingPublicKey">The public key used to verify the signature.</param>
+		/// <param name="hash">The hash of the data that was signed.</param>
+		/// <param name="signature">The signature.</param>
+		/// <param name="hashAlgorithm">The hash algorithm used to hash the data.</param>
+		/// <returns>
+		/// A value indicating whether the signature is valid.
+		/// </returns>
+		public override bool VerifyHash(byte[] signingPublicKey, byte[] hash, byte[] signature, string hashAlgorithm) {
+			// WinRT 8.0 doesn't expose a way to verify hashes.
+			// This will either require depending on WinRT 8.1, or switching to BouncyCastle.
+			throw new NotSupportedException();
+		}
+
+		/// <summary>
 		/// Symmetrically encrypts the specified buffer using a randomly generated key.
 		/// </summary>
 		/// <param name="data">The data to encrypt.</param>
+		/// <param name="encryptionVariables">Optional encryption variables to use; or <c>null</c> to use randomly generated ones.</param>
 		/// <returns>
 		/// The result of the encryption.
 		/// </returns>
-		public override SymmetricEncryptionResult Encrypt(byte[] data) {
-			IBuffer plainTextBuffer = CryptographicBuffer.CreateFromByteArray(data);
-			IBuffer symmetricKeyMaterial = CryptographicBuffer.GenerateRandom((uint)this.SymmetricEncryptionKeySize / 8);
-			var symmetricKey = SymmetricAlgorithm.CreateSymmetricKey(symmetricKeyMaterial);
-			IBuffer ivBuffer = CryptographicBuffer.GenerateRandom(SymmetricAlgorithm.BlockLength);
+		public override SymmetricEncryptionResult Encrypt(byte[] data, SymmetricEncryptionVariables encryptionVariables) {
+			Requires.NotNull(data, "data");
 
+			IBuffer plainTextBuffer = CryptographicBuffer.CreateFromByteArray(data);
+			IBuffer symmetricKeyMaterial, ivBuffer;
+			if (encryptionVariables == null) {
+				symmetricKeyMaterial = CryptographicBuffer.GenerateRandom((uint)this.SymmetricEncryptionKeySize / 8);
+				ivBuffer = CryptographicBuffer.GenerateRandom(SymmetricAlgorithm.BlockLength);
+			} else {
+				Requires.Argument(encryptionVariables.Key.Length == this.SymmetricEncryptionKeySize / 8, "key", "Incorrect length.");
+				Requires.Argument(encryptionVariables.IV.Length == this.SymmetricEncryptionBlockSize / 8, "iv", "Incorrect length.");
+				symmetricKeyMaterial = CryptographicBuffer.CreateFromByteArray(encryptionVariables.Key);
+				ivBuffer = CryptographicBuffer.CreateFromByteArray(encryptionVariables.IV);
+			}
+
+			var symmetricKey = SymmetricAlgorithm.CreateSymmetricKey(symmetricKeyMaterial);
 			var cipherTextBuffer = CryptographicEngine.Encrypt(symmetricKey, plainTextBuffer, ivBuffer);
 			return new SymmetricEncryptionResult(
 				symmetricKeyMaterial.ToArray(),
 				ivBuffer.ToArray(),
 				cipherTextBuffer.ToArray());
+		}
+
+		/// <summary>
+		/// Symmetrically encrypts a stream.
+		/// </summary>
+		/// <param name="plaintext">The stream of plaintext to encrypt.</param>
+		/// <param name="ciphertext">The stream to receive the ciphertext.</param>
+		/// <param name="encryptionVariables">An optional key and IV to use. May be <c>null</c> to use randomly generated values.</param>
+		/// <param name="cancellationToken">A cancellation token.</param>
+		/// <returns>A task that completes when encryption has completed, whose result is the key and IV to use to decrypt the ciphertext.</returns>
+		public override async Task<SymmetricEncryptionVariables> EncryptAsync(Stream plaintext, Stream ciphertext, SymmetricEncryptionVariables encryptionVariables, CancellationToken cancellationToken) {
+			Requires.NotNull(plaintext, "plaintext");
+			Requires.NotNull(ciphertext, "ciphertext");
+
+			var plaintextMemoryStream = new MemoryStream();
+			await plaintext.CopyToAsync(plaintextMemoryStream, 4096, cancellationToken);
+			cancellationToken.ThrowIfCancellationRequested();
+			var result = this.Encrypt(plaintextMemoryStream.ToArray(), encryptionVariables);
+			await ciphertext.WriteAsync(result.Ciphertext, 0, result.Ciphertext.Length, cancellationToken);
+			return result;
+		}
+
+		/// <summary>
+		/// Symmetrically decrypts a stream.
+		/// </summary>
+		/// <param name="ciphertext">The stream of ciphertext to decrypt.</param>
+		/// <param name="plaintext">The stream to receive the plaintext.</param>
+		/// <param name="encryptionVariables">The key and IV to use.</param>
+		/// <param name="cancellationToken">A cancellation token.</param>
+		/// <returns>A task that represents the asynchronous operation.</returns>
+		public override async Task DecryptAsync(Stream ciphertext, Stream plaintext, SymmetricEncryptionVariables encryptionVariables, CancellationToken cancellationToken) {
+			Requires.NotNull(ciphertext, "ciphertext");
+			Requires.NotNull(plaintext, "plaintext");
+			Requires.NotNull(encryptionVariables, "encryptionVariables");
+
+			var ciphertextMemoryStream = new MemoryStream();
+			await ciphertext.CopyToAsync(ciphertextMemoryStream, 4096, cancellationToken);
+			cancellationToken.ThrowIfCancellationRequested();
+			byte[] plaintextBytes = this.Decrypt(new SymmetricEncryptionResult(encryptionVariables, ciphertextMemoryStream.ToArray()));
+			await plaintext.WriteAsync(plaintextBytes, 0, plaintextBytes.Length, cancellationToken);
 		}
 
 		/// <summary>
@@ -129,6 +242,29 @@
 		}
 
 		/// <summary>
+		/// Hashes the contents of a stream.
+		/// </summary>
+		/// <param name="source">The stream to hash.</param>
+		/// <param name="hashAlgorithmName">The hash algorithm to use.</param>
+		/// <param name="cancellationToken">The cancellation token.</param>
+		/// <returns>A task whose result is the hash.</returns>
+		public override async Task<byte[]> HashAsync(Stream source, string hashAlgorithmName, CancellationToken cancellationToken) {
+			var hashAlgorithm = HashAlgorithmProvider.OpenAlgorithm(hashAlgorithmName);
+			var hasher = hashAlgorithm.CreateHash();
+			IBuffer buffer = new Windows.Storage.Streams.Buffer(4096);
+			var inputStream = source.AsInputStream();
+			do {
+				// We re-assign the buffer because WinRT can return a new buffer, and reusing the last one they issued
+				// will avoid reallocating a new buffer on each call.
+				buffer = await inputStream.ReadAsync(buffer, buffer.Capacity, InputStreamOptions.None).AsTask(cancellationToken);
+				hasher.Append(buffer);
+			}
+			while (buffer.Length > 0);
+			var hash = hasher.GetValueAndReset();
+			return hash.ToArray();
+		}
+
+		/// <summary>
 		/// Generates a key pair for asymmetric cryptography.
 		/// </summary>
 		/// <param name="keyPair">Receives the serialized key pair (includes private key).</param>
@@ -167,6 +303,26 @@
 					return AsymmetricKeyAlgorithmProvider.OpenAlgorithm(AsymmetricAlgorithmNames.RsaSignPkcs1Sha384);
 				case "SHA512":
 					return AsymmetricKeyAlgorithmProvider.OpenAlgorithm(AsymmetricAlgorithmNames.RsaSignPkcs1Sha512);
+				default:
+					throw new NotSupportedException();
+			}
+		}
+
+		/// <summary>
+		/// Gets the HMAC algorithm provider for the given hash algorithm.
+		/// </summary>
+		/// <param name="hashAlgorithm">The hash algorithm (SHA1, SHA256, etc.)</param>
+		/// <returns>The algorithm provider.</returns>
+		protected virtual MacAlgorithmProvider GetHmacAlgorithmProvider(string hashAlgorithm) {
+			switch (hashAlgorithm) {
+				case "SHA1":
+					return MacAlgorithmProvider.OpenAlgorithm(MacAlgorithmNames.HmacSha1);
+				case "SHA256":
+					return MacAlgorithmProvider.OpenAlgorithm(MacAlgorithmNames.HmacSha256);
+				case "SHA384":
+					return MacAlgorithmProvider.OpenAlgorithm(MacAlgorithmNames.HmacSha384);
+				case "SHA512":
+					return MacAlgorithmProvider.OpenAlgorithm(MacAlgorithmNames.HmacSha512);
 				default:
 					throw new NotSupportedException();
 			}

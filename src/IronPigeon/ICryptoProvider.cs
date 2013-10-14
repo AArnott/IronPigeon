@@ -1,4 +1,8 @@
 ﻿namespace IronPigeon {
+	using System.IO;
+	using System.Threading;
+	using System.Threading.Tasks;
+
 	/// <summary>
 	/// Implements the cryptographic algorithms that protect users and data required by the IronPigeon protocol.
 	/// </summary>
@@ -19,19 +23,34 @@
 		EncryptionConfiguration SymmetricEncryptionConfiguration { get; set; }
 
 		/// <summary>
-		/// Gets or sets the size of the key used for symmetric blob encryption.
+		/// Gets or sets the size of the key (in bits) used for symmetric blob encryption.
 		/// </summary>
 		int SymmetricEncryptionKeySize { get; set; }
 
 		/// <summary>
-		/// Gets or sets the size of the key used for asymmetric signatures.
+		/// Gets the length (in bits) of the symmetric encryption cipher block.
+		/// </summary>
+		int SymmetricEncryptionBlockSize { get; }
+
+		/// <summary>
+		/// Gets or sets the size of the key (in bits) used for asymmetric signatures.
 		/// </summary>
 		int SignatureAsymmetricKeySize { get; set; }
 
 		/// <summary>
-		/// Gets or sets the size of the key used for asymmetric encryption.
+		/// Gets or sets the size of the key (in bits) used for asymmetric encryption.
 		/// </summary>
 		int EncryptionAsymmetricKeySize { get; set; }
+
+		/// <summary>
+		/// Computes the authentication code for the contents of a stream given the specified symmetric key.
+		/// </summary>
+		/// <param name="data">The data to compute the HMAC for.</param>
+		/// <param name="key">The key to use in hashing.</param>
+		/// <param name="hashAlgorithmName">The hash algorithm to use.</param>
+		/// <param name="cancellationToken">The cancellation token.</param>
+		/// <returns>The authentication code.</returns>
+		Task<byte[]> ComputeAuthenticationCodeAsync(Stream data, byte[] key, string hashAlgorithmName, CancellationToken cancellationToken = default(CancellationToken));
 
 		/// <summary>
 		/// Asymmetrically signs a data blob.
@@ -40,6 +59,17 @@
 		/// <param name="signingPrivateKey">The private key used to sign the data.</param>
 		/// <returns>The signature.</returns>
 		byte[] Sign(byte[] data, byte[] signingPrivateKey);
+
+		/// <summary>
+		/// Asymmetrically signs the hash of data.
+		/// </summary>
+		/// <param name="hash">The hash to sign.</param>
+		/// <param name="signingPrivateKey">The private key used to sign the data.</param>
+		/// <param name="hashAlgorithmName">The hash algorithm name.</param>
+		/// <returns>
+		/// The signature.
+		/// </returns>
+		byte[] SignHash(byte[] hash, byte[] signingPrivateKey, string hashAlgorithmName);
 
 		/// <summary>
 		/// Verifies the asymmetric signature of some data blob.
@@ -54,11 +84,44 @@
 		bool VerifySignature(byte[] signingPublicKey, byte[] data, byte[] signature, string hashAlgorithm);
 
 		/// <summary>
+		/// Verifies the asymmetric signature of the hash of some data blob.
+		/// </summary>
+		/// <param name="signingPublicKey">The public key used to verify the signature.</param>
+		/// <param name="hash">The hash of the data that was signed.</param>
+		/// <param name="signature">The signature.</param>
+		/// <param name="hashAlgorithm">The hash algorithm used to hash the data.</param>
+		/// <returns>
+		/// A value indicating whether the signature is valid.
+		/// </returns>
+		bool VerifyHash(byte[] signingPublicKey, byte[] hash, byte[] signature, string hashAlgorithm);
+
+		/// <summary>
 		/// Symmetrically encrypts the specified buffer using a randomly generated key.
 		/// </summary>
 		/// <param name="data">The data to encrypt.</param>
+		/// <param name="encryptionVariables">Optional encryption variables to use; or <c>null</c> to use randomly generated ones.</param>
 		/// <returns>The result of the encryption.</returns>
-		SymmetricEncryptionResult Encrypt(byte[] data);
+		SymmetricEncryptionResult Encrypt(byte[] data, SymmetricEncryptionVariables encryptionVariables = null);
+
+		/// <summary>
+		/// Symmetrically encrypts a stream.
+		/// </summary>
+		/// <param name="plaintext">The stream of plaintext to encrypt.</param>
+		/// <param name="ciphertext">The stream to receive the ciphertext.</param>
+		/// <param name="encryptionVariables">An optional key and IV to use. May be <c>null</c> to use randomly generated values.</param>
+		/// <param name="cancellationToken">A cancellation token.</param>
+		/// <returns>A task that completes when encryption has completed, whose result is the key and IV to use to decrypt the ciphertext.</returns>
+		Task<SymmetricEncryptionVariables> EncryptAsync(Stream plaintext, Stream ciphertext, SymmetricEncryptionVariables encryptionVariables = null, CancellationToken cancellationToken = default(CancellationToken));
+
+		/// <summary>
+		/// Symmetrically decrypts a stream.
+		/// </summary>
+		/// <param name="ciphertext">The stream of ciphertext to decrypt.</param>
+		/// <param name="plaintext">The stream to receive the plaintext.</param>
+		/// <param name="encryptionVariables">The key and IV to use.</param>
+		/// <param name="cancellationToken">A cancellation token.</param>
+		/// <returns>A task that represents the asynchronous operation.</returns>
+		Task DecryptAsync(Stream ciphertext, Stream plaintext, SymmetricEncryptionVariables encryptionVariables, CancellationToken cancellationToken = default(CancellationToken));
 
 		/// <summary>
 		/// Symmetrically decrypts a buffer using the specified key.
@@ -92,6 +155,15 @@
 		/// The computed hash.
 		/// </returns>
 		byte[] Hash(byte[] data, string hashAlgorithmName);
+
+		/// <summary>
+		/// Hashes the contents of a stream.
+		/// </summary>
+		/// <param name="source">The stream to hash.</param>
+		/// <param name="hashAlgorithmName">The hash algorithm to use.</param>
+		/// <param name="cancellationToken">The cancellation token.</param>
+		/// <returns>A task whose result is the hash.</returns>
+		Task<byte[]> HashAsync(Stream source, string hashAlgorithmName, CancellationToken cancellationToken = default(CancellationToken));
 
 		/// <summary>
 		/// Generates a key pair for asymmetric cryptography.

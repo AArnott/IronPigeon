@@ -385,7 +385,11 @@
 			pushNotifyRequest.Content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
 
 			var response = await this.HttpClient.SendAsync(pushNotifyRequest);
-			if (!response.IsSuccessStatusCode) {
+			if (response.IsSuccessStatusCode) {
+				inbox.LastWindows8PushNotificationUtc = DateTime.UtcNow;
+				this.InboxTable.UpdateObject(inbox);
+				await this.InboxTable.SaveChangesAsync();
+			} else {
 				if (failedAttempts == 0) {
 					var authHeader = response.Headers.WwwAuthenticate.FirstOrDefault();
 					if (authHeader != null) {
@@ -416,7 +420,13 @@
 					if (!string.IsNullOrEmpty(inbox.WinPhone8ToastText1) || !string.IsNullOrEmpty(inbox.WinPhone8ToastText2)) {
 						var line1 = string.Format(CultureInfo.InvariantCulture, inbox.WinPhone8ToastText1 ?? string.Empty, count);
 						var line2 = string.Format(CultureInfo.InvariantCulture, inbox.WinPhone8ToastText2 ?? string.Empty, count);
-						pushToast = notifications.PushWinPhoneToastAsync(line1, line2);
+						if (inbox.LastWinPhone8PushNotificationUtc.HasValue && inbox.LastAuthenticatedInteractionUtc.HasValue && inbox.LastWinPhone8PushNotificationUtc.Value > inbox.LastAuthenticatedInteractionUtc.Value) {
+							// We've sent a toast notification more recently than the user has checked messages,
+							// so there's no reason to send another for now.
+							pushToast = Task.FromResult(true);
+						} else {
+							pushToast = notifications.PushWinPhoneToastAsync(line1, line2);
+						}
 					}
 
 					Task<bool> pushRaw = Task.FromResult(false);
@@ -435,9 +445,12 @@
 					inbox.WinPhone8PushChannelContent = null;
 					inbox.WinPhone8ToastText1 = null;
 					inbox.WinPhone8ToastText2 = null;
-					this.InboxTable.UpdateObject(inbox);
-					await this.InboxTable.SaveChangesAsync();
+				} else {
+					inbox.LastWinPhone8PushNotificationUtc = DateTime.UtcNow;
 				}
+
+				this.InboxTable.UpdateObject(inbox);
+				await this.InboxTable.SaveChangesAsync();
 			}
 		}
 

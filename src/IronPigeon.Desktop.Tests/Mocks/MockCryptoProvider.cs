@@ -1,8 +1,10 @@
 ﻿namespace IronPigeon.Tests.Mocks {
 	using System;
 	using System.Collections.Generic;
+	using System.IO;
 	using System.Linq;
 	using System.Text;
+	using System.Threading;
 	using System.Threading.Tasks;
 	using NUnit.Framework;
 
@@ -41,25 +43,61 @@
 			set { throw new NotSupportedException(); }
 		}
 
+		/// <summary>
+		/// Gets the length of the symmetric encryption cipher block.
+		/// </summary>
+		public int SymmetricEncryptionBlockSize {
+			get { return 5; }
+		}
+
+		public Task<byte[]> ComputeAuthenticationCodeAsync(Stream data, byte[] key, string hashAlgorithmName, CancellationToken cancellationToken) {
+			throw new NotImplementedException();
+		}
+
 		public byte[] Sign(byte[] data, byte[] signingPrivateKey) {
 			return data;
+		}
+
+		public byte[] SignHash(byte[] hash, byte[] signingPrivateKey, string hashAlgorithmName) {
+			throw new NotImplementedException();
+		}
+
+		public bool VerifyHash(byte[] signingPublicKey, byte[] hash, byte[] signature, string hashAlgorithm) {
+			throw new NotImplementedException();
 		}
 
 		public bool VerifySignature(byte[] signingPublicKey, byte[] data, byte[] signature, string hashAlgorithm) {
 			return true;
 		}
 
-		public SymmetricEncryptionResult Encrypt(byte[] data) {
+		public SymmetricEncryptionResult Encrypt(byte[] data, SymmetricEncryptionVariables encryptionVariables) {
 			var rng = new Random();
-			var key = new byte[KeyLengthInBytes];
-			var iv = new byte[KeyLengthInBytes];
-			rng.NextBytes(key);
-			rng.NextBytes(iv);
+
+			byte[] key, iv;
+			if (encryptionVariables != null) {
+				key = encryptionVariables.Key;
+				iv = encryptionVariables.IV;
+			} else {
+				key = new byte[KeyLengthInBytes];
+				rng.NextBytes(key);
+
+				iv = new byte[KeyLengthInBytes];
+				rng.NextBytes(iv);
+			}
+
 			var ciphertext = new byte[key.Length + iv.Length + data.Length];
 			Array.Copy(key, ciphertext, key.Length);
 			Array.Copy(iv, 0, ciphertext, key.Length, iv.Length);
 			Array.Copy(data, 0, ciphertext, key.Length + iv.Length, data.Length);
 			return new SymmetricEncryptionResult(key, iv, ciphertext);
+		}
+
+		public Task<SymmetricEncryptionVariables> EncryptAsync(Stream plaintext, Stream ciphertext, SymmetricEncryptionVariables encryptionVariables = null, CancellationToken cancellationToken = default(CancellationToken)) {
+			throw new NotImplementedException();
+		}
+
+		public Task DecryptAsync(Stream ciphertext, Stream plaintext, SymmetricEncryptionVariables encryptionVariables, CancellationToken cancellationToken = default(CancellationToken)) {
+			throw new NotImplementedException();
 		}
 
 		public byte[] Decrypt(SymmetricEncryptionResult data) {
@@ -102,6 +140,10 @@
 			}
 
 			return BitConverter.GetBytes(hash);
+		}
+
+		public Task<byte[]> HashAsync(Stream source, string hashAlgorithmName, CancellationToken cancellationToken = default(CancellationToken)) {
+			throw new NotImplementedException();
 		}
 
 		public void GenerateSigningKeyPair(out byte[] keyPair, out byte[] publicKey) {

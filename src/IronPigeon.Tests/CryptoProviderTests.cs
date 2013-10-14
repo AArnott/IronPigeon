@@ -1,5 +1,7 @@
 ﻿namespace IronPigeon.Tests {
 	using System;
+	using System.IO;
+	using System.Threading.Tasks;
 #if NETFX_CORE || WINDOWS_PHONE
 	using Microsoft.VisualStudio.TestPlatform.UnitTestFramework;
 #else
@@ -37,6 +39,41 @@
 		}
 
 		[TestMethod]
+		public void SymmetricEncryptionRoundtripExplicitKeyAndIV() {
+			byte[] key = new byte[this.CryptoProvider.SymmetricEncryptionKeySize / 8];
+			byte[] iv = new byte[this.CryptoProvider.SymmetricEncryptionBlockSize / 8];
+			byte[] plaintext = new byte[10000];
+
+			var rng = new Random();
+			rng.NextBytes(key);
+			rng.NextBytes(iv);
+			rng.NextBytes(plaintext);
+
+			var cipherPacket = this.CryptoProvider.Encrypt(plaintext, new SymmetricEncryptionVariables(key, iv));
+			CollectionAssert.AreEqual(key, cipherPacket.Key);
+			CollectionAssert.AreEqual(iv, cipherPacket.IV);
+
+			byte[] decryptedPlaintext = this.CryptoProvider.Decrypt(cipherPacket);
+			CollectionAssert.AreEqual(plaintext, decryptedPlaintext);
+		}
+
+		[TestMethod]
+		public void SymmetricEncryptionAsStreamRoundtrip() {
+			var rng = new Random();
+			byte[] plaintext = new byte[10000];
+			rng.NextBytes(plaintext);
+
+			var plaintextStream = new MemoryStream(plaintext);
+			var cipherStream = new MemoryStream();
+			var cipherPacket = this.CryptoProvider.EncryptAsync(plaintextStream, cipherStream).Result;
+
+			var decryptedStream = new MemoryStream();
+			cipherStream.Position = 0;
+			this.CryptoProvider.DecryptAsync(cipherStream, decryptedStream, cipherPacket).Wait();
+			CollectionAssert.AreEqual(plaintext, decryptedStream.ToArray());
+		}
+
+		[TestMethod]
 		public void AsymmetricSignatures() {
 			var data = new byte[] { 0x1, 0x2, 0x3 };
 			var tamperedData = new byte[] { 0x1, 0x2, 0x4 };
@@ -57,6 +94,26 @@
 			byte[] signature = this.CryptoProvider.Sign(data, keyPair);
 			Assert.IsTrue(this.CryptoProvider.VerifySignature(publicKey, data, signature, this.CryptoProvider.AsymmetricHashAlgorithmName));
 			Assert.IsFalse(this.CryptoProvider.VerifySignature(publicKey, tamperedData, signature, this.CryptoProvider.AsymmetricHashAlgorithmName));
+		}
+
+		[TestMethod]
+		public async Task HashAsync() {
+			var streamContent = new byte[5000]; // not aligned with natural 4096 block sizes deliberately.
+			streamContent[0] = 0x22;
+			var stream = new MemoryStream(streamContent);
+			string hash = Convert.ToBase64String(await this.CryptoProvider.HashAsync(stream, "SHA256"));
+			Assert.AreEqual("Dt3SUt9aw0h0ALEcIPIw8G6pIZA84nUF6jzUcPEaick=", hash);
+		}
+
+		[TestMethod]
+		public async Task ComputeAuthenticationCodeAsync() {
+			var streamContent = new byte[5000]; // not aligned with natural 4096 block sizes deliberately.
+			streamContent[0] = 0x22;
+			byte[] key = new byte[16];
+			key[1] = 0x44;
+			var stream = new MemoryStream(streamContent);
+			string code = Convert.ToBase64String(await this.CryptoProvider.ComputeAuthenticationCodeAsync(stream, key, "SHA256"));
+			Assert.AreEqual("uEkw2LhaJ8X5PIIdFaQZJOQclqmUdCavVVrtAoh/vCY=", code);
 		}
 	}
 }
