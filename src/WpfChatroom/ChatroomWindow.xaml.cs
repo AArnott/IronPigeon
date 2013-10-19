@@ -14,8 +14,8 @@
 	using System.Windows.Media;
 	using System.Windows.Media.Imaging;
 	using System.Windows.Shapes;
-
 	using IronPigeon;
+	using IronPigeon.Dart;
 	using IronPigeon.Providers;
 
 	/// <summary>
@@ -36,7 +36,7 @@
 		/// Gets or sets the channel.
 		/// </summary>
 		[Import]
-		public Channel Channel { get; set; }
+		public PostalService PostalService { get; set; }
 
 		/// <summary>
 		/// Gets or sets the crypto provider.
@@ -66,7 +66,7 @@
 			base.OnInitialized(e);
 
 			await Task.Yield();
-			this.AddMember("You", this.Channel.Endpoint.PublicEndpoint);
+			this.AddMember("You", this.PostalService.Channel.Endpoint.PublicEndpoint);
 			await this.ReceiveMessageLoopAsync();
 		}
 
@@ -86,8 +86,8 @@
 					await Task.Delay(delay);
 					bool lastTimeFailed = delay > TimeSpan.Zero;
 					delay = TimeSpan.Zero;
-					var progress = new ProgressWithCompletion<Channel.PayloadReceipt>(m => this.ProcessReceivedMessagedAsync(m.Payload));
-					await this.Channel.ReceiveAsync(longPoll: !lastTimeFailed, progress: progress);
+					var progress = new ProgressWithCompletion<PostalService.MessageReceipt>(m => this.ProcessReceivedMessagedAsync(m.Message));
+					await this.PostalService.ReceiveAsync(longPoll: !lastTimeFailed, progress: progress);
 					this.TopInfoBar.Visibility = Visibility.Collapsed;
 				} catch (HttpRequestException) {
 					// report the error eventually if it keeps happening.
@@ -99,10 +99,9 @@
 			}
 		}
 
-		private async Task ProcessReceivedMessagedAsync(Payload payload) {
-			var message = Encoding.UTF8.GetString(payload.Content);
-			this.History.Items.Add(message);
-			await this.Channel.DeleteInboxItemAsync(payload);
+		private async Task ProcessReceivedMessagedAsync(Message message) {
+			this.History.Items.Add(message.Body);
+			await this.PostalService.DeleteAsync(message);
 		}
 
 		private async void SendMessageButton_Click(object sender, RoutedEventArgs e) {
@@ -110,8 +109,11 @@
 			this.SendMessageButton.IsEnabled = false;
 			try {
 				if (this.AuthoredMessage.Text.Length > 0) {
-					var payload = new Payload(Encoding.UTF8.GetBytes(this.AuthoredMessage.Text), "text/plain");
-					await this.Channel.PostAsync(payload, this.members.Values.ToList(), DateTime.UtcNow + TimeSpan.FromDays(14));
+					var message = new Message(this.PostalService.Channel.Endpoint, this.members.Values.ToList(), "message", this.AuthoredMessage.Text) {
+						ExpirationUtc = DateTime.UtcNow + TimeSpan.FromDays(14),
+						AuthorName = "WpfChatroom user",
+					};
+					await this.PostalService.PostAsync(message);
 				}
 
 				this.BottomInfoBar.Visibility = Visibility.Collapsed;

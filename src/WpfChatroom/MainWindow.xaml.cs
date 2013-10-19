@@ -20,6 +20,7 @@
 	using System.Windows.Navigation;
 	using System.Windows.Shapes;
 	using IronPigeon;
+	using IronPigeon.Dart;
 	using IronPigeon.Providers;
 	using Microsoft.Win32;
 
@@ -35,6 +36,7 @@
 
 			var configuration =
 				new ContainerConfiguration().WithAssembly(typeof(Channel).Assembly)
+											.WithAssembly(typeof(PostalService).Assembly)
 											.WithPart(typeof(DesktopCryptoProvider))
 											.WithPart(typeof(DesktopChannel))
 											.WithAssembly(Assembly.GetExecutingAssembly());
@@ -43,7 +45,6 @@
 
 			this.MessageRelayService.BlobPostUrl = new Uri(ConfigurationManager.ConnectionStrings["RelayBlobService"].ConnectionString);
 			this.MessageRelayService.InboxServiceUrl = new Uri(ConfigurationManager.ConnectionStrings["RelayInboxService"].ConnectionString);
-			this.CryptoProvider.ApplySecurityLevel(SecurityLevel.Minimum);
 		}
 
 		/// <summary>

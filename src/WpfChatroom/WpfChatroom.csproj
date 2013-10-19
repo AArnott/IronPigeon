@@ -156,6 +156,10 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\IronPigeon.Dart\IronPigeon.Dart.csproj">
+      <Project>{7413ff6f-dc39-4b86-ad14-eac145f5c3b7}</Project>
+      <Name>IronPigeon.Dart</Name>
+    </ProjectReference>
     <ProjectReference Include="..\IronPigeon.Desktop\IronPigeon.Desktop.csproj">
       <Project>{2acabe1a-13da-4248-b200-8b9d63486e45}</Project>
       <Name>IronPigeon.Desktop</Name>
