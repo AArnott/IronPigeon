@@ -16,9 +16,9 @@
 				<RowDefinition/>
 			</Grid.RowDefinitions>
 			<Label VerticalAlignment="Center">Name</Label>
-			<TextBox Grid.Column="1" x:Name="FriendlyNameBox"/>
+			<TextBox Grid.Column="1" x:Name="FriendlyNameBox" Text="App author"/>
 			<Label Grid.Row="1" VerticalAlignment="Center">Public endpoint URL</Label>
-			<TextBox Grid.Row="1" Grid.Column="1" x:Name="PublicEndpointUrlBox"/>
+			<TextBox Grid.Row="1" Grid.Column="1" x:Name="PublicEndpointUrlBox" Text="http://tinyurl.com/omhxu6l#-Rrs7LRrCE3bV8x58j1l4JUzAT3P2obKia73k3IFG9k"/>
 		</Grid>
 	</DockPanel>
 </Window>
