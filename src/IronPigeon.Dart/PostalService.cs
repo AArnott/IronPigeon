@@ -51,12 +51,13 @@
 		/// Retrieves all messages waiting for pickup at our endpoint.
 		/// </summary>
 		/// <param name="longPoll">if set to <c>true</c> [long poll].</param>
+		/// <param name="purgeUnsupportedMessages">A value indicating whether to purge any messages that are not Dart messages. False will skip the messages but will not delete them from the server.</param>
 		/// <param name="progress">A callback to invoke for each downloaded message as it arrives.</param>
 		/// <param name="cancellationToken">The cancellation token.</param>
 		/// <returns>
 		/// A task whose result is the complete list of received messages.
 		/// </returns>
-		public virtual async Task<IReadOnlyList<MessageReceipt>> ReceiveAsync(bool longPoll = false, IProgress<MessageReceipt> progress = null, CancellationToken cancellationToken = default(CancellationToken)) {
+		public virtual async Task<IReadOnlyList<MessageReceipt>> ReceiveAsync(bool longPoll = false, bool purgeUnsupportedMessages = false, IProgress<MessageReceipt> progress = null, CancellationToken cancellationToken = default(CancellationToken)) {
 			var messages = new List<MessageReceipt>();
 			IReadOnlyList<Channel.PayloadReceipt> payloads = null;
 			var payloadProgress = new ProgressWithCompletion<Channel.PayloadReceipt>(
@@ -77,6 +78,8 @@
 						if (progress != null) {
 							progress.Report(messageReceipt);
 						}
+					} else if (purgeUnsupportedMessages) {
+						await this.Channel.DeleteInboxItemAsync(payload.Payload, cancellationToken);
 					}
 				});
 
