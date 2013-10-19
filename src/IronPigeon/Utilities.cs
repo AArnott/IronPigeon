@@ -244,6 +244,22 @@
 		}
 
 		/// <summary>
+		/// Writes out the size of the buffer and its contents.
+		/// </summary>
+		/// <param name="stream">The stream to write the buffer's length and contents to.</param>
+		/// <param name="sourceStream">The source stream to write out.</param>
+		/// <param name="cancellationToken">The cancellation token.  Cancellation may leave the stream in a partially written state.</param>
+		/// <returns>A task whose completion indicates the async operation has completed.</returns>
+		public static async Task WriteSizeAndStreamAsync(this Stream stream, Stream sourceStream, CancellationToken cancellationToken) {
+			Requires.NotNull(stream, "stream");
+			Requires.NotNull(sourceStream, "sourceStream");
+
+			byte[] streamLength = BitConverter.GetBytes((int)(sourceStream.Length - sourceStream.Position));
+			await stream.WriteAsync(streamLength, 0, streamLength.Length, cancellationToken);
+			await sourceStream.CopyToAsync(stream, 4096, cancellationToken);
+		}
+
+		/// <summary>
 		/// Reads the size of a buffer, and then the buffer itself, from a binary reader.
 		/// </summary>
 		/// <param name="stream">The stream from which to read the buffer's size and contents.</param>
@@ -262,6 +278,25 @@
 			byte[] buffer = new byte[size];
 			await stream.ReadAsync(buffer, 0, size, cancellationToken);
 			return buffer;
+		}
+
+		/// <summary>
+		/// Reads the size of a buffer, and then the buffer itself, from a binary reader.
+		/// </summary>
+		/// <param name="stream">The stream from which to read the buffer's size and contents.</param>
+		/// <param name="cancellationToken">A cancellation token.</param>
+		/// <param name="maxSize">The maximum value to accept as the length of the buffer.</param>
+		/// <returns>The substream of the specified stream that will read just the length of the next object.</returns>
+		/// <exception cref="InvalidMessageException">Thrown if the buffer length read from the stream exceeds the maximum allowable size.</exception>
+		public static async Task<Stream> ReadSizeAndStreamAsync(this Stream stream, CancellationToken cancellationToken, int maxSize = 10 * 1024) {
+			byte[] lengthBuffer = new byte[sizeof(int)];
+			await stream.ReadAsync(lengthBuffer, 0, lengthBuffer.Length, cancellationToken);
+			int size = BitConverter.ToInt32(lengthBuffer, 0);
+			if (size > maxSize) {
+				throw new InvalidMessageException(Strings.MaxAllowableMessagePartSizeExceeded);
+			}
+
+			return new Substream(stream, size);
 		}
 
 		/// <summary>

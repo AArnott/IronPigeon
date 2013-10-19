@@ -234,12 +234,13 @@
 			var encryptedKey = await responseStreamCopy.ReadSizeAndBufferAsync(cancellationToken);
 			var key = this.CryptoServices.Decrypt(this.Endpoint.EncryptionKeyPrivateMaterial, encryptedKey);
 			var iv = await responseStreamCopy.ReadSizeAndBufferAsync(cancellationToken);
-			var ciphertext = await responseStreamCopy.ReadSizeAndBufferAsync(cancellationToken);
-			var encryptedPayload = new SymmetricEncryptionResult(key, iv, ciphertext);
+			var ciphertextStream = await responseStreamCopy.ReadSizeAndStreamAsync(cancellationToken);
+			var encryptedVariables = new SymmetricEncryptionVariables(key, iv);
 
-			var plainTextPayloadBuffer = this.CryptoServices.Decrypt(encryptedPayload);
+			var plainTextPayloadStream = new MemoryStream();
+			await this.CryptoServices.DecryptAsync(ciphertextStream, plainTextPayloadStream, encryptedVariables, cancellationToken);
 
-			var plainTextPayloadStream = new MemoryStream(plainTextPayloadBuffer);
+			plainTextPayloadStream.Position = 0;
 			string signingHashAlgorithm = null; //// Encoding.UTF8.GetString(await plainTextPayloadStream.ReadSizeAndBufferAsync(cancellationToken));
 			byte[] signature = await plainTextPayloadStream.ReadSizeAndBufferAsync(cancellationToken);
 			long payloadStartPosition = plainTextPayloadStream.Position;
@@ -286,13 +287,12 @@
 				throw new InvalidMessageException();
 			}
 
-			var encryptedResult = new SymmetricEncryptionResult(
-				notification.Key,
-				notification.IV,
-				messageBuffer);
+			var encryptionVariables = new SymmetricEncryptionVariables(notification.Key, notification.IV);
 
-			var plainTextBuffer = this.CryptoServices.Decrypt(encryptedResult);
-			var plainTextStream = new MemoryStream(plainTextBuffer);
+			var cipherStream = new MemoryStream(messageBuffer);
+			var plainTextStream = new MemoryStream();
+			await this.CryptoServices.DecryptAsync(cipherStream, plainTextStream, encryptionVariables, cancellationToken);
+			plainTextStream.Position = 0;
 			var plainTextReader = new BinaryReader(plainTextStream);
 			var message = Utilities.DeserializeDataContract<Payload>(plainTextReader);
 			message.PayloadReferenceUri = notification.ReferenceLocation;
@@ -320,18 +320,20 @@
 			var plainTextBuffer = plainTextStream.ToArray();
 			this.Log("Message plaintext", plainTextBuffer);
 
-			var encryptionResult = this.CryptoServices.Encrypt(plainTextBuffer);
-			this.Log("Message symmetrically encrypted", encryptionResult.Ciphertext);
-			this.Log("Message symmetric key", encryptionResult.Key);
-			this.Log("Message symmetric IV", encryptionResult.IV);
+			plainTextStream.Position = 0;
+			var cipherTextStream = new MemoryStream();
+			var encryptionVariables = await this.CryptoServices.EncryptAsync(plainTextStream, cipherTextStream, cancellationToken: cancellationToken);
+			this.Log("Message symmetrically encrypted", cipherTextStream.ToArray());
+			this.Log("Message symmetric key", encryptionVariables.Key);
+			this.Log("Message symmetric IV", encryptionVariables.IV);
 
-			var messageHash = this.CryptoServices.Hash(encryptionResult.Ciphertext, this.CryptoServices.SymmetricHashAlgorithmName);
+			cipherTextStream.Position = 0;
+			var messageHash = await this.CryptoServices.HashAsync(cipherTextStream, this.CryptoServices.SymmetricHashAlgorithmName, cancellationToken);
 			this.Log("Encrypted message hash", messageHash);
 
-			using (MemoryStream cipherTextStream = new MemoryStream(encryptionResult.Ciphertext)) {
-				Uri blobUri = await this.CloudBlobStorage.UploadMessageAsync(cipherTextStream, expiresUtc, cancellationToken: cancellationToken);
-				return new PayloadReference(blobUri, messageHash, this.CryptoServices.SymmetricHashAlgorithmName, encryptionResult.Key, encryptionResult.IV, expiresUtc);
-			}
+			cipherTextStream.Position = 0;
+			Uri blobUri = await this.CloudBlobStorage.UploadMessageAsync(cipherTextStream, expiresUtc, cancellationToken: cancellationToken);
+			return new PayloadReference(blobUri, messageHash, this.CryptoServices.SymmetricHashAlgorithmName, encryptionVariables.Key, encryptionVariables.IV, expiresUtc);
 		}
 
 		/// <summary>
@@ -389,21 +391,24 @@
 			await signedPlainTextPayloadStream.WriteSizeAndBufferAsync(notificationSignature, cancellationToken);
 			plainTextPayloadStream.Position = 0;
 			await plainTextPayloadStream.CopyToAsync(signedPlainTextPayloadStream, 4096, cancellationToken);
-			var encryptedPayload = this.CryptoServices.Encrypt(signedPlainTextPayloadStream.ToArray());
-			this.Log("Message invite ciphertext", encryptedPayload.Ciphertext);
-			this.Log("Message invite key", encryptedPayload.Key);
-			this.Log("Message invite IV", encryptedPayload.IV);
+			signedPlainTextPayloadStream.Position = 0;
+			var cipherTextStream = new MemoryStream();
+			var encryptedVariables = await this.CryptoServices.EncryptAsync(signedPlainTextPayloadStream, cipherTextStream, cancellationToken: cancellationToken);
+			this.Log("Message invite ciphertext", cipherTextStream.ToArray());
+			this.Log("Message invite key", encryptedVariables.Key);
+			this.Log("Message invite IV", encryptedVariables.IV);
 
 			var builder = new UriBuilder(recipient.MessageReceivingEndpoint);
 			var lifetimeInMinutes = (int)(messageReference.ExpiresUtc - DateTime.UtcNow).TotalMinutes;
 			builder.Query += "&lifetime=" + lifetimeInMinutes.ToString(CultureInfo.InvariantCulture);
 
 			var postContent = new MemoryStream();
-			var encryptedKey = this.CryptoServices.Encrypt(recipient.EncryptionKeyPublicMaterial, encryptedPayload.Key);
+			var encryptedKey = this.CryptoServices.Encrypt(recipient.EncryptionKeyPublicMaterial, encryptedVariables.Key);
 			this.Log("Message invite encrypted key", encryptedKey);
 			await postContent.WriteSizeAndBufferAsync(encryptedKey, cancellationToken);
-			await postContent.WriteSizeAndBufferAsync(encryptedPayload.IV, cancellationToken);
-			await postContent.WriteSizeAndBufferAsync(encryptedPayload.Ciphertext, cancellationToken);
+			await postContent.WriteSizeAndBufferAsync(encryptedVariables.IV, cancellationToken);
+			cipherTextStream.Position = 0;
+			await postContent.WriteSizeAndStreamAsync(cipherTextStream, cancellationToken);
 			await postContent.FlushAsync();
 			postContent.Position = 0;
 

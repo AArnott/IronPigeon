@@ -58,6 +58,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Strings.resx</DependentUpon>
     </Compile>
+    <Compile Include="Substream.cs" />
     <Compile Include="SymmetricEncryptionResult.cs" />
     <Compile Include="Providers\TwitterAddressBook.cs" />
     <Compile Include="SymmetricEncryptionVariables.cs" />
