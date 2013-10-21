@@ -13,6 +13,9 @@ This project includes libraries that implement the protocol and a message
 relay web service project that provides the cloud component necessary for
 passing messages.
 
+See the end of this file for instructions on contacting the author using
+the IronPigeon protocol.
+
 Installing IronPigeon
 ---------------------
 
@@ -205,6 +208,23 @@ types:
 	var message = new Message(ownEndpoint, recipients, "subject", "body");
 	await this.PostalService.PostAsync(message);
 	var incoming = await this.PostalService.ReceiveAsync(longPoll: true|false);
+
+Contact the author
+==================
+
+To contact the author using the IronPigeon protocol follow these steps:
+
+1. Clone this project.
+2. Open the IronPigeon.sln in Visual Studio 2013.
+3. Set the Clients\WpfChatroom project as the startup project.
+4. Press F5.
+5. Create your own endpoint and save it to disk so you can open it next time.
+6. Click the "Chat with author" button.
+7. Send me a message. 
+
+I may reply right away. But I may reply in a day or two. Check back occasionally
+by re-launching the sample and opening the same endpoint file you used to send
+me the message.
 
 [1]: http://nuget.org/packages/IronPigeon            "IronPigeon NuGet package"
 [2]: http://nuget.org/packages/IronPigeon.Dart       "IronPigeon.Dart NuGet package"
