@@ -6,6 +6,7 @@
 	using System.Configuration;
 	using System.IO;
 	using System.Linq;
+	using System.Net.Http;
 	using System.Reflection;
 	using System.Text;
 	using System.Threading;
@@ -130,10 +131,20 @@
 			chatroomWindow.Value.Show();
 		}
 
+		private async void ChatWithAuthor_OnClick(object sender, RoutedEventArgs e) {
+			var chatroomWindow = this.ChatroomWindowFactory.CreateExport();
+			chatroomWindow.Value.Show();
+
+			var addressBook = new DirectEntryAddressBook(this.CryptoProvider, new HttpClient());
+			var endpoint = await addressBook.LookupAsync("http://tinyurl.com/omhxu6l#-Rrs7LRrCE3bV8x58j1l4JUzAT3P2obKia73k3IFG9k");
+			chatroomWindow.Value.AddMember("App author", endpoint);
+		}
+
 		private async Task SetEndpointAsync(OwnEndpoint endpoint, Uri addressBookEntry, CancellationToken cancellationToken = default(CancellationToken)) {
 			this.Channel.Endpoint = endpoint;
 			this.PublicEndpointUrlTextBlock.Text = addressBookEntry.AbsoluteUri;
 			this.OpenChatroom.IsEnabled = true;
+			this.ChatWithAuthor.IsEnabled = true;
 		}
 
 		private void PublicEndpointUrlTextBlock_OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e) {

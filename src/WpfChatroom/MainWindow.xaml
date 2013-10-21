@@ -6,6 +6,7 @@
 		<Button x:Name="CreateNewEndpoint" Click="CreateNewEndpoint_OnClick">Create new endpoint</Button>
 		<Button x:Name="OpenOwnEndpoint" Click="OpenOwnEndpoint_OnClick">Open a previously saved endpoint</Button>
 		<Button x:Name="OpenChatroom" Click="OpenChatroom_OnClick" IsEnabled="False">Visit chatroom</Button>
+		<Button x:Name="ChatWithAuthor" Click="ChatWithAuthor_OnClick" IsEnabled="False">Chat with author</Button>
 		<WrapPanel>
 			<TextBlock Padding="0,0,10,0">Public endpoint URL:</TextBlock>
 			<TextBlock x:Name="PublicEndpointUrlTextBlock" ToolTip="Click to copy to clipboard" MouseLeftButtonDown="PublicEndpointUrlTextBlock_OnMouseLeftButtonDown"/>

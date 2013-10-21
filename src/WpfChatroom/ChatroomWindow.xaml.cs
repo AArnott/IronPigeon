@@ -70,7 +70,7 @@
 			await this.ReceiveMessageLoopAsync();
 		}
 
-		private void AddMember(string friendlyName, Endpoint endpoint) {
+		internal void AddMember(string friendlyName, Endpoint endpoint) {
 			if (this.members.Values.Contains(endpoint)) {
 				throw new InvalidOperationException("That member is already in the chatroom.");
 			}
