@@ -301,7 +301,7 @@
 					inboxContainer.CreateContainerWithPublicBlobsIfNotExistAsync(),
 					inboxTable.GetTableReference(DefaultInboxTableName).CreateIfNotExistsAsync());
 
-			Task.Run(
+			var nowait = Task.Run(
 				async delegate {
 					while (true) {
 						await PurgeExpiredAsync(inboxContainer);
