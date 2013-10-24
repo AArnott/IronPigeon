@@ -148,7 +148,7 @@
 		public async Task<JsonResult> CreateAsync() {
 			var inbox = InboxEntity.Create();
 			this.InboxTable.AddObject(inbox);
-			await this.InboxTable.SaveChangesWithRetriesAsync();
+			await this.InboxTable.SaveChangesAsync();
 
 			string messageReceivingEndpoint = this.GetAbsoluteUrlForAction("Slot", new { id = inbox.RowKey }).AbsoluteUri;
 			var result = new InboxCreationResponse {
@@ -238,7 +238,7 @@
 			}
 
 			this.InboxTable.UpdateObject(inbox);
-			await this.InboxTable.SaveChangesWithRetriesAsync();
+			await this.InboxTable.SaveChangesAsync();
 			return new EmptyResult();
 		}
 
@@ -388,7 +388,7 @@
 			if (response.IsSuccessStatusCode) {
 				inbox.LastWindows8PushNotificationUtc = DateTime.UtcNow;
 				this.InboxTable.UpdateObject(inbox);
-				await this.InboxTable.SaveChangesWithRetriesAsync();
+				await this.InboxTable.SaveChangesAsync();
 			} else {
 				if (failedAttempts == 0) {
 					var authHeader = response.Headers.WwwAuthenticate.FirstOrDefault();
@@ -396,7 +396,7 @@
 						if (authHeader.Parameter.Contains("Token expired")) {
 							await client.AcquireWnsPushBearerTokenAsync(this.HttpClient);
 							this.ClientTable.UpdateObject(client);
-							await this.ClientTable.SaveChangesWithRetriesAsync();
+							await this.ClientTable.SaveChangesAsync();
 							await this.PushNotifyInboxMessageWinStoreAsync(inbox, failedAttempts + 1);
 							return;
 						}
@@ -450,7 +450,7 @@
 				}
 
 				this.InboxTable.UpdateObject(inbox);
-				await this.InboxTable.SaveChangesWithRetriesAsync();
+				await this.InboxTable.SaveChangesAsync();
 			}
 		}
 

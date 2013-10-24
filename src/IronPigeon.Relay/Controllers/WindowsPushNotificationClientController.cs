@@ -70,7 +70,7 @@
 						this.ClientTable.AddObject(newClient);
 					}
 
-					await this.ClientTable.SaveChangesWithRetriesAsync();
+					await this.ClientTable.SaveChangesAsync();
 					this.ViewData["Successful"] = true;
 				}
 			}
@@ -87,7 +87,7 @@
 		public async Task Put(string id, string clientSecret) {
 			var client = new PushNotificationClientEntity(id, clientSecret);
 			this.ClientTable.AddObject(client);
-			await this.ClientTable.SaveChangesWithRetriesAsync();
+			await this.ClientTable.SaveChangesAsync();
 		}
 
 		/// <summary>
@@ -107,7 +107,7 @@
 			}
 
 			this.ClientTable.DeleteObject(client);
-			await this.ClientTable.SaveChangesWithRetriesAsync();
+			await this.ClientTable.SaveChangesAsync();
 		}
 
 		internal static async Task OneTimeInitializeAsync(CloudStorageAccount azureAccount) {
