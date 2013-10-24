@@ -44,6 +44,15 @@
 		[Import]
 		public ICryptoProvider CryptoProvider { get; set; }
 
+		internal void AddMember(string friendlyName, Endpoint endpoint) {
+			if (this.members.Values.Contains(endpoint)) {
+				throw new InvalidOperationException("That member is already in the chatroom.");
+			}
+
+			this.members.Add(friendlyName, endpoint);
+			this.ChatroomMembersList.Items.Add(friendlyName);
+		}
+
 		internal async Task InvitingMemberAsync(InviteMember inviteWindow) {
 			var addressBook = new DirectEntryAddressBook(this.CryptoProvider, new HttpClient());
 			var endpoint = await addressBook.LookupAsync(inviteWindow.PublicEndpointUrlBox.Text);
@@ -68,15 +77,6 @@
 			await Task.Yield();
 			this.AddMember("You", this.PostalService.Channel.Endpoint.PublicEndpoint);
 			await this.ReceiveMessageLoopAsync();
-		}
-
-		internal void AddMember(string friendlyName, Endpoint endpoint) {
-			if (this.members.Values.Contains(endpoint)) {
-				throw new InvalidOperationException("That member is already in the chatroom.");
-			}
-
-			this.members.Add(friendlyName, endpoint);
-			this.ChatroomMembersList.Items.Add(friendlyName);
 		}
 
 		private async Task ReceiveMessageLoopAsync() {
