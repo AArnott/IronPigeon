@@ -92,12 +92,20 @@
 			return new SymmetricEncryptionResult(key, iv, ciphertext);
 		}
 
-		public Task<SymmetricEncryptionVariables> EncryptAsync(Stream plaintext, Stream ciphertext, SymmetricEncryptionVariables encryptionVariables = null, CancellationToken cancellationToken = default(CancellationToken)) {
-			throw new NotImplementedException();
+		public async Task<SymmetricEncryptionVariables> EncryptAsync(Stream plaintext, Stream ciphertext, SymmetricEncryptionVariables encryptionVariables = null, CancellationToken cancellationToken = default(CancellationToken)) {
+			var plaintextBuffer = new byte[plaintext.Length - plaintext.Position];
+			await plaintext.ReadAsync(plaintextBuffer, 0, plaintextBuffer.Length);
+			var result = this.Encrypt(plaintextBuffer, encryptionVariables);
+			await ciphertext.WriteAsync(result.Ciphertext, 0, result.Ciphertext.Length);
+			return result;
 		}
 
-		public Task DecryptAsync(Stream ciphertext, Stream plaintext, SymmetricEncryptionVariables encryptionVariables, CancellationToken cancellationToken = default(CancellationToken)) {
-			throw new NotImplementedException();
+		public async Task DecryptAsync(Stream ciphertext, Stream plaintext, SymmetricEncryptionVariables encryptionVariables, CancellationToken cancellationToken = default(CancellationToken)) {
+			var buffer = new byte[ciphertext.Length - ciphertext.Position];
+			await ciphertext.ReadAsync(buffer, 0, buffer.Length);
+			var oldResult = new SymmetricEncryptionResult(encryptionVariables, buffer);
+			var plaintextBuffer = this.Decrypt(oldResult);
+			await plaintext.WriteAsync(plaintextBuffer, 0, plaintextBuffer.Length);
 		}
 
 		public byte[] Decrypt(SymmetricEncryptionResult data) {
@@ -142,8 +150,10 @@
 			return BitConverter.GetBytes(hash);
 		}
 
-		public Task<byte[]> HashAsync(Stream source, string hashAlgorithmName, CancellationToken cancellationToken = default(CancellationToken)) {
-			throw new NotImplementedException();
+		public async Task<byte[]> HashAsync(Stream source, string hashAlgorithmName, CancellationToken cancellationToken = default(CancellationToken)) {
+			var buffer = new byte[source.Length- source.Position];
+			await source.ReadAsync(buffer, 0, buffer.Length);
+			return this.Hash(buffer, hashAlgorithmName);
 		}
 
 		public void GenerateSigningKeyPair(out byte[] keyPair, out byte[] publicKey) {
