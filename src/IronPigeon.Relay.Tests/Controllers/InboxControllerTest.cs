@@ -1,7 +1,10 @@
 ﻿namespace IronPigeon.Relay.Tests.Controllers {
 	using System;
+	using System.Collections.Generic;
+	using System.Collections.Specialized;
 	using System.Globalization;
 	using System.IO;
+	using System.Linq;
 	using System.Net;
 	using System.Net.Http;
 	using System.Text;
@@ -10,6 +13,7 @@
 	using System.Web.Mvc;
 	using System.Web.Routing;
 	using IronPigeon.Relay.Controllers;
+	using IronPigeon.Relay.Models;
 	using Microsoft.WindowsAzure;
 	using Microsoft.WindowsAzure.Storage;
 	using Microsoft.WindowsAzure.Storage.Blob;
@@ -23,6 +27,7 @@
 	[TestFixture]
 	public class InboxControllerTest {
 		private const string CloudConfigurationName = "StorageConnectionString";
+		private const string MockClientIdentifier = "ms-app://w8id/";
 
 		private readonly HttpClient httpClient = new HttpClient();
 
@@ -35,20 +40,22 @@
 		private InboxCreationResponse inbox;
 
 		private string inboxId;
+		private string testTableName;
+		private string testContainerName;
 
 		[SetUp]
 		public void SetUp() {
 			AzureStorageConfig.RegisterConfiguration();
 
-			var testContainerName = "unittests" + Guid.NewGuid().ToString();
-			var testTableName = "unittests" + Guid.NewGuid().ToString().Replace("-", string.Empty);
+			this.testContainerName = "unittests" + Guid.NewGuid().ToString();
+			this.testTableName = "unittests" + Guid.NewGuid().ToString().Replace("-", string.Empty);
 			var account = CloudStorageAccount.DevelopmentStorageAccount;
 			var client = account.CreateCloudBlobClient();
 			this.tableClient = account.CreateCloudTableClient();
-			this.tableClient.GetTableReference(testTableName).CreateIfNotExists();
-			this.container = client.GetContainerReference(testContainerName);
-			this.container.CreateContainerWithPublicBlobsIfNotExistAsync();
-			this.controller = new InboxControllerForTest(this.container.Name, testTableName, CloudConfigurationName);
+			this.tableClient.GetTableReference(this.testTableName).CreateIfNotExists();
+			this.container = client.GetContainerReference(this.testContainerName);
+			var nowait = this.container.CreateContainerWithPublicBlobsIfNotExistAsync();
+			this.controller = this.CreateController();
 		}
 
 		[TearDown]
@@ -111,7 +118,7 @@
 		[Test]
 		public void DeleteNotificationAction() {
 			this.CreateInboxHelperAsync().Wait();
-			this.PostNotificationHelper().Wait();
+			this.PostNotificationHelper(this.controller).Wait();
 			var inbox = this.GetInboxItemsAsyncHelper().Result;
 			this.controller.DeleteAsync(this.inboxId, inbox.Items[0].Location.AbsoluteUri).GetAwaiter().GetResult();
 
@@ -125,7 +132,7 @@
 		public void PostNotificationAction() {
 			this.CreateInboxHelperAsync().Wait();
 			var inputStream = new MemoryStream(new byte[] { 0x1, 0x3, 0x2 });
-			this.PostNotificationHelper(inputStream: inputStream).Wait();
+			this.PostNotificationHelper(this.controller, inputStream: inputStream).Wait();
 
 			// Confirm that retrieving the inbox now includes the posted message.
 			var getResult = this.GetInboxItemsAsyncHelper().Result;
@@ -142,7 +149,7 @@
 		[Test]
 		public void PostNotificationActionHasExpirationCeiling() {
 			this.CreateInboxHelperAsync().Wait();
-			this.PostNotificationHelper(lifetimeInMinutes: (int)InboxController.MaxLifetimeCeiling.TotalMinutes + 5).Wait();
+			this.PostNotificationHelper(this.controller, lifetimeInMinutes: (int)InboxController.MaxLifetimeCeiling.TotalMinutes + 5).Wait();
 
 			var results = this.GetInboxItemsAsyncHelper().Result;
 			var blob = this.container.GetBlockBlobReference(results.Items[0].Location.AbsoluteUri);
@@ -156,7 +163,7 @@
 		public void PostNotificationActionRejectsLargePayloads() {
 			var inputStream = new MemoryStream(new byte[InboxController.MaxNotificationSize + 1]);
 			Assert.Throws<ArgumentException>(
-				() => this.PostNotificationHelper(inputStream: inputStream).GetAwaiter().GetResult());
+				() => this.PostNotificationHelper(this.controller, inputStream: inputStream).GetAwaiter().GetResult());
 		}
 
 		[Test]
@@ -179,6 +186,61 @@
 			Assert.That(freshBlob.DeleteIfExists(), Is.True);
 		}
 
+		[Test]
+		public void HighFrequencyPostingTest() {
+			const int MessageCount = 5;
+			this.CreateInboxHelperAsync().Wait();
+			this.RegisterPushNotificationsAsync().Wait();
+			Task task = Task.WhenAll(Enumerable.Range(1, MessageCount).Select(n => {
+				var controller = this.CreateController();
+				var clientTableMock = new Mock<PushNotificationContext>(controller.ClientTable.ServiceClient, controller.ClientTable.TableName);
+				clientTableMock
+					.Setup<Task<PushNotificationClientEntity>>(c => c.GetAsync(MockClientIdentifier))
+					.Returns(Task.FromResult(new PushNotificationClientEntity() { AccessToken = "sometoken" }));
+				controller.ClientTable = clientTableMock.Object;
+				return this.PostNotificationHelper(controller);
+			}));
+			task.Wait();
+			var getResult = this.GetInboxItemsAsyncHelper().Result;
+			Assert.AreEqual(MessageCount, getResult.Items.Count);
+		}
+
+		private static string AssembleQueryString(NameValueCollection args) {
+			Requires.NotNull(args, "args");
+
+			var builder = new StringBuilder();
+			foreach (string key in args) {
+				if (builder.Length > 0) {
+					builder.Append("&");
+				}
+
+				builder.Append(Uri.EscapeDataString(key));
+				builder.Append("=");
+				builder.Append(Uri.EscapeDataString(args[key]));
+			}
+
+			return builder.ToString();
+		}
+
+		private static void SetupNextRequest(InboxController controller, string httpMethod, Stream inputStream = null, NameValueCollection form = null) {
+			Requires.NotNull(controller, "controller");
+			inputStream = inputStream ?? new MemoryStream(new byte[] { 0x1, 0x3, 0x2 });
+
+			var request = new Mock<HttpRequestBase>();
+			request.SetupGet(r => r.InputStream).Returns(inputStream);
+			request.SetupGet(r => r.HttpMethod).Returns(httpMethod);
+			request.SetupGet(r => r.ContentLength).Returns((int)inputStream.Length);
+			request.SetupGet(r => r.Form).Returns(form ?? new NameValueCollection());
+
+			var httpContext = new Mock<HttpContextBase>();
+			httpContext.SetupGet(c => c.Request).Returns(request.Object);
+
+			var controllerContext = new Mock<ControllerContext>();
+			controllerContext.SetupGet(cc => cc.HttpContext).Returns(httpContext.Object);
+
+			controller.ControllerContext = controllerContext.Object;
+		}
+
 		private async Task CreateInboxHelperAsync() {
 			var jsonResult = await this.controller.CreateAsync();
 			var result = (InboxCreationResponse)jsonResult.Data;
@@ -193,24 +255,31 @@
 			this.inboxId = (string)routeData.Values["id"];
 		}
 
-		private async Task PostNotificationHelper(Stream inputStream = null, int lifetimeInMinutes = 2) {
-			inputStream = inputStream ?? new MemoryStream(new byte[] { 0x1, 0x3, 0x2 });
+		private async Task RegisterPushNotificationsAsync() {
+			var queryArgs = new NameValueCollection {
+				{ "channel_uri", "http://localhost/win8push" },
+				{ "channel_content", "w8content" },
+				{ "package_security_identifier", MockClientIdentifier },
+				{ "wp8_channel_uri", "http://localhost/wp8push" },
+				{ "wp8_channel_content", "wp8content" },
+				{ "wp8_channel_toast_text1", "wp8toast1" },
+				{ "wp8_channel_toast_text2", "wp8toast2" },
+			};
+			var inputStream = new MemoryStream(Encoding.ASCII.GetBytes(AssembleQueryString(queryArgs)));
+			SetupNextRequest(this.controller, "PUT", inputStream, queryArgs);
 
-			var request = new Mock<HttpRequestBase>();
-			request.SetupGet(r => r.InputStream).Returns(inputStream);
-			request.SetupGet(r => r.HttpMethod).Returns("POST");
-			request.SetupGet(r => r.ContentLength).Returns((int)inputStream.Length);
+			await this.controller.PushChannelAsync(this.inboxId);
+		}
 
-			var httpContext = new Mock<HttpContextBase>();
-			httpContext.SetupGet(c => c.Request).Returns(request.Object);
+		private async Task PostNotificationHelper(InboxController controller, Stream inputStream = null, int lifetimeInMinutes = 2) {
+			SetupNextRequest(controller, "POST", inputStream);
 
-			var controllerContext = new Mock<ControllerContext>();
-			controllerContext.SetupGet(cc => cc.HttpContext).Returns(httpContext.Object);
-
-			this.controller.ControllerContext = controllerContext.Object;
-
-			var result = await this.controller.PostNotificationAsync(this.inboxId, lifetimeInMinutes);
+			var result = await controller.PostNotificationAsync(this.inboxId, lifetimeInMinutes);
 			Assert.That(result, Is.InstanceOf<EmptyResult>());
+		}
+
+		private InboxControllerForTest CreateController() {
+			return new InboxControllerForTest(this.container.Name, this.testTableName, CloudConfigurationName, new MockHandler());
 		}
 
 		private async Task<IncomingList> GetInboxItemsAsyncHelper() {
@@ -225,14 +294,26 @@
 		}
 
 		public class InboxControllerForTest : InboxController {
-			public InboxControllerForTest(string containerName, string tableName, string cloudConfigurationName)
-				: base(containerName, tableName, cloudConfigurationName) {
+			public InboxControllerForTest(string containerName, string tableName, string cloudConfigurationName, HttpMessageHandler httpHandler)
+				: base(containerName, tableName, cloudConfigurationName, httpHandler) {
+				this.HttpHandler = httpHandler;
 			}
+
+			public HttpMessageHandler HttpHandler { get; private set; }
 
 			protected override Uri GetAbsoluteUrlForAction(string action, dynamic routeValues) {
 				routeValues = new ReflectionDynamicObject(routeValues);
 				return new Uri(
 					string.Format(CultureInfo.InvariantCulture, "http://localhost/inbox/{0}/{1}", action, routeValues.id));
+			}
+		}
+
+		private class MockHandler : HttpMessageHandler {
+			internal MockHandler() {
+			}
+
+			protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, System.Threading.CancellationToken cancellationToken) {
+				return Task.FromResult(new HttpResponseMessage());
 			}
 		}
 	}

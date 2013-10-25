@@ -18,7 +18,7 @@
 
 		public string TableName { get; private set; }
 
-		public async Task<PushNotificationClientEntity> GetAsync(string clientPackageSecurityIdentifier) {
+		public virtual async Task<PushNotificationClientEntity> GetAsync(string clientPackageSecurityIdentifier) {
 			Requires.NotNullOrEmpty(clientPackageSecurityIdentifier, "clientPackageSecurityIdentifier");
 			Requires.Argument(clientPackageSecurityIdentifier == null || clientPackageSecurityIdentifier.StartsWith(PushNotificationClientEntity.SchemePrefix), "clientPackageSecurityIdentifier", "Prefix {0} not found", PushNotificationClientEntity.SchemePrefix);
 

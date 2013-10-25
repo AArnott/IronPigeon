@@ -65,7 +65,8 @@
 		/// <param name="containerName">Name of the blob container.</param>
 		/// <param name="tableName">Name of the table.</param>
 		/// <param name="cloudConfigurationName">Name of the cloud configuration.</param>
-		public InboxController(string containerName, string tableName, string cloudConfigurationName) {
+		/// <param name="httpHandler">The HTTP handler to use for outgoing HTTP requests.</param>
+		public InboxController(string containerName, string tableName, string cloudConfigurationName, HttpMessageHandler httpHandler = null) {
 			Requires.NotNullOrEmpty(containerName, "containerName");
 			Requires.NotNullOrEmpty(cloudConfigurationName, "cloudConfigurationName");
 
@@ -74,7 +75,7 @@
 			this.InboxContainer = blobClient.GetContainerReference(containerName);
 			var tableClient = storage.CreateCloudTableClient();
 			this.InboxTable = new InboxContext(tableClient, tableName);
-			this.HttpClient = new HttpClient();
+			this.HttpClient = new HttpClient(httpHandler ?? new HttpClientHandler());
 			this.ClientTable = new PushNotificationContext(tableClient, WindowsPushNotificationClientController.DefaultTableName);
 		}
 
