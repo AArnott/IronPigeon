@@ -210,8 +210,11 @@
 				throw new ArgumentException("Maximum message notification size exceeded.");
 			}
 
-			await this.AlertLongPollWaiterAsync(inbox);
-			await this.InboxTable.SaveChangesWithMergeAsync(inbox);
+			// Notifying the receiver isn't something the sender needs to wait for.
+			var nowait = Task.Run(async delegate {
+				await this.AlertLongPollWaiterAsync(inbox);
+				await this.InboxTable.SaveChangesWithMergeAsync(inbox);
+			});
 			return new EmptyResult();
 		}
 
