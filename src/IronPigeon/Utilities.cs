@@ -44,12 +44,12 @@
 		/// incrementing salt value to mix into the clock ticks so that each instance produces unique data.
 		/// </remarks>
 		private static readonly ThreadLocal<Random> NonCryptoRandomGenerator = new ThreadLocal<Random>(
-			() => new Random((int)((DateTime.Now.Ticks + Interlocked.Increment(ref RandSeedSalt)) % int.MaxValue)));
+			() => new Random((int)((DateTime.Now.Ticks + Interlocked.Increment(ref randSeedSalt)) % int.MaxValue)));
 
 		/// <summary>
 		/// A simple salt for instantiating non-crypto RNGs.
 		/// </summary>
-		private static int RandSeedSalt = 0;
+		private static int randSeedSalt = 0;
 
 		/// <summary>
 		/// Tests whether two arrays are equal in contents and ordering.

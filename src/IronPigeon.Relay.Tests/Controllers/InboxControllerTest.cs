@@ -208,6 +208,7 @@
 		/// Tests that when an Inbox entity optimistic locking conflict is reported
 		/// that changes are merged together successfully.
 		/// </summary>
+		/// <returns>A task representing the async test.</returns>
 		[Test, Category("Stress")]
 		public async Task OptimisticLockingMergeResolution() {
 			await this.CreateInboxHelperAsync();
