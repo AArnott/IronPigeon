@@ -187,11 +187,11 @@
 		}
 
 		[Test, Category("Stress")]
-		public void HighFrequencyPostingTest() {
-			const int MessageCount = 2;
-			this.CreateInboxHelperAsync().Wait();
-			this.RegisterPushNotificationsAsync().Wait();
-			Task task = Task.WhenAll(Enumerable.Range(1, MessageCount).Select(n => {
+		public async Task HighFrequencyPostingTest() {
+			const int MessageCount = 5;
+			await this.CreateInboxHelperAsync();
+			await this.RegisterPushNotificationsAsync();
+			await Task.WhenAll(Enumerable.Range(1, MessageCount).Select(n => {
 				var controller = this.CreateController();
 				var clientTableMock = new Mock<PushNotificationContext>(controller.ClientTable.ServiceClient, controller.ClientTable.TableName);
 				clientTableMock
@@ -200,8 +200,7 @@
 				controller.ClientTable = clientTableMock.Object;
 				return this.PostNotificationHelper(controller);
 			}));
-			task.Wait();
-			var getResult = this.GetInboxItemsAsyncHelper().Result;
+			var getResult = await this.GetInboxItemsAsyncHelper();
 			Assert.AreEqual(MessageCount, getResult.Items.Count);
 		}
 
@@ -300,7 +299,7 @@
 			await this.controller.PushChannelAsync(this.inboxId);
 		}
 
-		private async Task PostNotificationHelper(InboxController controller, Stream inputStream = null, int lifetimeInMinutes = 2) {
+		private async Task PostNotificationHelper(InboxController controller, Stream inputStream = null, int lifetimeInMinutes = 10) {
 			SetupNextRequest(controller, "POST", inputStream);
 
 			var result = await controller.PostNotificationAsync(this.inboxId, lifetimeInMinutes);

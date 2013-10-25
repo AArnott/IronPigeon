@@ -3,6 +3,7 @@
 	using System.Collections.Generic;
 	using System.Configuration;
 	using System.Data.Services.Client;
+	using System.Diagnostics;
 	using System.Globalization;
 	using System.IO;
 	using System.Linq;
@@ -193,6 +194,7 @@
 
 			var directory = this.InboxContainer.GetDirectoryReference(id);
 			var blob = directory.GetBlockBlobReference(Utilities.CreateRandomWebSafeName(24));
+			Debug.WriteLine("Defining blob: {0} ({1})", blob.Name, blob.Uri);
 
 			var requestedLifeSpan = TimeSpan.FromMinutes(lifetime);
 			var actualLifespan = requestedLifeSpan > MaxLifetimeCeiling ? MaxLifetimeCeiling : requestedLifeSpan;
