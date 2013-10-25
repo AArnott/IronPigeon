@@ -147,7 +147,7 @@
 				this.ClientTable.AddObject(newEmailEntity);
 			}
 
-			await this.ClientTable.SaveChangesWithRetriesAsync();
+			await this.ClientTable.SaveChangesAsync();
 		}
 
 		[DataContract]

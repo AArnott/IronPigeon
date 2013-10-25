@@ -83,7 +83,7 @@
 			var blobStorage = new AzureBlobStorage(azureAccount, BlobController.DefaultContainerName);
 			await blobStorage.CreateContainerIfNotExistAsync();
 
-			Task.Run(async delegate {
+			var nowait = Task.Run(async delegate {
 				while (true) {
 					await blobStorage.PurgeBlobsExpiringBeforeAsync();
 					await Task.Delay(AzureStorageConfig.PurgeExpiredBlobsInterval);

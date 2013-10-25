@@ -140,11 +140,12 @@
 			chatroomWindow.Value.AddMember("App author", endpoint);
 		}
 
-		private async Task SetEndpointAsync(OwnEndpoint endpoint, Uri addressBookEntry, CancellationToken cancellationToken = default(CancellationToken)) {
+		private Task SetEndpointAsync(OwnEndpoint endpoint, Uri addressBookEntry, CancellationToken cancellationToken = default(CancellationToken)) {
 			this.Channel.Endpoint = endpoint;
 			this.PublicEndpointUrlTextBlock.Text = addressBookEntry.AbsoluteUri;
 			this.OpenChatroom.IsEnabled = true;
 			this.ChatWithAuthor.IsEnabled = true;
+			return Task.FromResult<object>(null);
 		}
 
 		private void PublicEndpointUrlTextBlock_OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e) {

@@ -2,6 +2,8 @@
 	using System;
 	using System.Collections.Generic;
 	using System.Configuration;
+	using System.Data.Services.Client;
+	using System.Diagnostics;
 	using System.Globalization;
 	using System.IO;
 	using System.Linq;
@@ -65,7 +67,8 @@
 		/// <param name="containerName">Name of the blob container.</param>
 		/// <param name="tableName">Name of the table.</param>
 		/// <param name="cloudConfigurationName">Name of the cloud configuration.</param>
-		public InboxController(string containerName, string tableName, string cloudConfigurationName) {
+		/// <param name="httpHandler">The HTTP handler to use for outgoing HTTP requests.</param>
+		public InboxController(string containerName, string tableName, string cloudConfigurationName, HttpMessageHandler httpHandler = null) {
 			Requires.NotNullOrEmpty(containerName, "containerName");
 			Requires.NotNullOrEmpty(cloudConfigurationName, "cloudConfigurationName");
 
@@ -74,7 +77,7 @@
 			this.InboxContainer = blobClient.GetContainerReference(containerName);
 			var tableClient = storage.CreateCloudTableClient();
 			this.InboxTable = new InboxContext(tableClient, tableName);
-			this.HttpClient = new HttpClient();
+			this.HttpClient = new HttpClient(httpHandler ?? new HttpClientHandler());
 			this.ClientTable = new PushNotificationContext(tableClient, WindowsPushNotificationClientController.DefaultTableName);
 		}
 
@@ -148,7 +151,7 @@
 		public async Task<JsonResult> CreateAsync() {
 			var inbox = InboxEntity.Create();
 			this.InboxTable.AddObject(inbox);
-			await this.InboxTable.SaveChangesWithRetriesAsync();
+			await this.InboxTable.SaveChangesWithMergeAsync(inbox);
 
 			string messageReceivingEndpoint = this.GetAbsoluteUrlForAction("Slot", new { id = inbox.RowKey }).AbsoluteUri;
 			var result = new InboxCreationResponse {
@@ -191,6 +194,7 @@
 
 			var directory = this.InboxContainer.GetDirectoryReference(id);
 			var blob = directory.GetBlockBlobReference(Utilities.CreateRandomWebSafeName(24));
+			Debug.WriteLine("Defining blob: {0} ({1})", blob.Name, blob.Uri);
 
 			var requestedLifeSpan = TimeSpan.FromMinutes(lifetime);
 			var actualLifespan = requestedLifeSpan > MaxLifetimeCeiling ? MaxLifetimeCeiling : requestedLifeSpan;
@@ -207,7 +211,7 @@
 			}
 
 			await this.AlertLongPollWaiterAsync(inbox);
-
+			await this.InboxTable.SaveChangesWithMergeAsync(inbox);
 			return new EmptyResult();
 		}
 
@@ -238,7 +242,7 @@
 			}
 
 			this.InboxTable.UpdateObject(inbox);
-			await this.InboxTable.SaveChangesWithRetriesAsync();
+			await this.InboxTable.SaveChangesWithMergeAsync(inbox);
 			return new EmptyResult();
 		}
 
@@ -301,7 +305,7 @@
 					inboxContainer.CreateContainerWithPublicBlobsIfNotExistAsync(),
 					inboxTable.GetTableReference(DefaultInboxTableName).CreateIfNotExistsAsync());
 
-			Task.Run(
+			var nowait = Task.Run(
 				async delegate {
 					while (true) {
 						await PurgeExpiredAsync(inboxContainer);
@@ -388,7 +392,6 @@
 			if (response.IsSuccessStatusCode) {
 				inbox.LastWindows8PushNotificationUtc = DateTime.UtcNow;
 				this.InboxTable.UpdateObject(inbox);
-				await this.InboxTable.SaveChangesWithRetriesAsync();
 			} else {
 				if (failedAttempts == 0) {
 					var authHeader = response.Headers.WwwAuthenticate.FirstOrDefault();
@@ -396,7 +399,7 @@
 						if (authHeader.Parameter.Contains("Token expired")) {
 							await client.AcquireWnsPushBearerTokenAsync(this.HttpClient);
 							this.ClientTable.UpdateObject(client);
-							await this.ClientTable.SaveChangesWithRetriesAsync();
+							await this.ClientTable.SaveChangesAsync();
 							await this.PushNotifyInboxMessageWinStoreAsync(inbox, failedAttempts + 1);
 							return;
 						}
@@ -450,7 +453,6 @@
 				}
 
 				this.InboxTable.UpdateObject(inbox);
-				await this.InboxTable.SaveChangesWithRetriesAsync();
 			}
 		}
 

@@ -36,6 +36,22 @@
 		private static readonly char[] WebSafeSpecificBase64Characters = new char[] { '-', '_' };
 
 		/// <summary>
+		/// Gets a thread-local instance of a non-crypto random number generator.
+		/// </summary>
+		/// <remarks>
+		/// It's important that we minimize the risk of creating these with the same seed as another
+		/// in the case of two threads simultaneously asking for their first RNG. So we use a simple
+		/// incrementing salt value to mix into the clock ticks so that each instance produces unique data.
+		/// </remarks>
+		private static readonly ThreadLocal<Random> NonCryptoRandomGenerator = new ThreadLocal<Random>(
+			() => new Random((int)((DateTime.Now.Ticks + Interlocked.Increment(ref RandSeedSalt)) % int.MaxValue)));
+
+		/// <summary>
+		/// A simple salt for instantiating non-crypto RNGs.
+		/// </summary>
+		private static int RandSeedSalt = 0;
+
+		/// <summary>
 		/// Tests whether two arrays are equal in contents and ordering.
 		/// </summary>
 		/// <typeparam name="T">The type of elements in the arrays.</typeparam>
@@ -110,7 +126,7 @@
 		/// </remarks>
 		public static string CreateRandomWebSafeName(int length) {
 			Requires.Range(length > 0, "length");
-			var random = new Random();
+			var random = NonCryptoRandomGenerator.Value;
 			var buffer = new byte[length];
 			random.NextBytes(buffer);
 			return ToBase64WebSafe(buffer).Substring(0, length);

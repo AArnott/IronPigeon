@@ -413,6 +413,11 @@
 			postContent.Position = 0;
 
 			using (var response = await this.HttpClient.PostAsync(builder.Uri, new StreamContent(postContent), cancellationToken)) {
+				if (response.Content != null) {
+					// Just to help in debugging.
+					string responseContent = await response.Content.ReadAsStringAsync();
+				}
+
 				response.EnsureSuccessStatusCode();
 				var receipt = new NotificationPostedReceipt(recipient, response.Headers.Date);
 				return receipt;

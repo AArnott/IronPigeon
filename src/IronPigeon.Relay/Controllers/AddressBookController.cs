@@ -97,7 +97,7 @@
 
 			entity.AddressBookUrl = addressBookBlobUri;
 
-			await this.ClientTable.SaveChangesWithRetriesAsync();
+			await this.ClientTable.SaveChangesAsync();
 			return new EmptyResult();
 		}
 

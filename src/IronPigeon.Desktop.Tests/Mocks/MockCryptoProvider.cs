@@ -151,7 +151,7 @@
 		}
 
 		public async Task<byte[]> HashAsync(Stream source, string hashAlgorithmName, CancellationToken cancellationToken = default(CancellationToken)) {
-			var buffer = new byte[source.Length- source.Position];
+			var buffer = new byte[source.Length - source.Position];
 			await source.ReadAsync(buffer, 0, buffer.Length);
 			return this.Hash(buffer, hashAlgorithmName);
 		}

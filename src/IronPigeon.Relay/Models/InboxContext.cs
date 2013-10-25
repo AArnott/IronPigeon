@@ -1,7 +1,10 @@
 ﻿namespace IronPigeon.Relay.Models {
 	using System;
 	using System.Collections.Generic;
+	using System.Data.Services.Client;
 	using System.Linq;
+	using System.Runtime.ExceptionServices;
+	using System.Threading.Tasks;
 	using System.Web;
 	using Microsoft.WindowsAzure.Storage.Table;
 	using Microsoft.WindowsAzure.Storage.Table.DataServices;
@@ -25,6 +28,28 @@
 
 		public void AddObject(InboxEntity entity) {
 			this.AddObject(this.TableName, entity);
+		}
+
+		public async Task SaveChangesWithMergeAsync(InboxEntity inboxEntity) {
+			const int MaxRetries = 5;
+			Exception lastError = null;
+			for (int i = 0; i < MaxRetries; i++) {
+				try {
+					if (i > 0) {
+						// Attempt to sync up our inboxEntity with the cloud before saving local changes again.
+						// We can drop the result. Just requerying is enough to solve the problem.
+						await this.Get(inboxEntity.RowKey).ExecuteSegmentedAsync(null);
+					}
+
+					await this.SaveChangesAsync();
+					return;
+				} catch (DataServiceRequestException ex) {
+					lastError = ex;
+				}
+			}
+
+			// Rethrow exception. We've failed too many times.
+			ExceptionDispatchInfo.Capture(lastError).Throw();
 		}
 	}
 }
