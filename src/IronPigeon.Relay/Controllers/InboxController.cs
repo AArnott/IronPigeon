@@ -2,6 +2,7 @@
 	using System;
 	using System.Collections.Generic;
 	using System.Configuration;
+	using System.Data.Services.Client;
 	using System.Globalization;
 	using System.IO;
 	using System.Linq;
@@ -149,7 +150,7 @@
 		public async Task<JsonResult> CreateAsync() {
 			var inbox = InboxEntity.Create();
 			this.InboxTable.AddObject(inbox);
-			await this.InboxTable.SaveChangesAsync();
+			await this.InboxTable.SaveChangesWithMergeAsync(inbox);
 
 			string messageReceivingEndpoint = this.GetAbsoluteUrlForAction("Slot", new { id = inbox.RowKey }).AbsoluteUri;
 			var result = new InboxCreationResponse {
@@ -208,7 +209,7 @@
 			}
 
 			await this.AlertLongPollWaiterAsync(inbox);
-
+			await this.InboxTable.SaveChangesWithMergeAsync(inbox);
 			return new EmptyResult();
 		}
 
@@ -239,7 +240,7 @@
 			}
 
 			this.InboxTable.UpdateObject(inbox);
-			await this.InboxTable.SaveChangesAsync();
+			await this.InboxTable.SaveChangesWithMergeAsync(inbox);
 			return new EmptyResult();
 		}
 
@@ -389,7 +390,6 @@
 			if (response.IsSuccessStatusCode) {
 				inbox.LastWindows8PushNotificationUtc = DateTime.UtcNow;
 				this.InboxTable.UpdateObject(inbox);
-				await this.InboxTable.SaveChangesAsync();
 			} else {
 				if (failedAttempts == 0) {
 					var authHeader = response.Headers.WwwAuthenticate.FirstOrDefault();
@@ -451,7 +451,6 @@
 				}
 
 				this.InboxTable.UpdateObject(inbox);
-				await this.InboxTable.SaveChangesAsync();
 			}
 		}
 

@@ -188,7 +188,7 @@
 
 		[Test]
 		public void HighFrequencyPostingTest() {
-			const int MessageCount = 5;
+			const int MessageCount = 2;
 			this.CreateInboxHelperAsync().Wait();
 			this.RegisterPushNotificationsAsync().Wait();
 			Task task = Task.WhenAll(Enumerable.Range(1, MessageCount).Select(n => {
