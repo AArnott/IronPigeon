@@ -186,7 +186,7 @@
 			Assert.That(freshBlob.DeleteIfExists(), Is.True);
 		}
 
-		[Test]
+		[Test, Category("Stress")]
 		public void HighFrequencyPostingTest() {
 			const int MessageCount = 2;
 			this.CreateInboxHelperAsync().Wait();
@@ -203,6 +203,35 @@
 			task.Wait();
 			var getResult = this.GetInboxItemsAsyncHelper().Result;
 			Assert.AreEqual(MessageCount, getResult.Items.Count);
+		}
+
+		/// <summary>
+		/// Tests that when an Inbox entity optimistic locking conflict is reported
+		/// that changes are merged together successfully.
+		/// </summary>
+		[Test, Category("Stress")]
+		public async Task OptimisticLockingMergeResolution() {
+			await this.CreateInboxHelperAsync();
+			var inboxContext1 = new InboxContext(this.controller.InboxTable.ServiceClient, this.controller.InboxTable.TableName);
+			var inboxContext2 = new InboxContext(this.controller.InboxTable.ServiceClient, this.controller.InboxTable.TableName);
+			var inboxContext3 = new InboxContext(this.controller.InboxTable.ServiceClient, this.controller.InboxTable.TableName);
+
+			var inbox1 = inboxContext1.Get(this.inboxId).Single();
+			var inbox2 = inboxContext2.Get(this.inboxId).Single();
+
+			inbox1.WinPhone8ToastText1 = "new text1";
+			inbox2.WinPhone8ToastText2 = "new text2";
+
+			inboxContext1.UpdateObject(inbox1);
+			inboxContext2.UpdateObject(inbox2);
+
+			await inboxContext1.SaveChangesWithMergeAsync(inbox1);
+			await inboxContext2.SaveChangesWithMergeAsync(inbox2);
+
+			// Verify that a fresh entity obtained has both property changes preserved.
+			var inbox3 = inboxContext3.Get(this.inboxId).Single();
+			Assert.AreEqual("new text1", inbox3.WinPhone8ToastText1);
+			Assert.AreEqual("new text2", inbox3.WinPhone8ToastText2);
 		}
 
 		private static string AssembleQueryString(NameValueCollection args) {

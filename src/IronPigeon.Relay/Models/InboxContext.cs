@@ -31,15 +31,14 @@
 		}
 
 		public async Task SaveChangesWithMergeAsync(InboxEntity inboxEntity) {
+			const int MaxRetries = 5;
 			Exception lastError = null;
-			for (int i = 0; i < 3; i++) {
+			for (int i = 0; i < MaxRetries; i++) {
 				try {
 					if (i > 0) {
 						// Attempt to sync up our inboxEntity with the cloud before saving local changes again.
-						this.MergeOption = System.Data.Services.Client.MergeOption.PreserveChanges;
-						var queryResult = await this.Get(inboxEntity.RowKey).ExecuteSegmentedAsync(null);
-						var newInboxEntity = queryResult.Single();
-						//// TODO: code here
+						// We can drop the result. Just requerying is enough to solve the problem.
+						await this.Get(inboxEntity.RowKey).ExecuteSegmentedAsync(null);
 					}
 
 					await this.SaveChangesAsync();
