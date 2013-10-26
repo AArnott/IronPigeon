@@ -243,6 +243,35 @@
 			return new PayloadReference(blobUri, messageHash, this.CryptoServices.SymmetricHashAlgorithmName, encryptionVariables.Key, encryptionVariables.IV, expiresUtc);
 		}
 
+		/// <summary>
+		/// Downloads the message payload referred to by the specified <see cref="PayloadReference"/>.
+		/// </summary>
+		/// <param name="notification">The payload reference.</param>
+		/// <param name="cancellationToken">The cancellation token.</param>
+		/// <returns>The task representing the asynchronous operation.</returns>
+		public virtual async Task<Payload> DownloadPayloadAsync(PayloadReference notification, CancellationToken cancellationToken) {
+			Requires.NotNull(notification, "notification");
+
+			var responseMessage = await this.HttpClient.GetAsync(notification.Location, cancellationToken);
+			var messageBuffer = await responseMessage.Content.ReadAsByteArrayAsync();
+
+			// Calculate hash of downloaded message and check that it matches the referenced message hash.
+			if (!this.CryptoServices.IsHashMatchWithTolerantHashAlgorithm(messageBuffer, notification.Hash, notification.HashAlgorithmName)) {
+				throw new InvalidMessageException();
+			}
+
+			var encryptionVariables = new SymmetricEncryptionVariables(notification.Key, notification.IV);
+
+			var cipherStream = new MemoryStream(messageBuffer);
+			var plainTextStream = new MemoryStream();
+			await this.CryptoServices.DecryptAsync(cipherStream, plainTextStream, encryptionVariables, cancellationToken);
+			plainTextStream.Position = 0;
+			var plainTextReader = new BinaryReader(plainTextStream);
+			var message = Utilities.DeserializeDataContract<Payload>(plainTextReader);
+			message.PayloadReferenceUri = notification.ReferenceLocation;
+			return message;
+		}
+
 		#region Protected message sending/receiving methods
 
 		/// <summary>
@@ -305,35 +334,6 @@
 			}
 
 			return messageReference;
-		}
-
-		/// <summary>
-		/// Downloads the message payload referred to by the specified <see cref="PayloadReference"/>.
-		/// </summary>
-		/// <param name="notification">The payload reference.</param>
-		/// <param name="cancellationToken">The cancellation token.</param>
-		/// <returns>The task representing the asynchronous operation.</returns>
-		protected virtual async Task<Payload> DownloadPayloadAsync(PayloadReference notification, CancellationToken cancellationToken) {
-			Requires.NotNull(notification, "notification");
-
-			var responseMessage = await this.HttpClient.GetAsync(notification.Location, cancellationToken);
-			var messageBuffer = await responseMessage.Content.ReadAsByteArrayAsync();
-
-			// Calculate hash of downloaded message and check that it matches the referenced message hash.
-			if (!this.CryptoServices.IsHashMatchWithTolerantHashAlgorithm(messageBuffer, notification.Hash, notification.HashAlgorithmName)) {
-				throw new InvalidMessageException();
-			}
-
-			var encryptionVariables = new SymmetricEncryptionVariables(notification.Key, notification.IV);
-
-			var cipherStream = new MemoryStream(messageBuffer);
-			var plainTextStream = new MemoryStream();
-			await this.CryptoServices.DecryptAsync(cipherStream, plainTextStream, encryptionVariables, cancellationToken);
-			plainTextStream.Position = 0;
-			var plainTextReader = new BinaryReader(plainTextStream);
-			var message = Utilities.DeserializeDataContract<Payload>(plainTextReader);
-			message.PayloadReferenceUri = notification.ReferenceLocation;
-			return message;
 		}
 
 		/// <summary>
