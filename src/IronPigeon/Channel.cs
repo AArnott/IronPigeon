@@ -206,6 +206,43 @@
 			return verifiedIdentifiers;
 		}
 
+		/// <summary>
+		/// Encrypts a message and uploads it to the cloud.
+		/// </summary>
+		/// <param name="message">The message being transmitted.</param>
+		/// <param name="expiresUtc">The date after which the message may be destroyed.</param>
+		/// <param name="cancellationToken">The cancellation token.</param>
+		/// <returns>The task whose result is a reference to the uploaded payload including decryption key.</returns>
+		public virtual async Task<PayloadReference> PostPayloadAsync(Payload message, DateTime expiresUtc, CancellationToken cancellationToken) {
+			Requires.NotNull(message, "message");
+			Requires.That(expiresUtc.Kind == DateTimeKind.Utc, "expiresUtc", Strings.UTCTimeRequired);
+			Requires.ValidState(this.CloudBlobStorage != null, "BlobStorageProvider must not be null");
+
+			cancellationToken.ThrowIfCancellationRequested();
+
+			var plainTextStream = new MemoryStream();
+			var writer = new BinaryWriter(plainTextStream);
+			writer.SerializeDataContract(message);
+			writer.Flush();
+			var plainTextBuffer = plainTextStream.ToArray();
+			this.Log("Message plaintext", plainTextBuffer);
+
+			plainTextStream.Position = 0;
+			var cipherTextStream = new MemoryStream();
+			var encryptionVariables = await this.CryptoServices.EncryptAsync(plainTextStream, cipherTextStream, cancellationToken: cancellationToken);
+			this.Log("Message symmetrically encrypted", cipherTextStream.ToArray());
+			this.Log("Message symmetric key", encryptionVariables.Key);
+			this.Log("Message symmetric IV", encryptionVariables.IV);
+
+			cipherTextStream.Position = 0;
+			var messageHash = await this.CryptoServices.HashAsync(cipherTextStream, this.CryptoServices.SymmetricHashAlgorithmName, cancellationToken);
+			this.Log("Encrypted message hash", messageHash);
+
+			cipherTextStream.Position = 0;
+			Uri blobUri = await this.CloudBlobStorage.UploadMessageAsync(cipherTextStream, expiresUtc, cancellationToken: cancellationToken);
+			return new PayloadReference(blobUri, messageHash, this.CryptoServices.SymmetricHashAlgorithmName, encryptionVariables.Key, encryptionVariables.IV, expiresUtc);
+		}
+
 		#region Protected message sending/receiving methods
 
 		/// <summary>
@@ -297,43 +334,6 @@
 			var message = Utilities.DeserializeDataContract<Payload>(plainTextReader);
 			message.PayloadReferenceUri = notification.ReferenceLocation;
 			return message;
-		}
-
-		/// <summary>
-		/// Encrypts a message and uploads it to the cloud.
-		/// </summary>
-		/// <param name="message">The message being transmitted.</param>
-		/// <param name="expiresUtc">The date after which the message may be destroyed.</param>
-		/// <param name="cancellationToken">The cancellation token.</param>
-		/// <returns>The task whose result is a reference to the uploaded payload including decryption key.</returns>
-		protected virtual async Task<PayloadReference> PostPayloadAsync(Payload message, DateTime expiresUtc, CancellationToken cancellationToken) {
-			Requires.NotNull(message, "message");
-			Requires.That(expiresUtc.Kind == DateTimeKind.Utc, "expiresUtc", Strings.UTCTimeRequired);
-			Requires.ValidState(this.CloudBlobStorage != null, "BlobStorageProvider must not be null");
-
-			cancellationToken.ThrowIfCancellationRequested();
-
-			var plainTextStream = new MemoryStream();
-			var writer = new BinaryWriter(plainTextStream);
-			writer.SerializeDataContract(message);
-			writer.Flush();
-			var plainTextBuffer = plainTextStream.ToArray();
-			this.Log("Message plaintext", plainTextBuffer);
-
-			plainTextStream.Position = 0;
-			var cipherTextStream = new MemoryStream();
-			var encryptionVariables = await this.CryptoServices.EncryptAsync(plainTextStream, cipherTextStream, cancellationToken: cancellationToken);
-			this.Log("Message symmetrically encrypted", cipherTextStream.ToArray());
-			this.Log("Message symmetric key", encryptionVariables.Key);
-			this.Log("Message symmetric IV", encryptionVariables.IV);
-
-			cipherTextStream.Position = 0;
-			var messageHash = await this.CryptoServices.HashAsync(cipherTextStream, this.CryptoServices.SymmetricHashAlgorithmName, cancellationToken);
-			this.Log("Encrypted message hash", messageHash);
-
-			cipherTextStream.Position = 0;
-			Uri blobUri = await this.CloudBlobStorage.UploadMessageAsync(cipherTextStream, expiresUtc, cancellationToken: cancellationToken);
-			return new PayloadReference(blobUri, messageHash, this.CryptoServices.SymmetricHashAlgorithmName, encryptionVariables.Key, encryptionVariables.IV, expiresUtc);
 		}
 
 		/// <summary>
