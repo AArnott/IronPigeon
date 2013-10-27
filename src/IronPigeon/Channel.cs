@@ -213,7 +213,7 @@
 		/// <param name="expiresUtc">The date after which the message may be destroyed.</param>
 		/// <param name="cancellationToken">The cancellation token.</param>
 		/// <returns>The task whose result is a reference to the uploaded payload including decryption key.</returns>
-		public virtual async Task<PayloadReference> PostPayloadAsync(Payload message, DateTime expiresUtc, CancellationToken cancellationToken) {
+		public virtual async Task<PayloadReference> PostPayloadAsync(Payload message, DateTime expiresUtc, CancellationToken cancellationToken = default(CancellationToken)) {
 			Requires.NotNull(message, "message");
 			Requires.That(expiresUtc.Kind == DateTimeKind.Utc, "expiresUtc", Strings.UTCTimeRequired);
 			Requires.ValidState(this.CloudBlobStorage != null, "BlobStorageProvider must not be null");
@@ -249,7 +249,7 @@
 		/// <param name="notification">The payload reference.</param>
 		/// <param name="cancellationToken">The cancellation token.</param>
 		/// <returns>The task representing the asynchronous operation.</returns>
-		public virtual async Task<Payload> DownloadPayloadAsync(PayloadReference notification, CancellationToken cancellationToken) {
+		public virtual async Task<Payload> DownloadPayloadAsync(PayloadReference notification, CancellationToken cancellationToken = default(CancellationToken)) {
 			Requires.NotNull(notification, "notification");
 
 			var responseMessage = await this.HttpClient.GetAsync(notification.Location, cancellationToken);
