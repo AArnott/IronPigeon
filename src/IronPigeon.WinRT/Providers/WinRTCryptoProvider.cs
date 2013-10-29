@@ -49,11 +49,16 @@
 			Requires.NotNullOrEmpty(hashAlgorithmName, "hashAlgorithmName");
 
 			var algorithm = this.GetHmacAlgorithmProvider(hashAlgorithmName);
-			var cryptoKey = algorithm.CreateKey(key.ToBuffer());
+			var hasher = algorithm.CreateHash(key.ToBuffer());
 
-			byte[] hash = await this.HashAsync(data, hashAlgorithmName, cancellationToken);
-			IBuffer code = await CryptographicEngine.SignHashedDataAsync(cryptoKey, hash.ToBuffer());
-			return code.ToArray();
+			var reader = data.AsInputStream();
+			IBuffer buffer = new Windows.Storage.Streams.Buffer(4096);
+			do {
+				buffer = await reader.ReadAsync(buffer, buffer.Capacity, InputStreamOptions.None);
+				hasher.Append(buffer);
+			} while (buffer.Length > 0);
+
+			return hasher.GetValueAndReset().ToArray();
 		}
 
 		/// <summary>
@@ -250,6 +255,11 @@
 		/// <param name="cancellationToken">The cancellation token.</param>
 		/// <returns>A task whose result is the hash.</returns>
 		public override async Task<byte[]> HashAsync(Stream source, string hashAlgorithmName, CancellationToken cancellationToken) {
+			var hash = await this.HashBufferAsync(source, hashAlgorithmName, cancellationToken);
+			return hash.ToArray();
+		}
+
+		private async Task<IBuffer> HashBufferAsync(Stream source, string hashAlgorithmName, CancellationToken cancellationToken) {
 			var hashAlgorithm = HashAlgorithmProvider.OpenAlgorithm(hashAlgorithmName);
 			var hasher = hashAlgorithm.CreateHash();
 			IBuffer buffer = new Windows.Storage.Streams.Buffer(4096);
@@ -262,7 +272,7 @@
 			}
 			while (buffer.Length > 0);
 			var hash = hasher.GetValueAndReset();
-			return hash.ToArray();
+			return hash;
 		}
 
 		/// <summary>
