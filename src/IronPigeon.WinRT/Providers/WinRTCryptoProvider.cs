@@ -50,9 +50,9 @@
 
 			var algorithm = this.GetHmacAlgorithmProvider(hashAlgorithmName);
 			var cryptoKey = algorithm.CreateKey(key.ToBuffer());
-			var memoryStream = new MemoryStream();
-			await data.CopyToAsync(memoryStream, 4096, cancellationToken);
-			IBuffer code = CryptographicEngine.Sign(cryptoKey, memoryStream.ToArray().ToBuffer());
+
+			byte[] hash = await this.HashAsync(data, hashAlgorithmName, cancellationToken);
+			IBuffer code = await CryptographicEngine.SignHashedDataAsync(cryptoKey, hash.ToBuffer());
 			return code.ToArray();
 		}
 
@@ -81,9 +81,10 @@
 		/// The signature.
 		/// </returns>
 		public override byte[] SignHash(byte[] hash, byte[] signingPrivateKey, string hashAlgorithmName) {
-			// WinRT 8.0 doesn't expose a way to sign hashes.
-			// This will either require depending on WinRT 8.1, or switching to BouncyCastle.
-			throw new NotSupportedException();
+			var signer = this.GetSignatureProvider(this.AsymmetricHashAlgorithmName);
+			var key = signer.ImportKeyPair(signingPrivateKey.ToBuffer());
+			var signatureBuffer = CryptographicEngine.SignHashedData(key, hash.ToBuffer());
+			return signatureBuffer.ToArray();
 		}
 
 		/// <summary>
@@ -113,9 +114,9 @@
 		/// A value indicating whether the signature is valid.
 		/// </returns>
 		public override bool VerifyHash(byte[] signingPublicKey, byte[] hash, byte[] signature, string hashAlgorithm) {
-			// WinRT 8.0 doesn't expose a way to verify hashes.
-			// This will either require depending on WinRT 8.1, or switching to BouncyCastle.
-			throw new NotSupportedException();
+			var signer = this.GetSignatureProvider(hashAlgorithm);
+			var key = signer.ImportPublicKey(signingPublicKey.ToBuffer(), CryptographicPublicKeyBlobType.Capi1PublicKey);
+			return CryptographicEngine.VerifySignatureWithHashInput(key, hash.ToBuffer(), signature.ToBuffer());
 		}
 
 		/// <summary>
