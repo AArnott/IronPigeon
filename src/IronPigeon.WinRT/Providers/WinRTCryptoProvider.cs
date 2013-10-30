@@ -255,11 +255,6 @@
 		/// <param name="cancellationToken">The cancellation token.</param>
 		/// <returns>A task whose result is the hash.</returns>
 		public override async Task<byte[]> HashAsync(Stream source, string hashAlgorithmName, CancellationToken cancellationToken) {
-			var hash = await this.HashBufferAsync(source, hashAlgorithmName, cancellationToken);
-			return hash.ToArray();
-		}
-
-		private async Task<IBuffer> HashBufferAsync(Stream source, string hashAlgorithmName, CancellationToken cancellationToken) {
 			var hashAlgorithm = HashAlgorithmProvider.OpenAlgorithm(hashAlgorithmName);
 			var hasher = hashAlgorithm.CreateHash();
 			IBuffer buffer = new Windows.Storage.Streams.Buffer(4096);
@@ -272,7 +267,7 @@
 			}
 			while (buffer.Length > 0);
 			var hash = hasher.GetValueAndReset();
-			return hash;
+			return hash.ToArray();
 		}
 
 		/// <summary>
