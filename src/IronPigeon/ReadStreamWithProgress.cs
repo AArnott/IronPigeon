@@ -126,6 +126,19 @@
 			base.Dispose(disposing);
 		}
 
+		/// <summary>
+		/// Reports progress for the next segment of bytes read.
+		/// </summary>
+		/// <param name="bytesJustRead">The number of bytes read in the last operation.</param>
+		/// <remarks>
+		/// This method adds a 1-step lag to reporting progress.
+		/// For example if 5 bytes are read, no progress is reported.
+		/// When 12 more bytes are read, 5 bytes are reported.
+		/// When 14 more bytes are read, 17 bytes are reported (5+12).
+		/// When 0 more bytes are read (or this is disposed), all 31 bytes are reported (17+14)
+		/// This is done so that progress is reported when the reader is done
+		/// processing the read bytes rather than just beginning to.
+		/// </remarks>
 		private void ReportProgress(int bytesJustRead = 0) {
 			if (this.lastBytesRead > 0) {
 				this.totalBytesRead += this.lastBytesRead;
