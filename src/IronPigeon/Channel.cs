@@ -153,14 +153,15 @@
 		/// <param name="message">The payload to transmit.</param>
 		/// <param name="recipients">The recipients to receive the message.</param>
 		/// <param name="expiresUtc">The date after which the message may be destroyed.</param>
+		/// <param name="bytesCopiedProgress">Progress in terms of bytes copied.</param>
 		/// <param name="cancellationToken">The cancellation token.</param>
 		/// <returns>The task representing the asynchronous operation.</returns>
-		public async Task<IReadOnlyCollection<NotificationPostedReceipt>> PostAsync(Payload message, IReadOnlyCollection<Endpoint> recipients, DateTime expiresUtc, CancellationToken cancellationToken = default(CancellationToken)) {
+		public async Task<IReadOnlyCollection<NotificationPostedReceipt>> PostAsync(Payload message, IReadOnlyCollection<Endpoint> recipients, DateTime expiresUtc, IProgress<int> bytesCopiedProgress = null, CancellationToken cancellationToken = default(CancellationToken)) {
 			Requires.NotNull(message, "message");
 			Requires.That(expiresUtc.Kind == DateTimeKind.Utc, "expiresUtc", Strings.UTCTimeRequired);
 			Requires.NotNullOrEmpty(recipients, "recipients");
 
-			var payloadReference = await this.PostPayloadAsync(message, expiresUtc, cancellationToken);
+			var payloadReference = await this.PostPayloadAsync(message, expiresUtc, bytesCopiedProgress, cancellationToken);
 			return await this.PostPayloadReferenceAsync(payloadReference, recipients, cancellationToken);
 		}
 
@@ -211,9 +212,10 @@
 		/// </summary>
 		/// <param name="message">The message being transmitted.</param>
 		/// <param name="expiresUtc">The date after which the message may be destroyed.</param>
+		/// <param name="bytesCopiedProgress">Receives progress in terms of number of bytes uploaded.</param>
 		/// <param name="cancellationToken">The cancellation token.</param>
 		/// <returns>The task whose result is a reference to the uploaded payload including decryption key.</returns>
-		public virtual async Task<PayloadReference> PostPayloadAsync(Payload message, DateTime expiresUtc, CancellationToken cancellationToken = default(CancellationToken)) {
+		public virtual async Task<PayloadReference> PostPayloadAsync(Payload message, DateTime expiresUtc, IProgress<int> bytesCopiedProgress = null, CancellationToken cancellationToken = default(CancellationToken)) {
 			Requires.NotNull(message, "message");
 			Requires.That(expiresUtc.Kind == DateTimeKind.Utc, "expiresUtc", Strings.UTCTimeRequired);
 			Requires.ValidState(this.CloudBlobStorage != null, "BlobStorageProvider must not be null");
@@ -239,7 +241,7 @@
 			this.Log("Encrypted message hash", messageHash);
 
 			cipherTextStream.Position = 0;
-			Uri blobUri = await this.CloudBlobStorage.UploadMessageAsync(cipherTextStream, expiresUtc, cancellationToken: cancellationToken);
+			Uri blobUri = await this.CloudBlobStorage.UploadMessageAsync(cipherTextStream, expiresUtc, bytesCopiedProgress: bytesCopiedProgress, cancellationToken: cancellationToken);
 			return new PayloadReference(blobUri, messageHash, this.CryptoServices.SymmetricHashAlgorithmName, encryptionVariables.Key, encryptionVariables.IV, expiresUtc);
 		}
 

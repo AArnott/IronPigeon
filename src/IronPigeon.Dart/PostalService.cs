@@ -26,9 +26,10 @@
 		/// Sends the specified dart to the recipients specified in the message.
 		/// </summary>
 		/// <param name="message">The dart to send.</param>
+		/// <param name="bytesCopiedProgress">Progress feedback in terms of bytes uploaded.</param>
 		/// <param name="cancellationToken">The cancellation token.</param>
 		/// <returns>The asynchronous result.</returns>
-		public virtual Task<IReadOnlyCollection<Channel.NotificationPostedReceipt>> PostAsync(Message message, CancellationToken cancellationToken = default(CancellationToken)) {
+		public virtual Task<IReadOnlyCollection<Channel.NotificationPostedReceipt>> PostAsync(Message message, IProgress<int> bytesCopiedProgress = null, CancellationToken cancellationToken = default(CancellationToken)) {
 			Requires.NotNull(message, "message");
 
 			var ms = new MemoryStream();
@@ -44,7 +45,7 @@
 			}
 
 			var readOnlyRecipients = new ReadOnlyCollection<Endpoint>(allRecipients);
-			return this.Channel.PostAsync(payload, readOnlyRecipients, message.ExpirationUtc, cancellationToken);
+			return this.Channel.PostAsync(payload, readOnlyRecipients, message.ExpirationUtc, bytesCopiedProgress, cancellationToken);
 		}
 
 		/// <summary>

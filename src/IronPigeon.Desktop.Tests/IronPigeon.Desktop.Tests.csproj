@@ -106,6 +106,9 @@
     <Compile Include="..\IronPigeon.Tests\CryptoProviderTests.cs">
       <Link>Providers\CryptoProviderTests.cs</Link>
     </Compile>
+    <Compile Include="..\IronPigeon.Tests\UtilitiesTests.cs">
+      <Link>UtilitiesTests.cs</Link>
+    </Compile>
     <Compile Include="AddressBookEntryTest.cs" />
     <Compile Include="InteropTests.cs" />
     <Compile Include="Providers\AzureBlobStorageTests.cs" />
@@ -124,7 +127,7 @@
     <Compile Include="Providers\RelayCloudBlobStorageProviderTests.cs" />
     <Compile Include="TestUtilities.cs" />
     <Compile Include="Providers\TwitterAddressBookTests.cs" />
-    <Compile Include="UtilitiesTests.cs" />
+    <Compile Include="UtilitiesTests2.cs" />
     <Compile Include="Valid.cs" />
     <Compile Include="EndpointTests.cs" />
     <Compile Include="MessageTests.cs" />
@@ -159,6 +162,10 @@
     <ProjectReference Include="..\IronPigeon.Desktop\IronPigeon.Desktop.csproj">
       <Project>{2acabe1a-13da-4248-b200-8b9d63486e45}</Project>
       <Name>IronPigeon.Desktop</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\IronPigeon.Tests\IronPigeon.Tests.csproj">
+      <Project>{d2ff68ff-68c8-400a-a6e2-6e3ba61d17a1}</Project>
+      <Name>IronPigeon.Tests</Name>
     </ProjectReference>
     <ProjectReference Include="..\IronPigeon\IronPigeon.csproj">
       <Project>{befb82d5-c686-4d50-91c7-419846c8f201}</Project>

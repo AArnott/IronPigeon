@@ -53,16 +53,8 @@
 
 		#region ICloudBlobStorageProvider Members
 
-		/// <summary>
-		/// Uploads a blob to public cloud storage.
-		/// </summary>
-		/// <param name="content">The blob's content.</param>
-		/// <param name="expirationUtc">The date after which this blob should be deleted.</param>
-		/// <param name="contentType">The content type of the blob.</param>
-		/// <param name="contentEncoding">The content encoding of the blob.</param>
-		/// <param name="cancellationToken">A cancellation token.</param>
-		/// <returns>A task whose result is the URL by which the blob's content may be accessed.</returns>
-		public async Task<Uri> UploadMessageAsync(Stream content, DateTime expirationUtc, string contentType, string contentEncoding, CancellationToken cancellationToken = default(CancellationToken)) {
+		/// <inheritdoc/>
+		public async Task<Uri> UploadMessageAsync(Stream content, DateTime expirationUtc, string contentType, string contentEncoding, IProgress<int> bytesCopiedProgress, CancellationToken cancellationToken = default(CancellationToken)) {
 			Requires.NotNull(content, "content");
 			Requires.Range(expirationUtc > DateTime.UtcNow, "expirationUtc");
 
@@ -83,7 +75,7 @@
 			blob.Properties.ContentType = contentType;
 			blob.Properties.ContentEncoding = contentEncoding;
 
-			await blob.UploadFromStreamAsync(content);
+			await blob.UploadFromStreamAsync(content.ReadStreamWithProgress(bytesCopiedProgress), cancellationToken);
 			return blob.Uri;
 		}
 

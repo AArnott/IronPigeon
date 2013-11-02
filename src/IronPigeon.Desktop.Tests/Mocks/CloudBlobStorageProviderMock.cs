@@ -24,7 +24,7 @@
 
 		#region ICloudBlobStorageProvider Members
 
-		public async Task<Uri> UploadMessageAsync(Stream encryptedMessageContent, DateTime expiration, string contentType, string contentEncoding, CancellationToken cancellationToken) {
+		public async Task<Uri> UploadMessageAsync(Stream encryptedMessageContent, DateTime expiration, string contentType, string contentEncoding, IProgress<int> bytesCopiedProgress, CancellationToken cancellationToken) {
 			Assert.That(encryptedMessageContent.Length, Is.GreaterThan(0));
 			Assert.That(encryptedMessageContent.Position, Is.EqualTo(0));
 

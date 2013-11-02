@@ -482,6 +482,18 @@
 		}
 
 		/// <summary>
+		/// Gets a stream wrapper that reports bytes read as progress.
+		/// </summary>
+		/// <param name="stream">The stream to read.</param>
+		/// <param name="bytesReadProgress">The progress receiver. May be <c>null</c>.</param>
+		/// <returns>The progress-reporting stream.</returns>
+		public static Stream ReadStreamWithProgress(this Stream stream, IProgress<int> bytesReadProgress) {
+			Requires.NotNull(stream, "stream");
+
+			return bytesReadProgress != null ? new ReadStreamWithProgress(stream, bytesReadProgress) : stream;
+		}
+
+		/// <summary>
 		/// Guesses the hash algorithm used given the length of the result.
 		/// </summary>
 		/// <param name="hashLengthInBytes">The length of the output of the hash functino bytes.</param>

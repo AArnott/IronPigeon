@@ -35,6 +35,7 @@
     <Compile Include="ProgressWithCompletion.cs" />
     <Compile Include="Providers\RelayServiceAddressBook.cs" />
     <Compile Include="Providers\TinyUrlShortener.cs" />
+    <Compile Include="ReadStreamWithProgress.cs" />
     <Compile Include="Relay\IEndpointInboxFactory.cs" />
     <Compile Include="ILogger.cs" />
     <Compile Include="IncomingList.cs" />

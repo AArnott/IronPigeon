@@ -68,6 +68,9 @@
     <Compile Include="..\IronPigeon.Tests\CryptoProviderTests.cs">
       <Link>Providers\CryptoProviderTests.cs</Link>
     </Compile>
+    <Compile Include="..\IronPigeon.Tests\UtilitiesTests.cs">
+      <Link>UtilitiesTests.cs</Link>
+    </Compile>
     <Compile Include="Providers\WinRTCryptoProviderTests.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -92,6 +95,10 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\IronPigeon.Tests\IronPigeon.Tests.csproj">
+      <Project>{d2ff68ff-68c8-400a-a6e2-6e3ba61d17a1}</Project>
+      <Name>IronPigeon.Tests</Name>
+    </ProjectReference>
     <ProjectReference Include="..\IronPigeon.WinRT\IronPigeon.WinRT.csproj">
       <Project>{8bba7bc0-de22-4395-a408-9b33365a6280}</Project>
       <Name>IronPigeon.WinRT</Name>
@@ -112,6 +119,10 @@
     <Reference Include="System.Net.Http.Primitives, Version=4.2.13.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\Microsoft.Net.Http.2.2.13\lib\win8\System.Net.Http.Primitives.dll</HintPath>
+    </Reference>
+    <Reference Include="Validation, Version=2.0.0.0, Culture=neutral, PublicKeyToken=2fc06f0d701809a7, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\Validation.2.0.2.13022\lib\portable-windows8+net40+sl5+windowsphone8\Validation.dll</HintPath>
     </Reference>
   </ItemGroup>
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '12.0' ">
