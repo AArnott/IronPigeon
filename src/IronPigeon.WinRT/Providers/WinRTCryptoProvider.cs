@@ -36,6 +36,15 @@
 		}
 
 		/// <summary>
+		/// Fills the specified buffer with cryptographically strong random generated data.
+		/// </summary>
+		/// <param name="buffer">The buffer to fill.</param>
+		public override void FillCryptoRandomBuffer(byte[] buffer) {
+			var windowsBuffer = CryptographicBuffer.GenerateRandom((uint)buffer.Length);
+			Array.Copy(windowsBuffer.ToArray(), buffer, buffer.Length);
+		}
+
+		/// <summary>
 		/// Computes the authentication code for the contents of a stream given the specified symmetric key.
 		/// </summary>
 		/// <param name="data">The data to compute the HMAC for.</param>

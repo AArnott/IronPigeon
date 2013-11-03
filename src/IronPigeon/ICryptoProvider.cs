@@ -43,6 +43,12 @@
 		int EncryptionAsymmetricKeySize { get; set; }
 
 		/// <summary>
+		/// Fills the specified buffer with cryptographically strong random generated data.
+		/// </summary>
+		/// <param name="buffer">The buffer to fill.</param>
+		void FillCryptoRandomBuffer(byte[] buffer);
+
+		/// <summary>
 		/// Computes the authentication code for the contents of a stream given the specified symmetric key.
 		/// </summary>
 		/// <param name="data">The data to compute the HMAC for.</param>

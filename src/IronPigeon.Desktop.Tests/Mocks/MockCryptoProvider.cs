@@ -3,6 +3,7 @@
 	using System.Collections.Generic;
 	using System.IO;
 	using System.Linq;
+	using System.Security.Cryptography;
 	using System.Text;
 	using System.Threading;
 	using System.Threading.Tasks;
@@ -48,6 +49,11 @@
 		/// </summary>
 		public int SymmetricEncryptionBlockSize {
 			get { return 5; }
+		}
+		
+		public void FillCryptoRandomBuffer(byte[] buffer) {
+			var rng = new RNGCryptoServiceProvider();
+			rng.GetBytes(buffer);
 		}
 
 		public Task<byte[]> ComputeAuthenticationCodeAsync(Stream data, byte[] key, string hashAlgorithmName, CancellationToken cancellationToken) {
