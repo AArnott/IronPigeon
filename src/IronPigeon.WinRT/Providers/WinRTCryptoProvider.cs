@@ -265,7 +265,7 @@
 				buffer = await inputStream.ReadAsync(buffer, buffer.Capacity, InputStreamOptions.None).AsTask(cancellationToken);
 				hasher.Append(buffer);
 			}
-			while (buffer.Length > 0);
+			while (buffer.Length > 0 && (!source.CanSeek || source.Position < source.Length));
 			var hash = hasher.GetValueAndReset();
 			return hash.ToArray();
 		}
