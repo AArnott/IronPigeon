@@ -1,6 +1,7 @@
 ﻿namespace IronPigeon.Tests {
 	using System;
 	using System.IO;
+	using System.Linq;
 	using System.Threading.Tasks;
 #if NETFX_CORE || WINDOWS_PHONE
 	using Microsoft.VisualStudio.TestPlatform.UnitTestFramework;
@@ -114,6 +115,23 @@
 			var stream = new MemoryStream(streamContent);
 			string code = Convert.ToBase64String(await this.CryptoProvider.ComputeAuthenticationCodeAsync(stream, key, "SHA256"));
 			Assert.AreEqual("uEkw2LhaJ8X5PIIdFaQZJOQclqmUdCavVVrtAoh/vCY=", code);
+		}
+
+		[TestMethod]
+		public void FillCryptoRandomBufferNull() {
+			AssertEx.Throws<ArgumentNullException>(() => this.CryptoProvider.FillCryptoRandomBuffer(null));
+		}
+
+		[TestMethod]
+		public void FillCryptoRandomBufferZeroLength() {
+			this.CryptoProvider.FillCryptoRandomBuffer(new byte[0]);
+		}
+
+		[TestMethod]
+		public void FillCryptoRandomBuffer() {
+			var buffer = new byte[48];
+			this.CryptoProvider.FillCryptoRandomBuffer(buffer);
+			Assert.IsFalse(buffer.All(b => b == 0));
 		}
 	}
 }

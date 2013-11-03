@@ -10,6 +10,7 @@
 	using System.Text;
 	using System.Threading;
 	using System.Threading.Tasks;
+	using Validation;
 	using Windows.Data.Xml.Dom;
 	using Windows.Security.Cryptography;
 	using Windows.Security.Cryptography.Core;
@@ -27,6 +28,12 @@
 		/// <param name="buffer">The WinRT buffer.</param>
 		/// <returns>The .NET buffer.</returns>
 		public static byte[] ToArray(this IBuffer buffer) {
+			Requires.NotNull(buffer, "buffer");
+
+			if (buffer.Length == 0) {
+				return new byte[0]; // CopyToByteArray produces a null array in this case, so we fix it here.
+			}
+
 			byte[] result;
 			CryptographicBuffer.CopyToByteArray(buffer, out result);
 			return result;

@@ -40,6 +40,7 @@
 		/// </summary>
 		/// <param name="buffer">The buffer to fill.</param>
 		public override void FillCryptoRandomBuffer(byte[] buffer) {
+			Requires.NotNull(buffer, "buffer");
 			var windowsBuffer = CryptographicBuffer.GenerateRandom((uint)buffer.Length);
 			Array.Copy(windowsBuffer.ToArray(), buffer, buffer.Length);
 		}
