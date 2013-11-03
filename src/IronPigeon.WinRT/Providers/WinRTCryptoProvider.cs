@@ -46,6 +46,34 @@
 		}
 
 		/// <summary>
+		/// Derives a cryptographically strong key from the specified password.
+		/// </summary>
+		/// <param name="password">The user-supplied password.</param>
+		/// <param name="salt">The salt.</param>
+		/// <param name="iterations">The rounds of computation to use in deriving a stronger key. The larger this is, the longer attacks will take.</param>
+		/// <param name="keySizeInBytes">The desired key size in bytes.</param>
+		/// <returns>The generated key.</returns>
+		public override byte[] DeriveKeyFromPassword(string password, byte[] salt, int iterations, int keySizeInBytes) {
+			Requires.NotNullOrEmpty(password, "password");
+			Requires.NotNull(salt, "salt");
+			Requires.Range(iterations > 0, "iterations");
+			Requires.Range(keySizeInBytes > 0, "keySizeInBytes");
+
+			IBuffer passwordBuffer = CryptographicBuffer.ConvertStringToBinary(password, BinaryStringEncoding.Utf8);
+			IBuffer saltBuffer = salt.ToBuffer();
+
+			KeyDerivationAlgorithmProvider keyDerivationProvider =
+				KeyDerivationAlgorithmProvider.OpenAlgorithm(KeyDerivationAlgorithmNames.Pbkdf2Sha1);
+			KeyDerivationParameters pbkdf2Parms =
+				KeyDerivationParameters.BuildForPbkdf2(saltBuffer, (uint)iterations);
+
+			// create a key based on original key and derivation parameters
+			CryptographicKey keyOriginal = keyDerivationProvider.CreateKey(passwordBuffer);
+			IBuffer keyMaterial = CryptographicEngine.DeriveKeyMaterial(keyOriginal, pbkdf2Parms, (uint)keySizeInBytes);
+			return keyMaterial.ToArray();
+		}
+
+		/// <summary>
 		/// Computes the authentication code for the contents of a stream given the specified symmetric key.
 		/// </summary>
 		/// <param name="data">The data to compute the HMAC for.</param>

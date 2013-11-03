@@ -109,6 +109,16 @@
 		public abstract void FillCryptoRandomBuffer(byte[] buffer);
 
 		/// <summary>
+		/// Derives a cryptographically strong key from the specified password.
+		/// </summary>
+		/// <param name="password">The user-supplied password.</param>
+		/// <param name="salt">The salt.</param>
+		/// <param name="iterations">The rounds of computation to use in deriving a stronger key. The larger this is, the longer attacks will take.</param>
+		/// <param name="keySizeInBytes">The desired key size in bytes.</param>
+		/// <returns>The generated key.</returns>
+		public abstract byte[] DeriveKeyFromPassword(string password, byte[] salt, int iterations, int keySizeInBytes);
+
+		/// <summary>
 		/// Computes the authentication code for the contents of a stream given the specified symmetric key.
 		/// </summary>
 		/// <param name="data">The data to compute the HMAC for.</param>

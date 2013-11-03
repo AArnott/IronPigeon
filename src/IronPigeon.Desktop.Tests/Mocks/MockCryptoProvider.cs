@@ -56,6 +56,10 @@
 			rng.GetBytes(buffer);
 		}
 
+		public byte[] DeriveKeyFromPassword(string password, byte[] salt, int iterations, int keySizeInBytes) {
+			throw new NotImplementedException();
+		}
+
 		public Task<byte[]> ComputeAuthenticationCodeAsync(Stream data, byte[] key, string hashAlgorithmName, CancellationToken cancellationToken) {
 			throw new NotImplementedException();
 		}
