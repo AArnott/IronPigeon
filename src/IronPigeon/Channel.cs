@@ -241,7 +241,7 @@
 			this.Log("Encrypted message hash", messageHash);
 
 			cipherTextStream.Position = 0;
-			Uri blobUri = await this.CloudBlobStorage.UploadMessageAsync(cipherTextStream, expiresUtc, bytesCopiedProgress: bytesCopiedProgress, cancellationToken: cancellationToken);
+			Uri blobUri = await this.CloudBlobStorage.UploadMessageAsync(cipherTextStream, expiresUtc, contentType: message.ContentType, bytesCopiedProgress: bytesCopiedProgress, cancellationToken: cancellationToken);
 			return new PayloadReference(blobUri, messageHash, this.CryptoServices.SymmetricHashAlgorithmName, encryptionVariables.Key, encryptionVariables.IV, expiresUtc);
 		}
 
