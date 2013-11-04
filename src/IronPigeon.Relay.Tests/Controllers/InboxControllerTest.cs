@@ -304,7 +304,9 @@
 			SetupNextRequest(controller, "POST", inputStream);
 
 			var result = await controller.PostNotificationAsync(this.inboxId, lifetimeInMinutes);
-			Assert.That(result, Is.InstanceOf<EmptyResult>());
+			Assert.That(result, Is.InstanceOf<HttpStatusCodeResult>());
+			var actualStatus = (HttpStatusCode)((HttpStatusCodeResult)result).StatusCode;
+			Assert.AreEqual(HttpStatusCode.Created, actualStatus);
 		}
 
 		private InboxControllerForTest CreateController() {

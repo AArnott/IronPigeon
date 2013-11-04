@@ -24,8 +24,6 @@
 		/// </summary>
 		internal const string DefaultContainerName = "blobs";
 
-		private const int MaxBlobLength = 512 * 1024; // 0.5 MB
-
 		private static readonly SortedDictionary<int, TimeSpan> MaxBlobSizesAndLifetimes = new SortedDictionary<int, TimeSpan> {
 			{ 10 * 1024, TimeSpan.MaxValue }, // this is intended for address book entries.
 			{ 512 * 1024, TimeSpan.FromDays(7) },
@@ -59,7 +57,7 @@
 		public ICloudBlobStorageProvider CloudBlobStorageProvider { get; set; }
 
 		// POST api/blob
-		public async Task<string> Post([FromUri]int lifetimeInMinutes) {
+		public async Task<HttpResponseMessage> Post([FromUri]int lifetimeInMinutes) {
 			Requires.Range(lifetimeInMinutes > 0, "lifetimeInMinutes");
 
 			var lifetime = TimeSpan.FromMinutes(lifetimeInMinutes);
@@ -69,14 +67,20 @@
 									 : null;
 			string contentEncoding = this.Request.Content.Headers.ContentEncoding.FirstOrDefault();
 			var content = await this.Request.Content.ReadAsStreamAsync();
-			VerifyAllowedLifetime(content.Length, lifetime);
+			var errorResponse = GetDisallowedLifetimeResponse(content.Length, lifetime);
+			if (errorResponse != null) {
+				return errorResponse;
+			}
+
 			var blobLocation = await this.CloudBlobStorageProvider.UploadMessageAsync(content, expirationUtc, contentType, contentEncoding);
 
 			Uri resultLocation = contentType == AddressBookEntry.ContentType
 				? new Uri(this.Url.Link("Default", new { controller = "AddressBook", blob = blobLocation.AbsoluteUri }))
 				: blobLocation;
 
-			return resultLocation.AbsoluteUri;
+			return this.ControllerContext.Request.CreateResponse(
+				HttpStatusCode.Created,
+				resultLocation.AbsoluteUri);
 		}
 
 		internal static async Task OneTimeInitializeAsync(CloudStorageAccount azureAccount) {
@@ -91,18 +95,18 @@
 			});
 		}
 
-		private static void VerifyAllowedLifetime(long blobSize, TimeSpan lifetime) {
+		private static HttpResponseMessage GetDisallowedLifetimeResponse(long blobSize, TimeSpan lifetime) {
 			foreach (var rule in MaxBlobSizesAndLifetimes) {
 				if (blobSize < rule.Key) {
 					if (lifetime > rule.Value) {
-						throw new ArgumentOutOfRangeException("lifetime", "Maximum allowable blob lifetime exceeded.");
+						return new HttpResponseMessage(HttpStatusCode.PaymentRequired);
 					}
 
-					return;
+					return null;
 				}
 			}
 
-			throw new ArgumentOutOfRangeException("blobSize", "Maximum allowable blob size exceeded.");
+			return new HttpResponseMessage(HttpStatusCode.RequestEntityTooLarge);
 		}
 	}
 }

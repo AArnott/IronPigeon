@@ -215,7 +215,7 @@
 				await this.AlertLongPollWaiterAsync(inbox);
 				await this.InboxTable.SaveChangesWithMergeAsync(inbox);
 			});
-			return new EmptyResult();
+			return new HttpStatusCodeResult(HttpStatusCode.Created);
 		}
 
 		[HttpPut, ActionName("Slot"), InboxOwnerAuthorize]
@@ -241,12 +241,12 @@
 				inbox.WinPhone8ToastText2 = this.Request.Form["wp8_channel_toast_text2"];
 			} else {
 				// No data was posted. So skip updating the entity.
-				return new EmptyResult();
+				return new HttpStatusCodeResult(HttpStatusCode.NoContent);
 			}
 
 			this.InboxTable.UpdateObject(inbox);
 			await this.InboxTable.SaveChangesWithMergeAsync(inbox);
-			return new EmptyResult();
+			return new HttpStatusCodeResult(HttpStatusCode.NoContent);
 		}
 
 		/// <summary>
@@ -292,7 +292,7 @@
 					throw;
 				}
 
-				return new EmptyResult();
+				return new HttpStatusCodeResult(HttpStatusCode.NoContent);
 			} else {
 				return new HttpUnauthorizedResult("Notification URL does not match owner id.");
 			}
