@@ -27,7 +27,7 @@
 			Assert.AreEqual(expectedBase64, actualBase64);
 
 			byte[] decoded = Convert.FromBase64String(actualBase64);
-			Assert.AreEqual(buffer, decoded);
+			Assert.IsTrue(Utilities.AreEquivalent(buffer, decoded));
 		}
 
 		[TestMethod]
