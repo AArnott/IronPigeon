@@ -494,6 +494,22 @@
 		}
 
 		/// <summary>
+		/// Applies HTTP Basic authentication to an outgoing HTTP request message.
+		/// </summary>
+		/// <param name="request">The outbound HTTP request.</param>
+		/// <param name="userName">The username.</param>
+		/// <param name="password">The password.</param>
+		public static void AuthorizeBasic(this HttpRequestMessage request, string userName, string password) {
+			Requires.NotNull(request, "request");
+			Requires.NotNullOrEmpty(userName, "userName");
+			Requires.NotNull(password, "password");
+
+			string value = userName + ":" + password;
+			string encoded = Convert.ToBase64String(Encoding.UTF8.GetBytes(value));
+			request.Headers.Authorization = new AuthenticationHeaderValue("Basic", encoded);
+		}
+
+		/// <summary>
 		/// Guesses the hash algorithm used given the length of the result.
 		/// </summary>
 		/// <param name="hashLengthInBytes">The length of the output of the hash functino bytes.</param>
