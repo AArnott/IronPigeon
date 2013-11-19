@@ -15,7 +15,7 @@
 		<description>
 			An open source generic message passing protocol with focus on confidentiality and authentication.
 		</description>
-		<releaseNotes>Adds Windows Phone 8 support. Makes avoiding HttpClient timeout exceptions easier.</releaseNotes>
+		<releaseNotes>MonoTouch and MonoAndroid targets added, but all stubbed out at present. PCLs should work though.</releaseNotes>
 		<copyright>Copyright © Andrew Arnott</copyright>
 		<tags>crypto cryptography mail email privacy</tags>
 		<dependencies>
@@ -66,10 +66,26 @@
 		<file src="$OutputPath$IronPigeon.WinPhone8.pdb" target="lib\windowsphone8" />
 		<file src="$OutputPath$IronPigeon.WinPhone8.xml" target="lib\windowsphone8" />
 
+		<file src="$OutputPath$IronPigeon.dll" target="lib\windowsphone8" />
+		<file src="$OutputPath$IronPigeon.pdb" target="lib\windowsphone8" />
+		<file src="$OutputPath$IronPigeon.xml" target="lib\windowsphone8" />
+		<file src="$OutputPath$IronPigeon.MonoTouch.dll" target="lib\MonoTouch" />
+		<file src="$OutputPath$IronPigeon.MonoTouch.pdb" target="lib\MonoTouch" />
+		<file src="$OutputPath$IronPigeon.MonoTouch.xml" target="lib\MonoTouch" />
+
+		<file src="$OutputPath$IronPigeon.dll" target="lib\windowsphone8" />
+		<file src="$OutputPath$IronPigeon.pdb" target="lib\windowsphone8" />
+		<file src="$OutputPath$IronPigeon.xml" target="lib\windowsphone8" />
+		<file src="$OutputPath$IronPigeon.MonoAndroid.dll" target="lib\MonoAndroid" />
+		<file src="$OutputPath$IronPigeon.MonoAndroid.pdb" target="lib\MonoAndroid" />
+		<file src="$OutputPath$IronPigeon.MonoAndroid.xml" target="lib\MonoAndroid" />
+
 		<file src="..\src\IronPigeon\**\*.cs" target="src\IronPigeon" exclude="..\src\IronPigeon\obj\**" />
 		<file src="..\src\IronPigeon.Desktop\**\*.cs" target="src\IronPigeon.Desktop" exclude="..\src\IronPigeon.Desktop\obj\**" />
 		<file src="..\src\IronPigeon.WinRT\**\*.cs" target="src\IronPigeon.WinRT" exclude="..\src\IronPigeon.WinRT\obj\**" />
 		<file src="..\src\IronPigeon.WinPhone8\**\*.cs" target="src\IronPigeon.WinPhone8" exclude="..\src\IronPigeon.WinPhone8\obj\**" />
+		<file src="..\src\IronPigeon.MonoAndroid\**\*.cs" target="src\IronPigeon.MonoAndroid" exclude="..\src\IronPigeon.MonoAndroid\obj\**" />
+		<file src="..\src\IronPigeon.MonoTouch\**\*.cs" target="src\IronPigeon.MonoTouch" exclude="..\src\IronPigeon.MonoTouch\obj\**" />
 
 		<file src="$IntermediatePath$IronPigeon.Version.cs" target="src\IronPigeon\Properties" />
 		<file src="$IntermediatePath$IronPigeon.Desktop.Version.cs" target="src\IronPigeon.Desktop\Properties" />
