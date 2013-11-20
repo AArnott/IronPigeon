@@ -13,6 +13,10 @@ namespace IronPigeon.MonoAndroid.Providers {
 	using Android.Runtime;
 	using Android.Views;
 	using Android.Widget;
+	using Java.Security;
+	using Javax.Crypto;
+	using Javax.Crypto.Spec;
+	using Validation;
 	using Stream = System.IO.Stream;
 
 	/// <summary>
@@ -26,7 +30,8 @@ namespace IronPigeon.MonoAndroid.Providers {
 
 		/// <inheritdoc/>
 		public override void FillCryptoRandomBuffer(byte[] buffer) {
-			throw new NotImplementedException();
+			var sr = SecureRandom.GetInstance("SHA1PRNG");
+			sr.NextBytes(buffer);
 		}
 
 		/// <inheritdoc/>
@@ -60,13 +65,64 @@ namespace IronPigeon.MonoAndroid.Providers {
 		}
 
 		/// <inheritdoc/>
-		public override Task<SymmetricEncryptionVariables> EncryptAsync(Stream plaintext, Stream ciphertext, SymmetricEncryptionVariables encryptionVariables, CancellationToken cancellationToken) {
-			throw new NotImplementedException();
+		public override async Task<SymmetricEncryptionVariables> EncryptAsync(Stream plaintext, Stream ciphertext, SymmetricEncryptionVariables encryptionVariables, CancellationToken cancellationToken) {
+			Requires.NotNull(plaintext, "plaintext");
+			Requires.NotNull(ciphertext, "ciphertext");
+
+			cancellationToken.ThrowIfCancellationRequested();
+			if (encryptionVariables == null) {
+				var sr = SecureRandom.GetInstance("SHA1PRNG");
+				var iv = new byte[this.SymmetricEncryptionBlockSize];
+				sr.NextBytes(iv);
+				var keyGen = KeyGenerator.GetInstance("AES");
+				keyGen.Init(this.SymmetricEncryptionKeySize * 8);
+				ISecretKey key = keyGen.GenerateKey();
+				encryptionVariables = new SymmetricEncryptionVariables(key.GetEncoded(), iv);
+			} else {
+				Requires.Argument(encryptionVariables.Key.Length == this.SymmetricEncryptionKeySize / 8, "key", "Incorrect length.");
+				Requires.Argument(encryptionVariables.IV.Length == this.SymmetricEncryptionBlockSize / 8, "iv", "Incorrect length.");
+			}
+
+			var keySpec = new SecretKeySpec(encryptionVariables.Key, "AES");
+			Cipher cipher = Cipher.GetInstance("AES");
+			cipher.Init(CipherMode.EncryptMode, keySpec);
+
+			byte[] plainTextBuffer = new byte[this.SymmetricEncryptionBlockSize];
+			byte[] cipherTextBuffer = new byte[this.SymmetricEncryptionBlockSize];
+			int bytesRead, bytesWritten;
+			do {
+				cancellationToken.ThrowIfCancellationRequested();
+				bytesRead = await plaintext.ReadAsync(plainTextBuffer, 0, plainTextBuffer.Length, cancellationToken);
+				bytesWritten = cipher.Update(plainTextBuffer, 0, bytesRead, cipherTextBuffer, 0);
+				await ciphertext.WriteAsync(cipherTextBuffer, 0, bytesWritten, cancellationToken);
+			} while (bytesRead > 0);
+			bytesWritten = cipher.DoFinal(cipherTextBuffer, 0);
+			await ciphertext.WriteAsync(cipherTextBuffer, 0, bytesWritten);
+
+			return encryptionVariables;
 		}
 
 		/// <inheritdoc/>
-		public override Task DecryptAsync(Stream ciphertext, Stream plaintext, SymmetricEncryptionVariables encryptionVariables, CancellationToken cancellationToken) {
-			throw new NotImplementedException();
+		public override async Task DecryptAsync(Stream ciphertext, Stream plaintext, SymmetricEncryptionVariables encryptionVariables, CancellationToken cancellationToken) {
+			Requires.NotNull(ciphertext, "ciphertext");
+			Requires.NotNull(plaintext, "plaintext");
+			Requires.NotNull(encryptionVariables, "encryptionVariables");
+
+			var keySpec = new SecretKeySpec(encryptionVariables.Key, "AES");
+			Cipher cipher = Cipher.GetInstance("AES");
+			cipher.Init(CipherMode.DecryptMode, keySpec);
+
+			byte[] plainTextBuffer = new byte[this.SymmetricEncryptionBlockSize];
+			byte[] cipherTextBuffer = new byte[this.SymmetricEncryptionBlockSize];
+			int bytesRead, bytesWritten;
+			do {
+				cancellationToken.ThrowIfCancellationRequested();
+				bytesRead = await ciphertext.ReadAsync(cipherTextBuffer, 0, cipherTextBuffer.Length, cancellationToken);
+				bytesWritten = cipher.Update(cipherTextBuffer, 0, bytesRead, plainTextBuffer, 0);
+				await plaintext.WriteAsync(plainTextBuffer, 0, bytesWritten, cancellationToken);
+			} while (bytesRead > 0);
+			bytesWritten = cipher.DoFinal(plainTextBuffer, 0);
+			await plaintext.WriteAsync(plainTextBuffer, 0, bytesWritten);
 		}
 
 		/// <inheritdoc/>
