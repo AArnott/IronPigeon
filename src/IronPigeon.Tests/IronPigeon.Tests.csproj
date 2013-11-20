@@ -53,7 +53,7 @@
       <HintPath>..\packages\Microsoft.Net.Http.2.2.13\lib\portable-net40+sl4+win8+wp71\System.Net.Http.Primitives.dll</HintPath>
     </Reference>
     <Reference Include="Validation">
-      <HintPath>..\packages\Validation.2.0.2.13022\lib\portable-windows8+net40+sl5+windowsphone8\Validation.dll</HintPath>
+      <HintPath>..\packages\Validation.2.0.3.13323\lib\portable-windows8+net40+sl5+windowsphone8+MonoAndroid+MonoTouch\Validation.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
