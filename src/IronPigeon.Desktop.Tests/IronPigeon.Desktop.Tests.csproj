@@ -110,6 +110,7 @@
       <Link>UtilitiesTests.cs</Link>
     </Compile>
     <Compile Include="AddressBookEntryTest.cs" />
+    <Compile Include="EllipticCurveCryptoPatterns.cs" />
     <Compile Include="InteropTests.cs" />
     <Compile Include="Providers\AzureBlobStorageTests.cs" />
     <Compile Include="ChannelTests.cs" />
