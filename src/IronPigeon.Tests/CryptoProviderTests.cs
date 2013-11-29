@@ -151,5 +151,19 @@
 			string base64actualKey = Convert.ToBase64String(actualKey);
 			Assert.AreEqual(DeriveKeyFromPasswordExpectedKey, base64actualKey);
 		}
+
+		[TestMethod]
+		public void DiffieHellmanKeyExchange() {
+			byte[] alicePrivateKey, alicePublicKey;
+			this.CryptoProvider.BeginNegotiateSharedSecret(out alicePrivateKey, out alicePublicKey);
+
+			byte[] bobPublicKey, bobSharedSecret;
+			this.CryptoProvider.RespondNegotiateSharedSecret(alicePublicKey, out bobPublicKey, out bobSharedSecret);
+
+			byte[] aliceSharedSecret;
+			this.CryptoProvider.EndNegotiateSharedSecret(alicePrivateKey, bobPublicKey, out aliceSharedSecret);
+
+			CollectionAssert.AreEqual(aliceSharedSecret, bobSharedSecret);
+		}
 	}
 }

@@ -14,7 +14,6 @@
 	/// </summary>
 	[TestClass]
 	public class EllipticCurveCryptoPatterns {
-
 		[TestMethod, TestCategory("EC")]
 		public async Task PerfectForwardSecrecy() {
 			var bob = new ECDsaCng(521);

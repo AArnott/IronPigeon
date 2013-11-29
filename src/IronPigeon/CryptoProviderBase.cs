@@ -50,6 +50,12 @@
 		private int blobSymmetricKeySize = SecurityLevel.Maximum.BlobSymmetricKeySize;
 
 		/// <summary>
+		/// Backing field for the <see cref="ECDiffieHellmanKeySize"/> property.
+		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
+		private int ecdiffieHellmanKeySize = SecurityLevel.Maximum.ECDiffieHellmanKeySize;
+
+		/// <summary>
 		/// Gets or sets the name of the hash algorithm to use for symmetric signatures.
 		/// </summary>
 		public string SymmetricHashAlgorithmName {
@@ -95,6 +101,12 @@
 		public int SymmetricEncryptionKeySize {
 			get { return this.blobSymmetricKeySize; }
 			set { this.blobSymmetricKeySize = value; }
+		}
+
+		/// <inheritdoc/>
+		public int ECDiffieHellmanKeySize {
+			get { return this.ecdiffieHellmanKeySize; }
+			set { this.ecdiffieHellmanKeySize = value; }
 		}
 
 		/// <summary>
@@ -278,5 +290,14 @@
 		/// <param name="keyPair">Receives the serialized key pair (includes private key).</param>
 		/// <param name="publicKey">Receives the public key.</param>
 		public abstract void GenerateEncryptionKeyPair(out byte[] keyPair, out byte[] publicKey);
+
+		/// <inheritdoc/>
+		public abstract void BeginNegotiateSharedSecret(out byte[] privateKey, out byte[] publicKey);
+
+		/// <inheritdoc/>
+		public abstract void RespondNegotiateSharedSecret(byte[] remotePublicKey, out byte[] ownPublicKey, out byte[] sharedSecret);
+
+		/// <inheritdoc/>
+		public abstract void EndNegotiateSharedSecret(byte[] ownPrivateKey, byte[] remotePublicKey, out byte[] sharedSecret);
 	}
 }

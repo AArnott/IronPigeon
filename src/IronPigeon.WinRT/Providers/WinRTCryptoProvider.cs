@@ -331,6 +331,21 @@
 			publicKey = key.ExportPublicKey(CryptographicPublicKeyBlobType.Capi1PublicKey).ToArray();
 		}
 
+		/// <inheritdoc/>
+		public override void BeginNegotiateSharedSecret(out byte[] privateKey, out byte[] publicKey) {
+			throw new NotImplementedException();
+		}
+
+		/// <inheritdoc/>
+		public override void RespondNegotiateSharedSecret(byte[] remotePublicKey, out byte[] ownPublicKey, out byte[] sharedSecret) {
+			throw new NotImplementedException();
+		}
+
+		/// <inheritdoc/>
+		public override void EndNegotiateSharedSecret(byte[] ownPrivateKey, byte[] remotePublicKey, out byte[] sharedSecret) {
+			throw new NotImplementedException();
+		}
+
 		/// <summary>
 		/// Gets the signature provider.
 		/// </summary>

@@ -61,6 +61,11 @@
 		public abstract int SignatureAsymmetricKeySize { get; }
 
 		/// <summary>
+		/// Gets the size (in bits) of the ECDiffieHellman keys.
+		/// </summary>
+		public abstract int ECDiffieHellmanKeySize { get; }
+
+		/// <summary>
 		/// Gets the size of the BLOB symmetric key.
 		/// </summary>
 		/// <value>
@@ -134,6 +139,11 @@
 				get { return 512; }
 			}
 
+			/// <inheritdoc/>
+			public override int ECDiffieHellmanKeySize {
+				get { return 521; }
+			}
+
 			/// <summary>
 			/// Gets the size of the BLOB symmetric key.
 			/// </summary>
@@ -194,6 +204,11 @@
 			/// </value>
 			public override int SignatureAsymmetricKeySize {
 				get { return 4096; }
+			}
+
+			/// <inheritdoc/>
+			public override int ECDiffieHellmanKeySize {
+				get { return 521; }
 			}
 
 			/// <summary>

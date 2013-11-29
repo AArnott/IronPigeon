@@ -312,6 +312,36 @@
 			}
 		}
 
+		/// <inheritdoc/>
+		public override void BeginNegotiateSharedSecret(out byte[] privateKey, out byte[] publicKey) {
+			var keyParameters = new CngKeyCreationParameters {
+				ExportPolicy = CngExportPolicies.AllowPlaintextExport,
+			};
+			var cngKey = CngKey.Create(GetECDiffieHellmanAlgorithm(this.ECDiffieHellmanKeySize), null, keyParameters);
+			using (var ec = new ECDiffieHellmanCng(cngKey)) {
+				privateKey = ec.Key.Export(CngKeyBlobFormat.GenericPrivateBlob);
+				publicKey = ec.PublicKey.ToByteArray();
+			}
+		}
+
+		/// <inheritdoc/>
+		public override void RespondNegotiateSharedSecret(byte[] remotePublicKey, out byte[] ownPublicKey, out byte[] sharedSecret) {
+			using (var ec = new ECDiffieHellmanCng(this.ECDiffieHellmanKeySize)) {
+				var remoteECPublicKey = ECDiffieHellmanCngPublicKey.FromByteArray(remotePublicKey, CngKeyBlobFormat.EccPublicBlob);
+				ownPublicKey = ec.PublicKey.ToByteArray();
+				sharedSecret = ec.DeriveKeyMaterial(remoteECPublicKey);
+			}
+		}
+
+		/// <inheritdoc/>
+		public override void EndNegotiateSharedSecret(byte[] ownPrivateKey, byte[] remotePublicKey, out byte[] sharedSecret) {
+			CngKey key = CngKey.Import(ownPrivateKey, CngKeyBlobFormat.EccPrivateBlob);
+			using (var ec = new ECDiffieHellmanCng(key)) {
+				var remoteECPublicKey = CngKey.Import(remotePublicKey, CngKeyBlobFormat.EccPublicBlob);
+				sharedSecret = ec.DeriveKeyMaterial(remoteECPublicKey);
+			}
+		}
+
 		/// <summary>
 		/// Gets the HMAC algorithm to use.
 		/// </summary>
@@ -326,6 +356,20 @@
 					return new HMACSHA256();
 				default:
 					throw new NotSupportedException();
+			}
+		}
+
+		/// <summary>
+		/// Gets the ECDH algorithm that matches the specified size.
+		/// </summary>
+		/// <param name="keySizeInBits">The size of the key, in bits.</param>
+		/// <returns>The algorithm.</returns>
+		private static CngAlgorithm GetECDiffieHellmanAlgorithm(int keySizeInBits) {
+			switch (keySizeInBits) {
+				case 256: return CngAlgorithm.ECDiffieHellmanP256;
+				case 384: return CngAlgorithm.ECDiffieHellmanP384;
+				case 521: return CngAlgorithm.ECDiffieHellmanP521;
+				default: throw new NotSupportedException();
 			}
 		}
 	}

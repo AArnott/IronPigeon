@@ -149,6 +149,11 @@
 			public override int BlobSymmetricKeySize {
 				get { return 128; }
 			}
+
+			/// <inheritdoc/>
+			public override int ECDiffieHellmanKeySize {
+				get { return 256; }
+			}
 		}
 
 		/// <summary>
@@ -210,6 +215,11 @@
 			/// </value>
 			public override int BlobSymmetricKeySize {
 				get { return 192; }
+			}
+
+			/// <inheritdoc/>
+			public override int ECDiffieHellmanKeySize {
+				get { return 521; }
 			}
 		}
 	}
