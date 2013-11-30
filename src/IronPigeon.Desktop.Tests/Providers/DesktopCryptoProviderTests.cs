@@ -30,5 +30,10 @@
 			Assert.AreEqual("SHA111", this.provider.SymmetricHashAlgorithmName);
 			Assert.AreEqual("SHA222", this.provider.AsymmetricHashAlgorithmName);
 		}
+
+		[TestMethod]
+		public void DiffieHellmanKeyExchangeDesktop() {
+			this.DiffieHellmanKeyExchange();
+		}
 	}
 }

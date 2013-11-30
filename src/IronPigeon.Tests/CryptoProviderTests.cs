@@ -152,7 +152,7 @@
 			Assert.AreEqual(DeriveKeyFromPasswordExpectedKey, base64actualKey);
 		}
 
-		[TestMethod]
+		[TestMethod, Ignore] // ignored because it's only available on Desktop.
 		public void DiffieHellmanKeyExchange() {
 			byte[] alicePrivateKey, alicePublicKey;
 			this.CryptoProvider.BeginNegotiateSharedSecret(out alicePrivateKey, out alicePublicKey);
