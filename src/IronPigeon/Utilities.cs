@@ -86,8 +86,7 @@
 		/// <param name="array">The array of bytes to encode.</param>
 		/// <returns>A base64web encoded string.</returns>
 		public static string ToBase64WebSafe(byte[] array) {
-			Contract.Requires(array != null);
-			Contract.Ensures(Contract.Result<string>() != null);
+			Requires.NotNull(array, "array");
 
 			return ToBase64WebSafe(Convert.ToBase64String(array));
 		}
@@ -98,7 +97,7 @@
 		/// <param name="base64WebSafe">The base64web encoded string.</param>
 		/// <returns>A standard base64 encoded string.</returns>
 		public static string FromBase64WebSafe(string base64WebSafe) {
-			Contract.Requires(base64WebSafe != null);
+			Requires.NotNull(base64WebSafe, "base64WebSafe");
 			if (base64WebSafe.IndexOfAny(WebSafeSpecificBase64Characters) < 0 && (base64WebSafe.Length % 4) == 0) {
 				// This web-safe base64 encoded string is equivalent to its standard base64 form.
 				return base64WebSafe;
