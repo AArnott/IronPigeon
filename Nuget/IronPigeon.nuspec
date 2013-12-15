@@ -69,16 +69,16 @@
 		<file src="$OutputPath$IronPigeon.dll" target="lib\windowsphone8" />
 		<file src="$OutputPath$IronPigeon.pdb" target="lib\windowsphone8" />
 		<file src="$OutputPath$IronPigeon.xml" target="lib\windowsphone8" />
-		<file src="$OutputPath$IronPigeon.MonoTouch.dll" target="lib\MonoTouch" />
+		<!--<file src="$OutputPath$IronPigeon.MonoTouch.dll" target="lib\MonoTouch" />
 		<file src="$OutputPath$IronPigeon.MonoTouch.pdb" target="lib\MonoTouch" />
-		<file src="$OutputPath$IronPigeon.MonoTouch.xml" target="lib\MonoTouch" />
+		<file src="$OutputPath$IronPigeon.MonoTouch.xml" target="lib\MonoTouch" />-->
 
 		<file src="$OutputPath$IronPigeon.dll" target="lib\windowsphone8" />
 		<file src="$OutputPath$IronPigeon.pdb" target="lib\windowsphone8" />
 		<file src="$OutputPath$IronPigeon.xml" target="lib\windowsphone8" />
-		<file src="$OutputPath$IronPigeon.MonoAndroid.dll" target="lib\MonoAndroid" />
+		<!--<file src="$OutputPath$IronPigeon.MonoAndroid.dll" target="lib\MonoAndroid" />
 		<file src="$OutputPath$IronPigeon.MonoAndroid.pdb" target="lib\MonoAndroid" />
-		<file src="$OutputPath$IronPigeon.MonoAndroid.xml" target="lib\MonoAndroid" />
+		<file src="$OutputPath$IronPigeon.MonoAndroid.xml" target="lib\MonoAndroid" />-->
 
 		<file src="..\src\IronPigeon\**\*.cs" target="src\IronPigeon" exclude="..\src\IronPigeon\obj\**" />
 		<file src="..\src\IronPigeon.Desktop\**\*.cs" target="src\IronPigeon.Desktop" exclude="..\src\IronPigeon.Desktop\obj\**" />
