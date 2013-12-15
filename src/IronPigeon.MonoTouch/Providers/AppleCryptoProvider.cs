@@ -93,20 +93,5 @@ namespace IronPigeon.MonoTouch.Providers {
 		public override void GenerateEncryptionKeyPair(out byte[] keyPair, out byte[] publicKey) {
 			throw new NotImplementedException();
 		}
-
-		/// <inheritdoc/>
-		public override void BeginNegotiateSharedSecret(out byte[] privateKey, out byte[] publicKey) {
-			throw new NotImplementedException();
-		}
-
-		/// <inheritdoc/>
-		public override void RespondNegotiateSharedSecret(byte[] remotePublicKey, out byte[] ownPublicKey, out byte[] sharedSecret) {
-			throw new NotImplementedException();
-		}
-
-		/// <inheritdoc/>
-		public override void EndNegotiateSharedSecret(byte[] ownPrivateKey, byte[] remotePublicKey, out byte[] sharedSecret) {
-			throw new NotImplementedException();
-		}
 	}
 }
