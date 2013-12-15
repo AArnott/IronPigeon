@@ -58,6 +58,12 @@
 		public string WinPhone8ToastText2 { get; set; }
 
 		/// <summary>
+		/// Gets or sets the name of the Windows Phone 8 tile template in use by the client.
+		/// </summary>
+		/// <value>A template name. Or <c>null</c> to indicate the default of "FlipTile".</value>
+		public string WinPhone8TileTemplate { get; set; }
+
+		/// <summary>
 		/// Gets or sets the timestamp for when the inbox was last accessed by its owner.
 		/// </summary>
 		public DateTime? LastAuthenticatedInteractionUtc { get; set; }

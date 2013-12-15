@@ -239,6 +239,7 @@
 				inbox.WinPhone8PushChannelContent = content;
 				inbox.WinPhone8ToastText1 = this.Request.Form["wp8_channel_toast_text1"];
 				inbox.WinPhone8ToastText2 = this.Request.Form["wp8_channel_toast_text2"];
+				inbox.WinPhone8TileTemplate = this.Request.Form["wp8_channel_tile_template"];
 			} else {
 				// No data was posted. So skip updating the entity.
 				return new HttpStatusCodeResult(HttpStatusCode.NoContent);
@@ -421,7 +422,7 @@
 				int count = await this.RetrieveInboxItemsCountAsync(inbox.RowKey);
 				bool invalidChannel = false;
 				try {
-					var pushTile = notifications.PushWinPhoneTileAsync(count: count);
+					var pushTile = notifications.PushWinPhoneTileAsync(inbox.WinPhone8TileTemplate, count: count);
 					Task<bool> pushToast = Task.FromResult(false);
 					if (!string.IsNullOrEmpty(inbox.WinPhone8ToastText1) || !string.IsNullOrEmpty(inbox.WinPhone8ToastText2)) {
 						var line1 = string.Format(CultureInfo.InvariantCulture, inbox.WinPhone8ToastText1 ?? string.Empty, count);
