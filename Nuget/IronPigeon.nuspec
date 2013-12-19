@@ -32,6 +32,18 @@
 				<dependency id="Microsoft.Composition" version="[1.0.20, 2.0)" />
 				<dependency id="Microsoft.Tpl.Dataflow" version="[4.5.14, 5.0)" />
 			</group>
+			<group targetFramework="MonoAndroid10">
+				<dependency id="Validation" version="[2.0.3, 3.0)" />
+				<dependency id="Microsoft.Net.Http" version="2.2.18" />
+				<dependency id="Microsoft.Composition" version="[1.0.20, 2.0)" />
+				<dependency id="Microsoft.Tpl.Dataflow" version="[4.5.14, 5.0)" />
+			</group>
+			<group targetFramework="MonoTouch10">
+				<dependency id="Validation" version="[2.0.3, 3.0)" />
+				<dependency id="Microsoft.Net.Http" version="2.2.18" />
+				<dependency id="Microsoft.Composition" version="[1.0.20, 2.0)" />
+				<dependency id="Microsoft.Tpl.Dataflow" version="[4.5.14, 5.0)" />
+			</group>
 			<group targetFramework="windowsphone8">
 				<dependency id="Validation" version="[2.0.3, 3.0)" />
 				<dependency id="Microsoft.Net.Http" version="2.2.18" />
@@ -66,19 +78,19 @@
 		<file src="$OutputPath$IronPigeon.WinPhone8.pdb" target="lib\windowsphone8" />
 		<file src="$OutputPath$IronPigeon.WinPhone8.xml" target="lib\windowsphone8" />
 
-		<file src="$OutputPath$IronPigeon.dll" target="lib\windowsphone8" />
-		<file src="$OutputPath$IronPigeon.pdb" target="lib\windowsphone8" />
-		<file src="$OutputPath$IronPigeon.xml" target="lib\windowsphone8" />
-		<!--<file src="$OutputPath$IronPigeon.MonoTouch.dll" target="lib\MonoTouch" />
+		<file src="$OutputPath$IronPigeon.dll" target="lib\MonoTouch" />
+		<file src="$OutputPath$IronPigeon.pdb" target="lib\MonoTouch" />
+		<file src="$OutputPath$IronPigeon.xml" target="lib\MonoTouch" />
+		<file src="$OutputPath$IronPigeon.MonoTouch.dll" target="lib\MonoTouch" />
 		<file src="$OutputPath$IronPigeon.MonoTouch.pdb" target="lib\MonoTouch" />
-		<file src="$OutputPath$IronPigeon.MonoTouch.xml" target="lib\MonoTouch" />-->
+		<file src="$OutputPath$IronPigeon.MonoTouch.xml" target="lib\MonoTouch" />
 
-		<file src="$OutputPath$IronPigeon.dll" target="lib\windowsphone8" />
-		<file src="$OutputPath$IronPigeon.pdb" target="lib\windowsphone8" />
-		<file src="$OutputPath$IronPigeon.xml" target="lib\windowsphone8" />
-		<!--<file src="$OutputPath$IronPigeon.MonoAndroid.dll" target="lib\MonoAndroid" />
+		<file src="$OutputPath$IronPigeon.dll" target="lib\MonoAndroid" />
+		<file src="$OutputPath$IronPigeon.pdb" target="lib\MonoAndroid" />
+		<file src="$OutputPath$IronPigeon.xml" target="lib\MonoAndroid" />
+		<file src="$OutputPath$IronPigeon.MonoAndroid.dll" target="lib\MonoAndroid" />
 		<file src="$OutputPath$IronPigeon.MonoAndroid.pdb" target="lib\MonoAndroid" />
-		<file src="$OutputPath$IronPigeon.MonoAndroid.xml" target="lib\MonoAndroid" />-->
+		<file src="$OutputPath$IronPigeon.MonoAndroid.xml" target="lib\MonoAndroid" />
 
 		<file src="..\src\IronPigeon\**\*.cs" target="src\IronPigeon" exclude="..\src\IronPigeon\obj\**" />
 		<file src="..\src\IronPigeon.Desktop\**\*.cs" target="src\IronPigeon.Desktop" exclude="..\src\IronPigeon.Desktop\obj\**" />
