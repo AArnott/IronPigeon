@@ -1,4 +1,4 @@
-﻿namespace IronPigeon.WinPhone8 {
+﻿namespace IronPigeon {
 	using System;
 	using System.Collections.Generic;
 	using System.Composition;

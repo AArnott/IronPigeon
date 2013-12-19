@@ -1,4 +1,4 @@
-﻿namespace IronPigeon.WinPhone8.Providers {
+﻿namespace IronPigeon.Providers {
 	using System;
 	using System.Collections.Generic;
 	using System.Composition;

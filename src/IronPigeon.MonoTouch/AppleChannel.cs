@@ -1,4 +1,4 @@
-﻿namespace IronPigeon.MonoTouch {
+﻿namespace IronPigeon {
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;

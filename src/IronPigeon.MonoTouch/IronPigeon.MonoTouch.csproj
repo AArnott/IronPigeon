@@ -9,7 +9,7 @@
     <ProjectGuid>{93E2BBDC-0B6A-4E9B-9C1A-AF954A200E14}</ProjectGuid>
     <ProjectTypeGuids>{6BC8ED88-2882-458C-8E55-DFD12B67127B};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <OutputType>Library</OutputType>
-    <RootNamespace>IronPigeon.MonoTouch</RootNamespace>
+    <RootNamespace>IronPigeon</RootNamespace>
     <IPhoneResourcePrefix>Resources</IPhoneResourcePrefix>
     <AssemblyName>IronPigeon.MonoTouch</AssemblyName>
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
