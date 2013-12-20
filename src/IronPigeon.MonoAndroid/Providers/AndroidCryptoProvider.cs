@@ -3,6 +3,7 @@ namespace IronPigeon.Providers {
 	using System.Collections.Generic;
 	using System.IO;
 	using System.Linq;
+	using System.Security.Cryptography;
 	using System.Text;
 	using System.Threading;
 	using System.Threading.Tasks;
@@ -25,7 +26,11 @@ namespace IronPigeon.Providers {
 	public class AndroidCryptoProvider : CryptoProviderBase {
 		/// <inheritdoc/>
 		public override int SymmetricEncryptionBlockSize {
-			get { throw new NotImplementedException(); }
+			get {
+				using (var alg = SymmetricAlgorithm.Create(this.SymmetricEncryptionConfiguration.AlgorithmName)) {
+					return alg.BlockSize;
+				}
+			}
 		}
 
 		/// <inheritdoc/>
@@ -36,32 +41,61 @@ namespace IronPigeon.Providers {
 
 		/// <inheritdoc/>
 		public override byte[] DeriveKeyFromPassword(string password, byte[] salt, int iterations, int keySizeInBytes) {
-			throw new NotImplementedException();
+			Requires.NotNullOrEmpty(password, "password");
+			Requires.NotNull(salt, "salt");
+			Requires.Range(iterations > 0, "iterations");
+			Requires.Range(keySizeInBytes > 0, "keySizeInBytes");
+
+			var keyStrengthening = new Rfc2898DeriveBytes(password, salt, iterations);
+			return keyStrengthening.GetBytes(keySizeInBytes);
 		}
 
 		/// <inheritdoc/>
-		public override Task<byte[]> ComputeAuthenticationCodeAsync(Stream data, byte[] key, string hashAlgorithmName, CancellationToken cancellationToken) {
-			throw new NotImplementedException();
+		public override async Task<byte[]> ComputeAuthenticationCodeAsync(Stream data, byte[] key, string hashAlgorithmName, CancellationToken cancellationToken) {
+			Requires.NotNull(data, "data");
+			Requires.NotNull(key, "key");
+			Requires.NotNullOrEmpty(hashAlgorithmName, "hashAlgorithmName");
+
+			var hmac = this.GetHmacAlgorithm(hashAlgorithmName);
+			hmac.Key = key;
+			using (var cryptoStream = new CryptoStream(Stream.Null, hmac, CryptoStreamMode.Write)) {
+				await data.CopyToAsync(cryptoStream, 4096, cancellationToken);
+				cryptoStream.FlushFinalBlock();
+			}
+
+			return hmac.Hash;
 		}
 
 		/// <inheritdoc/>
 		public override byte[] Sign(byte[] data, byte[] signingPrivateKey) {
-			throw new NotImplementedException();
+			using (var rsa = new RSACryptoServiceProvider()) {
+				rsa.ImportCspBlob(signingPrivateKey);
+				return rsa.SignData(data, this.AsymmetricHashAlgorithmName);
+			}
 		}
 
 		/// <inheritdoc/>
 		public override byte[] SignHash(byte[] hash, byte[] signingPrivateKey, string hashAlgorithmName) {
-			throw new NotImplementedException();
+			using (var rsa = new RSACryptoServiceProvider()) {
+				rsa.ImportCspBlob(signingPrivateKey);
+				return rsa.SignHash(hash, this.AsymmetricHashAlgorithmName);
+			}
 		}
 
 		/// <inheritdoc/>
 		public override bool VerifySignature(byte[] signingPublicKey, byte[] data, byte[] signature, string hashAlgorithm) {
-			throw new NotImplementedException();
+			using (var rsa = new RSACryptoServiceProvider()) {
+				rsa.ImportCspBlob(signingPublicKey);
+				return rsa.VerifyData(data, hashAlgorithm, signature);
+			}
 		}
 
 		/// <inheritdoc/>
 		public override bool VerifyHash(byte[] signingPublicKey, byte[] hash, byte[] signature, string hashAlgorithm) {
-			throw new NotImplementedException();
+			using (var rsa = new RSACryptoServiceProvider()) {
+				rsa.ImportCspBlob(signingPublicKey);
+				return rsa.VerifyHash(hash, hashAlgorithm, signature);
+			}
 		}
 
 		/// <inheritdoc/>
@@ -85,7 +119,7 @@ namespace IronPigeon.Providers {
 
 			var keySpec = new SecretKeySpec(encryptionVariables.Key, "AES");
 			Cipher cipher = Cipher.GetInstance("AES");
-			cipher.Init(CipherMode.EncryptMode, keySpec);
+			cipher.Init(Javax.Crypto.CipherMode.EncryptMode, keySpec);
 
 			byte[] plainTextBuffer = new byte[this.SymmetricEncryptionBlockSize];
 			byte[] cipherTextBuffer = new byte[this.SymmetricEncryptionBlockSize];
@@ -110,7 +144,7 @@ namespace IronPigeon.Providers {
 
 			var keySpec = new SecretKeySpec(encryptionVariables.Key, "AES");
 			Cipher cipher = Cipher.GetInstance("AES");
-			cipher.Init(CipherMode.DecryptMode, keySpec);
+			cipher.Init(Javax.Crypto.CipherMode.DecryptMode, keySpec);
 
 			byte[] plainTextBuffer = new byte[this.SymmetricEncryptionBlockSize];
 			byte[] cipherTextBuffer = new byte[this.SymmetricEncryptionBlockSize];
@@ -127,32 +161,78 @@ namespace IronPigeon.Providers {
 
 		/// <inheritdoc/>
 		public override byte[] Encrypt(byte[] encryptionPublicKey, byte[] data) {
-			throw new NotImplementedException();
+			using (var rsa = new RSACryptoServiceProvider()) {
+				rsa.ImportCspBlob(encryptionPublicKey);
+				return rsa.Encrypt(data, true);
+			}
 		}
 
 		/// <inheritdoc/>
 		public override byte[] Decrypt(byte[] decryptionPrivateKey, byte[] data) {
-			throw new NotImplementedException();
+			using (var rsa = new RSACryptoServiceProvider()) {
+				rsa.ImportCspBlob(decryptionPrivateKey);
+				return rsa.Decrypt(data, true);
+			}
 		}
 
 		/// <inheritdoc/>
 		public override byte[] Hash(byte[] data, string hashAlgorithmName) {
-			throw new NotImplementedException();
+			using (var hasher = HashAlgorithm.Create(hashAlgorithmName)) {
+				if (hasher == null) {
+					throw new NotSupportedException();
+				}
+
+				return hasher.ComputeHash(data);
+			}
 		}
 
 		/// <inheritdoc/>
-		public override Task<byte[]> HashAsync(Stream source, string hashAlgorithmName, CancellationToken cancellationToken) {
-			throw new NotImplementedException();
+		public override async Task<byte[]> HashAsync(Stream source, string hashAlgorithmName, CancellationToken cancellationToken) {
+			using (var hasher = HashAlgorithm.Create(hashAlgorithmName)) {
+				if (hasher == null) {
+					throw new NotSupportedException();
+				}
+
+				using (var cryptoStream = new CryptoStream(Stream.Null, hasher, CryptoStreamMode.Write)) {
+					await source.CopyToAsync(cryptoStream, 4096, cancellationToken);
+					cryptoStream.FlushFinalBlock();
+				}
+
+				return hasher.Hash;
+			}
 		}
 
 		/// <inheritdoc/>
 		public override void GenerateSigningKeyPair(out byte[] keyPair, out byte[] publicKey) {
-			throw new NotImplementedException();
+			using (var rsa = new RSACryptoServiceProvider(this.SignatureAsymmetricKeySize)) {
+				keyPair = rsa.ExportCspBlob(true);
+				publicKey = rsa.ExportCspBlob(false);
+			}
 		}
 
 		/// <inheritdoc/>
 		public override void GenerateEncryptionKeyPair(out byte[] keyPair, out byte[] publicKey) {
-			throw new NotImplementedException();
+			using (var rsa = new RSACryptoServiceProvider(this.EncryptionAsymmetricKeySize)) {
+				keyPair = rsa.ExportCspBlob(true);
+				publicKey = rsa.ExportCspBlob(false);
+			}
+		}
+
+		/// <summary>
+		/// Gets the HMAC algorithm to use.
+		/// </summary>
+		/// <param name="hashAlgorithm">The hash algorithm used to hash the data (SHA1, SHA256).</param>
+		/// <returns>The hash algorithm.</returns>
+		/// <exception cref="System.NotSupportedException">Thrown when the hash algorithm is not recognized or supported.</exception>
+		protected virtual HMAC GetHmacAlgorithm(string hashAlgorithm) {
+			switch (hashAlgorithm) {
+				case "SHA1":
+					return new HMACSHA1();
+				case "SHA256":
+					return new HMACSHA256();
+				default:
+					throw new NotSupportedException();
+			}
 		}
 	}
 }
