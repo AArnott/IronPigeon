@@ -7,16 +7,6 @@ namespace IronPigeon.Providers {
 	using System.Text;
 	using System.Threading;
 	using System.Threading.Tasks;
-	using Android.App;
-	using Android.Content;
-	using Android.Media;
-	using Android.OS;
-	using Android.Runtime;
-	using Android.Views;
-	using Android.Widget;
-	using Java.Security;
-	using Javax.Crypto;
-	using Javax.Crypto.Spec;
 	using Validation;
 	using Stream = System.IO.Stream;
 
@@ -35,8 +25,8 @@ namespace IronPigeon.Providers {
 
 		/// <inheritdoc/>
 		public override void FillCryptoRandomBuffer(byte[] buffer) {
-			var sr = SecureRandom.GetInstance("SHA1PRNG");
-			sr.NextBytes(buffer);
+			var rng = new RNGCryptoServiceProvider();
+			rng.GetBytes(buffer);
 		}
 
 		/// <inheritdoc/>
@@ -103,37 +93,27 @@ namespace IronPigeon.Providers {
 			Requires.NotNull(plaintext, "plaintext");
 			Requires.NotNull(ciphertext, "ciphertext");
 
-			cancellationToken.ThrowIfCancellationRequested();
-			if (encryptionVariables == null) {
-				var sr = SecureRandom.GetInstance("SHA1PRNG");
-				var iv = new byte[this.SymmetricEncryptionBlockSize];
-				sr.NextBytes(iv);
-				var keyGen = KeyGenerator.GetInstance("AES");
-				keyGen.Init(this.SymmetricEncryptionKeySize * 8);
-				ISecretKey key = keyGen.GenerateKey();
-				encryptionVariables = new SymmetricEncryptionVariables(key.GetEncoded(), iv);
-			} else {
-				Requires.Argument(encryptionVariables.Key.Length == this.SymmetricEncryptionKeySize / 8, "key", "Incorrect length.");
-				Requires.Argument(encryptionVariables.IV.Length == this.SymmetricEncryptionBlockSize / 8, "iv", "Incorrect length.");
+			using (var alg = SymmetricAlgorithm.Create(this.SymmetricEncryptionConfiguration.AlgorithmName)) {
+				alg.Mode = (CipherMode)Enum.Parse(typeof(CipherMode), this.SymmetricEncryptionConfiguration.BlockMode);
+				alg.Padding = (PaddingMode)Enum.Parse(typeof(PaddingMode), this.SymmetricEncryptionConfiguration.Padding);
+				alg.KeySize = this.SymmetricEncryptionKeySize;
+
+				if (encryptionVariables != null) {
+					Requires.Argument(encryptionVariables.Key.Length == this.SymmetricEncryptionKeySize / 8, "key", "Incorrect length.");
+					Requires.Argument(encryptionVariables.IV.Length == this.SymmetricEncryptionBlockSize / 8, "iv", "Incorrect length.");
+					alg.Key = encryptionVariables.Key;
+					alg.IV = encryptionVariables.IV;
+				} else {
+					encryptionVariables = new SymmetricEncryptionVariables(alg.Key, alg.IV);
+				}
+
+				using (var encryptor = alg.CreateEncryptor()) {
+					var cryptoStream = new CryptoStream(ciphertext, encryptor, CryptoStreamMode.Write); // DON'T dispose this, or it disposes of the ciphertext stream.
+					await plaintext.CopyToAsync(cryptoStream, alg.BlockSize, cancellationToken);
+					cryptoStream.FlushFinalBlock();
+					return encryptionVariables;
+				}
 			}
-
-			var keySpec = new SecretKeySpec(encryptionVariables.Key, "AES");
-			Cipher cipher = Cipher.GetInstance("AES");
-			cipher.Init(Javax.Crypto.CipherMode.EncryptMode, keySpec);
-
-			byte[] plainTextBuffer = new byte[this.SymmetricEncryptionBlockSize];
-			byte[] cipherTextBuffer = new byte[this.SymmetricEncryptionBlockSize];
-			int bytesRead, bytesWritten;
-			do {
-				cancellationToken.ThrowIfCancellationRequested();
-				bytesRead = await plaintext.ReadAsync(plainTextBuffer, 0, plainTextBuffer.Length, cancellationToken);
-				bytesWritten = cipher.Update(plainTextBuffer, 0, bytesRead, cipherTextBuffer, 0);
-				await ciphertext.WriteAsync(cipherTextBuffer, 0, bytesWritten, cancellationToken);
-			} while (bytesRead > 0);
-			bytesWritten = cipher.DoFinal(cipherTextBuffer, 0);
-			await ciphertext.WriteAsync(cipherTextBuffer, 0, bytesWritten);
-
-			return encryptionVariables;
 		}
 
 		/// <inheritdoc/>
@@ -142,21 +122,15 @@ namespace IronPigeon.Providers {
 			Requires.NotNull(plaintext, "plaintext");
 			Requires.NotNull(encryptionVariables, "encryptionVariables");
 
-			var keySpec = new SecretKeySpec(encryptionVariables.Key, "AES");
-			Cipher cipher = Cipher.GetInstance("AES");
-			cipher.Init(Javax.Crypto.CipherMode.DecryptMode, keySpec);
-
-			byte[] plainTextBuffer = new byte[this.SymmetricEncryptionBlockSize];
-			byte[] cipherTextBuffer = new byte[this.SymmetricEncryptionBlockSize];
-			int bytesRead, bytesWritten;
-			do {
-				cancellationToken.ThrowIfCancellationRequested();
-				bytesRead = await ciphertext.ReadAsync(cipherTextBuffer, 0, cipherTextBuffer.Length, cancellationToken);
-				bytesWritten = cipher.Update(cipherTextBuffer, 0, bytesRead, plainTextBuffer, 0);
-				await plaintext.WriteAsync(plainTextBuffer, 0, bytesWritten, cancellationToken);
-			} while (bytesRead > 0);
-			bytesWritten = cipher.DoFinal(plainTextBuffer, 0);
-			await plaintext.WriteAsync(plainTextBuffer, 0, bytesWritten);
+			using (var alg = SymmetricAlgorithm.Create(this.SymmetricEncryptionConfiguration.AlgorithmName)) {
+				alg.Mode = (CipherMode)Enum.Parse(typeof(CipherMode), this.SymmetricEncryptionConfiguration.BlockMode);
+				alg.Padding = (PaddingMode)Enum.Parse(typeof(PaddingMode), this.SymmetricEncryptionConfiguration.Padding);
+				using (var decryptor = alg.CreateDecryptor(encryptionVariables.Key, encryptionVariables.IV)) {
+					var cryptoStream = new CryptoStream(plaintext, decryptor, CryptoStreamMode.Write); // don't dispose this or it disposes the target stream.
+					await ciphertext.CopyToAsync(cryptoStream, 4096, cancellationToken);
+					cryptoStream.FlushFinalBlock();
+				}
+			}
 		}
 
 		/// <inheritdoc/>
