@@ -64,6 +64,14 @@
 		public string WinPhone8TileTemplate { get; set; }
 
 		/// <summary>
+		/// Gets or sets the Google Cloud Messaging registration identifier.
+		/// </summary>
+		/// <value>
+		/// The google cloud messaging registration identifier.
+		/// </value>
+		public string GoogleCloudMessagingRegistrationId { get; set; }
+
+		/// <summary>
 		/// Gets or sets the timestamp for when the inbox was last accessed by its owner.
 		/// </summary>
 		public DateTime? LastAuthenticatedInteractionUtc { get; set; }
