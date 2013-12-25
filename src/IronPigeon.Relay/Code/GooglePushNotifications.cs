@@ -1,25 +1,26 @@
 ﻿namespace IronPigeon.Relay {
 	using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Net.Http;
-using System.Net.Http.Formatting;
-using System.Net.Http.Headers;
-using System.Runtime.Serialization;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Web;
-using System.Xml.Linq;
-using IronPigeon.Relay.Models;
-using Validation;
+	using System.Collections.Generic;
+	using System.Linq;
+	using System.Net;
+	using System.Net.Http;
+	using System.Net.Http.Formatting;
+	using System.Net.Http.Headers;
+	using System.Runtime.Serialization;
+	using System.Threading;
+	using System.Threading.Tasks;
+	using System.Web;
+	using System.Xml.Linq;
+	using IronPigeon.Relay.Models;
+	using Validation;
 
 	public class GooglePushNotifications {
 		public GooglePushNotifications() {
 		}
 
-		public GooglePushNotifications(HttpClient httpClient, string registrationId) {
+		public GooglePushNotifications(HttpClient httpClient, string apiKey, string registrationId) {
 			this.HttpClient = httpClient;
+			this.GoogleApiKey = apiKey;
 			this.RegistrationId = registrationId;
 		}
 

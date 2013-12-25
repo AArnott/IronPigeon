@@ -465,7 +465,7 @@
 
 		private async Task PushNotifyInboxMessageGoogleAsync(InboxEntity inbox) {
 			if (!string.IsNullOrEmpty(inbox.GoogleCloudMessagingRegistrationId)) {
-				var notifications = new GooglePushNotifications(this.HttpClient, inbox.GoogleCloudMessagingRegistrationId);
+				var notifications = new GooglePushNotifications(this.HttpClient, ConfigurationManager.AppSettings["GoogleApiKey"], inbox.GoogleCloudMessagingRegistrationId);
 
 				int count = await this.RetrieveInboxItemsCountAsync(inbox.RowKey);
 				bool invalidChannel = false;
