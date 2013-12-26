@@ -24,7 +24,7 @@
 				<dependency id="Microsoft.Net.Http" version="2.2.18" />
 				<dependency id="Microsoft.Composition" version="[1.0.20, 2.0)" />
 				<dependency id="Microsoft.Tpl.Dataflow" version="[4.5.14, 5.0)" />
-				<dependency id="Microsoft.WindowsAzure.StorageClient.Async" version="0.3.1-preview" />
+				<dependency id="Microsoft.WindowsAzure.StorageClient.Async" version="0.3.2-preview" />
 			</group>
 			<group targetFramework="winrt">
 				<dependency id="Validation" version="[2.0.3, 3.0)" />
