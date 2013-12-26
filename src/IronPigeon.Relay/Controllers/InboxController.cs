@@ -467,7 +467,6 @@
 			if (!string.IsNullOrEmpty(inbox.GoogleCloudMessagingRegistrationId)) {
 				var notifications = new GooglePushNotifications(this.HttpClient, ConfigurationManager.AppSettings["GoogleApiKey"], inbox.GoogleCloudMessagingRegistrationId);
 
-				int count = await this.RetrieveInboxItemsCountAsync(inbox.RowKey);
 				bool invalidChannel = false;
 				try {
 					bool successfulPush = await notifications.PushGoogleRawNotificationAsync(CancellationToken.None);

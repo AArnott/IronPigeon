@@ -34,12 +34,15 @@
 			Requires.ValidState(!string.IsNullOrEmpty(this.RegistrationId), "RegistrationId must be set.");
 			Requires.ValidState(!string.IsNullOrEmpty(this.GoogleApiKey), "GoogleApiKey must be set.");
 
-			var value = new GooglePushObject();
+			var value = new GooglePushObject {
+				CollapseKey = "NewMessages",
+				RegistrationIds = new[] { this.RegistrationId },
+				TimeToLive = (long)TimeSpan.FromDays(7).TotalSeconds,
+			};
 
 			var pushNotifyRequest = new HttpRequestMessage(HttpMethod.Post, "https://android.googleapis.com/gcm/send");
-			pushNotifyRequest.Headers.Authorization = new AuthenticationHeaderValue("key=" + this.GoogleApiKey);
+			pushNotifyRequest.Headers.TryAddWithoutValidation("Authorization", "key=" + this.GoogleApiKey); // non-standard format means we can't use normal type
 			pushNotifyRequest.Content = new ObjectContent<GooglePushObject>(value, new JsonMediaTypeFormatter());
-			////pushNotifyRequest.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
 			return await this.PushGoogleUpdate(pushNotifyRequest, cancellationToken);
 		}
 
