@@ -240,6 +240,8 @@
 				inbox.WinPhone8ToastText1 = this.Request.Form["wp8_channel_toast_text1"];
 				inbox.WinPhone8ToastText2 = this.Request.Form["wp8_channel_toast_text2"];
 				inbox.WinPhone8TileTemplate = this.Request.Form["wp8_channel_tile_template"];
+			} else if (this.Request.Form["gcm_registration_id"] != null) {
+				inbox.GoogleCloudMessagingRegistrationId = this.Request.Form["gcm_registration_id"];
 			} else {
 				// No data was posted. So skip updating the entity.
 				return new HttpStatusCodeResult(HttpStatusCode.NoContent);
@@ -374,7 +376,8 @@
 
 			await Task.WhenAll(
 				this.PushNotifyInboxMessageWinStoreAsync(inbox),
-				this.PushNotifyInboxMessageWinPhoneAsync(inbox));
+				this.PushNotifyInboxMessageWinPhoneAsync(inbox),
+				this.PushNotifyInboxMessageGoogleAsync(inbox));
 		}
 
 		private async Task PushNotifyInboxMessageWinStoreAsync(InboxEntity inbox, int failedAttempts = 0) {
@@ -457,6 +460,25 @@
 				}
 
 				this.InboxTable.UpdateObject(inbox);
+			}
+		}
+
+		private async Task PushNotifyInboxMessageGoogleAsync(InboxEntity inbox) {
+			if (!string.IsNullOrEmpty(inbox.GoogleCloudMessagingRegistrationId)) {
+				var notifications = new GooglePushNotifications(this.HttpClient, ConfigurationManager.AppSettings["GoogleApiKey"], inbox.GoogleCloudMessagingRegistrationId);
+
+				bool invalidChannel = false;
+				try {
+					bool successfulPush = await notifications.PushGoogleRawNotificationAsync(CancellationToken.None);
+					invalidChannel |= !successfulPush;
+				} catch (HttpRequestException) {
+					invalidChannel = true;
+				}
+
+				if (invalidChannel) {
+					inbox.GoogleCloudMessagingRegistrationId = null;
+					this.InboxTable.UpdateObject(inbox);
+				}
 			}
 		}
 
