@@ -101,5 +101,7 @@
 		<file src="$IntermediatePath$IronPigeon.Desktop.Version.cs" target="src\IronPigeon.Desktop\Properties" />
 		<file src="$IntermediatePath$IronPigeon.WinRT.Version.cs" target="src\IronPigeon.WinRT\Properties" />
 		<file src="$IntermediatePath$IronPigeon.WinPhone8.Version.cs" target="src\IronPigeon.WinPhone8\Properties" />
+		<file src="$IntermediatePath$IronPigeon.MonoAndroid.Version.cs" target="src\IronPigeon.MonoAndroid\Properties" />
+		<file src="$IntermediatePath$IronPigeon.MonoTouch.Version.cs" target="src\IronPigeon.MonoTouch\Properties" />
 	</files>
 </package>
