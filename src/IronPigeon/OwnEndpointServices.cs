@@ -61,7 +61,7 @@
 		/// </remarks>
 		public async Task<OwnEndpoint> CreateAsync(CancellationToken cancellationToken = default(CancellationToken)) {
 			// Create new key pairs.
-			var endpoint = await TaskEx.Run(() => this.CreateEndpointWithKeys(), cancellationToken);
+			var endpoint = await TaskEx.Run(() => this.CreateEndpointWithKeys(cancellationToken), cancellationToken);
 
 			// Set up the inbox on a message relay.
 			var inboxResponse = await this.EndpointInboxFactory.CreateInboxAsync(cancellationToken);
@@ -100,16 +100,21 @@
 		/// <summary>
 		/// Generates a new receiving endpoint.
 		/// </summary>
-		/// <returns>The newly generated endpoint.</returns>
+		/// <param name="cancellationToken">The cancellation token.</param>
+		/// <returns>
+		/// The newly generated endpoint.
+		/// </returns>
 		/// <remarks>
 		/// Depending on the length of the keys set in the provider and the amount of buffered entropy in the operating system,
 		/// this method can take an extended period (several seconds) to complete.
 		/// </remarks>
-		private OwnEndpoint CreateEndpointWithKeys() {
+		private OwnEndpoint CreateEndpointWithKeys(CancellationToken cancellationToken) {
 			byte[] privateEncryptionKey, publicEncryptionKey;
 			byte[] privateSigningKey, publicSigningKey;
 
+			cancellationToken.ThrowIfCancellationRequested();
 			this.CryptoProvider.GenerateEncryptionKeyPair(out privateEncryptionKey, out publicEncryptionKey);
+			cancellationToken.ThrowIfCancellationRequested();
 			this.CryptoProvider.GenerateSigningKeyPair(out privateSigningKey, out publicSigningKey);
 
 			var contact = new Endpoint() {
