@@ -29,6 +29,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="IronPigeonDartModule.cs" />
     <Compile Include="Message.cs" />
     <Compile Include="PostalService.cs" />
     <Compile Include="Strings.Designer.cs">
@@ -55,6 +56,9 @@
     <Folder Include="Properties\" />
   </ItemGroup>
   <ItemGroup>
+    <Reference Include="Autofac">
+      <HintPath>..\packages\Autofac.3.3.0\lib\portable-win+net40+sl50+wp8\Autofac.dll</HintPath>
+    </Reference>
     <Reference Include="System.Composition.AttributedModel">
       <HintPath>..\packages\Microsoft.Composition.1.0.20\lib\portable-net45+win8\System.Composition.AttributedModel.dll</HintPath>
     </Reference>

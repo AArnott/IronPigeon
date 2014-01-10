@@ -23,6 +23,9 @@
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Autofac">
+      <HintPath>..\packages\Autofac.3.3.0\lib\portable-win+net40+sl50+wp8\Autofac.dll</HintPath>
+    </Reference>
     <Reference Include="Mono.Android" />
     <Reference Include="mscorlib" />
     <Reference Include="System" />
@@ -64,6 +67,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AndroidChannel.cs" />
+    <Compile Include="IronPigeonPlatformModule.cs" />
     <Compile Include="Providers\AndroidCryptoProvider.cs" />
     <Compile Include="Resources\Resource.Designer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
