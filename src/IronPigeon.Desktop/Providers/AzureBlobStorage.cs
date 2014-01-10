@@ -18,6 +18,8 @@
 	/// <summary>
 	/// A cloud blob storage provider that uses Azure blob storage directly.
 	/// </summary>
+	[Export(typeof(ICloudBlobStorageProvider)), Export]
+	[Shared]
 	public class AzureBlobStorage : ICloudBlobStorageProvider {
 		/// <summary>
 		/// The Azure storage account.
