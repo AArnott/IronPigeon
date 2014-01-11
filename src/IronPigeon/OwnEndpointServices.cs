@@ -1,6 +1,7 @@
 ﻿namespace IronPigeon {
 	using System;
 	using System.Collections.Generic;
+	using System.Composition;
 	using System.IO;
 	using System.Linq;
 	using System.Net.Http;
@@ -15,25 +16,31 @@
 	/// <summary>
 	/// Creates and services <see cref="OwnEndpoint"/> instances.
 	/// </summary>
+	[Export]
+	[Shared]
 	public class OwnEndpointServices {
 		/// <summary>
 		/// Gets or sets the crypto provider.
 		/// </summary>
+		[Import]
 		public ICryptoProvider CryptoProvider { get; set; }
 
 		/// <summary>
 		/// Gets or sets the cloud blob storage provider.
 		/// </summary>
+		[Import]
 		public ICloudBlobStorageProvider CloudBlobStorage { get; set; }
 
 		/// <summary>
 		/// Gets or sets the HTTP client.
 		/// </summary>
+		[Import]
 		public HttpClient HttpClient { get; set; }
 
 		/// <summary>
 		/// Gets or sets the service that creates new inboxes on a message relay.
 		/// </summary>
+		[Import]
 		public IEndpointInboxFactory EndpointInboxFactory { get; set; }
 
 		/// <summary>

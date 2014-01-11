@@ -1,6 +1,7 @@
 ﻿namespace IronPigeon.Providers {
 	using System;
 	using System.Collections.Generic;
+	using System.Composition;
 	using System.IO;
 	using System.Linq;
 	using System.Net.Http;
@@ -15,6 +16,10 @@
 	/// <summary>
 	/// A blob storage provider that stores blobs to the message relay service via its well-known blob API.
 	/// </summary>
+	[Export(typeof(ICloudBlobStorageProvider))]
+	[Export(typeof(IEndpointInboxFactory))]
+	[Export]
+	[Shared]
 	public class RelayCloudBlobStorageProvider : ICloudBlobStorageProvider, IEndpointInboxFactory {
 		/// <summary>
 		/// Initializes a new instance of the <see cref="RelayCloudBlobStorageProvider" /> class.
@@ -44,6 +49,7 @@
 		/// <summary>
 		/// Gets or sets the HTTP client to use for outbound HTTP requests.
 		/// </summary>
+		[Import]
 		public HttpClient HttpClient { get; set; }
 
 		/// <inheritdoc/>

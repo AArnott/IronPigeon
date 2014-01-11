@@ -1,6 +1,7 @@
 ﻿namespace IronPigeon {
 	using System;
 	using System.Collections.Generic;
+	using System.Composition;
 	using System.Globalization;
 	using System.Linq;
 	using System.Net.Http;
@@ -14,6 +15,8 @@
 	/// <summary>
 	/// A channel for sending or receiving secure messages with additional WinRT specific functionality.
 	/// </summary>
+	[Export(typeof(Channel))]
+	[Shared]
 	public class WinRTChannel : Channel {
 		/// <summary>
 		/// Gets or sets the package security identifier of the app.
