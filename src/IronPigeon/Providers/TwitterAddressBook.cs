@@ -1,7 +1,6 @@
 ﻿namespace IronPigeon.Providers {
 	using System;
 	using System.Collections.Generic;
-	using System.Composition;
 	using System.Globalization;
 	using System.IO;
 	using System.Linq;
@@ -17,9 +16,6 @@
 	/// <summary>
 	/// Discovers an address book entry by searching for the URL to it on the user's Twitter bio.
 	/// </summary>
-	[Export(typeof(AddressBook))]
-	[Export]
-	[Shared]
 	public class TwitterAddressBook : OnlineAddressBook {
 		/// <summary>
 		/// The unformatted string that serves as the template for the URL that downloads user information from Twitter.

@@ -1,8 +1,6 @@
 ﻿namespace WpfChatroom {
 	using System;
 	using System.Collections.Generic;
-	using System.Composition;
-	using System.Composition.Hosting;
 	using System.Configuration;
 	using System.IO;
 	using System.Linq;
@@ -20,6 +18,7 @@
 	using System.Windows.Media.Imaging;
 	using System.Windows.Navigation;
 	using System.Windows.Shapes;
+	using Autofac;
 	using IronPigeon;
 	using IronPigeon.Dart;
 	using IronPigeon.Providers;
@@ -29,20 +28,25 @@
 	/// Interaction logic for MainWindow.xaml
 	/// </summary>
 	public partial class MainWindow : Window {
+		private IContainer container;
+
 		/// <summary>
 		/// Initializes a new instance of the <see cref="MainWindow"/> class.
 		/// </summary>
 		public MainWindow() {
 			this.InitializeComponent();
 
-			var configuration =
-				new ContainerConfiguration().WithAssembly(typeof(Channel).Assembly)
-											.WithAssembly(typeof(PostalService).Assembly)
-											.WithPart(typeof(DesktopCryptoProvider))
-											.WithPart(typeof(DesktopChannel))
-											.WithAssembly(Assembly.GetExecutingAssembly());
-			var container = configuration.CreateContainer();
-			container.SatisfyImports(this);
+			var containerBuilder = new ContainerBuilder();
+			containerBuilder.RegisterModule(new IronPigeonPlatformModule());
+			containerBuilder.RegisterModule(new IronPigeonDartModule());
+			containerBuilder.RegisterType<ChatroomWindow>()
+				.AsSelf()
+				.PropertiesAutowired();
+			containerBuilder.RegisterInstance(this)
+				.AsSelf()
+				.PropertiesAutowired();
+			this.container = containerBuilder.Build();
+			this.container.Resolve<MainWindow>(); // satisfy imports
 
 			this.MessageRelayService.BlobPostUrl = new Uri(ConfigurationManager.ConnectionStrings["RelayBlobService"].ConnectionString);
 			this.MessageRelayService.InboxServiceUrl = new Uri(ConfigurationManager.ConnectionStrings["RelayInboxService"].ConnectionString);
@@ -51,34 +55,21 @@
 		/// <summary>
 		/// Gets or sets the own endpoint services.
 		/// </summary>
-		[Import]
 		public OwnEndpointServices OwnEndpointServices { get; set; }
 
 		/// <summary>
 		/// Gets or sets the message relay service.
 		/// </summary>
-		[Import]
 		public RelayCloudBlobStorageProvider MessageRelayService { get; set; }
 
 		/// <summary>
 		/// Gets or sets the crypto provider.
 		/// </summary>
-		[Import]
 		public ICryptoProvider CryptoProvider { get; set; }
-
-		/// <summary>
-		/// Gets or sets the chatroom window factory.
-		/// </summary>
-		/// <value>
-		/// The chatroom window factory.
-		/// </value>
-		[Import]
-		public ExportFactory<ChatroomWindow> ChatroomWindowFactory { get; set; }
 
 		/// <summary>
 		/// Gets or sets the channel.
 		/// </summary>
-		[Import]
 		public Channel Channel { get; set; }
 
 		private async void CreateNewEndpoint_OnClick(object sender, RoutedEventArgs e) {
@@ -127,17 +118,17 @@
 		}
 
 		private void OpenChatroom_OnClick(object sender, RoutedEventArgs e) {
-			var chatroomWindow = this.ChatroomWindowFactory.CreateExport();
-			chatroomWindow.Value.Show();
+			var chatroomWindow = this.container.Resolve<ChatroomWindow>();
+			chatroomWindow.Show();
 		}
 
 		private async void ChatWithAuthor_OnClick(object sender, RoutedEventArgs e) {
-			var chatroomWindow = this.ChatroomWindowFactory.CreateExport();
-			chatroomWindow.Value.Show();
+			var chatroomWindow = this.container.Resolve<ChatroomWindow>();
+			chatroomWindow.Show();
 
 			var addressBook = new DirectEntryAddressBook(this.CryptoProvider, new HttpClient());
 			var endpoint = await addressBook.LookupAsync("http://tinyurl.com/omhxu6l#-Rrs7LRrCE3bV8x58j1l4JUzAT3P2obKia73k3IFG9k");
-			chatroomWindow.Value.AddMember("App author", endpoint);
+			chatroomWindow.AddMember("App author", endpoint);
 		}
 
 		private Task SetEndpointAsync(OwnEndpoint endpoint, Uri addressBookEntry, CancellationToken cancellationToken = default(CancellationToken)) {

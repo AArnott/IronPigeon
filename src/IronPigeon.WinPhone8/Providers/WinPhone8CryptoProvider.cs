@@ -1,7 +1,6 @@
 ﻿namespace IronPigeon.Providers {
 	using System;
 	using System.Collections.Generic;
-	using System.Composition;
 	using System.Globalization;
 	using System.IO;
 	using System.Linq;
@@ -22,8 +21,6 @@
 	/// <summary>
 	/// The Windows Phone 8 implementation of the IronPigeon crypto provider.
 	/// </summary>
-	[Export(typeof(ICryptoProvider))]
-	[Shared]
 	public class WinPhone8CryptoProvider : CryptoProviderBase {
 		/// <summary>
 		/// Initializes a new instance of the <see cref="WinPhone8CryptoProvider" /> class

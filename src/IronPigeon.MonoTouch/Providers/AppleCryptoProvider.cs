@@ -1,7 +1,6 @@
 namespace IronPigeon.Providers {
 	using System;
 	using System.Collections.Generic;
-	using System.Composition;
 	using System.IO;
 	using System.Linq;
 	using System.Security.Cryptography;
@@ -13,8 +12,6 @@ namespace IronPigeon.Providers {
 	/// <summary>
 	/// An Apple iOS implementation of <see cref="ICryptoProvider"/>.
 	/// </summary>
-	[Export(typeof(ICryptoProvider))]
-	[Shared]
 	public class AppleCryptoProvider : CryptoProviderBase {
 		/// <inheritdoc/>
 		public override int SymmetricEncryptionBlockSize {

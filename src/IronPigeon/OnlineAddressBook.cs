@@ -1,7 +1,6 @@
 ﻿namespace IronPigeon {
 	using System;
 	using System.Collections.Generic;
-	using System.Composition;
 	using System.IO;
 	using System.Linq;
 	using System.Net.Http;
@@ -38,7 +37,6 @@
 		/// <summary>
 		/// Gets or sets the HTTP client to use for outbound HTTP requests.
 		/// </summary>
-		[Import]
 		public HttpClient HttpClient { get; set; }
 
 		/// <summary>

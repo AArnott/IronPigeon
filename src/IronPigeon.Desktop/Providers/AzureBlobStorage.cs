@@ -1,7 +1,6 @@
 ﻿namespace IronPigeon.Providers {
 	using System;
 	using System.Collections.Generic;
-	using System.Composition;
 	using System.Globalization;
 	using System.IO;
 	using System.Linq;

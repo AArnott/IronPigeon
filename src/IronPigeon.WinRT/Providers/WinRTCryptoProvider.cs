@@ -1,7 +1,6 @@
 ﻿namespace IronPigeon.Providers {
 	using System;
 	using System.Collections.Generic;
-	using System.Composition;
 	using System.IO;
 	using System.Linq;
 	using System.Text;
@@ -15,8 +14,6 @@
 	/// <summary>
 	/// A WinRT implementation of cryptography.
 	/// </summary>
-	[Export(typeof(ICryptoProvider))]
-	[Shared]
 	public class WinRTCryptoProvider : CryptoProviderBase {
 		/// <summary>
 		/// The asymmetric encryption algorithm provider to use.
