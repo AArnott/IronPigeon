@@ -209,7 +209,14 @@
 				builder.Append(line);
 			}
 
-			var ms = new MemoryStream(Convert.FromBase64String(builder.ToString()));
+			byte[] buffer;
+			try {
+				buffer = Convert.FromBase64String(builder.ToString());
+			} catch (FormatException ex) {
+				throw new SerializationException("Failed to decode base64 string.", ex);
+			}
+
+			var ms = new MemoryStream(buffer);
 			var binaryReader = new BinaryReader(ms);
 			var value = DeserializeDataContract<T>(binaryReader);
 			return value;
