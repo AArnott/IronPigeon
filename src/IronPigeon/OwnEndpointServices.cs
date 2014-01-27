@@ -27,11 +27,6 @@
 		public ICloudBlobStorageProvider CloudBlobStorage { get; set; }
 
 		/// <summary>
-		/// Gets or sets the URL shortener.
-		/// </summary>
-		public IList<IUrlShortener> UrlShorteners { get; set; }
-
-		/// <summary>
 		/// Gets or sets the HTTP client.
 		/// </summary>
 		public HttpClient HttpClient { get; set; }
@@ -78,10 +73,6 @@
 			await Utilities.SerializeDataContractAsBase64Async(abeWriter, abe);
 			var ms = new MemoryStream(Encoding.UTF8.GetBytes(abeWriter.ToString()));
 			var location = await this.CloudBlobStorage.UploadMessageAsync(ms, DateTime.MaxValue, AddressBookEntry.ContentType, cancellationToken: cancellationToken);
-			var urlShortener = this.UrlShorteners.FirstOrDefault();
-			if (urlShortener != null) {
-				location = await urlShortener.ShortenAsync(location);
-			}
 
 			var fullLocationWithFragment = new Uri(
 				location,
