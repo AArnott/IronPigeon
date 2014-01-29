@@ -43,10 +43,10 @@
 			var pushNotifyRequest = new HttpRequestMessage(HttpMethod.Post, "https://android.googleapis.com/gcm/send");
 			pushNotifyRequest.Headers.TryAddWithoutValidation("Authorization", "key=" + this.GoogleApiKey); // non-standard format means we can't use normal type
 			pushNotifyRequest.Content = new ObjectContent<GooglePushObject>(value, new JsonMediaTypeFormatter());
-			return await this.PushGoogleUpdate(pushNotifyRequest, cancellationToken);
+			return await this.PushGoogleUpdateAsync(pushNotifyRequest, cancellationToken);
 		}
 
-		private async Task<bool> PushGoogleUpdate(HttpRequestMessage request, CancellationToken cancellationToken) {
+		private async Task<bool> PushGoogleUpdateAsync(HttpRequestMessage request, CancellationToken cancellationToken) {
 			Requires.NotNull(request, "request");
 			Requires.ValidState(this.HttpClient != null, "HttpClient must be initialized.");
 
