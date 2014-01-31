@@ -72,6 +72,11 @@
 		public string GoogleCloudMessagingRegistrationId { get; set; }
 
 		/// <summary>
+		/// Gets or sets the device token from an iOS device that should receive push notification.
+		/// </summary>
+		public string ApplePushNotificationGatewayDeviceToken { get; set; }
+
+		/// <summary>
 		/// Gets or sets the timestamp for when the inbox was last accessed by its owner.
 		/// </summary>
 		public DateTime? LastAuthenticatedInteractionUtc { get; set; }

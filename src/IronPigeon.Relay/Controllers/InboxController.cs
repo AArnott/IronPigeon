@@ -24,6 +24,8 @@
 	using Microsoft.WindowsAzure.StorageClient;
 	using Newtonsoft.Json;
 	using Newtonsoft.Json.Linq;
+	using PushSharp;
+	using PushSharp.Apple;
 	using Validation;
 
 #if !DEBUG
@@ -242,6 +244,8 @@
 				inbox.WinPhone8TileTemplate = this.Request.Form["wp8_channel_tile_template"];
 			} else if (this.Request.Form["gcm_registration_id"] != null) {
 				inbox.GoogleCloudMessagingRegistrationId = this.Request.Form["gcm_registration_id"];
+			} else if (this.Request.Form["ios_device_token"] != null) {
+				inbox.ApplePushNotificationGatewayDeviceToken = this.Request.Form["ios_device_token"];
 			} else {
 				// No data was posted. So skip updating the entity.
 				return new HttpStatusCodeResult(HttpStatusCode.NoContent);
@@ -377,7 +381,8 @@
 			await Task.WhenAll(
 				this.PushNotifyInboxMessageWinStoreAsync(inbox),
 				this.PushNotifyInboxMessageWinPhoneAsync(inbox),
-				this.PushNotifyInboxMessageGoogleAsync(inbox));
+				this.PushNotifyInboxMessageGoogleAsync(inbox),
+				this.PushNotifyInboxMessageAppleAsync(inbox));
 		}
 
 		private async Task PushNotifyInboxMessageWinStoreAsync(InboxEntity inbox, int failedAttempts = 0) {
@@ -478,6 +483,17 @@
 				if (invalidChannel) {
 					inbox.GoogleCloudMessagingRegistrationId = null;
 					this.InboxTable.UpdateObject(inbox);
+				}
+			}
+		}
+
+		private async Task PushNotifyInboxMessageAppleAsync(InboxEntity inbox) {
+			if (MvcApplication.IsApplePushRegistered) {
+				if (!string.IsNullOrEmpty(inbox.ApplePushNotificationGatewayDeviceToken)) {
+					int count = await this.RetrieveInboxItemsCountAsync(inbox.RowKey);
+					MvcApplication.PushBroker.QueueNotification(new AppleNotification()
+						.ForDeviceToken(inbox.ApplePushNotificationGatewayDeviceToken)
+						.WithBadge(count));
 				}
 			}
 		}

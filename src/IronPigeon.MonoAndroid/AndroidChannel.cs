@@ -13,7 +13,7 @@
 	/// </summary>
 	public class AndroidChannel : Channel {
 		/// <summary>
-		/// Registers a Windows 8 application to receive push notifications for incoming messages.
+		/// Registers an Android application to receive push notifications for incoming messages.
 		/// </summary>
 		/// <param name="googlePlayRegistrationId">The Google Cloud Messaging registration identifier.</param>
 		/// <param name="cancellationToken">The cancellation token.</param>
