@@ -1,6 +1,7 @@
 ﻿namespace IronPigeon {
 	using System;
 	using System.Collections.Generic;
+	using System.Composition;
 	using System.Linq;
 	using System.Net.Http;
 	using System.Net.Http.Headers;
@@ -12,6 +13,8 @@
 	/// <summary>
 	/// An Apple iOS implementation of <see cref="Channel"/>.
 	/// </summary>
+	[Export(typeof(Channel))]
+	[Shared]
 	public class AppleChannel : Channel {
 		/// <summary>
 		/// Registers an iOS application to receive push notifications for incoming messages.

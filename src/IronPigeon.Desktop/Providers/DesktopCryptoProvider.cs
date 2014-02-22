@@ -1,6 +1,7 @@
 ﻿namespace IronPigeon.Providers {
 	using System;
 	using System.Collections.Generic;
+	using System.Composition;
 	using System.IO;
 	using System.Linq;
 	using System.Security.Cryptography;
@@ -12,6 +13,8 @@
 	/// <summary>
 	/// The (full) .NET Framework implementation of cryptography.
 	/// </summary>
+	[Export(typeof(ICryptoProvider))]
+	[Shared]
 	public class DesktopCryptoProvider : CryptoProviderBase {
 		/// <summary>
 		/// Initializes a new instance of the <see cref="DesktopCryptoProvider" /> class

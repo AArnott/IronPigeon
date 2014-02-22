@@ -2,6 +2,7 @@
 	using System;
 	using System.Collections.Generic;
 	using System.Collections.ObjectModel;
+	using System.Composition;
 	using System.IO;
 	using System.Linq;
 	using System.Text;
@@ -12,10 +13,13 @@
 	/// <summary>
 	/// An email sending and receiving service.
 	/// </summary>
+	[Export]
+	[Shared]
 	public class PostalService {
 		/// <summary>
 		/// Gets or sets the channel used to send and receive messages.
 		/// </summary>
+		[Import]
 		public Channel Channel { get; set; }
 
 		/// <summary>

@@ -1,6 +1,7 @@
 ﻿namespace IronPigeon {
 	using System;
 	using System.Collections.Generic;
+	using System.Composition;
 	using System.Globalization;
 	using System.Linq;
 	using System.Net.Http;
@@ -16,6 +17,8 @@
 	/// <summary>
 	/// The Windows Phone 8 implementation of an IronPigeon channel.
 	/// </summary>
+	[Export(typeof(Channel))]
+	[Shared]
 	public class WinPhoneChannel : Channel {
 		/// <summary>
 		/// Registers a Windows 8 application to receive push notifications for incoming messages.
