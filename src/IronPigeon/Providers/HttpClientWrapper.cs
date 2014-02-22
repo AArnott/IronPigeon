@@ -15,10 +15,15 @@
 	[Export]
 	public class HttpClientWrapper {
 		/// <summary>
+		/// The default timeout.
+		/// </summary>
+		public static readonly TimeSpan DefaultTimeoutInitValue = TimeSpan.FromSeconds(10);
+
+		/// <summary>
 		/// Initializes a new instance of the <see cref="HttpClientWrapper"/> class.
 		/// </summary>
 		public HttpClientWrapper() {
-			this.DefaultTimeout = TimeSpan.FromSeconds(10);
+			this.DefaultTimeout = DefaultTimeoutInitValue;
 		}
 
 		/// <summary>
