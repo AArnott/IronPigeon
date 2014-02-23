@@ -48,6 +48,14 @@
 		int ECDiffieHellmanKeySize { get; set; }
 
 		/// <summary>
+		/// Gets or sets the size of the Elliptic-curve DSA key.
+		/// </summary>
+		/// <value>
+		/// The size of the EC DSA key.
+		/// </value>
+		int ECDsaKeySize { get; set; }
+
+		/// <summary>
 		/// Fills the specified buffer with cryptographically strong random generated data.
 		/// </summary>
 		/// <param name="buffer">The buffer to fill.</param>
@@ -82,7 +90,7 @@
 		byte[] Sign(byte[] data, byte[] signingPrivateKey);
 
 		/// <summary>
-		/// Asymmetrically signs the hash of data.
+		/// Asymmetrically signs the hash of data using RSA.
 		/// </summary>
 		/// <param name="hash">The hash to sign.</param>
 		/// <param name="signingPrivateKey">The private key used to sign the data.</param>
@@ -91,6 +99,16 @@
 		/// The signature.
 		/// </returns>
 		byte[] SignHash(byte[] hash, byte[] signingPrivateKey, string hashAlgorithmName);
+
+		/// <summary>
+		/// Asymmetrically signs the hash of data using ECDsa.
+		/// </summary>
+		/// <param name="hash">The hash to sign.</param>
+		/// <param name="signingPrivateKey">The private key used to sign the data.</param>
+		/// <returns>
+		/// The signature.
+		/// </returns>
+		byte[] SignHashEC(byte[] hash, byte[] signingPrivateKey);
 
 		/// <summary>
 		/// Verifies the asymmetric signature of some data blob.
@@ -105,7 +123,7 @@
 		bool VerifySignature(byte[] signingPublicKey, byte[] data, byte[] signature, string hashAlgorithm);
 
 		/// <summary>
-		/// Verifies the asymmetric signature of the hash of some data blob.
+		/// Verifies the asymmetric signature of the hash of some data blob using RSA.
 		/// </summary>
 		/// <param name="signingPublicKey">The public key used to verify the signature.</param>
 		/// <param name="hash">The hash of the data that was signed.</param>
@@ -115,6 +133,17 @@
 		/// A value indicating whether the signature is valid.
 		/// </returns>
 		bool VerifyHash(byte[] signingPublicKey, byte[] hash, byte[] signature, string hashAlgorithm);
+
+		/// <summary>
+		/// Verifies the asymmetric signature of the hash of some data blob using ECDsa.
+		/// </summary>
+		/// <param name="signingPublicKey">The public key used to verify the signature.</param>
+		/// <param name="hash">The hash of the data that was signed.</param>
+		/// <param name="signature">The signature.</param>
+		/// <returns>
+		/// A value indicating whether the signature is valid.
+		/// </returns>
+		bool VerifyHashEC(byte[] signingPublicKey, byte[] hash, byte[] signature);
 
 		/// <summary>
 		/// Symmetrically encrypts the specified buffer using a randomly generated key.
@@ -199,6 +228,13 @@
 		/// <param name="keyPair">Receives the serialized key pair (includes private key).</param>
 		/// <param name="publicKey">Receives the public key.</param>
 		void GenerateEncryptionKeyPair(out byte[] keyPair, out byte[] publicKey);
+
+		/// <summary>
+		/// Generate a new ECDsa key pair.
+		/// </summary>
+		/// <param name="keyPair">Receives the private+public key pair.</param>
+		/// <param name="publicKey">Receives the public key.</param>
+		void GenerateECDsaKeyPair(out byte[] keyPair, out byte[] publicKey);
 
 		/// <summary>
 		/// Creates private/public key pair used to begin an ECDiffieHellman exchange

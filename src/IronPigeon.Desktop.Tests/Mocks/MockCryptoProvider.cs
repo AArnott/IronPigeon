@@ -56,6 +56,20 @@
 			set { throw new NotSupportedException(); }
 		}
 
+		public int ECDsaKeySize { get; set; }
+
+		public byte[] SignHashEC(byte[] hash, byte[] signingPrivateKey) {
+			throw new NotImplementedException();
+		}
+
+		public bool VerifyHashEC(byte[] signingPublicKey, byte[] hash, byte[] signature) {
+			throw new NotImplementedException();
+		}
+
+		public void GenerateECDsaKeyPair(out byte[] keyPair, out byte[] publicKey) {
+			throw new NotImplementedException();
+		}
+
 		public void FillCryptoRandomBuffer(byte[] buffer) {
 			var rng = new RNGCryptoServiceProvider();
 			rng.GetBytes(buffer);

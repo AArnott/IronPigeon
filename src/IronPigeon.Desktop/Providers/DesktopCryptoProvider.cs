@@ -125,6 +125,14 @@
 			}
 		}
 
+		/// <inheritdoc/>
+		public override byte[] SignHashEC(byte[] hash, byte[] signingPrivateKey) {
+			var key = CngKey.Import(signingPrivateKey, CngKeyBlobFormat.EccPrivateBlob);
+			using (var ecdsa = new ECDsaCng(key)) {
+				return ecdsa.SignHash(hash);
+			}
+		}
+
 		/// <summary>
 		/// Verifies the asymmetric signature of some data blob.
 		/// </summary>
@@ -156,6 +164,14 @@
 			using (var rsa = new RSACryptoServiceProvider()) {
 				rsa.ImportCspBlob(signingPublicKey);
 				return rsa.VerifyHash(hash, hashAlgorithm, signature);
+			}
+		}
+
+		/// <inheritdoc/>
+		public override bool VerifyHashEC(byte[] signingPublicKey, byte[] hash, byte[] signature) {
+			var key = CngKey.Import(signingPublicKey, CngKeyBlobFormat.EccPublicBlob);
+			using (var ecdsa = new ECDsaCng(key)) {
+				return ecdsa.VerifyHash(hash, signature);
 			}
 		}
 
@@ -309,6 +325,15 @@
 			using (var rsa = new RSACryptoServiceProvider(this.EncryptionAsymmetricKeySize)) {
 				keyPair = rsa.ExportCspBlob(true);
 				publicKey = rsa.ExportCspBlob(false);
+			}
+		}
+
+		/// <inheritdoc/>
+		public override void GenerateECDsaKeyPair(out byte[] keyPair, out byte[] publicKey) {
+			using (var ecdsa = new ECDsaCng(this.ECDsaKeySize)) {
+				CngKey key = ecdsa.Key;
+				publicKey = key.Export(CngKeyBlobFormat.EccPublicBlob);
+				keyPair = key.Export(CngKeyBlobFormat.EccPrivateBlob);
 			}
 		}
 

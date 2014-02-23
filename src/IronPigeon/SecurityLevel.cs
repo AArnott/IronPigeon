@@ -66,6 +66,11 @@
 		public abstract int ECDiffieHellmanKeySize { get; }
 
 		/// <summary>
+		/// Gets the size (in bits) of the ECDsa keys.
+		/// </summary>
+		public abstract int ECDsaKeySize { get; }
+
+		/// <summary>
 		/// Gets the size of the BLOB symmetric key.
 		/// </summary>
 		/// <value>
@@ -86,6 +91,8 @@
 			cryptoProvider.EncryptionAsymmetricKeySize = this.EncryptionAsymmetricKeySize;
 			cryptoProvider.SignatureAsymmetricKeySize = this.SignatureAsymmetricKeySize;
 			cryptoProvider.SymmetricEncryptionKeySize = this.BlobSymmetricKeySize;
+			cryptoProvider.ECDiffieHellmanKeySize = this.ECDiffieHellmanKeySize;
+			cryptoProvider.ECDsaKeySize = this.ECDsaKeySize;
 		}
 
 		/// <summary>
@@ -141,6 +148,11 @@
 
 			/// <inheritdoc/>
 			public override int ECDiffieHellmanKeySize {
+				get { return 521; }
+			}
+
+			/// <inheritdoc/>
+			public override int ECDsaKeySize {
 				get { return 521; }
 			}
 
@@ -208,6 +220,11 @@
 
 			/// <inheritdoc/>
 			public override int ECDiffieHellmanKeySize {
+				get { return 521; }
+			}
+
+			/// <inheritdoc/>
+			public override int ECDsaKeySize {
 				get { return 521; }
 			}
 

@@ -130,6 +130,11 @@
 			}
 		}
 
+		/// <inheritdoc/>
+		public override byte[] SignHashEC(byte[] hash, byte[] signingPrivateKey) {
+			throw new NotImplementedException();
+		}
+
 		/// <summary>
 		/// Verifies the asymmetric signature of some data blob.
 		/// </summary>
@@ -162,6 +167,11 @@
 				rsa.ImportCspBlob(signingPublicKey);
 				return rsa.VerifyHash(hash, hashAlgorithm, signature);
 			}
+		}
+
+		/// <inheritdoc/>
+		public override bool VerifyHashEC(byte[] signingPublicKey, byte[] hash, byte[] signature) {
+			throw new NotImplementedException();
 		}
 
 		/// <summary>
@@ -302,6 +312,11 @@
 				keyPair = rsa.ExportCspBlob(true);
 				publicKey = rsa.ExportCspBlob(false);
 			}
+		}
+
+		/// <inheritdoc/>
+		public override void GenerateECDsaKeyPair(out byte[] keyPair, out byte[] publicKey) {
+			throw new NotImplementedException();
 		}
 
 		/// <inheritdoc/>

@@ -154,6 +154,11 @@
 			public override int ECDiffieHellmanKeySize {
 				get { return 256; }
 			}
+
+			/// <inheritdoc/>
+			public override int ECDsaKeySize {
+				get { return 256; }
+			}
 		}
 
 		/// <summary>
@@ -219,6 +224,11 @@
 
 			/// <inheritdoc/>
 			public override int ECDiffieHellmanKeySize {
+				get { return 521; }
+			}
+
+			/// <inheritdoc/>
+			public override int ECDsaKeySize {
 				get { return 521; }
 			}
 		}

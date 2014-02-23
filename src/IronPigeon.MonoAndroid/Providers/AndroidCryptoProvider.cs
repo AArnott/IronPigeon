@@ -76,6 +76,11 @@ namespace IronPigeon.Providers {
 		}
 
 		/// <inheritdoc/>
+		public override byte[] SignHashEC(byte[] hash, byte[] signingPrivateKey) {
+			throw new NotImplementedException();
+		}
+
+		/// <inheritdoc/>
 		public override bool VerifySignature(byte[] signingPublicKey, byte[] data, byte[] signature, string hashAlgorithm) {
 			using (var rsa = new RSACryptoServiceProvider()) {
 				rsa.ImportCspBlob(signingPublicKey);
@@ -89,6 +94,11 @@ namespace IronPigeon.Providers {
 				rsa.ImportCspBlob(signingPublicKey);
 				return rsa.VerifyHash(hash, hashAlgorithm, signature);
 			}
+		}
+
+		/// <inheritdoc/>
+		public override bool VerifyHashEC(byte[] signingPublicKey, byte[] hash, byte[] signature) {
+			throw new NotImplementedException();
 		}
 
 		/// <inheritdoc/>
@@ -193,6 +203,11 @@ namespace IronPigeon.Providers {
 				keyPair = rsa.ExportCspBlob(true);
 				publicKey = rsa.ExportCspBlob(false);
 			}
+		}
+
+		/// <inheritdoc/>
+		public override void GenerateECDsaKeyPair(out byte[] keyPair, out byte[] publicKey) {
+			throw new NotImplementedException();
 		}
 
 		/// <inheritdoc/>
