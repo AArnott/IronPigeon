@@ -52,6 +52,8 @@
 				return endpoint;
 			} catch (HttpRequestException) {
 				return null;
+			} catch (BadAddressBookEntryException) {
+				return null;
 			}
 		}
 	}

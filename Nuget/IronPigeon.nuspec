@@ -24,13 +24,23 @@
 				<dependency id="Microsoft.Net.Http" version="2.2.18" />
 				<dependency id="Microsoft.Composition" version="[1.0.20, 2.0)" />
 				<dependency id="Microsoft.Tpl.Dataflow" version="[4.5.14, 5.0)" />
-				<dependency id="Microsoft.WindowsAzure.StorageClient.Async" version="0.3.1-preview" />
+				<dependency id="Microsoft.WindowsAzure.StorageClient.Async" version="0.3.2-preview" />
 			</group>
 			<group targetFramework="winrt">
 				<dependency id="Validation" version="[2.0.3, 3.0)" />
 				<dependency id="Microsoft.Net.Http" version="2.2.18" />
 				<dependency id="Microsoft.Composition" version="[1.0.20, 2.0)" />
 				<dependency id="Microsoft.Tpl.Dataflow" version="[4.5.14, 5.0)" />
+			</group>
+			<group targetFramework="MonoAndroid10">
+				<dependency id="Validation" version="[2.0.3, 3.0)" />
+				<dependency id="Microsoft.Net.Http" version="2.2.18" />
+				<dependency id="Microsoft.Composition" version="[1.0.20, 2.0)" />
+			</group>
+			<group targetFramework="MonoTouch10">
+				<dependency id="Validation" version="[2.0.3, 3.0)" />
+				<dependency id="Microsoft.Net.Http" version="2.2.18" />
+				<dependency id="Microsoft.Composition" version="[1.0.20, 2.0)" />
 			</group>
 			<group targetFramework="windowsphone8">
 				<dependency id="Validation" version="[2.0.3, 3.0)" />
@@ -66,16 +76,16 @@
 		<file src="$OutputPath$IronPigeon.WinPhone8.pdb" target="lib\windowsphone8" />
 		<file src="$OutputPath$IronPigeon.WinPhone8.xml" target="lib\windowsphone8" />
 
-		<file src="$OutputPath$IronPigeon.dll" target="lib\windowsphone8" />
-		<file src="$OutputPath$IronPigeon.pdb" target="lib\windowsphone8" />
-		<file src="$OutputPath$IronPigeon.xml" target="lib\windowsphone8" />
+		<file src="$OutputPath$IronPigeon.dll" target="lib\MonoTouch" />
+		<file src="$OutputPath$IronPigeon.pdb" target="lib\MonoTouch" />
+		<file src="$OutputPath$IronPigeon.xml" target="lib\MonoTouch" />
 		<file src="$OutputPath$IronPigeon.MonoTouch.dll" target="lib\MonoTouch" />
 		<file src="$OutputPath$IronPigeon.MonoTouch.pdb" target="lib\MonoTouch" />
 		<file src="$OutputPath$IronPigeon.MonoTouch.xml" target="lib\MonoTouch" />
 
-		<file src="$OutputPath$IronPigeon.dll" target="lib\windowsphone8" />
-		<file src="$OutputPath$IronPigeon.pdb" target="lib\windowsphone8" />
-		<file src="$OutputPath$IronPigeon.xml" target="lib\windowsphone8" />
+		<file src="$OutputPath$IronPigeon.dll" target="lib\MonoAndroid" />
+		<file src="$OutputPath$IronPigeon.pdb" target="lib\MonoAndroid" />
+		<file src="$OutputPath$IronPigeon.xml" target="lib\MonoAndroid" />
 		<file src="$OutputPath$IronPigeon.MonoAndroid.dll" target="lib\MonoAndroid" />
 		<file src="$OutputPath$IronPigeon.MonoAndroid.pdb" target="lib\MonoAndroid" />
 		<file src="$OutputPath$IronPigeon.MonoAndroid.xml" target="lib\MonoAndroid" />
@@ -91,5 +101,7 @@
 		<file src="$IntermediatePath$IronPigeon.Desktop.Version.cs" target="src\IronPigeon.Desktop\Properties" />
 		<file src="$IntermediatePath$IronPigeon.WinRT.Version.cs" target="src\IronPigeon.WinRT\Properties" />
 		<file src="$IntermediatePath$IronPigeon.WinPhone8.Version.cs" target="src\IronPigeon.WinPhone8\Properties" />
+		<file src="$IntermediatePath$IronPigeon.MonoAndroid.Version.cs" target="src\IronPigeon.MonoAndroid\Properties" />
+		<file src="$IntermediatePath$IronPigeon.MonoTouch.Version.cs" target="src\IronPigeon.MonoTouch\Properties" />
 	</files>
 </package>

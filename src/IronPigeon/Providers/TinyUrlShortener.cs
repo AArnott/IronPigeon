@@ -39,6 +39,11 @@
 		public async Task<Uri> ShortenAsync(Uri longUrl, CancellationToken cancellationToken) {
 			Requires.NotNull(longUrl, "longUrl");
 
+			if (longUrl.Host == "tinyurl.com") {
+				// already shortened.
+				return longUrl;
+			}
+
 			string shorteningRequestUrl = string.Format(
 				CultureInfo.InvariantCulture, ShorteningService, Uri.EscapeDataString(longUrl.AbsoluteUri));
 			var response = await this.HttpClient.GetAsync(shorteningRequestUrl, cancellationToken);

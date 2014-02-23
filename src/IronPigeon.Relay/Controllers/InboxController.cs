@@ -24,6 +24,8 @@
 	using Microsoft.WindowsAzure.StorageClient;
 	using Newtonsoft.Json;
 	using Newtonsoft.Json.Linq;
+	using PushSharp;
+	using PushSharp.Apple;
 	using Validation;
 
 #if !DEBUG
@@ -239,6 +241,11 @@
 				inbox.WinPhone8PushChannelContent = content;
 				inbox.WinPhone8ToastText1 = this.Request.Form["wp8_channel_toast_text1"];
 				inbox.WinPhone8ToastText2 = this.Request.Form["wp8_channel_toast_text2"];
+				inbox.WinPhone8TileTemplate = this.Request.Form["wp8_channel_tile_template"];
+			} else if (this.Request.Form["gcm_registration_id"] != null) {
+				inbox.GoogleCloudMessagingRegistrationId = this.Request.Form["gcm_registration_id"];
+			} else if (this.Request.Form["ios_device_token"] != null) {
+				inbox.ApplePushNotificationGatewayDeviceToken = this.Request.Form["ios_device_token"];
 			} else {
 				// No data was posted. So skip updating the entity.
 				return new HttpStatusCodeResult(HttpStatusCode.NoContent);
@@ -373,7 +380,9 @@
 
 			await Task.WhenAll(
 				this.PushNotifyInboxMessageWinStoreAsync(inbox),
-				this.PushNotifyInboxMessageWinPhoneAsync(inbox));
+				this.PushNotifyInboxMessageWinPhoneAsync(inbox),
+				this.PushNotifyInboxMessageGoogleAsync(inbox),
+				this.PushNotifyInboxMessageAppleAsync(inbox));
 		}
 
 		private async Task PushNotifyInboxMessageWinStoreAsync(InboxEntity inbox, int failedAttempts = 0) {
@@ -421,7 +430,7 @@
 				int count = await this.RetrieveInboxItemsCountAsync(inbox.RowKey);
 				bool invalidChannel = false;
 				try {
-					var pushTile = notifications.PushWinPhoneTileAsync(count: count);
+					var pushTile = notifications.PushWinPhoneTileAsync(inbox.WinPhone8TileTemplate, count: count);
 					Task<bool> pushToast = Task.FromResult(false);
 					if (!string.IsNullOrEmpty(inbox.WinPhone8ToastText1) || !string.IsNullOrEmpty(inbox.WinPhone8ToastText2)) {
 						var line1 = string.Format(CultureInfo.InvariantCulture, inbox.WinPhone8ToastText1 ?? string.Empty, count);
@@ -456,6 +465,36 @@
 				}
 
 				this.InboxTable.UpdateObject(inbox);
+			}
+		}
+
+		private async Task PushNotifyInboxMessageGoogleAsync(InboxEntity inbox) {
+			if (!string.IsNullOrEmpty(inbox.GoogleCloudMessagingRegistrationId)) {
+				var notifications = new GooglePushNotifications(this.HttpClient, ConfigurationManager.AppSettings["GoogleApiKey"], inbox.GoogleCloudMessagingRegistrationId);
+
+				bool invalidChannel = false;
+				try {
+					bool successfulPush = await notifications.PushGoogleRawNotificationAsync(CancellationToken.None);
+					invalidChannel |= !successfulPush;
+				} catch (HttpRequestException) {
+					invalidChannel = true;
+				}
+
+				if (invalidChannel) {
+					inbox.GoogleCloudMessagingRegistrationId = null;
+					this.InboxTable.UpdateObject(inbox);
+				}
+			}
+		}
+
+		private async Task PushNotifyInboxMessageAppleAsync(InboxEntity inbox) {
+			if (MvcApplication.IsApplePushRegistered) {
+				if (!string.IsNullOrEmpty(inbox.ApplePushNotificationGatewayDeviceToken)) {
+					int count = await this.RetrieveInboxItemsCountAsync(inbox.RowKey);
+					MvcApplication.PushBroker.QueueNotification(new AppleNotification()
+						.ForDeviceToken(inbox.ApplePushNotificationGatewayDeviceToken)
+						.WithBadge(count));
+				}
 			}
 		}
 

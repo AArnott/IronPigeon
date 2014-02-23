@@ -28,10 +28,10 @@
 
 		public Uri ChannelUri { get; set; }
 
-		public async Task<bool> PushWinPhoneTileAsync(string backgroundImage = null, string title = null, int? count = null) {
+		public async Task<bool> PushWinPhoneTileAsync(string tileTemplate, string backgroundImage = null, string title = null, int? count = null) {
 			Requires.ValidState(this.ChannelUri != null, "ChannelUri must be set.");
 
-			var tile = TileUpdate(backgroundImage, title, count);
+			var tile = TileUpdate(tileTemplate, backgroundImage, title, count);
 			var pushNotifyRequest = new HttpRequestMessage(HttpMethod.Post, this.ChannelUri);
 			pushNotifyRequest.Headers.Add("X-WindowsPhone-Target", "token");
 			pushNotifyRequest.Headers.Add("X-NotificationClass", "1");
@@ -62,8 +62,25 @@
 			return await this.PushWinPhoneUpdate(pushNotifyRequest);
 		}
 
-		private static XElement TileUpdate(string backgroundImage = null, string title = null, int? count = null) {
+		private static XElement TileUpdate(string tileTemplate, string backgroundImage = null, string title = null, int? count = null) {
+			XElement tile;
+			switch (tileTemplate ?? string.Empty) {
+				case "IconicTile":
+					tile = IconicTileUpdate(title, count);
+					break;
+				case "FlipTile":
+				case "":
+				default:
+					tile = FlipTileUpdate(backgroundImage, title, count);
+					break;
+			}
+
+			return new XElement(XName.Get("Notification", WinPhoneNS), tile);
+		}
+
+		private static XElement FlipTileUpdate(string backgroundImage = null, string title = null, int? count = null) {
 			var tile = new XElement(XName.Get("Tile", WinPhoneNS));
+			tile.SetAttributeValue("Template", "FlipTile");
 			if (backgroundImage != null) {
 				tile.Add(new XElement(XName.Get("BackgroundImage", WinPhoneNS), backgroundImage));
 			}
@@ -76,7 +93,22 @@
 				tile.Add(new XElement(XName.Get("Count", WinPhoneNS), count.Value));
 			}
 
-			return new XElement(XName.Get("Notification", WinPhoneNS), tile);
+			return tile;
+		}
+
+		private static XElement IconicTileUpdate(string title = null, int? count = null) {
+			var tile = new XElement(XName.Get("Tile", WinPhoneNS));
+			tile.SetAttributeValue("Template", "IconicTile");
+
+			if (title != null) {
+				tile.Add(new XElement(XName.Get("Title", WinPhoneNS), title));
+			}
+
+			if (count.HasValue) {
+				tile.Add(new XElement(XName.Get("Count", WinPhoneNS), count.Value));
+			}
+
+			return tile;
 		}
 
 		private static XElement Toast(string text1, string text2) {

@@ -32,12 +32,6 @@
 		public ICloudBlobStorageProvider CloudBlobStorage { get; set; }
 
 		/// <summary>
-		/// Gets or sets the URL shortener.
-		/// </summary>
-		[ImportMany]
-		public IList<IUrlShortener> UrlShorteners { get; set; }
-
-		/// <summary>
 		/// Gets or sets the HTTP client.
 		/// </summary>
 		[Import]
@@ -61,7 +55,7 @@
 		/// </remarks>
 		public async Task<OwnEndpoint> CreateAsync(CancellationToken cancellationToken = default(CancellationToken)) {
 			// Create new key pairs.
-			var endpoint = await TaskEx.Run(() => this.CreateEndpointWithKeys(), cancellationToken);
+			var endpoint = await TaskEx.Run(() => this.CreateEndpointWithKeys(cancellationToken), cancellationToken);
 
 			// Set up the inbox on a message relay.
 			var inboxResponse = await this.EndpointInboxFactory.CreateInboxAsync(cancellationToken);
@@ -86,10 +80,6 @@
 			await Utilities.SerializeDataContractAsBase64Async(abeWriter, abe);
 			var ms = new MemoryStream(Encoding.UTF8.GetBytes(abeWriter.ToString()));
 			var location = await this.CloudBlobStorage.UploadMessageAsync(ms, DateTime.MaxValue, AddressBookEntry.ContentType, cancellationToken: cancellationToken);
-			var urlShortener = this.UrlShorteners.FirstOrDefault();
-			if (urlShortener != null) {
-				location = await urlShortener.ShortenAsync(location);
-			}
 
 			var fullLocationWithFragment = new Uri(
 				location,
@@ -100,16 +90,21 @@
 		/// <summary>
 		/// Generates a new receiving endpoint.
 		/// </summary>
-		/// <returns>The newly generated endpoint.</returns>
+		/// <param name="cancellationToken">The cancellation token.</param>
+		/// <returns>
+		/// The newly generated endpoint.
+		/// </returns>
 		/// <remarks>
 		/// Depending on the length of the keys set in the provider and the amount of buffered entropy in the operating system,
 		/// this method can take an extended period (several seconds) to complete.
 		/// </remarks>
-		private OwnEndpoint CreateEndpointWithKeys() {
+		private OwnEndpoint CreateEndpointWithKeys(CancellationToken cancellationToken) {
 			byte[] privateEncryptionKey, publicEncryptionKey;
 			byte[] privateSigningKey, publicSigningKey;
 
+			cancellationToken.ThrowIfCancellationRequested();
 			this.CryptoProvider.GenerateEncryptionKeyPair(out privateEncryptionKey, out publicEncryptionKey);
+			cancellationToken.ThrowIfCancellationRequested();
 			this.CryptoProvider.GenerateSigningKeyPair(out privateSigningKey, out publicSigningKey);
 
 			var contact = new Endpoint() {

@@ -2,7 +2,7 @@
 	using System;
 	using System.Security.Cryptography;
 	using IronPigeon.Tests;
-	using IronPigeon.WinPhone8.Providers;
+	using IronPigeon.Providers;
 	using Microsoft.VisualStudio.TestPlatform.UnitTestFramework;
 
 	[TestClass]

@@ -9,9 +9,9 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-[assembly: global::Android.Runtime.ResourceDesignerAttribute("IronPigeon.MonoAndroid.Resource", IsApplication=false)]
+[assembly: global::Android.Runtime.ResourceDesignerAttribute("IronPigeon.Resource", IsApplication=false)]
 
-namespace IronPigeon.MonoAndroid
+namespace IronPigeon
 {
 	
 	
