@@ -195,6 +195,21 @@ namespace IronPigeon.Providers {
 			}
 		}
 
+		/// <inheritdoc/>
+		public override void BeginNegotiateSharedSecret(out byte[] privateKey, out byte[] publicKey) {
+			throw new NotImplementedException();
+		}
+
+		/// <inheritdoc/>
+		public override void RespondNegotiateSharedSecret(byte[] remotePublicKey, out byte[] ownPublicKey, out byte[] sharedSecret) {
+			throw new NotImplementedException();
+		}
+
+		/// <inheritdoc/>
+		public override void EndNegotiateSharedSecret(byte[] ownPrivateKey, byte[] remotePublicKey, out byte[] sharedSecret) {
+			throw new NotImplementedException();
+		}
+
 		/// <summary>
 		/// Gets the HMAC algorithm to use.
 		/// </summary>
@@ -210,21 +225,6 @@ namespace IronPigeon.Providers {
 				default:
 					throw new NotSupportedException();
 			}
-		}
-
-		/// <inheritdoc/>
-		public override void BeginNegotiateSharedSecret(out byte[] privateKey, out byte[] publicKey) {
-			throw new NotImplementedException();
-		}
-
-		/// <inheritdoc/>
-		public override void RespondNegotiateSharedSecret(byte[] remotePublicKey, out byte[] ownPublicKey, out byte[] sharedSecret) {
-			throw new NotImplementedException();
-		}
-
-		/// <inheritdoc/>
-		public override void EndNegotiateSharedSecret(byte[] ownPrivateKey, byte[] remotePublicKey, out byte[] sharedSecret) {
-			throw new NotImplementedException();
 		}
 	}
 }
