@@ -32,7 +32,9 @@
 
 		[TearDown]
 		public void TearDown() {
-			this.container.Delete();
+			if (this.container != null) {
+				this.container.Delete();
+			}
 		}
 
 		[Test]
