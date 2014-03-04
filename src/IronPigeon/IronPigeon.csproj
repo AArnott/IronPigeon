@@ -33,6 +33,7 @@
     <Compile Include="ICryptoProvider.cs" />
     <Compile Include="AddressBook.cs" />
     <Compile Include="IronPigeonBaseModule.cs" />
+    <Compile Include="PclCryptoProvider.cs" />
     <Compile Include="ProgressWithCompletion.cs" />
     <Compile Include="Providers\RelayServiceAddressBook.cs" />
     <Compile Include="Providers\TinyUrlShortener.cs" />
@@ -85,6 +86,12 @@
   <ItemGroup>
     <Reference Include="Autofac">
       <HintPath>..\packages\Autofac.3.3.0\lib\portable-win+net40+sl50+wp8\Autofac.dll</HintPath>
+    </Reference>
+    <Reference Include="PCLCrypto">
+      <HintPath>..\packages\PCLCrypto.0.3.0-beta\lib\portable-net40+sl50+wp80+win+MonoAndroid10+MonoTouch10\PCLCrypto.dll</HintPath>
+    </Reference>
+    <Reference Include="PCLCrypto.Abstractions">
+      <HintPath>..\packages\PCLCrypto.0.3.0-beta\lib\portable-net40+sl50+wp80+win+MonoAndroid10+MonoTouch10\PCLCrypto.Abstractions.dll</HintPath>
     </Reference>
     <Reference Include="System.Net.Http">
       <HintPath>..\packages\Microsoft.Net.Http.2.2.18\lib\portable-net40+sl4+win8+wp71\System.Net.Http.dll</HintPath>

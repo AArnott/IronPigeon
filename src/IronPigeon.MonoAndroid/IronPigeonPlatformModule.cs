@@ -26,7 +26,7 @@
 				.As<Channel>()
 				.PropertiesAutowired()
 				.InstancePerLifetimeScope();
-			builder.RegisterType<Providers.AndroidCryptoProvider>()
+			builder.RegisterType<PclCryptoProvider>()
 				.As<ICryptoProvider>()
 				.PropertiesAutowired()
 				.InstancePerLifetimeScope();

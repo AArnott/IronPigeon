@@ -26,7 +26,7 @@
 				.As<Channel>()
 				.PropertiesAutowired()
 				.InstancePerLifetimeScope();
-			builder.RegisterType<Providers.WinPhone8CryptoProvider>()
+			builder.RegisterType<PclCryptoProvider>()
 				.As<ICryptoProvider>()
 				.PropertiesAutowired()
 				.InstancePerLifetimeScope();
