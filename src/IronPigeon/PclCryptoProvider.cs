@@ -96,10 +96,9 @@ namespace IronPigeon
             var algorithm = this.GetHmacAlgorithmProvider(hashAlgorithmName);
             var hasher = algorithm.CreateHash(key);
 
-            using (var cryptoStream = new CryptoStream(Stream.Null, hasher, CryptoStreamMode.Write))
-            {
-                await data.CopyToAsync(cryptoStream, 4096, cancellationToken);
-            }
+            var cryptoStream = new CryptoStream(Stream.Null, hasher, CryptoStreamMode.Write);
+            await data.CopyToAsync(cryptoStream, 4096, cancellationToken);
+            cryptoStream.FlushFinalBlock();
 
             return hasher.GetValueAndReset();
         }
@@ -206,10 +205,9 @@ namespace IronPigeon
             var key = SymmetricAlgorithm.CreateSymmetricKey(encryptionVariables.Key);
             using (var encryptor = WinRTCrypto.CryptographicEngine.CreateEncryptor(key, encryptionVariables.IV))
             {
-                using (var cryptoStream = new CryptoStream(ciphertext, encryptor, CryptoStreamMode.Write))
-                {
-                    await plaintext.CopyToAsync(cryptoStream, 4096, cancellationToken);
-                }
+                var cryptoStream = new CryptoStream(ciphertext, encryptor, CryptoStreamMode.Write);
+                await plaintext.CopyToAsync(cryptoStream, 4096, cancellationToken);
+                cryptoStream.FlushFinalBlock();
             }
 
             return encryptionVariables;
@@ -232,10 +230,9 @@ namespace IronPigeon
             var key = SymmetricAlgorithm.CreateSymmetricKey(encryptionVariables.Key);
             using (var decryptor = WinRTCrypto.CryptographicEngine.CreateDecryptor(key, encryptionVariables.IV))
             {
-                using (var cryptoStream = new CryptoStream(plaintext, decryptor, CryptoStreamMode.Write))
-                {
-                    await ciphertext.CopyToAsync(cryptoStream, 4096, cancellationToken);
-                }
+                var cryptoStream = new CryptoStream(plaintext, decryptor, CryptoStreamMode.Write);
+                await ciphertext.CopyToAsync(cryptoStream, 4096, cancellationToken);
+                cryptoStream.FlushFinalBlock();
             }
         }
 
@@ -290,7 +287,7 @@ namespace IronPigeon
         /// </returns>
         public override byte[] Hash(byte[] data, string hashAlgorithmName)
         {
-            var hashAlgorithm = WinRTCrypto.HashAlgorithmProvider.OpenAlgorithm((HashAlgorithm)Enum.Parse(typeof(HashAlgorithm), hashAlgorithmName));
+            var hashAlgorithm = WinRTCrypto.HashAlgorithmProvider.OpenAlgorithm((HashAlgorithm)Enum.Parse(typeof(HashAlgorithm), hashAlgorithmName, true));
             var hash = hashAlgorithm.HashData(data);
             return hash;
         }
@@ -304,12 +301,11 @@ namespace IronPigeon
         /// <returns>A task whose result is the hash.</returns>
         public override async Task<byte[]> HashAsync(Stream source, string hashAlgorithmName, CancellationToken cancellationToken)
         {
-            var hashAlgorithm = WinRTCrypto.HashAlgorithmProvider.OpenAlgorithm((HashAlgorithm)Enum.Parse(typeof(HashAlgorithm), hashAlgorithmName));
+            var hashAlgorithm = WinRTCrypto.HashAlgorithmProvider.OpenAlgorithm((HashAlgorithm)Enum.Parse(typeof(HashAlgorithm), hashAlgorithmName, true));
             var hasher = hashAlgorithm.CreateHash();
-            using (var cryptoStream = new CryptoStream(Stream.Null, hasher, CryptoStreamMode.Write))
-            {
-                await source.CopyToAsync(cryptoStream, 4096, cancellationToken);
-            }
+            var cryptoStream = new CryptoStream(Stream.Null, hasher, CryptoStreamMode.Write);
+            await source.CopyToAsync(cryptoStream, 4096, cancellationToken);
+            cryptoStream.FlushFinalBlock();
 
             return hasher.GetValueAndReset();
         }
