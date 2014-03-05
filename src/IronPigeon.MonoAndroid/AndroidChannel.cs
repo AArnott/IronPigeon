@@ -1,6 +1,7 @@
 ﻿namespace IronPigeon {
 	using System;
 	using System.Collections.Generic;
+	using System.Composition;
 	using System.Net.Http;
 	using System.Net.Http.Headers;
 	using System.Text;
@@ -11,6 +12,8 @@
 	/// <summary>
 	/// An Android implementation of <see cref="Channel"/>.
 	/// </summary>
+	[Export(typeof(Channel))]
+	[Shared]
 	public class AndroidChannel : Channel {
 		/// <summary>
 		/// Registers an Android application to receive push notifications for incoming messages.

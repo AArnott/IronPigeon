@@ -50,6 +50,18 @@
 		private int blobSymmetricKeySize = SecurityLevel.Maximum.BlobSymmetricKeySize;
 
 		/// <summary>
+		/// Backing field for the <see cref="ECDiffieHellmanKeySize"/> property.
+		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
+		private int ecdiffieHellmanKeySize = SecurityLevel.Maximum.ECDiffieHellmanKeySize;
+
+		/// <summary>
+		/// Backing field for the <see cref="ECDsaKeySize"/> property.
+		/// </summary>
+		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
+		private int ecdsaKeySize = SecurityLevel.Maximum.ECDsaKeySize;
+
+		/// <summary>
 		/// Gets or sets the name of the hash algorithm to use for symmetric signatures.
 		/// </summary>
 		public string SymmetricHashAlgorithmName {
@@ -95,6 +107,18 @@
 		public int SymmetricEncryptionKeySize {
 			get { return this.blobSymmetricKeySize; }
 			set { this.blobSymmetricKeySize = value; }
+		}
+
+		/// <inheritdoc/>
+		public int ECDiffieHellmanKeySize {
+			get { return this.ecdiffieHellmanKeySize; }
+			set { this.ecdiffieHellmanKeySize = value; }
+		}
+
+		/// <inheritdoc/>
+		public int ECDsaKeySize {
+			get { return this.ecdsaKeySize; }
+			set { this.ecdsaKeySize = value; }
 		}
 
 		/// <summary>
@@ -149,6 +173,9 @@
 		/// </returns>
 		public abstract byte[] SignHash(byte[] hash, byte[] signingPrivateKey, string hashAlgorithmName);
 
+		/// <inheritdoc/>
+		public abstract byte[] SignHashEC(byte[] hash, byte[] signingPrivateKey);
+
 		/// <summary>
 		/// Verifies the asymmetric signature of some data blob.
 		/// </summary>
@@ -172,6 +199,9 @@
 		/// A value indicating whether the signature is valid.
 		/// </returns>
 		public abstract bool VerifyHash(byte[] signingPublicKey, byte[] hash, byte[] signature, string hashAlgorithm);
+
+		/// <inheritdoc/>
+		public abstract bool VerifyHashEC(byte[] signingPublicKey, byte[] hash, byte[] signature);
 
 		/// <summary>
 		/// Symmetrically encrypts the specified buffer using a randomly generated key.
@@ -272,11 +302,23 @@
 		/// <param name="publicKey">Receives the public key.</param>
 		public abstract void GenerateSigningKeyPair(out byte[] keyPair, out byte[] publicKey);
 
+		/// <inheritdoc/>
+		public abstract void GenerateECDsaKeyPair(out byte[] keyPair, out byte[] publicKey);
+
 		/// <summary>
 		/// Generates a key pair for asymmetric cryptography.
 		/// </summary>
 		/// <param name="keyPair">Receives the serialized key pair (includes private key).</param>
 		/// <param name="publicKey">Receives the public key.</param>
 		public abstract void GenerateEncryptionKeyPair(out byte[] keyPair, out byte[] publicKey);
+
+		/// <inheritdoc/>
+		public abstract void BeginNegotiateSharedSecret(out byte[] privateKey, out byte[] publicKey);
+
+		/// <inheritdoc/>
+		public abstract void RespondNegotiateSharedSecret(byte[] remotePublicKey, out byte[] ownPublicKey, out byte[] sharedSecret);
+
+		/// <inheritdoc/>
+		public abstract void EndNegotiateSharedSecret(byte[] ownPrivateKey, byte[] remotePublicKey, out byte[] sharedSecret);
 	}
 }

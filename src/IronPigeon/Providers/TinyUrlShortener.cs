@@ -1,6 +1,7 @@
 ﻿namespace IronPigeon.Providers {
 	using System;
 	using System.Collections.Generic;
+	using System.Composition;
 	using System.Globalization;
 	using System.Linq;
 	using System.Net.Http;
@@ -13,6 +14,10 @@
 	/// <summary>
 	/// A URL shortener that uses tinyurl.com
 	/// </summary>
+	[Export(typeof(IUrlShortener))]
+	[Export]
+	[ExportMetadata("SupportsUnusualSchemes", true)]
+	[Shared]
 	public class TinyUrlShortener : IUrlShortener {
 		/// <summary>
 		/// The template for the URL of the service that takes a long URL and returns a short one.
@@ -22,6 +27,7 @@
 		/// <summary>
 		/// Gets or sets the HTTP client to use for outbound HTTP requests.
 		/// </summary>
+		[Import]
 		public HttpClient HttpClient { get; set; }
 
 		/// <summary>

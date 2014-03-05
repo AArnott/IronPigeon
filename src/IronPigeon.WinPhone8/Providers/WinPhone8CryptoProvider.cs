@@ -1,6 +1,7 @@
 ﻿namespace IronPigeon.Providers {
 	using System;
 	using System.Collections.Generic;
+	using System.Composition;
 	using System.Globalization;
 	using System.IO;
 	using System.Linq;
@@ -21,6 +22,8 @@
 	/// <summary>
 	/// The Windows Phone 8 implementation of the IronPigeon crypto provider.
 	/// </summary>
+	[Export(typeof(ICryptoProvider))]
+	[Shared]
 	public class WinPhone8CryptoProvider : CryptoProviderBase {
 		/// <summary>
 		/// Initializes a new instance of the <see cref="WinPhone8CryptoProvider" /> class
@@ -127,6 +130,11 @@
 			}
 		}
 
+		/// <inheritdoc/>
+		public override byte[] SignHashEC(byte[] hash, byte[] signingPrivateKey) {
+			throw new NotImplementedException();
+		}
+
 		/// <summary>
 		/// Verifies the asymmetric signature of some data blob.
 		/// </summary>
@@ -159,6 +167,11 @@
 				rsa.ImportCspBlob(signingPublicKey);
 				return rsa.VerifyHash(hash, hashAlgorithm, signature);
 			}
+		}
+
+		/// <inheritdoc/>
+		public override bool VerifyHashEC(byte[] signingPublicKey, byte[] hash, byte[] signature) {
+			throw new NotImplementedException();
 		}
 
 		/// <summary>
@@ -299,6 +312,26 @@
 				keyPair = rsa.ExportCspBlob(true);
 				publicKey = rsa.ExportCspBlob(false);
 			}
+		}
+
+		/// <inheritdoc/>
+		public override void GenerateECDsaKeyPair(out byte[] keyPair, out byte[] publicKey) {
+			throw new NotImplementedException();
+		}
+
+		/// <inheritdoc/>
+		public override void BeginNegotiateSharedSecret(out byte[] privateKey, out byte[] publicKey) {
+			throw new NotImplementedException();
+		}
+
+		/// <inheritdoc/>
+		public override void RespondNegotiateSharedSecret(byte[] remotePublicKey, out byte[] ownPublicKey, out byte[] sharedSecret) {
+			throw new NotImplementedException();
+		}
+
+		/// <inheritdoc/>
+		public override void EndNegotiateSharedSecret(byte[] ownPrivateKey, byte[] remotePublicKey, out byte[] sharedSecret) {
+			throw new NotImplementedException();
 		}
 
 		/// <summary>

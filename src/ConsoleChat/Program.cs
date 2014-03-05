@@ -1,13 +1,15 @@
 ﻿namespace ConsoleChat {
 	using System;
 	using System.Collections.Generic;
+	using System.Composition;
+	using System.Composition.Convention;
+	using System.Composition.Hosting;
 	using System.Configuration;
 	using System.IO;
 	using System.Linq;
 	using System.Text;
 	using System.Threading.Tasks;
 	using System.Windows.Forms;
-	using Autofac;
 	using IronPigeon;
 	using IronPigeon.Providers;
 	using Microsoft.WindowsAzure;
@@ -19,6 +21,7 @@
 	/// <summary>
 	/// Simple console app that demonstrates the IronPigeon protocol in a live chat program.
 	/// </summary>
+	[Export]
 	internal class Program {
 		/// <summary>
 		/// The name of the table in Azure Table storage to create.
@@ -33,21 +36,25 @@
 		/// <summary>
 		/// Gets or sets the channel.
 		/// </summary>
+		[Import]
 		public Channel Channel { get; set; }
 
 		/// <summary>
 		/// Gets or sets the message relay service.
 		/// </summary>
+		[Import]
 		public RelayCloudBlobStorageProvider MessageRelayService { get; set; }
 
 		/// <summary>
 		/// Gets or sets the crypto provider.
 		/// </summary>
+		[Import]
 		public ICryptoProvider CryptoProvider { get; set; }
 
 		/// <summary>
 		/// Gets or sets the own endpoint services.
 		/// </summary>
+		[Import]
 		public OwnEndpointServices OwnEndpointServices { get; set; }
 
 		/// <summary>
@@ -56,13 +63,14 @@
 		/// <param name="args">The arguments passed into the console app.</param>
 		[STAThread]
 		private static void Main(string[] args) {
-			var containerBuilder = new ContainerBuilder();
-			containerBuilder.RegisterModule(new IronPigeonPlatformModule());
-			containerBuilder.RegisterType<Program>().AsSelf().PropertiesAutowired();
-
-			var container = containerBuilder.Build();
+			var configuration = new ContainerConfiguration()
+				.WithAssembly(typeof(Channel).Assembly)
+				.WithPart(typeof(DesktopCryptoProvider))
+				.WithPart(typeof(DesktopChannel))
+				.WithPart(typeof(Program));
+			var container = configuration.CreateContainer();
 			
-			var program = container.Resolve<Program>();
+			var program = container.GetExport<Program>();
 			program.DoAsync().GetAwaiter().GetResult();
 		}
 

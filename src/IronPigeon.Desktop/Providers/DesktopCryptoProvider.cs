@@ -1,6 +1,7 @@
 ﻿namespace IronPigeon.Providers {
 	using System;
 	using System.Collections.Generic;
+	using System.Composition;
 	using System.IO;
 	using System.Linq;
 	using System.Security.Cryptography;
@@ -12,6 +13,8 @@
 	/// <summary>
 	/// The (full) .NET Framework implementation of cryptography.
 	/// </summary>
+	[Export(typeof(ICryptoProvider))]
+	[Shared]
 	public class DesktopCryptoProvider : CryptoProviderBase {
 		/// <summary>
 		/// Initializes a new instance of the <see cref="DesktopCryptoProvider" /> class
@@ -122,6 +125,14 @@
 			}
 		}
 
+		/// <inheritdoc/>
+		public override byte[] SignHashEC(byte[] hash, byte[] signingPrivateKey) {
+			var key = CngKey.Import(signingPrivateKey, CngKeyBlobFormat.EccPrivateBlob);
+			using (var ecdsa = new ECDsaCng(key)) {
+				return ecdsa.SignHash(hash);
+			}
+		}
+
 		/// <summary>
 		/// Verifies the asymmetric signature of some data blob.
 		/// </summary>
@@ -153,6 +164,14 @@
 			using (var rsa = new RSACryptoServiceProvider()) {
 				rsa.ImportCspBlob(signingPublicKey);
 				return rsa.VerifyHash(hash, hashAlgorithm, signature);
+			}
+		}
+
+		/// <inheritdoc/>
+		public override bool VerifyHashEC(byte[] signingPublicKey, byte[] hash, byte[] signature) {
+			var key = CngKey.Import(signingPublicKey, CngKeyBlobFormat.EccPublicBlob);
+			using (var ecdsa = new ECDsaCng(key)) {
+				return ecdsa.VerifyHash(hash, signature);
 			}
 		}
 
@@ -309,6 +328,45 @@
 			}
 		}
 
+		/// <inheritdoc/>
+		public override void GenerateECDsaKeyPair(out byte[] keyPair, out byte[] publicKey) {
+			using (var ecdsa = new ECDsaCng(this.ECDsaKeySize)) {
+				CngKey key = ecdsa.Key;
+				publicKey = key.Export(CngKeyBlobFormat.EccPublicBlob);
+				keyPair = key.Export(CngKeyBlobFormat.EccPrivateBlob);
+			}
+		}
+
+		/// <inheritdoc/>
+		public override void BeginNegotiateSharedSecret(out byte[] privateKey, out byte[] publicKey) {
+			var keyParameters = new CngKeyCreationParameters {
+				ExportPolicy = CngExportPolicies.AllowPlaintextExport,
+			};
+			var cngKey = CngKey.Create(GetECDiffieHellmanAlgorithm(this.ECDiffieHellmanKeySize), null, keyParameters);
+			using (var ec = new ECDiffieHellmanCng(cngKey)) {
+				privateKey = ec.Key.Export(CngKeyBlobFormat.GenericPrivateBlob);
+				publicKey = ec.PublicKey.ToByteArray();
+			}
+		}
+
+		/// <inheritdoc/>
+		public override void RespondNegotiateSharedSecret(byte[] remotePublicKey, out byte[] ownPublicKey, out byte[] sharedSecret) {
+			using (var ec = new ECDiffieHellmanCng(this.ECDiffieHellmanKeySize)) {
+				var remoteECPublicKey = ECDiffieHellmanCngPublicKey.FromByteArray(remotePublicKey, CngKeyBlobFormat.EccPublicBlob);
+				ownPublicKey = ec.PublicKey.ToByteArray();
+				sharedSecret = ec.DeriveKeyMaterial(remoteECPublicKey);
+			}
+		}
+
+		/// <inheritdoc/>
+		public override void EndNegotiateSharedSecret(byte[] ownPrivateKey, byte[] remotePublicKey, out byte[] sharedSecret) {
+			CngKey key = CngKey.Import(ownPrivateKey, CngKeyBlobFormat.EccPrivateBlob);
+			using (var ec = new ECDiffieHellmanCng(key)) {
+				var remoteECPublicKey = CngKey.Import(remotePublicKey, CngKeyBlobFormat.EccPublicBlob);
+				sharedSecret = ec.DeriveKeyMaterial(remoteECPublicKey);
+			}
+		}
+
 		/// <summary>
 		/// Gets the HMAC algorithm to use.
 		/// </summary>
@@ -323,6 +381,20 @@
 					return new HMACSHA256();
 				default:
 					throw new NotSupportedException();
+			}
+		}
+
+		/// <summary>
+		/// Gets the ECDH algorithm that matches the specified size.
+		/// </summary>
+		/// <param name="keySizeInBits">The size of the key, in bits.</param>
+		/// <returns>The algorithm.</returns>
+		private static CngAlgorithm GetECDiffieHellmanAlgorithm(int keySizeInBits) {
+			switch (keySizeInBits) {
+				case 256: return CngAlgorithm.ECDiffieHellmanP256;
+				case 384: return CngAlgorithm.ECDiffieHellmanP384;
+				case 521: return CngAlgorithm.ECDiffieHellmanP521;
+				default: throw new NotSupportedException();
 			}
 		}
 	}

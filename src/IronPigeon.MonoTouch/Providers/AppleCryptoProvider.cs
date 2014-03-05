@@ -1,6 +1,7 @@
 namespace IronPigeon.Providers {
 	using System;
 	using System.Collections.Generic;
+	using System.Composition;
 	using System.IO;
 	using System.Linq;
 	using System.Security.Cryptography;
@@ -12,6 +13,8 @@ namespace IronPigeon.Providers {
 	/// <summary>
 	/// An Apple iOS implementation of <see cref="ICryptoProvider"/>.
 	/// </summary>
+	[Export(typeof(ICryptoProvider))]
+	[Shared]
 	public class AppleCryptoProvider : CryptoProviderBase {
 		/// <inheritdoc/>
 		public override int SymmetricEncryptionBlockSize {
@@ -72,6 +75,11 @@ namespace IronPigeon.Providers {
 		}
 
 		/// <inheritdoc/>
+		public override byte[] SignHashEC(byte[] hash, byte[] signingPrivateKey) {
+			throw new NotImplementedException();
+		}
+
+		/// <inheritdoc/>
 		public override bool VerifySignature(byte[] signingPublicKey, byte[] data, byte[] signature, string hashAlgorithm) {
 			using (var rsa = new RSACryptoServiceProvider()) {
 				rsa.ImportCspBlob(signingPublicKey);
@@ -85,6 +93,11 @@ namespace IronPigeon.Providers {
 				rsa.ImportCspBlob(signingPublicKey);
 				return rsa.VerifyHash(hash, hashAlgorithm, signature);
 			}
+		}
+
+		/// <inheritdoc/>
+		public override bool VerifyHashEC(byte[] signingPublicKey, byte[] hash, byte[] signature) {
+			throw new NotImplementedException();
 		}
 
 		/// <inheritdoc/>
@@ -189,6 +202,26 @@ namespace IronPigeon.Providers {
 				keyPair = rsa.ExportCspBlob(true);
 				publicKey = rsa.ExportCspBlob(false);
 			}
+		}
+
+		/// <inheritdoc/>
+		public override void GenerateECDsaKeyPair(out byte[] keyPair, out byte[] publicKey) {
+			throw new NotImplementedException();
+		}
+
+		/// <inheritdoc/>
+		public override void BeginNegotiateSharedSecret(out byte[] privateKey, out byte[] publicKey) {
+			throw new NotImplementedException();
+		}
+
+		/// <inheritdoc/>
+		public override void RespondNegotiateSharedSecret(byte[] remotePublicKey, out byte[] ownPublicKey, out byte[] sharedSecret) {
+			throw new NotImplementedException();
+		}
+
+		/// <inheritdoc/>
+		public override void EndNegotiateSharedSecret(byte[] ownPrivateKey, byte[] remotePublicKey, out byte[] sharedSecret) {
+			throw new NotImplementedException();
 		}
 
 		/// <summary>

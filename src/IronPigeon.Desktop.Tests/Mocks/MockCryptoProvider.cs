@@ -50,7 +50,26 @@
 		public int SymmetricEncryptionBlockSize {
 			get { return 5; }
 		}
-		
+
+		public int ECDiffieHellmanKeySize {
+			get { return 521; }
+			set { throw new NotSupportedException(); }
+		}
+
+		public int ECDsaKeySize { get; set; }
+
+		public byte[] SignHashEC(byte[] hash, byte[] signingPrivateKey) {
+			throw new NotImplementedException();
+		}
+
+		public bool VerifyHashEC(byte[] signingPublicKey, byte[] hash, byte[] signature) {
+			throw new NotImplementedException();
+		}
+
+		public void GenerateECDsaKeyPair(out byte[] keyPair, out byte[] publicKey) {
+			throw new NotImplementedException();
+		}
+
 		public void FillCryptoRandomBuffer(byte[] buffer) {
 			var rng = new RNGCryptoServiceProvider();
 			rng.GetBytes(buffer);
@@ -172,6 +191,18 @@
 
 		public void GenerateEncryptionKeyPair(out byte[] keyPair, out byte[] publicKey) {
 			GenerateKeyPair(out keyPair, out publicKey);
+		}
+
+		public void BeginNegotiateSharedSecret(out byte[] privateKey, out byte[] publicKey) {
+			throw new NotImplementedException();
+		}
+
+		public void RespondNegotiateSharedSecret(byte[] remotePublicKey, out byte[] ownPublicKey, out byte[] sharedSecret) {
+			throw new NotImplementedException();
+		}
+
+		public void EndNegotiateSharedSecret(byte[] ownPrivateKey, byte[] remotePublicKey, out byte[] sharedSecret) {
+			throw new NotImplementedException();
 		}
 
 		#endregion

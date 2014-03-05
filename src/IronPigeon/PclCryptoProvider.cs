@@ -8,6 +8,7 @@ namespace IronPigeon
 {
     using System;
     using System.Collections.Generic;
+    using System.Composition;
     using System.IO;
     using System.Linq;
     using System.Text;
@@ -19,6 +20,8 @@ namespace IronPigeon
     /// <summary>
     /// An <see cref="ICryptoProvider"/> instance based on PclCrypto.
     /// </summary>
+    [Export(typeof(ICryptoProvider))]
+    [Shared]
     public class PclCryptoProvider : CryptoProviderBase
     {
         /// <summary>
@@ -333,6 +336,71 @@ namespace IronPigeon
             var key = EncryptionProvider.CreateKeyPair(this.EncryptionAsymmetricKeySize);
             keyPair = key.Export();
             publicKey = key.ExportPublicKey(CryptographicPublicKeyBlobType.Capi1PublicKey);
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="hash"></param>
+        /// <param name="signingPrivateKey"></param>
+        /// <returns></returns>
+        /// <inheritdoc />
+        /// <exception cref="System.NotImplementedException"></exception>
+        public override byte[] SignHashEC(byte[] hash, byte[] signingPrivateKey) {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="signingPublicKey"></param>
+        /// <param name="hash"></param>
+        /// <param name="signature"></param>
+        /// <returns></returns>
+        /// <inheritdoc />
+        /// <exception cref="System.NotImplementedException"></exception>
+        public override bool VerifyHashEC(byte[] signingPublicKey, byte[] hash, byte[] signature) {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="keyPair"></param>
+        /// <param name="publicKey"></param>
+        /// <inheritdoc />
+        /// <exception cref="System.NotImplementedException"></exception>
+        public override void GenerateECDsaKeyPair(out byte[] keyPair, out byte[] publicKey) {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="privateKey"></param>
+        /// <param name="publicKey"></param>
+        /// <inheritdoc />
+        /// <exception cref="System.NotImplementedException"></exception>
+        public override void BeginNegotiateSharedSecret(out byte[] privateKey, out byte[] publicKey) {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="remotePublicKey"></param>
+        /// <param name="ownPublicKey"></param>
+        /// <param name="sharedSecret"></param>
+        /// <inheritdoc />
+        /// <exception cref="System.NotImplementedException"></exception>
+        public override void RespondNegotiateSharedSecret(byte[] remotePublicKey, out byte[] ownPublicKey, out byte[] sharedSecret) {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// </summary>
+        /// <param name="ownPrivateKey"></param>
+        /// <param name="remotePublicKey"></param>
+        /// <param name="sharedSecret"></param>
+        /// <inheritdoc />
+        /// <exception cref="System.NotImplementedException"></exception>
+        public override void EndNegotiateSharedSecret(byte[] ownPrivateKey, byte[] remotePublicKey, out byte[] sharedSecret) {
+            throw new NotImplementedException();
         }
 
         /// <summary>

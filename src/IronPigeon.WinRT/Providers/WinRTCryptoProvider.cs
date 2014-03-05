@@ -1,6 +1,7 @@
 ﻿namespace IronPigeon.Providers {
 	using System;
 	using System.Collections.Generic;
+	using System.Composition;
 	using System.IO;
 	using System.Linq;
 	using System.Text;
@@ -14,6 +15,8 @@
 	/// <summary>
 	/// A WinRT implementation of cryptography.
 	/// </summary>
+	[Export(typeof(ICryptoProvider))]
+	[Shared]
 	public class WinRTCryptoProvider : CryptoProviderBase {
 		/// <summary>
 		/// The asymmetric encryption algorithm provider to use.
@@ -127,6 +130,13 @@
 			return signatureBuffer.ToArray();
 		}
 
+		/// <inheritdoc/>
+		public override byte[] SignHashEC(byte[] hash, byte[] signingPrivateKey) {
+			var keyProvider = AsymmetricKeyAlgorithmProvider.OpenAlgorithm(AsymmetricAlgorithmNames.EcdsaP521Sha512);
+			var key = keyProvider.ImportKeyPair(hash.ToBuffer());
+			return CryptographicEngine.SignHashedData(key, hash.ToBuffer()).ToArray();
+		}
+
 		/// <summary>
 		/// Verifies the asymmetric signature of some data blob.
 		/// </summary>
@@ -156,6 +166,13 @@
 		public override bool VerifyHash(byte[] signingPublicKey, byte[] hash, byte[] signature, string hashAlgorithm) {
 			var signer = this.GetSignatureProvider(hashAlgorithm);
 			var key = signer.ImportPublicKey(signingPublicKey.ToBuffer(), CryptographicPublicKeyBlobType.Capi1PublicKey);
+			return CryptographicEngine.VerifySignatureWithHashInput(key, hash.ToBuffer(), signature.ToBuffer());
+		}
+
+		/// <inheritdoc/>
+		public override bool VerifyHashEC(byte[] signingPublicKey, byte[] hash, byte[] signature) {
+			var keyProvider = AsymmetricKeyAlgorithmProvider.OpenAlgorithm(AsymmetricAlgorithmNames.EcdsaP521Sha512);
+			var key = keyProvider.ImportPublicKey(signingPublicKey.ToBuffer());
 			return CryptographicEngine.VerifySignatureWithHashInput(key, hash.ToBuffer(), signature.ToBuffer());
 		}
 
@@ -326,6 +343,29 @@
 			var key = EncryptionProvider.CreateKeyPair((uint)this.EncryptionAsymmetricKeySize);
 			keyPair = key.Export().ToArray();
 			publicKey = key.ExportPublicKey(CryptographicPublicKeyBlobType.Capi1PublicKey).ToArray();
+		}
+
+		/// <inheritdoc/>
+		public override void GenerateECDsaKeyPair(out byte[] keyPair, out byte[] publicKey) {
+			var keyProvider = AsymmetricKeyAlgorithmProvider.OpenAlgorithm(AsymmetricAlgorithmNames.EcdsaP521Sha512);
+			var key = keyProvider.CreateKeyPair((uint)this.ECDsaKeySize);
+			keyPair = key.Export().ToArray();
+			publicKey = key.ExportPublicKey().ToArray();
+		}
+
+		/// <inheritdoc/>
+		public override void BeginNegotiateSharedSecret(out byte[] privateKey, out byte[] publicKey) {
+			throw new NotImplementedException();
+		}
+
+		/// <inheritdoc/>
+		public override void RespondNegotiateSharedSecret(byte[] remotePublicKey, out byte[] ownPublicKey, out byte[] sharedSecret) {
+			throw new NotImplementedException();
+		}
+
+		/// <inheritdoc/>
+		public override void EndNegotiateSharedSecret(byte[] ownPrivateKey, byte[] remotePublicKey, out byte[] sharedSecret) {
+			throw new NotImplementedException();
 		}
 
 		/// <summary>
