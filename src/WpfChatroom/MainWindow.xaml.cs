@@ -38,7 +38,7 @@
 			var configuration =
 				new ContainerConfiguration().WithAssembly(typeof(Channel).Assembly)
 											.WithAssembly(typeof(PostalService).Assembly)
-											.WithPart(typeof(DesktopCryptoProvider))
+											.WithPart(typeof(PclCryptoProvider))
 											.WithPart(typeof(DesktopChannel))
 											.WithAssembly(Assembly.GetExecutingAssembly());
 			var container = configuration.CreateContainer();

@@ -83,6 +83,14 @@
     <Reference Include="Newtonsoft.Json, Version=4.5.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.5.0.8\lib\net45\Newtonsoft.Json.dll</HintPath>
     </Reference>
+    <Reference Include="PCLCrypto, Version=0.3.0.0, Culture=neutral, PublicKeyToken=d4421c8a4786956c, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\PCLCrypto.0.3.1-beta\lib\net40-Client\PCLCrypto.dll</HintPath>
+    </Reference>
+    <Reference Include="PCLCrypto.Abstractions, Version=0.3.0.0, Culture=neutral, PublicKeyToken=d4421c8a4786956c, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\PCLCrypto.0.3.1-beta\lib\net40-Client\PCLCrypto.Abstractions.dll</HintPath>
+    </Reference>
     <Reference Include="PushSharp.Android">
       <HintPath>..\packages\PushSharp.2.0.4.0\lib\net40\PushSharp.Android.dll</HintPath>
     </Reference>

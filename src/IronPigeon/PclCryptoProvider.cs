@@ -35,6 +35,24 @@ namespace IronPigeon
         protected static readonly ISymmetricKeyAlgorithmProvider SymmetricAlgorithm = WinRTCrypto.SymmetricKeyAlgorithmProvider.OpenAlgorithm(PCLCrypto.SymmetricAlgorithm.AesCbcPkcs7);
 
         /// <summary>
+        /// Initializes a new instance of the <see cref="PclCryptoProvider"/> class.
+        /// </summary>
+        public PclCryptoProvider()
+            : this(SecurityLevel.Maximum)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="PclCryptoProvider"/> class.
+        /// </summary>
+        /// <param name="securityLevel">The security level to apply to this instance.  The default is <see cref="SecurityLevel.Maximum"/>.</param>
+        public PclCryptoProvider(SecurityLevel securityLevel)
+        {
+            Requires.NotNull(securityLevel, "securityLevel");
+            securityLevel.Apply(this);
+        }
+
+        /// <summary>
         /// Gets the length (in bits) of the symmetric encryption cipher block.
         /// </summary>
         public override int SymmetricEncryptionBlockSize
