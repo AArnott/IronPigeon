@@ -21,10 +21,10 @@
 
 		[Fact]
 		public async Task CrossSecurityLevelAddressBookExchange() {
-			var lowLevelCrypto = new DesktopCryptoProvider(new Level1());
+			var lowLevelCrypto = new PclCryptoProvider(new Level1());
 			var lowLevelEndpoint = Valid.GenerateOwnEndpoint(lowLevelCrypto);
 
-			var highLevelCrypto = new DesktopCryptoProvider(new Level2());
+			var highLevelCrypto = new PclCryptoProvider(new Level2());
 			var highLevelEndpoint = Valid.GenerateOwnEndpoint(highLevelCrypto);
 
 			await this.TestSendAndReceiveAsync(lowLevelCrypto, lowLevelEndpoint, highLevelCrypto, highLevelEndpoint);

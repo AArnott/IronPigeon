@@ -34,7 +34,7 @@
 		}
 
 		internal static ICryptoProvider CreateAuthenticCryptoProvider() {
-			return new DesktopCryptoProvider(SecurityLevel.Minimum);
+			return new PclCryptoProvider(SecurityLevel.Minimum);
 		}
 
 		internal static void GetUnitTestInfo(out Type testFixture, out string testMethod) {
