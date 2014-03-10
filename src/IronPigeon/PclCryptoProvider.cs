@@ -117,7 +117,7 @@ namespace IronPigeon
         public override byte[] Sign(byte[] data, byte[] signingPrivateKey)
         {
             var signer = this.GetSignatureProvider(this.AsymmetricHashAlgorithmName);
-            var key = signer.ImportKeyPair(signingPrivateKey);
+            var key = signer.ImportKeyPair(signingPrivateKey, CryptographicPrivateKeyBlobType.Capi1PrivateKey);
             var signatureBuffer = WinRTCrypto.CryptographicEngine.Sign(key, data);
             return signatureBuffer;
         }
@@ -134,7 +134,7 @@ namespace IronPigeon
         public override byte[] SignHash(byte[] hash, byte[] signingPrivateKey, string hashAlgorithmName)
         {
             var signer = this.GetSignatureProvider(this.AsymmetricHashAlgorithmName);
-            var key = signer.ImportKeyPair(signingPrivateKey);
+            var key = signer.ImportKeyPair(signingPrivateKey, CryptographicPrivateKeyBlobType.Capi1PrivateKey);
             var signatureBuffer = WinRTCrypto.CryptographicEngine.SignHashedData(key, hash);
             return signatureBuffer;
         }
@@ -276,7 +276,7 @@ namespace IronPigeon
         /// </returns>
         public override byte[] Decrypt(byte[] decryptionPrivateKey, byte[] data)
         {
-            var key = EncryptionProvider.ImportKeyPair(decryptionPrivateKey);
+            var key = EncryptionProvider.ImportKeyPair(decryptionPrivateKey, CryptographicPrivateKeyBlobType.Capi1PrivateKey);
             return WinRTCrypto.CryptographicEngine.Decrypt(key, data, null);
         }
 
@@ -322,7 +322,7 @@ namespace IronPigeon
         {
             var signer = this.GetSignatureProvider(this.AsymmetricHashAlgorithmName);
             var key = signer.CreateKeyPair(this.SignatureAsymmetricKeySize);
-            keyPair = key.Export();
+            keyPair = key.Export(CryptographicPrivateKeyBlobType.Capi1PrivateKey);
             publicKey = key.ExportPublicKey(CryptographicPublicKeyBlobType.Capi1PublicKey);
         }
 
@@ -334,7 +334,7 @@ namespace IronPigeon
         public override void GenerateEncryptionKeyPair(out byte[] keyPair, out byte[] publicKey)
         {
             var key = EncryptionProvider.CreateKeyPair(this.EncryptionAsymmetricKeySize);
-            keyPair = key.Export();
+            keyPair = key.Export(CryptographicPrivateKeyBlobType.Capi1PrivateKey);
             publicKey = key.ExportPublicKey(CryptographicPublicKeyBlobType.Capi1PublicKey);
         }
 
