@@ -252,23 +252,11 @@
 		/// <param name="publicKey">Receives the public key.</param>
 		public abstract void GenerateSigningKeyPair(out byte[] keyPair, out byte[] publicKey);
 
-		/// <inheritdoc/>
-		public abstract void GenerateECDsaKeyPair(out byte[] keyPair, out byte[] publicKey);
-
 		/// <summary>
 		/// Generates a key pair for asymmetric cryptography.
 		/// </summary>
 		/// <param name="keyPair">Receives the serialized key pair (includes private key).</param>
 		/// <param name="publicKey">Receives the public key.</param>
 		public abstract void GenerateEncryptionKeyPair(out byte[] keyPair, out byte[] publicKey);
-
-		/// <inheritdoc/>
-		public abstract void BeginNegotiateSharedSecret(out byte[] privateKey, out byte[] publicKey);
-
-		/// <inheritdoc/>
-		public abstract void RespondNegotiateSharedSecret(byte[] remotePublicKey, out byte[] ownPublicKey, out byte[] sharedSecret);
-
-		/// <inheritdoc/>
-		public abstract void EndNegotiateSharedSecret(byte[] ownPrivateKey, byte[] remotePublicKey, out byte[] sharedSecret);
 	}
 }

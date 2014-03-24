@@ -279,52 +279,6 @@ namespace IronPigeon
         }
 
         /// <summary>
-        /// </summary>
-        /// <param name="keyPair"></param>
-        /// <param name="publicKey"></param>
-        /// <inheritdoc />
-        /// <exception cref="System.NotImplementedException"></exception>
-        public override void GenerateECDsaKeyPair(out byte[] keyPair, out byte[] publicKey)
-        {
-            throw new NotImplementedException();
-        }
-
-        /// <summary>
-        /// </summary>
-        /// <param name="privateKey"></param>
-        /// <param name="publicKey"></param>
-        /// <inheritdoc />
-        /// <exception cref="System.NotImplementedException"></exception>
-        public override void BeginNegotiateSharedSecret(out byte[] privateKey, out byte[] publicKey)
-        {
-            throw new NotImplementedException();
-        }
-
-        /// <summary>
-        /// </summary>
-        /// <param name="remotePublicKey"></param>
-        /// <param name="ownPublicKey"></param>
-        /// <param name="sharedSecret"></param>
-        /// <inheritdoc />
-        /// <exception cref="System.NotImplementedException"></exception>
-        public override void RespondNegotiateSharedSecret(byte[] remotePublicKey, out byte[] ownPublicKey, out byte[] sharedSecret)
-        {
-            throw new NotImplementedException();
-        }
-
-        /// <summary>
-        /// </summary>
-        /// <param name="ownPrivateKey"></param>
-        /// <param name="remotePublicKey"></param>
-        /// <param name="sharedSecret"></param>
-        /// <inheritdoc />
-        /// <exception cref="System.NotImplementedException"></exception>
-        public override void EndNegotiateSharedSecret(byte[] ownPrivateKey, byte[] remotePublicKey, out byte[] sharedSecret)
-        {
-            throw new NotImplementedException();
-        }
-
-        /// <summary>
         /// Gets the HMAC algorithm provider for the given hash algorithm.
         /// </summary>
         /// <param name="hashAlgorithm">The hash algorithm (SHA1, SHA256, etc.)</param>
