@@ -4,7 +4,7 @@
 	using System.Linq;
 	using System.Text;
 	using System.Threading.Tasks;
-
+	using PCLCrypto;
 	using Validation;
 
 	/// <summary>
@@ -79,13 +79,40 @@
 		/// <returns>
 		/// A value indicating whether the signature is valid.
 		/// </returns>
-		internal static bool VerifySignatureWithTolerantHashAlgorithm(this ICryptoProvider cryptoProvider, byte[] signingPublicKey, byte[] data, byte[] signature, string hashAlgorithm) {
-			if (hashAlgorithm != null) {
-				return cryptoProvider.VerifySignature(signingPublicKey, data, signature, hashAlgorithm);
+		internal static bool VerifySignatureWithTolerantHashAlgorithm(this ICryptoProvider cryptoProvider, byte[] signingPublicKey, byte[] data, byte[] signature, AsymmetricAlgorithm? signingAlgorithm = null) {
+			if (signingAlgorithm.HasValue) {
+				var key = WinRTCrypto.AsymmetricKeyAlgorithmProvider.OpenAlgorithm(signingAlgorithm.Value)
+					.ImportPublicKey(signingPublicKey);
+				return WinRTCrypto.CryptographicEngine.VerifySignature(key, data, signature);
 			}
 
-			return cryptoProvider.VerifySignature(signingPublicKey, data, signature, "SHA1")
-				|| cryptoProvider.VerifySignature(signingPublicKey, data, signature, "SHA256");
+			var key1 = WinRTCrypto.AsymmetricKeyAlgorithmProvider.OpenAlgorithm(AsymmetricAlgorithm.RsaSignPkcs1Sha1)
+				.ImportPublicKey(signingPublicKey);
+			var key2 = WinRTCrypto.AsymmetricKeyAlgorithmProvider.OpenAlgorithm(AsymmetricAlgorithm.RsaSignPkcs1Sha256)
+				.ImportPublicKey(signingPublicKey);
+			return WinRTCrypto.CryptographicEngine.VerifySignature(key1, data, signature)
+				|| WinRTCrypto.CryptographicEngine.VerifySignature(key2, data, signature);
+		}
+
+		/// <summary>
+		/// Gets the signature provider.
+		/// </summary>
+		/// <param name="hashAlgorithm">The hash algorithm to use.</param>
+		/// <returns>The asymmetric key provider.</returns>
+		/// <exception cref="System.NotSupportedException">Thrown if the arguments are not supported.</exception>
+		internal static AsymmetricAlgorithm GetSignatureProvider(string hashAlgorithm) {
+			switch (hashAlgorithm) {
+				case "SHA1":
+					return AsymmetricAlgorithm.RsaSignPkcs1Sha1;
+				case "SHA256":
+					return AsymmetricAlgorithm.RsaSignPkcs1Sha256;
+				case "SHA384":
+					return AsymmetricAlgorithm.RsaSignPkcs1Sha384;
+				case "SHA512":
+					return AsymmetricAlgorithm.RsaSignPkcs1Sha512;
+				default:
+					throw new NotSupportedException();
+			}
 		}
 	}
 }

@@ -2,6 +2,8 @@
 	using System.IO;
 	using System.Threading;
 	using System.Threading.Tasks;
+	using PCLCrypto;
+
 
 	/// <summary>
 	/// Implements the cryptographic algorithms that protect users and data required by the IronPigeon protocol.
@@ -16,6 +18,8 @@
 		/// Gets or sets the name of the algorithm to use for asymmetric signatures.
 		/// </summary>
 		string AsymmetricHashAlgorithmName { get; set; }
+
+		AsymmetricAlgorithm SigningAlgorithm { get;set; }
 
 		/// <summary>
 		/// Gets or sets the configuration to use for symmetric encryption.
@@ -74,70 +78,6 @@
 		/// <param name="cancellationToken">The cancellation token.</param>
 		/// <returns>The authentication code.</returns>
 		Task<byte[]> ComputeAuthenticationCodeAsync(Stream data, byte[] key, string hashAlgorithmName, CancellationToken cancellationToken = default(CancellationToken));
-
-		/// <summary>
-		/// Asymmetrically signs a data blob.
-		/// </summary>
-		/// <param name="data">The data to sign.</param>
-		/// <param name="signingPrivateKey">The private key used to sign the data.</param>
-		/// <returns>The signature.</returns>
-		byte[] Sign(byte[] data, byte[] signingPrivateKey);
-
-		/// <summary>
-		/// Asymmetrically signs the hash of data using RSA.
-		/// </summary>
-		/// <param name="hash">The hash to sign.</param>
-		/// <param name="signingPrivateKey">The private key used to sign the data.</param>
-		/// <param name="hashAlgorithmName">The hash algorithm name.</param>
-		/// <returns>
-		/// The signature.
-		/// </returns>
-		byte[] SignHash(byte[] hash, byte[] signingPrivateKey, string hashAlgorithmName);
-
-		/// <summary>
-		/// Asymmetrically signs the hash of data using ECDsa.
-		/// </summary>
-		/// <param name="hash">The hash to sign.</param>
-		/// <param name="signingPrivateKey">The private key used to sign the data.</param>
-		/// <returns>
-		/// The signature.
-		/// </returns>
-		byte[] SignHashEC(byte[] hash, byte[] signingPrivateKey);
-
-		/// <summary>
-		/// Verifies the asymmetric signature of some data blob.
-		/// </summary>
-		/// <param name="signingPublicKey">The public key used to verify the signature.</param>
-		/// <param name="data">The data that was signed.</param>
-		/// <param name="signature">The signature.</param>
-		/// <param name="hashAlgorithm">The hash algorithm used to hash the data.</param>
-		/// <returns>
-		/// A value indicating whether the signature is valid.
-		/// </returns>
-		bool VerifySignature(byte[] signingPublicKey, byte[] data, byte[] signature, string hashAlgorithm);
-
-		/// <summary>
-		/// Verifies the asymmetric signature of the hash of some data blob using RSA.
-		/// </summary>
-		/// <param name="signingPublicKey">The public key used to verify the signature.</param>
-		/// <param name="hash">The hash of the data that was signed.</param>
-		/// <param name="signature">The signature.</param>
-		/// <param name="hashAlgorithm">The hash algorithm used to hash the data.</param>
-		/// <returns>
-		/// A value indicating whether the signature is valid.
-		/// </returns>
-		bool VerifyHash(byte[] signingPublicKey, byte[] hash, byte[] signature, string hashAlgorithm);
-
-		/// <summary>
-		/// Verifies the asymmetric signature of the hash of some data blob using ECDsa.
-		/// </summary>
-		/// <param name="signingPublicKey">The public key used to verify the signature.</param>
-		/// <param name="hash">The hash of the data that was signed.</param>
-		/// <param name="signature">The signature.</param>
-		/// <returns>
-		/// A value indicating whether the signature is valid.
-		/// </returns>
-		bool VerifyHashEC(byte[] signingPublicKey, byte[] hash, byte[] signature);
 
 		/// <summary>
 		/// Symmetrically encrypts the specified buffer using a randomly generated key.

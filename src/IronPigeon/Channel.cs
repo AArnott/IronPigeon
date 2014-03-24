@@ -17,6 +17,7 @@
 	using System.Threading.Tasks;
 	using IronPigeon.Providers;
 	using IronPigeon.Relay;
+	using PCLCrypto;
 	using Validation;
 
 	/// <summary>
@@ -309,7 +310,7 @@
 			await this.CryptoServices.DecryptAsync(ciphertextStream, plainTextPayloadStream, encryptedVariables, cancellationToken);
 
 			plainTextPayloadStream.Position = 0;
-			string signingHashAlgorithm = null; //// Encoding.UTF8.GetString(await plainTextPayloadStream.ReadSizeAndBufferAsync(cancellationToken));
+			AsymmetricAlgorithm? signingHashAlgorithm = null; //// Encoding.UTF8.GetString(await plainTextPayloadStream.ReadSizeAndBufferAsync(cancellationToken));
 			byte[] signature = await plainTextPayloadStream.ReadSizeAndBufferAsync(cancellationToken);
 			long payloadStartPosition = plainTextPayloadStream.Position;
 			var signedBytes = new byte[plainTextPayloadStream.Length - plainTextPayloadStream.Position];
@@ -387,7 +388,9 @@
 			plainTextPayloadWriter.Flush();
 			this.Log("Message invite plaintext", plainTextPayloadStream.ToArray());
 
-			byte[] notificationSignature = this.CryptoServices.Sign(plainTextPayloadStream.ToArray(), this.Endpoint.SigningKeyPrivateMaterial);
+			var signingKey = WinRTCrypto.AsymmetricKeyAlgorithmProvider.OpenAlgorithm(this.CryptoServices.SigningAlgorithm)
+				.ImportKeyPair(this.Endpoint.SigningKeyPrivateMaterial);
+			byte[] notificationSignature = WinRTCrypto.CryptographicEngine.Sign(signingKey, plainTextPayloadStream.ToArray());
 			var signedPlainTextPayloadStream = new MemoryStream((int)plainTextPayloadStream.Length + notificationSignature.Length + 4);
 			////await signedPlainTextPayloadStream.WriteSizeAndBufferAsync(Encoding.UTF8.GetBytes(this.CryptoServices.HashAlgorithmName), cancellationToken);
 			await signedPlainTextPayloadStream.WriteSizeAndBufferAsync(notificationSignature, cancellationToken);

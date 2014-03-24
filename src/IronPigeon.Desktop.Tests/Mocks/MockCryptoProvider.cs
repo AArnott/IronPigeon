@@ -8,6 +8,7 @@
 	using System.Threading;
 	using System.Threading.Tasks;
 	using NUnit.Framework;
+	using PCLCrypto;
 
 	internal class MockCryptoProvider : ICryptoProvider {
 		internal const int KeyLengthInBytes = 5;
@@ -57,6 +58,8 @@
 		}
 
 		public int ECDsaKeySize { get; set; }
+
+		public PCLCrypto.AsymmetricAlgorithm SigningAlgorithm { get; set; }
 
 		public byte[] SignHashEC(byte[] hash, byte[] signingPrivateKey) {
 			throw new NotImplementedException();
@@ -171,7 +174,8 @@
 		public byte[] Hash(byte[] data, string hashAlgorithmName) {
 			int hash = 22;
 			for (int i = 0; i < data.Length; i++) {
-				unchecked {
+				unchecked
+				{
 					hash += data[i];
 				}
 			}

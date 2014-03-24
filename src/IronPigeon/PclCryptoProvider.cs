@@ -114,73 +114,6 @@ namespace IronPigeon
         }
 
         /// <summary>
-        /// Asymmetrically signs a data blob.
-        /// </summary>
-        /// <param name="data">The data to sign.</param>
-        /// <param name="signingPrivateKey">The private key used to sign the data.</param>
-        /// <returns>
-        /// The signature.
-        /// </returns>
-        public override byte[] Sign(byte[] data, byte[] signingPrivateKey)
-        {
-            var signer = this.GetSignatureProvider(this.AsymmetricHashAlgorithmName);
-            var key = signer.ImportKeyPair(signingPrivateKey, CryptographicPrivateKeyBlobType.Capi1PrivateKey);
-            var signatureBuffer = WinRTCrypto.CryptographicEngine.Sign(key, data);
-            return signatureBuffer;
-        }
-
-        /// <summary>
-        /// Asymmetrically signs the hash of data.
-        /// </summary>
-        /// <param name="hash">The hash to sign.</param>
-        /// <param name="signingPrivateKey">The private key used to sign the data.</param>
-        /// <param name="hashAlgorithmName">The hash algorithm name.</param>
-        /// <returns>
-        /// The signature.
-        /// </returns>
-        public override byte[] SignHash(byte[] hash, byte[] signingPrivateKey, string hashAlgorithmName)
-        {
-            var signer = this.GetSignatureProvider(this.AsymmetricHashAlgorithmName);
-            var key = signer.ImportKeyPair(signingPrivateKey, CryptographicPrivateKeyBlobType.Capi1PrivateKey);
-            var signatureBuffer = WinRTCrypto.CryptographicEngine.SignHashedData(key, hash);
-            return signatureBuffer;
-        }
-
-        /// <summary>
-        /// Verifies the asymmetric signature of some data blob.
-        /// </summary>
-        /// <param name="signingPublicKey">The public key used to verify the signature.</param>
-        /// <param name="data">The data that was signed.</param>
-        /// <param name="signature">The signature.</param>
-        /// <param name="hashAlgorithm">The hash algorithm used to hash the data.</param>
-        /// <returns>
-        /// A value indicating whether the signature is valid.
-        /// </returns>
-        public override bool VerifySignature(byte[] signingPublicKey, byte[] data, byte[] signature, string hashAlgorithm)
-        {
-            var signer = this.GetSignatureProvider(hashAlgorithm);
-            var key = signer.ImportPublicKey(signingPublicKey, CryptographicPublicKeyBlobType.Capi1PublicKey);
-            return WinRTCrypto.CryptographicEngine.VerifySignature(key, data, signature);
-        }
-
-        /// <summary>
-        /// Verifies the asymmetric signature of the hash of some data blob.
-        /// </summary>
-        /// <param name="signingPublicKey">The public key used to verify the signature.</param>
-        /// <param name="hash">The hash of the data that was signed.</param>
-        /// <param name="signature">The signature.</param>
-        /// <param name="hashAlgorithm">The hash algorithm used to hash the data.</param>
-        /// <returns>
-        /// A value indicating whether the signature is valid.
-        /// </returns>
-        public override bool VerifyHash(byte[] signingPublicKey, byte[] hash, byte[] signature, string hashAlgorithm)
-        {
-            var signer = this.GetSignatureProvider(hashAlgorithm);
-            var key = signer.ImportPublicKey(signingPublicKey, CryptographicPublicKeyBlobType.Capi1PublicKey);
-            return WinRTCrypto.CryptographicEngine.VerifySignatureWithHashInput(key, hash, signature);
-        }
-
-        /// <summary>
         /// Symmetrically encrypts the specified buffer using a randomly generated key.
         /// </summary>
         /// <param name="data">The data to encrypt.</param>
@@ -327,7 +260,7 @@ namespace IronPigeon
         /// <param name="publicKey">Receives the public key.</param>
         public override void GenerateSigningKeyPair(out byte[] keyPair, out byte[] publicKey)
         {
-            var signer = this.GetSignatureProvider(this.AsymmetricHashAlgorithmName);
+            var signer = WinRTCrypto.AsymmetricKeyAlgorithmProvider.OpenAlgorithm(this.SigningAlgorithm);
             var key = signer.CreateKeyPair(this.SignatureAsymmetricKeySize);
             keyPair = key.Export(CryptographicPrivateKeyBlobType.Capi1PrivateKey);
             publicKey = key.ExportPublicKey(CryptographicPublicKeyBlobType.Capi1PublicKey);
@@ -347,34 +280,12 @@ namespace IronPigeon
 
         /// <summary>
         /// </summary>
-        /// <param name="hash"></param>
-        /// <param name="signingPrivateKey"></param>
-        /// <returns></returns>
-        /// <inheritdoc />
-        /// <exception cref="System.NotImplementedException"></exception>
-        public override byte[] SignHashEC(byte[] hash, byte[] signingPrivateKey) {
-            throw new NotImplementedException();
-        }
-
-        /// <summary>
-        /// </summary>
-        /// <param name="signingPublicKey"></param>
-        /// <param name="hash"></param>
-        /// <param name="signature"></param>
-        /// <returns></returns>
-        /// <inheritdoc />
-        /// <exception cref="System.NotImplementedException"></exception>
-        public override bool VerifyHashEC(byte[] signingPublicKey, byte[] hash, byte[] signature) {
-            throw new NotImplementedException();
-        }
-
-        /// <summary>
-        /// </summary>
         /// <param name="keyPair"></param>
         /// <param name="publicKey"></param>
         /// <inheritdoc />
         /// <exception cref="System.NotImplementedException"></exception>
-        public override void GenerateECDsaKeyPair(out byte[] keyPair, out byte[] publicKey) {
+        public override void GenerateECDsaKeyPair(out byte[] keyPair, out byte[] publicKey)
+        {
             throw new NotImplementedException();
         }
 
@@ -384,7 +295,8 @@ namespace IronPigeon
         /// <param name="publicKey"></param>
         /// <inheritdoc />
         /// <exception cref="System.NotImplementedException"></exception>
-        public override void BeginNegotiateSharedSecret(out byte[] privateKey, out byte[] publicKey) {
+        public override void BeginNegotiateSharedSecret(out byte[] privateKey, out byte[] publicKey)
+        {
             throw new NotImplementedException();
         }
 
@@ -395,7 +307,8 @@ namespace IronPigeon
         /// <param name="sharedSecret"></param>
         /// <inheritdoc />
         /// <exception cref="System.NotImplementedException"></exception>
-        public override void RespondNegotiateSharedSecret(byte[] remotePublicKey, out byte[] ownPublicKey, out byte[] sharedSecret) {
+        public override void RespondNegotiateSharedSecret(byte[] remotePublicKey, out byte[] ownPublicKey, out byte[] sharedSecret)
+        {
             throw new NotImplementedException();
         }
 
@@ -406,31 +319,9 @@ namespace IronPigeon
         /// <param name="sharedSecret"></param>
         /// <inheritdoc />
         /// <exception cref="System.NotImplementedException"></exception>
-        public override void EndNegotiateSharedSecret(byte[] ownPrivateKey, byte[] remotePublicKey, out byte[] sharedSecret) {
-            throw new NotImplementedException();
-        }
-
-        /// <summary>
-        /// Gets the signature provider.
-        /// </summary>
-        /// <param name="hashAlgorithm">The hash algorithm to use.</param>
-        /// <returns>The asymmetric key provider.</returns>
-        /// <exception cref="System.NotSupportedException">Thrown if the arguments are not supported.</exception>
-        protected virtual IAsymmetricKeyAlgorithmProvider GetSignatureProvider(string hashAlgorithm)
+        public override void EndNegotiateSharedSecret(byte[] ownPrivateKey, byte[] remotePublicKey, out byte[] sharedSecret)
         {
-            switch (hashAlgorithm)
-            {
-                case "SHA1":
-                    return WinRTCrypto.AsymmetricKeyAlgorithmProvider.OpenAlgorithm(AsymmetricAlgorithm.RsaSignPkcs1Sha1);
-                case "SHA256":
-                    return WinRTCrypto.AsymmetricKeyAlgorithmProvider.OpenAlgorithm(AsymmetricAlgorithm.RsaSignPkcs1Sha256);
-                case "SHA384":
-                    return WinRTCrypto.AsymmetricKeyAlgorithmProvider.OpenAlgorithm(AsymmetricAlgorithm.RsaSignPkcs1Sha384);
-                case "SHA512":
-                    return WinRTCrypto.AsymmetricKeyAlgorithmProvider.OpenAlgorithm(AsymmetricAlgorithm.RsaSignPkcs1Sha512);
-                default:
-                    throw new NotSupportedException();
-            }
+            throw new NotImplementedException();
         }
 
         /// <summary>

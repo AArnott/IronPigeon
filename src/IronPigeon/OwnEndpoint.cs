@@ -7,6 +7,7 @@
 	using System.Text;
 	using System.Threading;
 	using System.Threading.Tasks;
+	using PCLCrypto;
 	using Validation;
 	using TaskEx = System.Threading.Tasks.Task;
 
@@ -93,7 +94,9 @@
 			writer.SerializeDataContract(this.PublicEndpoint);
 			writer.Flush();
 			entry.SerializedEndpoint = ms.ToArray();
-			entry.Signature = cryptoServices.Sign(entry.SerializedEndpoint, this.SigningKeyPrivateMaterial);
+			var key = WinRTCrypto.AsymmetricKeyAlgorithmProvider.OpenAlgorithm(cryptoServices.SigningAlgorithm)
+				.ImportKeyPair(this.SigningKeyPrivateMaterial);
+			entry.Signature = WinRTCrypto.CryptographicEngine.Sign(key, entry.SerializedEndpoint);
 			return entry;
 		}
 
