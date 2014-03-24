@@ -119,23 +119,6 @@
 		}
 
 		[TestMethod]
-		public void FillCryptoRandomBufferNull() {
-			AssertEx.Throws<ArgumentNullException>(() => this.CryptoProvider.FillCryptoRandomBuffer(null));
-		}
-
-		[TestMethod]
-		public void FillCryptoRandomBufferZeroLength() {
-			this.CryptoProvider.FillCryptoRandomBuffer(new byte[0]);
-		}
-
-		[TestMethod]
-		public void FillCryptoRandomBuffer() {
-			var buffer = new byte[48];
-			this.CryptoProvider.FillCryptoRandomBuffer(buffer);
-			Assert.IsFalse(buffer.All(b => b == 0));
-		}
-
-		[TestMethod]
 		public void DeriveKeyFromPasswordBoundsChecks() {
 			AssertEx.Throws<ArgumentNullException>(() => this.CryptoProvider.DeriveKeyFromPassword(null, new byte[15], 1, 15));
 			AssertEx.Throws<ArgumentNullException>(() => this.CryptoProvider.DeriveKeyFromPassword("foo", null, 1, 15));

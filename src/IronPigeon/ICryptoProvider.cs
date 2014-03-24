@@ -56,12 +56,6 @@
 		int ECDsaKeySize { get; set; }
 
 		/// <summary>
-		/// Fills the specified buffer with cryptographically strong random generated data.
-		/// </summary>
-		/// <param name="buffer">The buffer to fill.</param>
-		void FillCryptoRandomBuffer(byte[] buffer);
-
-		/// <summary>
 		/// Derives a cryptographically strong key from the specified password.
 		/// </summary>
 		/// <param name="password">The user-supplied password.</param>

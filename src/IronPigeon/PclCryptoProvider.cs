@@ -61,17 +61,6 @@ namespace IronPigeon
         }
 
         /// <summary>
-        /// Fills the specified buffer with cryptographically strong random generated data.
-        /// </summary>
-        /// <param name="buffer">The buffer to fill.</param>
-        public override void FillCryptoRandomBuffer(byte[] buffer)
-        {
-            Requires.NotNull(buffer, "buffer");
-            var windowsBuffer = WinRTCrypto.CryptographicBuffer.GenerateRandom((uint)buffer.Length);
-            Array.Copy(windowsBuffer, buffer, buffer.Length);
-        }
-
-        /// <summary>
         /// Derives a cryptographically strong key from the specified password.
         /// </summary>
         /// <param name="password">The user-supplied password.</param>
