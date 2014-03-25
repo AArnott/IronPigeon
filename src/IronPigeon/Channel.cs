@@ -392,7 +392,7 @@
 			this.Log("Message invite plaintext", plainTextPayloadStream.ToArray());
 
 			var signingKey = WinRTCrypto.AsymmetricKeyAlgorithmProvider.OpenAlgorithm(this.CryptoServices.SigningAlgorithm)
-				.ImportKeyPair(this.Endpoint.SigningKeyPrivateMaterial);
+				.ImportKeyPair(this.Endpoint.SigningKeyPrivateMaterial, CryptographicPrivateKeyBlobType.Capi1PrivateKey);
 			byte[] notificationSignature = WinRTCrypto.CryptographicEngine.Sign(signingKey, plainTextPayloadStream.ToArray());
 			var signedPlainTextPayloadStream = new MemoryStream((int)plainTextPayloadStream.Length + notificationSignature.Length + 4);
 			////await signedPlainTextPayloadStream.WriteSizeAndBufferAsync(Encoding.UTF8.GetBytes(this.CryptoServices.HashAlgorithmName), cancellationToken);
