@@ -35,7 +35,7 @@
 		public void DefaultCtor() {
 			var channel = new Channel();
 			Assert.That(channel.CloudBlobStorage, Is.Null);
-			Assert.That(channel.CryptoServices, Is.Null);
+			Assert.That(channel.CryptoServices, Is.Not.Null);
 			Assert.That(channel.Endpoint, Is.Null);
 		}
 

@@ -23,7 +23,7 @@
 		/// </summary>
 		private static readonly ISymmetricKeyAlgorithmProvider SymmetricAlgorithm = WinRTCrypto.SymmetricKeyAlgorithmProvider.OpenAlgorithm(PCLCrypto.SymmetricAlgorithm.AesCbcPkcs7);
 
-		internal static CryptographicPublicKeyBlobType PublicKeyFormat = CryptographicPublicKeyBlobType.X509SubjectPublicKeyInfo;
+		internal static CryptographicPublicKeyBlobType PublicKeyFormat = CryptographicPublicKeyBlobType.Capi1PublicKey;
 
 		/// <summary>
 		/// Creates a web safe base64 thumbprint of some buffer.

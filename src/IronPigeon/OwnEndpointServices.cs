@@ -126,8 +126,8 @@
 			var signingKey = signingAlgorithm.CreateKeyPair(this.CryptoProvider.SignatureAsymmetricKeySize);
 
 			var contact = new Endpoint() {
-				EncryptionKeyPublicMaterial = encryptionKey.ExportPublicKey(),
-				SigningKeyPublicMaterial = signingKey.ExportPublicKey(),
+				EncryptionKeyPublicMaterial = encryptionKey.ExportPublicKey(CryptoProviderExtensions.PublicKeyFormat),
+				SigningKeyPublicMaterial = signingKey.ExportPublicKey(CryptoProviderExtensions.PublicKeyFormat),
 			};
 
 			var ownContact = new OwnEndpoint(
