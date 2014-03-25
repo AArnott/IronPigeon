@@ -1,8 +1,10 @@
 ﻿namespace IronPigeon {
 	using System;
 	using System.Collections.Generic;
+	using System.IO;
 	using System.Linq;
 	using System.Text;
+	using System.Threading;
 	using System.Threading.Tasks;
 	using PCLCrypto;
 	using Validation;
@@ -11,6 +13,16 @@
 	/// Extension methods to the <see cref="ICryptoProvider"/> interface.
 	/// </summary>
 	public static class CryptoProviderExtensions {
+		/// <summary>
+		/// The asymmetric encryption algorithm provider to use.
+		/// </summary>
+		private static readonly IAsymmetricKeyAlgorithmProvider EncryptionProvider = WinRTCrypto.AsymmetricKeyAlgorithmProvider.OpenAlgorithm(AsymmetricAlgorithm.RsaOaepSha1);
+
+		/// <summary>
+		/// The symmetric encryption algorithm provider to use.
+		/// </summary>
+		private static readonly ISymmetricKeyAlgorithmProvider SymmetricAlgorithm = WinRTCrypto.SymmetricKeyAlgorithmProvider.OpenAlgorithm(PCLCrypto.SymmetricAlgorithm.AesCbcPkcs7);
+
 		/// <summary>
 		/// Creates a web safe base64 thumbprint of some buffer.
 		/// </summary>
@@ -129,6 +141,111 @@
 
 			HashAlgorithm algorithm = (HashAlgorithm)Enum.Parse(typeof(HashAlgorithm), algorithmName, true);
 			return WinRTCrypto.HashAlgorithmProvider.OpenAlgorithm(algorithm);
+		}
+
+		/// <summary>
+		/// Symmetrically encrypts the specified buffer using a randomly generated key.
+		/// </summary>
+		/// <param name="data">The data to encrypt.</param>
+		/// <param name="encryptionVariables">Optional encryption variables to use; or <c>null</c> to use randomly generated ones.</param>
+		/// <returns>
+		/// The result of the encryption.
+		/// </returns>
+		public static SymmetricEncryptionResult Encrypt(this ICryptoProvider cryptoProvider, byte[] data, SymmetricEncryptionVariables encryptionVariables = null) {
+			Requires.NotNull(data, "data");
+
+			encryptionVariables = ThisOrNewEncryptionVariables(cryptoProvider, encryptionVariables);
+			var symmetricKey = SymmetricAlgorithm.CreateSymmetricKey(encryptionVariables.Key);
+			var cipherTextBuffer = WinRTCrypto.CryptographicEngine.Encrypt(symmetricKey, data, encryptionVariables.IV);
+			return new SymmetricEncryptionResult(encryptionVariables, cipherTextBuffer);
+		}
+
+		/// <summary>
+		/// Symmetrically encrypts a stream.
+		/// </summary>
+		/// <param name="cryptoProvider">The crypto provider.</param>
+		/// <param name="plaintext">The stream of plaintext to encrypt.</param>
+		/// <param name="ciphertext">The stream to receive the ciphertext.</param>
+		/// <param name="encryptionVariables">An optional key and IV to use. May be <c>null</c> to use randomly generated values.</param>
+		/// <param name="cancellationToken">A cancellation token.</param>
+		/// <returns>
+		/// A task that completes when encryption has completed, whose result is the key and IV to use to decrypt the ciphertext.
+		/// </returns>
+		public static async Task<SymmetricEncryptionVariables> EncryptAsync(this ICryptoProvider cryptoProvider, Stream plaintext, Stream ciphertext, SymmetricEncryptionVariables encryptionVariables = null, CancellationToken cancellationToken = default(CancellationToken)) {
+			Requires.NotNull(plaintext, "plaintext");
+			Requires.NotNull(ciphertext, "ciphertext");
+
+			encryptionVariables = ThisOrNewEncryptionVariables(cryptoProvider, encryptionVariables);
+			var key = SymmetricAlgorithm.CreateSymmetricKey(encryptionVariables.Key);
+			using (var encryptor = WinRTCrypto.CryptographicEngine.CreateEncryptor(key, encryptionVariables.IV)) {
+				var cryptoStream = new CryptoStream(ciphertext, encryptor, CryptoStreamMode.Write);
+				await plaintext.CopyToAsync(cryptoStream, 4096, cancellationToken);
+				cryptoStream.FlushFinalBlock();
+			}
+
+			return encryptionVariables;
+		}
+
+		/// <summary>
+		/// Symmetrically decrypts a stream.
+		/// </summary>
+		/// <param name="cryptoProvider">The crypto provider.</param>
+		/// <param name="ciphertext">The stream of ciphertext to decrypt.</param>
+		/// <param name="plaintext">The stream to receive the plaintext.</param>
+		/// <param name="encryptionVariables">The key and IV to use.</param>
+		/// <param name="cancellationToken">A cancellation token.</param>
+		/// <returns>
+		/// A task that represents the asynchronous operation.
+		/// </returns>
+		public static async Task DecryptAsync(this ICryptoProvider cryptoProvider, Stream ciphertext, Stream plaintext, SymmetricEncryptionVariables encryptionVariables, CancellationToken cancellationToken = default(CancellationToken)) {
+			Requires.NotNull(ciphertext, "ciphertext");
+			Requires.NotNull(plaintext, "plaintext");
+			Requires.NotNull(encryptionVariables, "encryptionVariables");
+
+			var key = SymmetricAlgorithm.CreateSymmetricKey(encryptionVariables.Key);
+			using (var decryptor = WinRTCrypto.CryptographicEngine.CreateDecryptor(key, encryptionVariables.IV)) {
+				var cryptoStream = new CryptoStream(plaintext, decryptor, CryptoStreamMode.Write);
+				await ciphertext.CopyToAsync(cryptoStream, 4096, cancellationToken);
+				cryptoStream.FlushFinalBlock();
+			}
+		}
+
+		/// <summary>
+		/// Symmetrically decrypts a buffer using the specified key.
+		/// </summary>
+		/// <param name="cryptoProvider">The crypto provider.</param>
+		/// <param name="data">The encrypted data and the key and IV used to encrypt it.</param>
+		/// <returns>
+		/// The decrypted buffer.
+		/// </returns>
+		public static byte[] Decrypt(this ICryptoProvider cryptoProvider, SymmetricEncryptionResult data) {
+			var symmetricKey = SymmetricAlgorithm.CreateSymmetricKey(data.Key);
+			return WinRTCrypto.CryptographicEngine.Decrypt(symmetricKey, data.Ciphertext, data.IV);
+		}
+
+		/// <summary>
+		/// Generates a new set of encryption variables.
+		/// </summary>
+		/// <returns>A set of encryption variables.</returns>
+		private static SymmetricEncryptionVariables NewSymmetricEncryptionVariables(ICryptoProvider cryptoProvider) {
+			byte[] key = WinRTCrypto.CryptographicBuffer.GenerateRandom((uint)cryptoProvider.SymmetricEncryptionKeySize / 8);
+			byte[] iv = WinRTCrypto.CryptographicBuffer.GenerateRandom((uint)SymmetricAlgorithm.BlockLength);
+			return new SymmetricEncryptionVariables(key, iv);
+		}
+
+		/// <summary>
+		/// Returns the specified encryption variables if they are non-null, or generates new ones.
+		/// </summary>
+		/// <param name="encryptionVariables">The encryption variables.</param>
+		/// <returns>A valid set of encryption variables.</returns>
+		private static SymmetricEncryptionVariables ThisOrNewEncryptionVariables(ICryptoProvider cryptoProvider, SymmetricEncryptionVariables encryptionVariables) {
+			if (encryptionVariables == null) {
+				return NewSymmetricEncryptionVariables(cryptoProvider);
+			} else {
+				Requires.Argument(encryptionVariables.Key.Length == cryptoProvider.SymmetricEncryptionKeySize / 8, "key", "Incorrect length.");
+				Requires.Argument(encryptionVariables.IV.Length == cryptoProvider.SymmetricEncryptionBlockSize / 8, "iv", "Incorrect length.");
+				return encryptionVariables;
+			}
 		}
 	}
 }
