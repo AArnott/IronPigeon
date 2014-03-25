@@ -297,6 +297,10 @@
 				throw new InvalidMessageException(Strings.MaxAllowableMessagePartSizeExceeded);
 			}
 
+			if (size < 0) {
+				throw new InvalidMessageException("Message corrupted.");
+			}
+
 			byte[] buffer = new byte[size];
 			await stream.ReadAsync(buffer, 0, size, cancellationToken);
 			return buffer;
