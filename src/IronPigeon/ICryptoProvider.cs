@@ -115,21 +115,5 @@
 		/// <param name="data">The encrypted data and the key and IV used to encrypt it.</param>
 		/// <returns>The decrypted buffer.</returns>
 		byte[] Decrypt(SymmetricEncryptionResult data);
-
-		/// <summary>
-		/// Asymmetrically encrypts the specified buffer using the provided public key.
-		/// </summary>
-		/// <param name="encryptionPublicKey">The public key used to encrypt the buffer.</param>
-		/// <param name="data">The buffer to encrypt.</param>
-		/// <returns>The ciphertext.</returns>
-		byte[] Encrypt(byte[] encryptionPublicKey, byte[] data);
-
-		/// <summary>
-		/// Asymmetrically decrypts the specified buffer using the provided private key.
-		/// </summary>
-		/// <param name="decryptionPrivateKey">The private key used to decrypt the buffer.</param>
-		/// <param name="data">The buffer to decrypt.</param>
-		/// <returns>The plaintext.</returns>
-		byte[] Decrypt(byte[] decryptionPrivateKey, byte[] data);
 	}
 }

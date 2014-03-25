@@ -208,25 +208,5 @@
 		/// <param name="cancellationToken">A cancellation token.</param>
 		/// <returns>A task that represents the asynchronous operation.</returns>
 		public abstract Task DecryptAsync(Stream ciphertext, Stream plaintext, SymmetricEncryptionVariables encryptionVariables, CancellationToken cancellationToken);
-
-		/// <summary>
-		/// Asymmetrically encrypts the specified buffer using the provided public key.
-		/// </summary>
-		/// <param name="encryptionPublicKey">The public key used to encrypt the buffer.</param>
-		/// <param name="data">The buffer to encrypt.</param>
-		/// <returns>
-		/// The ciphertext.
-		/// </returns>
-		public abstract byte[] Encrypt(byte[] encryptionPublicKey, byte[] data);
-
-		/// <summary>
-		/// Asymmetrically decrypts the specified buffer using the provided private key.
-		/// </summary>
-		/// <param name="decryptionPrivateKey">The private key used to decrypt the buffer.</param>
-		/// <param name="data">The buffer to decrypt.</param>
-		/// <returns>
-		/// The plaintext.
-		/// </returns>
-		public abstract byte[] Decrypt(byte[] decryptionPrivateKey, byte[] data);
 	}
 }

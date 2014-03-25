@@ -193,34 +193,6 @@ namespace IronPigeon
         }
 
         /// <summary>
-        /// Asymmetrically encrypts the specified buffer using the provided public key.
-        /// </summary>
-        /// <param name="encryptionPublicKey">The public key used to encrypt the buffer.</param>
-        /// <param name="data">The buffer to encrypt.</param>
-        /// <returns>
-        /// The ciphertext.
-        /// </returns>
-        public override byte[] Encrypt(byte[] encryptionPublicKey, byte[] data)
-        {
-            var key = EncryptionProvider.ImportPublicKey(encryptionPublicKey, CryptographicPublicKeyBlobType.Capi1PublicKey);
-            return WinRTCrypto.CryptographicEngine.Encrypt(key, data, null);
-        }
-
-        /// <summary>
-        /// Asymmetrically decrypts the specified buffer using the provided private key.
-        /// </summary>
-        /// <param name="decryptionPrivateKey">The private key used to decrypt the buffer.</param>
-        /// <param name="data">The buffer to decrypt.</param>
-        /// <returns>
-        /// The plaintext.
-        /// </returns>
-        public override byte[] Decrypt(byte[] decryptionPrivateKey, byte[] data)
-        {
-            var key = EncryptionProvider.ImportKeyPair(decryptionPrivateKey, CryptographicPrivateKeyBlobType.Capi1PrivateKey);
-            return WinRTCrypto.CryptographicEngine.Decrypt(key, data, null);
-        }
-
-        /// <summary>
         /// Gets the HMAC algorithm provider for the given hash algorithm.
         /// </summary>
         /// <param name="hashAlgorithm">The hash algorithm (SHA1, SHA256, etc.)</param>

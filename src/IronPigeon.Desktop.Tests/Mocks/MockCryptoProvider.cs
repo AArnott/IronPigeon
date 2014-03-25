@@ -61,15 +61,7 @@
 
 		public PCLCrypto.AsymmetricAlgorithm SigningAlgorithm { get; set; }
 
-		public PCLCrypto.AsymmetricAlgorithm EncryptionAlgorithm {
-			get {
-				throw new NotImplementedException();
-			}
-
-			set {
-				throw new NotImplementedException();
-			}
-		}
+		public PCLCrypto.AsymmetricAlgorithm EncryptionAlgorithm { get; set; }
 
 		public byte[] SignHashEC(byte[] hash, byte[] signingPrivateKey) {
 			throw new NotImplementedException();
@@ -164,71 +156,6 @@
 			return plaintext;
 		}
 
-		public byte[] Encrypt(byte[] encryptionPublicKey, byte[] data) {
-			var buffer = new byte[encryptionPublicKey.Length + data.Length];
-			encryptionPublicKey.CopyTo(buffer, 0);
-			data.CopyTo(buffer, encryptionPublicKey.Length);
-			return buffer;
-		}
-
-		public byte[] Decrypt(byte[] decryptionPrivateKey, byte[] data) {
-			for (int i = 0; i < decryptionPrivateKey.Length; i++) {
-				Assert.That((byte)(data[i] ^ 0xff), Is.EqualTo(decryptionPrivateKey[i]), "Data corruption detected.");
-			}
-
-			var buffer = new byte[data.Length - decryptionPrivateKey.Length];
-			Array.Copy(data, decryptionPrivateKey.Length, buffer, 0, data.Length - decryptionPrivateKey.Length);
-			return buffer;
-		}
-
-		public byte[] Hash(byte[] data, string hashAlgorithmName) {
-			int hash = 22;
-			for (int i = 0; i < data.Length; i++) {
-				unchecked
-				{
-					hash += data[i];
-				}
-			}
-
-			return BitConverter.GetBytes(hash);
-		}
-
-		public async Task<byte[]> HashAsync(Stream source, string hashAlgorithmName, CancellationToken cancellationToken = default(CancellationToken)) {
-			var buffer = new byte[source.Length - source.Position];
-			await source.ReadAsync(buffer, 0, buffer.Length);
-			return this.Hash(buffer, hashAlgorithmName);
-		}
-
-		public void GenerateSigningKeyPair(out byte[] keyPair, out byte[] publicKey) {
-			GenerateKeyPair(out keyPair, out publicKey);
-		}
-
-		public void GenerateEncryptionKeyPair(out byte[] keyPair, out byte[] publicKey) {
-			GenerateKeyPair(out keyPair, out publicKey);
-		}
-
-		public void BeginNegotiateSharedSecret(out byte[] privateKey, out byte[] publicKey) {
-			throw new NotImplementedException();
-		}
-
-		public void RespondNegotiateSharedSecret(byte[] remotePublicKey, out byte[] ownPublicKey, out byte[] sharedSecret) {
-			throw new NotImplementedException();
-		}
-
-		public void EndNegotiateSharedSecret(byte[] ownPrivateKey, byte[] remotePublicKey, out byte[] sharedSecret) {
-			throw new NotImplementedException();
-		}
-
 		#endregion
-
-		private static void GenerateKeyPair(out byte[] privateKey, out byte[] publicKey) {
-			var rng = new Random();
-			privateKey = new byte[KeyLengthInBytes];
-			rng.NextBytes(privateKey);
-			publicKey = new byte[KeyLengthInBytes];
-			for (int i = 0; i < KeyLengthInBytes; i++) {
-				publicKey[i] = (byte)(privateKey[i] ^ 0xff);
-			}
-		}
 	}
 }

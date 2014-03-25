@@ -302,7 +302,9 @@
 			responseStreamCopy.Position = 0;
 
 			var encryptedKey = await responseStreamCopy.ReadSizeAndBufferAsync(cancellationToken);
-			var key = this.CryptoServices.Decrypt(this.Endpoint.EncryptionKeyPrivateMaterial, encryptedKey);
+			var ownDecryptionKey = WinRTCrypto.AsymmetricKeyAlgorithmProvider.OpenAlgorithm(this.CryptoServices.EncryptionAlgorithm)
+				.ImportKeyPair(this.Endpoint.EncryptionKeyPrivateMaterial, CryptographicPrivateKeyBlobType.Capi1PrivateKey);
+			var key = WinRTCrypto.CryptographicEngine.Decrypt(ownDecryptionKey, encryptedKey);
 			var iv = await responseStreamCopy.ReadSizeAndBufferAsync(cancellationToken);
 			var ciphertextStream = await responseStreamCopy.ReadSizeAndStreamAsync(cancellationToken);
 			var encryptedVariables = new SymmetricEncryptionVariables(key, iv);
@@ -409,7 +411,9 @@
 			builder.Query += "&lifetime=" + lifetimeInMinutes.ToString(CultureInfo.InvariantCulture);
 
 			var postContent = new MemoryStream();
-			var encryptedKey = this.CryptoServices.Encrypt(recipient.EncryptionKeyPublicMaterial, encryptedVariables.Key);
+			var encryptionKey = WinRTCrypto.AsymmetricKeyAlgorithmProvider.OpenAlgorithm(this.CryptoServices.EncryptionAlgorithm)
+				.ImportPublicKey(recipient.EncryptionKeyPublicMaterial);
+			var encryptedKey = WinRTCrypto.CryptographicEngine.Encrypt(encryptionKey, encryptedVariables.Key);
 			this.Log("Message invite encrypted key", encryptedKey);
 			await postContent.WriteSizeAndBufferAsync(encryptedKey, cancellationToken);
 			await postContent.WriteSizeAndBufferAsync(encryptedVariables.IV, cancellationToken);
