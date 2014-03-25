@@ -412,7 +412,7 @@
 
 			var postContent = new MemoryStream();
 			var encryptionKey = WinRTCrypto.AsymmetricKeyAlgorithmProvider.OpenAlgorithm(this.CryptoServices.EncryptionAlgorithm)
-				.ImportPublicKey(recipient.EncryptionKeyPublicMaterial);
+				.ImportPublicKey(recipient.EncryptionKeyPublicMaterial, CryptoProviderExtensions.PublicKeyFormat);
 			var encryptedKey = WinRTCrypto.CryptographicEngine.Encrypt(encryptionKey, encryptedVariables.Key);
 			this.Log("Message invite encrypted key", encryptedKey);
 			await postContent.WriteSizeAndBufferAsync(encryptedKey, cancellationToken);

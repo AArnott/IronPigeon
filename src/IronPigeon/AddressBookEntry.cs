@@ -6,6 +6,7 @@
 	using System.Runtime.Serialization;
 	using System.Text;
 	using System.Threading.Tasks;
+	using PCLCrypto;
 	using Validation;
 
 	/// <summary>
@@ -60,7 +61,7 @@
 			}
 
 			try {
-				if (!CryptoProviderExtensions.VerifySignatureWithTolerantHashAlgorithm(endpoint.SigningKeyPublicMaterial, this.SerializedEndpoint, this.Signature, CryptoProviderExtensions.GetSignatureProvider(this.HashAlgorithmName))) {
+				if (!CryptoProviderExtensions.VerifySignatureWithTolerantHashAlgorithm(endpoint.SigningKeyPublicMaterial, this.SerializedEndpoint, this.Signature, this.HashAlgorithmName != null ? (AsymmetricAlgorithm?)CryptoProviderExtensions.GetSignatureProvider(this.HashAlgorithmName) : null)) {
 					throw new BadAddressBookEntryException(Strings.AddressBookEntrySignatureDoesNotMatch);
 				}
 			} catch (Exception ex) { // all those platform-specific exceptions that aren't available to portable libraries.

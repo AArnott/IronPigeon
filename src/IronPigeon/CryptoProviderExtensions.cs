@@ -23,6 +23,8 @@
 		/// </summary>
 		private static readonly ISymmetricKeyAlgorithmProvider SymmetricAlgorithm = WinRTCrypto.SymmetricKeyAlgorithmProvider.OpenAlgorithm(PCLCrypto.SymmetricAlgorithm.AesCbcPkcs7);
 
+		internal static CryptographicPublicKeyBlobType PublicKeyFormat = CryptographicPublicKeyBlobType.X509SubjectPublicKeyInfo;
+
 		/// <summary>
 		/// Creates a web safe base64 thumbprint of some buffer.
 		/// </summary>
@@ -95,14 +97,14 @@
 		internal static bool VerifySignatureWithTolerantHashAlgorithm(byte[] signingPublicKey, byte[] data, byte[] signature, AsymmetricAlgorithm? signingAlgorithm = null) {
 			if (signingAlgorithm.HasValue) {
 				var key = WinRTCrypto.AsymmetricKeyAlgorithmProvider.OpenAlgorithm(signingAlgorithm.Value)
-					.ImportPublicKey(signingPublicKey);
+					.ImportPublicKey(signingPublicKey, PublicKeyFormat);
 				return WinRTCrypto.CryptographicEngine.VerifySignature(key, data, signature);
 			}
 
 			var key1 = WinRTCrypto.AsymmetricKeyAlgorithmProvider.OpenAlgorithm(AsymmetricAlgorithm.RsaSignPkcs1Sha1)
-				.ImportPublicKey(signingPublicKey);
+				.ImportPublicKey(signingPublicKey, PublicKeyFormat);
 			var key2 = WinRTCrypto.AsymmetricKeyAlgorithmProvider.OpenAlgorithm(AsymmetricAlgorithm.RsaSignPkcs1Sha256)
-				.ImportPublicKey(signingPublicKey);
+				.ImportPublicKey(signingPublicKey, PublicKeyFormat);
 			return WinRTCrypto.CryptographicEngine.VerifySignature(key1, data, signature)
 				|| WinRTCrypto.CryptographicEngine.VerifySignature(key2, data, signature);
 		}
