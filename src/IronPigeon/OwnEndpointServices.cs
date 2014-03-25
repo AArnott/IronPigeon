@@ -10,6 +10,7 @@
 	using System.Threading;
 	using System.Threading.Tasks;
 	using IronPigeon.Relay;
+	using PCLCrypto;
 	using Validation;
 	using TaskEx = System.Threading.Tasks.Task;
 
@@ -99,20 +100,24 @@
 		/// this method can take an extended period (several seconds) to complete.
 		/// </remarks>
 		private OwnEndpoint CreateEndpointWithKeys(CancellationToken cancellationToken) {
-			byte[] privateEncryptionKey, publicEncryptionKey;
 			byte[] privateSigningKey, publicSigningKey;
 
 			cancellationToken.ThrowIfCancellationRequested();
-			this.CryptoProvider.GenerateEncryptionKeyPair(out privateEncryptionKey, out publicEncryptionKey);
+			var encryptionAlgorithm = WinRTCrypto.AsymmetricKeyAlgorithmProvider.OpenAlgorithm(this.CryptoProvider.EncryptionAlgorithm);
+			var encryptionKey = encryptionAlgorithm.CreateKeyPair(this.CryptoProvider.EncryptionAsymmetricKeySize);
 			cancellationToken.ThrowIfCancellationRequested();
-			this.CryptoProvider.GenerateSigningKeyPair(out privateSigningKey, out publicSigningKey);
+			var signingAlgorithm = WinRTCrypto.AsymmetricKeyAlgorithmProvider.OpenAlgorithm(this.CryptoProvider.SigningAlgorithm);
+			var signingKey = signingAlgorithm.CreateKeyPair(this.CryptoProvider.SignatureAsymmetricKeySize);
 
 			var contact = new Endpoint() {
-				EncryptionKeyPublicMaterial = publicEncryptionKey,
-				SigningKeyPublicMaterial = publicSigningKey,
+				EncryptionKeyPublicMaterial = encryptionKey.ExportPublicKey(),
+				SigningKeyPublicMaterial = signingKey.ExportPublicKey(),
 			};
 
-			var ownContact = new OwnEndpoint(contact, privateSigningKey, privateEncryptionKey);
+			var ownContact = new OwnEndpoint(
+				contact,
+				signingKey.Export(CryptographicPrivateKeyBlobType.Capi1PrivateKey),
+				encryptionKey.Export(CryptographicPrivateKeyBlobType.Capi1PrivateKey));
 			return ownContact;
 		}
 	}

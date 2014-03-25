@@ -59,6 +59,8 @@
 		/// </value>
 		int ECDsaKeySize { get; set; }
 
+		AsymmetricAlgorithm EncryptionAlgorithm { get; set; }
+
 		/// <summary>
 		/// Derives a cryptographically strong key from the specified password.
 		/// </summary>
@@ -129,19 +131,5 @@
 		/// <param name="data">The buffer to decrypt.</param>
 		/// <returns>The plaintext.</returns>
 		byte[] Decrypt(byte[] decryptionPrivateKey, byte[] data);
-
-		/// <summary>
-		/// Generates a key pair for asymmetric cryptography.
-		/// </summary>
-		/// <param name="keyPair">Receives the serialized key pair (includes private key).</param>
-		/// <param name="publicKey">Receives the public key.</param>
-		void GenerateSigningKeyPair(out byte[] keyPair, out byte[] publicKey);
-
-		/// <summary>
-		/// Generates a key pair for asymmetric cryptography.
-		/// </summary>
-		/// <param name="keyPair">Receives the serialized key pair (includes private key).</param>
-		/// <param name="publicKey">Receives the public key.</param>
-		void GenerateEncryptionKeyPair(out byte[] keyPair, out byte[] publicKey);
 	}
 }

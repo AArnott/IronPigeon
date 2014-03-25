@@ -61,6 +61,16 @@
 
 		public PCLCrypto.AsymmetricAlgorithm SigningAlgorithm { get; set; }
 
+		public PCLCrypto.AsymmetricAlgorithm EncryptionAlgorithm {
+			get {
+				throw new NotImplementedException();
+			}
+
+			set {
+				throw new NotImplementedException();
+			}
+		}
+
 		public byte[] SignHashEC(byte[] hash, byte[] signingPrivateKey) {
 			throw new NotImplementedException();
 		}

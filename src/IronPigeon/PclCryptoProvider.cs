@@ -221,31 +221,6 @@ namespace IronPigeon
         }
 
         /// <summary>
-        /// Generates a key pair for asymmetric cryptography.
-        /// </summary>
-        /// <param name="keyPair">Receives the serialized key pair (includes private key).</param>
-        /// <param name="publicKey">Receives the public key.</param>
-        public override void GenerateSigningKeyPair(out byte[] keyPair, out byte[] publicKey)
-        {
-            var signer = WinRTCrypto.AsymmetricKeyAlgorithmProvider.OpenAlgorithm(this.SigningAlgorithm);
-            var key = signer.CreateKeyPair(this.SignatureAsymmetricKeySize);
-            keyPair = key.Export(CryptographicPrivateKeyBlobType.Capi1PrivateKey);
-            publicKey = key.ExportPublicKey(CryptographicPublicKeyBlobType.Capi1PublicKey);
-        }
-
-        /// <summary>
-        /// Generates a key pair for asymmetric cryptography.
-        /// </summary>
-        /// <param name="keyPair">Receives the serialized key pair (includes private key).</param>
-        /// <param name="publicKey">Receives the public key.</param>
-        public override void GenerateEncryptionKeyPair(out byte[] keyPair, out byte[] publicKey)
-        {
-            var key = EncryptionProvider.CreateKeyPair(this.EncryptionAsymmetricKeySize);
-            keyPair = key.Export(CryptographicPrivateKeyBlobType.Capi1PrivateKey);
-            publicKey = key.ExportPublicKey(CryptographicPublicKeyBlobType.Capi1PublicKey);
-        }
-
-        /// <summary>
         /// Gets the HMAC algorithm provider for the given hash algorithm.
         /// </summary>
         /// <param name="hashAlgorithm">The hash algorithm (SHA1, SHA256, etc.)</param>

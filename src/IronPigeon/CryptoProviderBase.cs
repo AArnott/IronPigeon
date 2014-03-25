@@ -64,7 +64,8 @@
 
 		protected CryptoProviderBase() {
 			this.SigningAlgorithm = AsymmetricAlgorithm.RsaSignPkcs1Sha256;
-		}
+			this.EncryptionAlgorithm = AsymmetricAlgorithm.RsaOaepSha1;
+        }
 
 		/// <summary>
 		/// Gets or sets the name of the hash algorithm to use for symmetric signatures.
@@ -127,6 +128,8 @@
 			get { return this.ecdsaKeySize; }
 			set { this.ecdsaKeySize = value; }
 		}
+
+		public AsymmetricAlgorithm EncryptionAlgorithm { get; set; }
 
 		/// <summary>
 		/// Gets the length (in bits) of the symmetric encryption cipher block.
@@ -225,19 +228,5 @@
 		/// The plaintext.
 		/// </returns>
 		public abstract byte[] Decrypt(byte[] decryptionPrivateKey, byte[] data);
-
-		/// <summary>
-		/// Generates a key pair for asymmetric cryptography.
-		/// </summary>
-		/// <param name="keyPair">Receives the serialized key pair (includes private key).</param>
-		/// <param name="publicKey">Receives the public key.</param>
-		public abstract void GenerateSigningKeyPair(out byte[] keyPair, out byte[] publicKey);
-
-		/// <summary>
-		/// Generates a key pair for asymmetric cryptography.
-		/// </summary>
-		/// <param name="keyPair">Receives the serialized key pair (includes private key).</param>
-		/// <param name="publicKey">Receives the public key.</param>
-		public abstract void GenerateEncryptionKeyPair(out byte[] keyPair, out byte[] publicKey);
 	}
 }
