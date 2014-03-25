@@ -137,16 +137,6 @@
 		public abstract int SymmetricEncryptionBlockSize { get; }
 
 		/// <summary>
-		/// Derives a cryptographically strong key from the specified password.
-		/// </summary>
-		/// <param name="password">The user-supplied password.</param>
-		/// <param name="salt">The salt.</param>
-		/// <param name="iterations">The rounds of computation to use in deriving a stronger key. The larger this is, the longer attacks will take.</param>
-		/// <param name="keySizeInBytes">The desired key size in bytes.</param>
-		/// <returns>The generated key.</returns>
-		public abstract byte[] DeriveKeyFromPassword(string password, byte[] salt, int iterations, int keySizeInBytes);
-
-		/// <summary>
 		/// Symmetrically encrypts the specified buffer using a randomly generated key.
 		/// </summary>
 		/// <param name="data">The data to encrypt.</param>
