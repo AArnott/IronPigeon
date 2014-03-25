@@ -56,7 +56,7 @@
 		[Test]
 		public void ExtractEndpointWithoutCrypto() {
 			var entry = new AddressBookEntry();
-			Assert.Throws<ArgumentNullException>(() => entry.ExtractEndpoint(null));
+			Assert.Throws<ArgumentNullException>(() => entry.ExtractEndpoint());
 		}
 
 		[Test]
@@ -65,7 +65,7 @@
 			var cryptoServices = new CryptoSettings(SecurityLevel.Minimum);
 			var entry = ownContact.CreateAddressBookEntry(cryptoServices);
 
-			var endpoint = entry.ExtractEndpoint(cryptoServices);
+			var endpoint = entry.ExtractEndpoint();
 			Assert.That(endpoint, Is.EqualTo(ownContact.PublicEndpoint));
 		}
 
@@ -77,7 +77,7 @@
 			var untamperedEndpoint = entry.SerializedEndpoint.CopyBuffer();
 			for (int i = 0; i < 100; i++) {
 				TestUtilities.ApplyFuzzing(entry.SerializedEndpoint, 1);
-				Assert.Throws<BadAddressBookEntryException>(() => entry.ExtractEndpoint(this.desktopCryptoProvider));
+				Assert.Throws<BadAddressBookEntryException>(() => entry.ExtractEndpoint());
 				untamperedEndpoint.CopyBuffer(entry.SerializedEndpoint);
 			}
 		}

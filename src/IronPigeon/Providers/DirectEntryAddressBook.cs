@@ -26,11 +26,9 @@
 		/// <summary>
 		/// Initializes a new instance of the <see cref="DirectEntryAddressBook" /> class.
 		/// </summary>
-		/// <param name="cryptoProvider">The crypto provider.</param>
 		/// <param name="httpClient">The HTTP client.</param>
-		public DirectEntryAddressBook(CryptoSettings cryptoProvider, HttpClient httpClient)
+		public DirectEntryAddressBook(HttpClient httpClient)
 			: base(httpClient) {
-			this.CryptoServices = cryptoProvider;
 		}
 
 		/// <summary>

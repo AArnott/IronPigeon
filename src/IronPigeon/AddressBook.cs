@@ -19,12 +19,6 @@
 	/// </remarks>
 	public abstract class AddressBook {
 		/// <summary>
-		/// Gets or sets the cryptographic services provider.
-		/// </summary>
-		[Import]
-		public CryptoSettings CryptoServices { get; set; }
-
-		/// <summary>
 		/// Retrieves a contact with some user supplied identifier.
 		/// </summary>
 		/// <param name="identifier">The user-supplied identifier for the contact.</param>

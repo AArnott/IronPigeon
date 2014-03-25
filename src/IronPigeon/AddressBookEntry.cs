@@ -48,12 +48,9 @@
 		/// <summary>
 		/// Deserializes an endpoint from an address book entry and validates that the signatures are correct.
 		/// </summary>
-		/// <param name="cryptoProvider">The cryptographic provider that will be used to verify the signature.</param>
 		/// <returns>The deserialized endpoint.</returns>
 		/// <exception cref="BadAddressBookEntryException">Thrown if the signatures are invalid.</exception>
-		public Endpoint ExtractEndpoint(CryptoSettings cryptoProvider) {
-			Requires.NotNull(cryptoProvider, "cryptoProvider");
-
+		public Endpoint ExtractEndpoint() {
 			var reader = new BinaryReader(new MemoryStream(this.SerializedEndpoint));
 			Endpoint endpoint;
 			try {
@@ -63,7 +60,7 @@
 			}
 
 			try {
-				if (!cryptoProvider.VerifySignatureWithTolerantHashAlgorithm(endpoint.SigningKeyPublicMaterial, this.SerializedEndpoint, this.Signature, CryptoProviderExtensions.GetSignatureProvider(this.HashAlgorithmName))) {
+				if (!CryptoProviderExtensions.VerifySignatureWithTolerantHashAlgorithm(endpoint.SigningKeyPublicMaterial, this.SerializedEndpoint, this.Signature, CryptoProviderExtensions.GetSignatureProvider(this.HashAlgorithmName))) {
 					throw new BadAddressBookEntryException(Strings.AddressBookEntrySignatureDoesNotMatch);
 				}
 			} catch (Exception ex) { // all those platform-specific exceptions that aren't available to portable libraries.

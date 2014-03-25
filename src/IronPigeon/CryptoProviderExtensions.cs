@@ -41,13 +41,11 @@
 		/// <summary>
 		/// Determines whether a given thumbprint matches the actual hash of the specified buffer.
 		/// </summary>
-		/// <param name="cryptoProvider">The crypto provider.</param>
 		/// <param name="buffer">The buffer.</param>
 		/// <param name="allegedHashWebSafeBase64Thumbprint">The web-safe base64 encoding of the thumbprint that the specified buffer's thumbprint is expected to match.</param>
 		/// <returns><c>true</c> if the thumbprints match; <c>false</c> otherwise.</returns>
 		/// <exception cref="System.NotSupportedException">If the length of the thumbprint is not consistent with any supported hash algorithm.</exception>
-		public static bool IsThumbprintMatch(this CryptoSettings cryptoProvider, byte[] buffer, string allegedHashWebSafeBase64Thumbprint) {
-			Requires.NotNull(cryptoProvider, "cryptoProvider");
+		public static bool IsThumbprintMatch(byte[] buffer, string allegedHashWebSafeBase64Thumbprint) {
 			Requires.NotNull(buffer, "buffer");
 			Requires.NotNullOrEmpty(allegedHashWebSafeBase64Thumbprint, "allegedHashWebSafeBase64Thumbprint");
 
@@ -94,7 +92,7 @@
 		/// <returns>
 		/// A value indicating whether the signature is valid.
 		/// </returns>
-		internal static bool VerifySignatureWithTolerantHashAlgorithm(this CryptoSettings cryptoProvider, byte[] signingPublicKey, byte[] data, byte[] signature, AsymmetricAlgorithm? signingAlgorithm = null) {
+		internal static bool VerifySignatureWithTolerantHashAlgorithm(byte[] signingPublicKey, byte[] data, byte[] signature, AsymmetricAlgorithm? signingAlgorithm = null) {
 			if (signingAlgorithm.HasValue) {
 				var key = WinRTCrypto.AsymmetricKeyAlgorithmProvider.OpenAlgorithm(signingAlgorithm.Value)
 					.ImportPublicKey(signingPublicKey);

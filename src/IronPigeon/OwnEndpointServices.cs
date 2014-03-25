@@ -20,11 +20,27 @@
 	[Export]
 	[Shared]
 	public class OwnEndpointServices {
+		private Channel channel;
+
 		/// <summary>
-		/// Gets or sets the crypto provider.
+		/// Gets the cryptographic services provider.
+		/// </summary>
+		public CryptoSettings CryptoProvider { get; set; }
+
+		/// <summary>
+		/// Gets or sets the channel.
 		/// </summary>
 		[Import]
-		public CryptoSettings CryptoProvider { get; set; }
+		public Channel Channel {
+			get { return this.channel; }
+			set {
+				this.channel = value;
+
+				if (value != null) {
+					this.CryptoProvider = value.CryptoServices;
+				}
+			}
+		}
 
 		/// <summary>
 		/// Gets or sets the cloud blob storage provider.

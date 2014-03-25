@@ -40,6 +40,7 @@
 		/// Initializes a new instance of the <see cref="Channel" /> class.
 		/// </summary>
 		public Channel() {
+			this.CryptoServices = new CryptoSettings();
 		}
 
 		/// <summary>
@@ -54,7 +55,6 @@
 		/// <value>
 		/// The crypto services.
 		/// </value>
-		[Import]
 		public CryptoSettings CryptoServices { get; set; }
 
 		/// <summary>
@@ -331,7 +331,7 @@
 				messageReference.HashAlgorithmName = Utilities.GuessHashAlgorithmFromLength(messageReference.Hash.Length);
 			}
 
-			if (!this.CryptoServices.VerifySignatureWithTolerantHashAlgorithm(notificationAuthor.SigningKeyPublicMaterial, signedBytes, signature, signingHashAlgorithm)) {
+			if (!CryptoProviderExtensions.VerifySignatureWithTolerantHashAlgorithm(notificationAuthor.SigningKeyPublicMaterial, signedBytes, signature, signingHashAlgorithm)) {
 				throw new InvalidMessageException();
 			}
 

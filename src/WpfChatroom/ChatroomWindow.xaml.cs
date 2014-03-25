@@ -38,12 +38,6 @@
 		[Import]
 		public PostalService PostalService { get; set; }
 
-		/// <summary>
-		/// Gets or sets the crypto provider.
-		/// </summary>
-		[Import]
-		public CryptoSettings CryptoProvider { get; set; }
-
 		internal void AddMember(string friendlyName, Endpoint endpoint) {
 			if (this.members.Values.Contains(endpoint)) {
 				throw new InvalidOperationException("That member is already in the chatroom.");
@@ -54,7 +48,7 @@
 		}
 
 		internal async Task InvitingMemberAsync(InviteMember inviteWindow) {
-			var addressBook = new DirectEntryAddressBook(this.CryptoProvider, new HttpClient());
+			var addressBook = new DirectEntryAddressBook(new HttpClient());
 			var endpoint = await addressBook.LookupAsync(inviteWindow.PublicEndpointUrlBox.Text);
 			if (endpoint != null) {
 				try {

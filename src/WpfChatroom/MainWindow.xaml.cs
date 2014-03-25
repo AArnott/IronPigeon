@@ -60,10 +60,11 @@
 		public RelayCloudBlobStorageProvider MessageRelayService { get; set; }
 
 		/// <summary>
-		/// Gets or sets the crypto provider.
+		/// Gets the cryptographic services provider.
 		/// </summary>
-		[Import]
-		public CryptoSettings CryptoProvider { get; set; }
+		public CryptoSettings CryptoServices {
+			get { return this.Channel.CryptoServices; }
+		}
 
 		/// <summary>
 		/// Gets or sets the chatroom window factory.
@@ -134,7 +135,7 @@
 			var chatroomWindow = this.ChatroomWindowFactory.CreateExport();
 			chatroomWindow.Value.Show();
 
-			var addressBook = new DirectEntryAddressBook(this.CryptoProvider, new HttpClient());
+			var addressBook = new DirectEntryAddressBook(new HttpClient());
 			var endpoint = await addressBook.LookupAsync("http://tinyurl.com/omhxu6l#-Rrs7LRrCE3bV8x58j1l4JUzAT3P2obKia73k3IFG9k");
 			chatroomWindow.Value.AddMember("App author", endpoint);
 		}

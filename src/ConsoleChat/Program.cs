@@ -48,8 +48,9 @@
 		/// <summary>
 		/// Gets or sets the crypto provider.
 		/// </summary>
-		[Import]
-		public CryptoSettings CryptoProvider { get; set; }
+		public CryptoSettings CryptoProvider {
+			get { return this.Channel.CryptoServices; }
+		}
 
 		/// <summary>
 		/// Gets or sets the own endpoint services.
@@ -153,7 +154,7 @@
 					return defaultEndpoint;
 				}
 
-				var addressBook = new DirectEntryAddressBook(this.CryptoProvider, new System.Net.Http.HttpClient());
+				var addressBook = new DirectEntryAddressBook(new System.Net.Http.HttpClient());
 				var endpoint = await addressBook.LookupAsync(url);
 				if (endpoint != null) {
 					return endpoint;
