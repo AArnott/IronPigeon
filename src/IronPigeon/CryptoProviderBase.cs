@@ -50,18 +50,6 @@
 		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
 		private int blobSymmetricKeySize = SecurityLevel.Maximum.BlobSymmetricKeySize;
 
-		/// <summary>
-		/// Backing field for the <see cref="ECDiffieHellmanKeySize"/> property.
-		/// </summary>
-		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
-		private int ecdiffieHellmanKeySize = SecurityLevel.Maximum.ECDiffieHellmanKeySize;
-
-		/// <summary>
-		/// Backing field for the <see cref="ECDsaKeySize"/> property.
-		/// </summary>
-		[DebuggerBrowsable(DebuggerBrowsableState.Never)]
-		private int ecdsaKeySize = SecurityLevel.Maximum.ECDsaKeySize;
-
 		protected CryptoProviderBase() {
 			this.SigningAlgorithm = AsymmetricAlgorithm.RsaSignPkcs1Sha256;
 			this.EncryptionAlgorithm = AsymmetricAlgorithm.RsaOaepSha1;
@@ -115,18 +103,6 @@
 		public int SymmetricEncryptionKeySize {
 			get { return this.blobSymmetricKeySize; }
 			set { this.blobSymmetricKeySize = value; }
-		}
-
-		/// <inheritdoc/>
-		public int ECDiffieHellmanKeySize {
-			get { return this.ecdiffieHellmanKeySize; }
-			set { this.ecdiffieHellmanKeySize = value; }
-		}
-
-		/// <inheritdoc/>
-		public int ECDsaKeySize {
-			get { return this.ecdsaKeySize; }
-			set { this.ecdsaKeySize = value; }
 		}
 
 		public AsymmetricAlgorithm EncryptionAlgorithm { get; set; }

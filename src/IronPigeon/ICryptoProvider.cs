@@ -46,19 +46,6 @@
 		/// </summary>
 		int EncryptionAsymmetricKeySize { get; set; }
 
-		/// <summary>
-		/// Gets or sets the key size (in bits) used for ECDiffieHellman for negotiating shared secrets.
-		/// </summary>
-		int ECDiffieHellmanKeySize { get; set; }
-
-		/// <summary>
-		/// Gets or sets the size of the Elliptic-curve DSA key.
-		/// </summary>
-		/// <value>
-		/// The size of the EC DSA key.
-		/// </value>
-		int ECDsaKeySize { get; set; }
-
 		AsymmetricAlgorithm EncryptionAlgorithm { get; set; }
 
 		/// <summary>
