@@ -38,7 +38,6 @@
 			var configuration =
 				new ContainerConfiguration().WithAssembly(typeof(Channel).Assembly)
 											.WithAssembly(typeof(PostalService).Assembly)
-											.WithPart(typeof(PclCryptoProvider))
 											.WithPart(typeof(DesktopChannel))
 											.WithAssembly(Assembly.GetExecutingAssembly());
 			var container = configuration.CreateContainer();
@@ -64,7 +63,7 @@
 		/// Gets or sets the crypto provider.
 		/// </summary>
 		[Import]
-		public ICryptoProvider CryptoProvider { get; set; }
+		public CryptoSettings CryptoProvider { get; set; }
 
 		/// <summary>
 		/// Gets or sets the chatroom window factory.

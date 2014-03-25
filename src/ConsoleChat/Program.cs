@@ -49,7 +49,7 @@
 		/// Gets or sets the crypto provider.
 		/// </summary>
 		[Import]
-		public ICryptoProvider CryptoProvider { get; set; }
+		public CryptoSettings CryptoProvider { get; set; }
 
 		/// <summary>
 		/// Gets or sets the own endpoint services.
@@ -65,7 +65,6 @@
 		private static void Main(string[] args) {
 			var configuration = new ContainerConfiguration()
 				.WithAssembly(typeof(Channel).Assembly)
-				.WithPart(typeof(PclCryptoProvider))
 				.WithPart(typeof(DesktopChannel))
 				.WithPart(typeof(Program));
 			var container = configuration.CreateContainer();

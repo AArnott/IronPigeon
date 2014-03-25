@@ -33,8 +33,8 @@
 			Array.Copy(buffer, to, buffer.Length);
 		}
 
-		internal static ICryptoProvider CreateAuthenticCryptoProvider() {
-			return new PclCryptoProvider(SecurityLevel.Minimum);
+		internal static CryptoSettings CreateAuthenticCryptoProvider() {
+			return new CryptoSettings(SecurityLevel.Minimum);
 		}
 
 		internal static void GetUnitTestInfo(out Type testFixture, out string testMethod) {

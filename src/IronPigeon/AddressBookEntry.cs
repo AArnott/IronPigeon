@@ -51,7 +51,7 @@
 		/// <param name="cryptoProvider">The cryptographic provider that will be used to verify the signature.</param>
 		/// <returns>The deserialized endpoint.</returns>
 		/// <exception cref="BadAddressBookEntryException">Thrown if the signatures are invalid.</exception>
-		public Endpoint ExtractEndpoint(ICryptoProvider cryptoProvider) {
+		public Endpoint ExtractEndpoint(CryptoSettings cryptoProvider) {
 			Requires.NotNull(cryptoProvider, "cryptoProvider");
 
 			var reader = new BinaryReader(new MemoryStream(this.SerializedEndpoint));

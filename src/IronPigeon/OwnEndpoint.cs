@@ -85,7 +85,7 @@
 		/// </summary>
 		/// <param name="cryptoServices">The crypto services to use for signing the address book entry.</param>
 		/// <returns>The address book entry.</returns>
-		public AddressBookEntry CreateAddressBookEntry(ICryptoProvider cryptoServices) {
+		public AddressBookEntry CreateAddressBookEntry(CryptoSettings cryptoServices) {
 			Requires.NotNull(cryptoServices, "cryptoServices");
 
 			var ms = new MemoryStream();

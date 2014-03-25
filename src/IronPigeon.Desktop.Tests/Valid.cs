@@ -25,8 +25,8 @@
 		internal static readonly Endpoint[] OneEndpoint = new Endpoint[] { PublicEndpoint };
 		internal static readonly Endpoint[] EmptyEndpoints = new Endpoint[0];
 
-		internal static OwnEndpoint GenerateOwnEndpoint(ICryptoProvider cryptoProvider = null) {
-			cryptoProvider = cryptoProvider ?? new Mocks.MockCryptoProvider();
+		internal static OwnEndpoint GenerateOwnEndpoint(CryptoSettings cryptoProvider = null) {
+			cryptoProvider = cryptoProvider ?? new CryptoSettings(SecurityLevel.Minimum);
 
 			var inboxFactory = new Mock<IEndpointInboxFactory>();
 			inboxFactory.Setup(f => f.CreateInboxAsync(CancellationToken.None)).Returns(

@@ -10,7 +10,7 @@
 
 	[TestFixture]
 	public class AddressBookEntryTest {
-		private ICryptoProvider desktopCryptoProvider;
+		private CryptoSettings desktopCryptoProvider;
 
 		[SetUp]
 		public void Setup() {
@@ -62,7 +62,7 @@
 		[Test]
 		public void ExtractEndpoint() {
 			var ownContact = new OwnEndpoint(Valid.ReceivingEndpoint.PublicEndpoint, Valid.ReceivingEndpoint.SigningKeyPrivateMaterial, Valid.ReceivingEndpoint.EncryptionKeyPrivateMaterial);
-			var cryptoServices = new Mocks.MockCryptoProvider();
+			var cryptoServices = new CryptoSettings(SecurityLevel.Minimum);
 			var entry = ownContact.CreateAddressBookEntry(cryptoServices);
 
 			var endpoint = entry.ExtractEndpoint(cryptoServices);

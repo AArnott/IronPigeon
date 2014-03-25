@@ -42,7 +42,7 @@
 		/// Gets or sets the crypto provider.
 		/// </summary>
 		[Import]
-		public ICryptoProvider CryptoProvider { get; set; }
+		public CryptoSettings CryptoProvider { get; set; }
 
 		internal void AddMember(string friendlyName, Endpoint endpoint) {
 			if (this.members.Values.Contains(endpoint)) {

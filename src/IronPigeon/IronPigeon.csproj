@@ -25,14 +25,12 @@
     <Compile Include="AddressBookEntry.cs" />
     <Compile Include="BadAddressBookEntryException.cs" />
     <Compile Include="Channel.cs" />
-    <Compile Include="CryptoProviderBase.cs" />
+    <Compile Include="CryptoSettings.cs" />
     <Compile Include="CryptoProviderExtensions.cs" />
     <Compile Include="EncryptionConfiguration.cs" />
     <Compile Include="Endpoint.cs" />
     <Compile Include="ICloudBlobStorageProvider.cs" />
-    <Compile Include="ICryptoProvider.cs" />
     <Compile Include="AddressBook.cs" />
-    <Compile Include="PclCryptoProvider.cs" />
     <Compile Include="ProgressWithCompletion.cs" />
     <Compile Include="Providers\RelayServiceAddressBook.cs" />
     <Compile Include="Providers\TinyUrlShortener.cs" />

@@ -129,7 +129,6 @@
     <Compile Include="Mocks\HttpMessageHandlerRecorder.cs" />
     <Compile Include="Mocks\InboxHttpHandlerMock.cs" />
     <Compile Include="Mocks\LoggerMock.cs" />
-    <Compile Include="Mocks\MockCryptoProvider.cs" />
     <Compile Include="OwnEndpointTests.cs" />
     <Compile Include="Providers\GoogleUrlShortenerTests.cs" />
     <Compile Include="Providers\RelayCloudBlobStorageProviderTests.cs" />

@@ -32,7 +32,7 @@
 		[Test]
 		public void CreateAddressBookEntry() {
 			var ownContact = Valid.ReceivingEndpoint;
-			ICryptoProvider cryptoServices = new Mocks.MockCryptoProvider();
+			CryptoSettings cryptoServices = new CryptoSettings(SecurityLevel.Minimum);
 			var entry = ownContact.CreateAddressBookEntry(cryptoServices);
 			Assert.That(entry.Signature, Is.Not.Null.And.Not.Empty);
 			Assert.That(entry.SerializedEndpoint, Is.Not.Null.And.Not.Empty);

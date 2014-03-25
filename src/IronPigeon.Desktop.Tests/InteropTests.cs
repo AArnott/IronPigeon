@@ -21,10 +21,10 @@
 
 		[Fact]
 		public async Task CrossSecurityLevelAddressBookExchange() {
-			var lowLevelCrypto = new PclCryptoProvider(new Level1());
+			var lowLevelCrypto = new CryptoSettings(new Level1());
 			var lowLevelEndpoint = Valid.GenerateOwnEndpoint(lowLevelCrypto);
 
-			var highLevelCrypto = new PclCryptoProvider(new Level2());
+			var highLevelCrypto = new CryptoSettings(new Level2());
 			var highLevelEndpoint = Valid.GenerateOwnEndpoint(highLevelCrypto);
 
 			await this.TestSendAndReceiveAsync(lowLevelCrypto, lowLevelEndpoint, highLevelCrypto, highLevelEndpoint);
@@ -32,7 +32,7 @@
 		}
 
 		private async Task TestSendAndReceiveAsync(
-			ICryptoProvider senderCrypto, OwnEndpoint senderEndpoint, ICryptoProvider receiverCrypto, OwnEndpoint receiverEndpoint) {
+			CryptoSettings senderCrypto, OwnEndpoint senderEndpoint, CryptoSettings receiverCrypto, OwnEndpoint receiverEndpoint) {
 			var inboxMock = new Mocks.InboxHttpHandlerMock(new[] { receiverEndpoint.PublicEndpoint });
 			var cloudStorage = new Mocks.CloudBlobStorageProviderMock();
 
@@ -40,7 +40,7 @@
 			await this.ReceiveMessageAsync(cloudStorage, inboxMock, receiverCrypto, receiverEndpoint);
 		}
 
-		private async Task SendMessageAsync(Mocks.CloudBlobStorageProviderMock cloudStorage, Mocks.InboxHttpHandlerMock inboxMock, ICryptoProvider senderCrypto, OwnEndpoint senderEndpoint, Endpoint receiverEndpoint) {
+		private async Task SendMessageAsync(Mocks.CloudBlobStorageProviderMock cloudStorage, Mocks.InboxHttpHandlerMock inboxMock, CryptoSettings senderCrypto, OwnEndpoint senderEndpoint, Endpoint receiverEndpoint) {
 			Requires.NotNull(cloudStorage, "cloudStorage");
 			Requires.NotNull(senderCrypto, "senderCrypto");
 			Requires.NotNull(senderEndpoint, "senderEndpoint");
@@ -65,7 +65,7 @@
 			await channel.PostAsync(sentMessage, new[] { receiverEndpoint }, Valid.ExpirationUtc);
 		}
 
-		private async Task ReceiveMessageAsync(Mocks.CloudBlobStorageProviderMock cloudStorage, Mocks.InboxHttpHandlerMock inboxMock, ICryptoProvider receiverCrypto, OwnEndpoint receiverEndpoint) {
+		private async Task ReceiveMessageAsync(Mocks.CloudBlobStorageProviderMock cloudStorage, Mocks.InboxHttpHandlerMock inboxMock, CryptoSettings receiverCrypto, OwnEndpoint receiverEndpoint) {
 			Requires.NotNull(cloudStorage, "cloudStorage");
 			Requires.NotNull(receiverCrypto, "receiverCrypto");
 			Requires.NotNull(receiverEndpoint, "receiverEndpoint");

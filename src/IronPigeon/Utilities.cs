@@ -326,7 +326,7 @@
 		/// </summary>
 		/// <param name="cryptoProvider">The crypto provider.</param>
 		/// <param name="level">The level of security to apply.</param>
-		public static void ApplySecurityLevel(this ICryptoProvider cryptoProvider, SecurityLevel level) {
+		public static void ApplySecurityLevel(this CryptoSettings cryptoProvider, SecurityLevel level) {
 			level.Apply(cryptoProvider);
 		}
 

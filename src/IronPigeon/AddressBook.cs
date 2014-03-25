@@ -22,7 +22,7 @@
 		/// Gets or sets the cryptographic services provider.
 		/// </summary>
 		[Import]
-		public ICryptoProvider CryptoServices { get; set; }
+		public CryptoSettings CryptoServices { get; set; }
 
 		/// <summary>
 		/// Retrieves a contact with some user supplied identifier.

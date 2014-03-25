@@ -24,7 +24,7 @@
 		/// Gets or sets the crypto provider.
 		/// </summary>
 		[Import]
-		public ICryptoProvider CryptoProvider { get; set; }
+		public CryptoSettings CryptoProvider { get; set; }
 
 		/// <summary>
 		/// Gets or sets the cloud blob storage provider.

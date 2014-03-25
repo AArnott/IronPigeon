@@ -28,7 +28,7 @@
 		/// </summary>
 		/// <param name="cryptoProvider">The crypto provider.</param>
 		/// <param name="httpClient">The HTTP client.</param>
-		public DirectEntryAddressBook(ICryptoProvider cryptoProvider, HttpClient httpClient)
+		public DirectEntryAddressBook(CryptoSettings cryptoProvider, HttpClient httpClient)
 			: base(httpClient) {
 			this.CryptoServices = cryptoProvider;
 		}

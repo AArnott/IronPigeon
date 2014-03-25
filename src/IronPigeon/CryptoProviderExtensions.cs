@@ -10,7 +10,7 @@
 	using Validation;
 
 	/// <summary>
-	/// Extension methods to the <see cref="ICryptoProvider"/> interface.
+	/// Extension methods to the <see cref="CryptoSettings"/> interface.
 	/// </summary>
 	public static class CryptoProviderExtensions {
 		/// <summary>
@@ -29,7 +29,7 @@
 		/// <param name="cryptoProvider">The crypto provider.</param>
 		/// <param name="buffer">The buffer.</param>
 		/// <returns>A string representation of a hash of the <paramref name="buffer"/>.</returns>
-		public static string CreateWebSafeBase64Thumbprint(this ICryptoProvider cryptoProvider, byte[] buffer) {
+		public static string CreateWebSafeBase64Thumbprint(this CryptoSettings cryptoProvider, byte[] buffer) {
 			Requires.NotNull(cryptoProvider, "cryptoProvider");
 			Requires.NotNull(buffer, "buffer");
 
@@ -46,7 +46,7 @@
 		/// <param name="allegedHashWebSafeBase64Thumbprint">The web-safe base64 encoding of the thumbprint that the specified buffer's thumbprint is expected to match.</param>
 		/// <returns><c>true</c> if the thumbprints match; <c>false</c> otherwise.</returns>
 		/// <exception cref="System.NotSupportedException">If the length of the thumbprint is not consistent with any supported hash algorithm.</exception>
-		public static bool IsThumbprintMatch(this ICryptoProvider cryptoProvider, byte[] buffer, string allegedHashWebSafeBase64Thumbprint) {
+		public static bool IsThumbprintMatch(this CryptoSettings cryptoProvider, byte[] buffer, string allegedHashWebSafeBase64Thumbprint) {
 			Requires.NotNull(cryptoProvider, "cryptoProvider");
 			Requires.NotNull(buffer, "buffer");
 			Requires.NotNullOrEmpty(allegedHashWebSafeBase64Thumbprint, "allegedHashWebSafeBase64Thumbprint");
@@ -69,7 +69,7 @@
 		/// <returns>
 		/// <c>true</c> if the hashes came out equal; <c>false</c> otherwise.
 		/// </returns>
-		internal static bool IsHashMatchWithTolerantHashAlgorithm(this ICryptoProvider cryptoProvider, byte[] data, byte[] expectedHash, string hashAlgorithmName) {
+		internal static bool IsHashMatchWithTolerantHashAlgorithm(this CryptoSettings cryptoProvider, byte[] data, byte[] expectedHash, string hashAlgorithmName) {
 			Requires.NotNull(cryptoProvider, "cryptoProvider");
 			Requires.NotNull(data, "data");
 			Requires.NotNull(expectedHash, "expectedHash");
@@ -94,7 +94,7 @@
 		/// <returns>
 		/// A value indicating whether the signature is valid.
 		/// </returns>
-		internal static bool VerifySignatureWithTolerantHashAlgorithm(this ICryptoProvider cryptoProvider, byte[] signingPublicKey, byte[] data, byte[] signature, AsymmetricAlgorithm? signingAlgorithm = null) {
+		internal static bool VerifySignatureWithTolerantHashAlgorithm(this CryptoSettings cryptoProvider, byte[] signingPublicKey, byte[] data, byte[] signature, AsymmetricAlgorithm? signingAlgorithm = null) {
 			if (signingAlgorithm.HasValue) {
 				var key = WinRTCrypto.AsymmetricKeyAlgorithmProvider.OpenAlgorithm(signingAlgorithm.Value)
 					.ImportPublicKey(signingPublicKey);
@@ -130,7 +130,7 @@
 			}
 		}
 
-		internal static IHashAlgorithmProvider GetHashAlgorithm(this ICryptoProvider cryptoProvider) {
+		internal static IHashAlgorithmProvider GetHashAlgorithm(this CryptoSettings cryptoProvider) {
 			Requires.NotNull(cryptoProvider, "cryptoProvider");
 
 			return GetHashAlgorithm(cryptoProvider.SymmetricHashAlgorithmName);
@@ -151,7 +151,7 @@
 		/// <returns>
 		/// The result of the encryption.
 		/// </returns>
-		public static SymmetricEncryptionResult Encrypt(this ICryptoProvider cryptoProvider, byte[] data, SymmetricEncryptionVariables encryptionVariables = null) {
+		public static SymmetricEncryptionResult Encrypt(this CryptoSettings cryptoProvider, byte[] data, SymmetricEncryptionVariables encryptionVariables = null) {
 			Requires.NotNull(data, "data");
 
 			encryptionVariables = ThisOrNewEncryptionVariables(cryptoProvider, encryptionVariables);
@@ -171,7 +171,7 @@
 		/// <returns>
 		/// A task that completes when encryption has completed, whose result is the key and IV to use to decrypt the ciphertext.
 		/// </returns>
-		public static async Task<SymmetricEncryptionVariables> EncryptAsync(this ICryptoProvider cryptoProvider, Stream plaintext, Stream ciphertext, SymmetricEncryptionVariables encryptionVariables = null, CancellationToken cancellationToken = default(CancellationToken)) {
+		public static async Task<SymmetricEncryptionVariables> EncryptAsync(this CryptoSettings cryptoProvider, Stream plaintext, Stream ciphertext, SymmetricEncryptionVariables encryptionVariables = null, CancellationToken cancellationToken = default(CancellationToken)) {
 			Requires.NotNull(plaintext, "plaintext");
 			Requires.NotNull(ciphertext, "ciphertext");
 
@@ -197,7 +197,7 @@
 		/// <returns>
 		/// A task that represents the asynchronous operation.
 		/// </returns>
-		public static async Task DecryptAsync(this ICryptoProvider cryptoProvider, Stream ciphertext, Stream plaintext, SymmetricEncryptionVariables encryptionVariables, CancellationToken cancellationToken = default(CancellationToken)) {
+		public static async Task DecryptAsync(this CryptoSettings cryptoProvider, Stream ciphertext, Stream plaintext, SymmetricEncryptionVariables encryptionVariables, CancellationToken cancellationToken = default(CancellationToken)) {
 			Requires.NotNull(ciphertext, "ciphertext");
 			Requires.NotNull(plaintext, "plaintext");
 			Requires.NotNull(encryptionVariables, "encryptionVariables");
@@ -218,7 +218,7 @@
 		/// <returns>
 		/// The decrypted buffer.
 		/// </returns>
-		public static byte[] Decrypt(this ICryptoProvider cryptoProvider, SymmetricEncryptionResult data) {
+		public static byte[] Decrypt(this CryptoSettings cryptoProvider, SymmetricEncryptionResult data) {
 			var symmetricKey = SymmetricAlgorithm.CreateSymmetricKey(data.Key);
 			return WinRTCrypto.CryptographicEngine.Decrypt(symmetricKey, data.Ciphertext, data.IV);
 		}
@@ -227,7 +227,7 @@
 		/// Generates a new set of encryption variables.
 		/// </summary>
 		/// <returns>A set of encryption variables.</returns>
-		private static SymmetricEncryptionVariables NewSymmetricEncryptionVariables(ICryptoProvider cryptoProvider) {
+		private static SymmetricEncryptionVariables NewSymmetricEncryptionVariables(CryptoSettings cryptoProvider) {
 			byte[] key = WinRTCrypto.CryptographicBuffer.GenerateRandom((uint)cryptoProvider.SymmetricEncryptionKeySize / 8);
 			byte[] iv = WinRTCrypto.CryptographicBuffer.GenerateRandom((uint)SymmetricAlgorithm.BlockLength);
 			return new SymmetricEncryptionVariables(key, iv);
@@ -238,7 +238,7 @@
 		/// </summary>
 		/// <param name="encryptionVariables">The encryption variables.</param>
 		/// <returns>A valid set of encryption variables.</returns>
-		private static SymmetricEncryptionVariables ThisOrNewEncryptionVariables(ICryptoProvider cryptoProvider, SymmetricEncryptionVariables encryptionVariables) {
+		private static SymmetricEncryptionVariables ThisOrNewEncryptionVariables(CryptoSettings cryptoProvider, SymmetricEncryptionVariables encryptionVariables) {
 			if (encryptionVariables == null) {
 				return NewSymmetricEncryptionVariables(cryptoProvider);
 			} else {

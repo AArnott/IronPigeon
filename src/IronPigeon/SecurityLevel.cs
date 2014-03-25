@@ -71,16 +71,16 @@
 		/// <summary>
 		/// Sets this security level's key lengths to the specified crypto provider.
 		/// </summary>
-		/// <param name="cryptoProvider">The crypto provider.</param>
-		public void Apply(ICryptoProvider cryptoProvider) {
-			Requires.NotNull(cryptoProvider, "cryptoProvider");
+		/// <param name="cryptoSettings">The crypto provider.</param>
+		public void Apply(CryptoSettings cryptoSettings) {
+			Requires.NotNull(cryptoSettings, "cryptoSettings");
 
-			cryptoProvider.SymmetricHashAlgorithmName = this.SymmetricHashAlgorithmName;
-			cryptoProvider.AsymmetricHashAlgorithmName = this.AsymmetricHashAlgorithmName;
-			cryptoProvider.SymmetricEncryptionConfiguration = this.SymmetricEncryptionConfiguration;
-			cryptoProvider.EncryptionAsymmetricKeySize = this.EncryptionAsymmetricKeySize;
-			cryptoProvider.SignatureAsymmetricKeySize = this.SignatureAsymmetricKeySize;
-			cryptoProvider.SymmetricEncryptionKeySize = this.BlobSymmetricKeySize;
+			cryptoSettings.SymmetricHashAlgorithmName = this.SymmetricHashAlgorithmName;
+			cryptoSettings.AsymmetricHashAlgorithmName = this.AsymmetricHashAlgorithmName;
+			cryptoSettings.SymmetricEncryptionConfiguration = this.SymmetricEncryptionConfiguration;
+			cryptoSettings.EncryptionAsymmetricKeySize = this.EncryptionAsymmetricKeySize;
+			cryptoSettings.SignatureAsymmetricKeySize = this.SignatureAsymmetricKeySize;
+			cryptoSettings.SymmetricEncryptionKeySize = this.BlobSymmetricKeySize;
 		}
 
 		/// <summary>

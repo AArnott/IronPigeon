@@ -55,7 +55,7 @@
 		/// The crypto services.
 		/// </value>
 		[Import]
-		public ICryptoProvider CryptoServices { get; set; }
+		public CryptoSettings CryptoServices { get; set; }
 
 		/// <summary>
 		/// Gets or sets the endpoint used to receive messages.
