@@ -227,25 +227,6 @@
 		public abstract byte[] Decrypt(byte[] decryptionPrivateKey, byte[] data);
 
 		/// <summary>
-		/// Computes the hash of the specified buffer.
-		/// </summary>
-		/// <param name="data">The data to hash.</param>
-		/// <param name="hashAlgorithmName">Name of the hash algorithm.</param>
-		/// <returns>
-		/// The computed hash.
-		/// </returns>
-		public abstract byte[] Hash(byte[] data, string hashAlgorithmName);
-
-		/// <summary>
-		/// Hashes the contents of a stream.
-		/// </summary>
-		/// <param name="source">The stream to hash.</param>
-		/// <param name="hashAlgorithmName">The hash algorithm to use.</param>
-		/// <param name="cancellationToken">The cancellation token.</param>
-		/// <returns>A task whose result is the hash.</returns>
-		public abstract Task<byte[]> HashAsync(Stream source, string hashAlgorithmName, CancellationToken cancellationToken);
-
-		/// <summary>
 		/// Generates a key pair for asymmetric cryptography.
 		/// </summary>
 		/// <param name="keyPair">Receives the serialized key pair (includes private key).</param>

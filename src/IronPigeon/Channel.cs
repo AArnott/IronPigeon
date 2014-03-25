@@ -238,7 +238,8 @@
 			this.Log("Message symmetric IV", encryptionVariables.IV);
 
 			cipherTextStream.Position = 0;
-			var messageHash = await this.CryptoServices.HashAsync(cipherTextStream, this.CryptoServices.SymmetricHashAlgorithmName, cancellationToken);
+			var hasher = this.CryptoServices.GetHashAlgorithm();
+			var messageHash = hasher.HashData(cipherTextStream.ToArray());
 			this.Log("Encrypted message hash", messageHash);
 
 			cipherTextStream.Position = 0;

@@ -21,7 +21,8 @@
 			Requires.NotNull(cryptoProvider, "cryptoProvider");
 			Requires.NotNull(buffer, "buffer");
 
-			var hash = cryptoProvider.Hash(buffer, cryptoProvider.SymmetricHashAlgorithmName);
+			var hasher = cryptoProvider.GetHashAlgorithm();
+			var hash = hasher.HashData(buffer);
 			return Utilities.ToBase64WebSafe(hash);
 		}
 
@@ -41,7 +42,8 @@
 			byte[] allegedThumbprint = Convert.FromBase64String(Utilities.FromBase64WebSafe(allegedHashWebSafeBase64Thumbprint));
 			var hashAlgorithm = Utilities.GuessHashAlgorithmFromLength(allegedThumbprint.Length);
 
-			var actualThumbprint = cryptoProvider.Hash(buffer, hashAlgorithm);
+			var hasher = GetHashAlgorithm(hashAlgorithm);
+			var actualThumbprint = hasher.HashData(buffer);
 			return Utilities.AreEquivalent(actualThumbprint, allegedThumbprint);
 		}
 
@@ -64,7 +66,8 @@
 				hashAlgorithmName = Utilities.GuessHashAlgorithmFromLength(expectedHash.Length);
 			}
 
-			byte[] actualHash = cryptoProvider.Hash(data, hashAlgorithmName);
+			var hasher = GetHashAlgorithm(hashAlgorithmName);
+			byte[] actualHash = hasher.HashData(data);
 			return Utilities.AreEquivalent(expectedHash, actualHash);
 		}
 
@@ -113,6 +116,19 @@
 				default:
 					throw new NotSupportedException();
 			}
+		}
+
+		internal static IHashAlgorithmProvider GetHashAlgorithm(this ICryptoProvider cryptoProvider) {
+			Requires.NotNull(cryptoProvider, "cryptoProvider");
+
+			return GetHashAlgorithm(cryptoProvider.SymmetricHashAlgorithmName);
+		}
+
+		internal static IHashAlgorithmProvider GetHashAlgorithm(string algorithmName) {
+			Requires.NotNullOrEmpty(algorithmName, "algorithmName");
+
+			HashAlgorithm algorithm = (HashAlgorithm)Enum.Parse(typeof(HashAlgorithm), algorithmName, true);
+			return WinRTCrypto.HashAlgorithmProvider.OpenAlgorithm(algorithm);
 		}
 	}
 }
