@@ -72,16 +72,6 @@
 		byte[] DeriveKeyFromPassword(string password, byte[] salt, int iterations, int keySizeInBytes);
 
 		/// <summary>
-		/// Computes the authentication code for the contents of a stream given the specified symmetric key.
-		/// </summary>
-		/// <param name="data">The data to compute the HMAC for.</param>
-		/// <param name="key">The key to use in hashing.</param>
-		/// <param name="hashAlgorithmName">The hash algorithm to use.</param>
-		/// <param name="cancellationToken">The cancellation token.</param>
-		/// <returns>The authentication code.</returns>
-		Task<byte[]> ComputeAuthenticationCodeAsync(Stream data, byte[] key, string hashAlgorithmName, CancellationToken cancellationToken = default(CancellationToken));
-
-		/// <summary>
 		/// Symmetrically encrypts the specified buffer using a randomly generated key.
 		/// </summary>
 		/// <param name="data">The data to encrypt.</param>

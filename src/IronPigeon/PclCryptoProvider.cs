@@ -90,30 +90,6 @@ namespace IronPigeon
         }
 
         /// <summary>
-        /// Computes the authentication code for the contents of a stream given the specified symmetric key.
-        /// </summary>
-        /// <param name="data">The data to compute the HMAC for.</param>
-        /// <param name="key">The key to use in hashing.</param>
-        /// <param name="hashAlgorithmName">The hash algorithm to use.</param>
-        /// <param name="cancellationToken">The cancellation token.</param>
-        /// <returns>The authentication code.</returns>
-        public override async Task<byte[]> ComputeAuthenticationCodeAsync(Stream data, byte[] key, string hashAlgorithmName, CancellationToken cancellationToken)
-        {
-            Requires.NotNull(data, "data");
-            Requires.NotNull(key, "key");
-            Requires.NotNullOrEmpty(hashAlgorithmName, "hashAlgorithmName");
-
-            var algorithm = this.GetHmacAlgorithmProvider(hashAlgorithmName);
-            var hasher = algorithm.CreateHash(key);
-
-            var cryptoStream = new CryptoStream(Stream.Null, hasher, CryptoStreamMode.Write);
-            await data.CopyToAsync(cryptoStream, 4096, cancellationToken);
-            cryptoStream.FlushFinalBlock();
-
-            return hasher.GetValueAndReset();
-        }
-
-        /// <summary>
         /// Symmetrically encrypts the specified buffer using a randomly generated key.
         /// </summary>
         /// <param name="data">The data to encrypt.</param>
