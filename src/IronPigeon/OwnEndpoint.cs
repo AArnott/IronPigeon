@@ -94,7 +94,7 @@
 			writer.SerializeDataContract(this.PublicEndpoint);
 			writer.Flush();
 			entry.SerializedEndpoint = ms.ToArray();
-			var key = WinRTCrypto.AsymmetricKeyAlgorithmProvider.OpenAlgorithm(cryptoServices.SigningAlgorithm)
+			var key = WinRTCrypto.AsymmetricKeyAlgorithmProvider.OpenAlgorithm(CryptoSettings.SigningAlgorithm)
 				.ImportKeyPair(this.SigningKeyPrivateMaterial, CryptographicPrivateKeyBlobType.Capi1PrivateKey);
 			entry.Signature = WinRTCrypto.CryptographicEngine.Sign(key, entry.SerializedEndpoint);
 			return entry;

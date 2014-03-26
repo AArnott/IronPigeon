@@ -302,7 +302,7 @@
 			responseStreamCopy.Position = 0;
 
 			var encryptedKey = await responseStreamCopy.ReadSizeAndBufferAsync(cancellationToken);
-			var ownDecryptionKey = WinRTCrypto.AsymmetricKeyAlgorithmProvider.OpenAlgorithm(this.CryptoServices.EncryptionAlgorithm)
+			var ownDecryptionKey = WinRTCrypto.AsymmetricKeyAlgorithmProvider.OpenAlgorithm(CryptoSettings.EncryptionAlgorithm)
 				.ImportKeyPair(this.Endpoint.EncryptionKeyPrivateMaterial, CryptographicPrivateKeyBlobType.Capi1PrivateKey);
 			var key = WinRTCrypto.CryptographicEngine.Decrypt(ownDecryptionKey, encryptedKey);
 			var iv = await responseStreamCopy.ReadSizeAndBufferAsync(cancellationToken);
@@ -391,7 +391,7 @@
 			plainTextPayloadWriter.Flush();
 			this.Log("Message invite plaintext", plainTextPayloadStream.ToArray());
 
-			var signingKey = WinRTCrypto.AsymmetricKeyAlgorithmProvider.OpenAlgorithm(this.CryptoServices.SigningAlgorithm)
+			var signingKey = WinRTCrypto.AsymmetricKeyAlgorithmProvider.OpenAlgorithm(CryptoSettings.SigningAlgorithm)
 				.ImportKeyPair(this.Endpoint.SigningKeyPrivateMaterial, CryptographicPrivateKeyBlobType.Capi1PrivateKey);
 			byte[] notificationSignature = WinRTCrypto.CryptographicEngine.Sign(signingKey, plainTextPayloadStream.ToArray());
 			var signedPlainTextPayloadStream = new MemoryStream((int)plainTextPayloadStream.Length + notificationSignature.Length + 4);
@@ -411,7 +411,7 @@
 			builder.Query += "&lifetime=" + lifetimeInMinutes.ToString(CultureInfo.InvariantCulture);
 
 			var postContent = new MemoryStream();
-			var encryptionKey = WinRTCrypto.AsymmetricKeyAlgorithmProvider.OpenAlgorithm(this.CryptoServices.EncryptionAlgorithm)
+			var encryptionKey = WinRTCrypto.AsymmetricKeyAlgorithmProvider.OpenAlgorithm(CryptoSettings.EncryptionAlgorithm)
 				.ImportPublicKey(recipient.EncryptionKeyPublicMaterial, CryptoProviderExtensions.PublicKeyFormat);
 			var encryptedKey = WinRTCrypto.CryptographicEngine.Encrypt(encryptionKey, encryptedVariables.Key);
 			this.Log("Message invite encrypted key", encryptedKey);

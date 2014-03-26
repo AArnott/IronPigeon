@@ -14,12 +14,14 @@
 	/// Configuration for common crypto operations.
 	/// </summary>
 	public class CryptoSettings {
+		public const AsymmetricAlgorithm SigningAlgorithm = AsymmetricAlgorithm.RsaSignPkcs1Sha256;
+
+		public const AsymmetricAlgorithm EncryptionAlgorithm = AsymmetricAlgorithm.RsaOaepSha1;
+
 		/// <summary>
 		/// Initializes a new instance of the <see cref="CryptoSettings"/> class.
 		/// </summary>
 		public CryptoSettings() {
-			this.SigningAlgorithm = AsymmetricAlgorithm.RsaSignPkcs1Sha256;
-			this.EncryptionAlgorithm = AsymmetricAlgorithm.RsaOaepSha1;
 			this.SymmetricAlgorithm = SymmetricAlgorithm.AesCbcPkcs7;
 			this.SignatureAsymmetricKeySize = SecurityLevel.Maximum.SignatureAsymmetricKeySize;
 			this.SymmetricEncryptionKeySize = SecurityLevel.Maximum.BlobSymmetricKeySize;
@@ -47,10 +49,6 @@
 		/// Gets or sets the symmetric encryption algorithm provider to use.
 		/// </summary>
 		public SymmetricAlgorithm SymmetricAlgorithm { get;set; }
-
-		public AsymmetricAlgorithm SigningAlgorithm { get; set; }
-
-		public AsymmetricAlgorithm EncryptionAlgorithm { get; set; }
 
 		/// <summary>
 		/// Gets or sets the size of the key (in bits) used for asymmetric signatures.
