@@ -104,16 +104,6 @@
 			}
 
 			/// <summary>
-			/// Gets the name of the hash algorithm to use for asymmetric signatures.
-			/// </summary>
-			/// <value>
-			/// The name of the hash algorithm.
-			/// </value>
-			public override HashAlgorithm AsymmetricHashAlgorithm {
-				get { return HashAlgorithm.Sha1; }
-			}
-
-			/// <summary>
 			/// Gets the name of the symmetric algorithm to use.
 			/// </summary>
 			public override EncryptionConfiguration SymmetricEncryptionConfiguration {
@@ -162,16 +152,6 @@
 			/// The name of the hash algorithm.
 			/// </value>
 			public override HashAlgorithm SymmetricHashAlgorithm {
-				get { return HashAlgorithm.Sha256; }
-			}
-
-			/// <summary>
-			/// Gets the name of the hash algorithm to use for asymmetric signatures.
-			/// </summary>
-			/// <value>
-			/// The name of the hash algorithm.
-			/// </value>
-			public override HashAlgorithm AsymmetricHashAlgorithm {
 				get { return HashAlgorithm.Sha256; }
 			}
 
