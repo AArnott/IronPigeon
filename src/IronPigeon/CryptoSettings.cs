@@ -15,23 +15,19 @@
 	/// </summary>
 	public class CryptoSettings {
 		/// <summary>
-		/// The symmetric encryption algorithm provider to use.
-		/// </summary>
-		private static readonly ISymmetricKeyAlgorithmProvider SymmetricAlgorithm = WinRTCrypto.SymmetricKeyAlgorithmProvider.OpenAlgorithm(PCLCrypto.SymmetricAlgorithm.AesCbcPkcs7);
-
-		/// <summary>
 		/// Initializes a new instance of the <see cref="CryptoSettings"/> class.
 		/// </summary>
 		public CryptoSettings() {
 			this.SigningAlgorithm = AsymmetricAlgorithm.RsaSignPkcs1Sha256;
 			this.EncryptionAlgorithm = AsymmetricAlgorithm.RsaOaepSha1;
+			this.SymmetricAlgorithm = SymmetricAlgorithm.AesCbcPkcs7;
 			this.SignatureAsymmetricKeySize = SecurityLevel.Maximum.SignatureAsymmetricKeySize;
 			this.SymmetricEncryptionKeySize = SecurityLevel.Maximum.BlobSymmetricKeySize;
 			this.EncryptionAsymmetricKeySize = SecurityLevel.Maximum.EncryptionAsymmetricKeySize;
 			this.SymmetricEncryptionConfiguration = SecurityLevel.Maximum.SymmetricEncryptionConfiguration;
 			this.AsymmetricHashAlgorithmName = SecurityLevel.Maximum.AsymmetricHashAlgorithmName;
 			this.SymmetricHashAlgorithmName = SecurityLevel.Maximum.SymmetricHashAlgorithmName;
-		}
+        }
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="CryptoSettings"/> class.
@@ -54,7 +50,14 @@
 		/// </summary>
 		public string AsymmetricHashAlgorithmName { get; set; }
 
+		/// <summary>
+		/// Gets or sets the symmetric encryption algorithm provider to use.
+		/// </summary>
+		public SymmetricAlgorithm SymmetricAlgorithm { get;set; }
+
 		public AsymmetricAlgorithm SigningAlgorithm { get; set; }
+
+		public AsymmetricAlgorithm EncryptionAlgorithm { get; set; }
 
 		/// <summary>
 		/// Gets or sets the configuration to use for symmetric encryption.
@@ -76,13 +79,8 @@
 		/// </summary>
 		public int SymmetricEncryptionKeySize { get; set; }
 
-		public AsymmetricAlgorithm EncryptionAlgorithm { get; set; }
-
-		/// <summary>
-		/// Gets the length (in bits) of the symmetric encryption cipher block.
-		/// </summary>
-		public int SymmetricEncryptionBlockSize {
-			get { return (int)SymmetricAlgorithm.BlockLength * 8; }
+		public ISymmetricKeyAlgorithmProvider CreateSymmetricAlgorithm() {
+			return WinRTCrypto.SymmetricKeyAlgorithmProvider.OpenAlgorithm(this.SymmetricAlgorithm);
 		}
 	}
 }

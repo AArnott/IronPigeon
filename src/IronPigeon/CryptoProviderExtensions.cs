@@ -13,16 +13,6 @@
 	/// Extension methods to the <see cref="CryptoSettings"/> interface.
 	/// </summary>
 	public static class CryptoProviderExtensions {
-		/// <summary>
-		/// The asymmetric encryption algorithm provider to use.
-		/// </summary>
-		private static readonly IAsymmetricKeyAlgorithmProvider EncryptionProvider = WinRTCrypto.AsymmetricKeyAlgorithmProvider.OpenAlgorithm(AsymmetricAlgorithm.RsaOaepSha1);
-
-		/// <summary>
-		/// The symmetric encryption algorithm provider to use.
-		/// </summary>
-		private static readonly ISymmetricKeyAlgorithmProvider SymmetricAlgorithm = WinRTCrypto.SymmetricKeyAlgorithmProvider.OpenAlgorithm(PCLCrypto.SymmetricAlgorithm.AesCbcPkcs7);
-
 		internal static CryptographicPublicKeyBlobType PublicKeyFormat = CryptographicPublicKeyBlobType.Capi1PublicKey;
 
 		/// <summary>
@@ -154,8 +144,9 @@
 		public static SymmetricEncryptionResult Encrypt(this CryptoSettings cryptoProvider, byte[] data, SymmetricEncryptionVariables encryptionVariables = null) {
 			Requires.NotNull(data, "data");
 
-			encryptionVariables = ThisOrNewEncryptionVariables(cryptoProvider, encryptionVariables);
-			var symmetricKey = SymmetricAlgorithm.CreateSymmetricKey(encryptionVariables.Key);
+			var algorithm = cryptoProvider.CreateSymmetricAlgorithm();
+			encryptionVariables = ThisOrNewEncryptionVariables(cryptoProvider, algorithm, encryptionVariables);
+			var symmetricKey = algorithm.CreateSymmetricKey(encryptionVariables.Key);
 			var cipherTextBuffer = WinRTCrypto.CryptographicEngine.Encrypt(symmetricKey, data, encryptionVariables.IV);
 			return new SymmetricEncryptionResult(encryptionVariables, cipherTextBuffer);
 		}
@@ -175,8 +166,9 @@
 			Requires.NotNull(plaintext, "plaintext");
 			Requires.NotNull(ciphertext, "ciphertext");
 
-			encryptionVariables = ThisOrNewEncryptionVariables(cryptoProvider, encryptionVariables);
-			var key = SymmetricAlgorithm.CreateSymmetricKey(encryptionVariables.Key);
+			var algorithm = cryptoProvider.CreateSymmetricAlgorithm();
+			encryptionVariables = ThisOrNewEncryptionVariables(cryptoProvider, algorithm, encryptionVariables);
+			var key = algorithm.CreateSymmetricKey(encryptionVariables.Key);
 			using (var encryptor = WinRTCrypto.CryptographicEngine.CreateEncryptor(key, encryptionVariables.IV)) {
 				var cryptoStream = new CryptoStream(ciphertext, encryptor, CryptoStreamMode.Write);
 				await plaintext.CopyToAsync(cryptoStream, 4096, cancellationToken);
@@ -202,7 +194,7 @@
 			Requires.NotNull(plaintext, "plaintext");
 			Requires.NotNull(encryptionVariables, "encryptionVariables");
 
-			var key = SymmetricAlgorithm.CreateSymmetricKey(encryptionVariables.Key);
+			var key = cryptoProvider.CreateSymmetricAlgorithm().CreateSymmetricKey(encryptionVariables.Key);
 			using (var decryptor = WinRTCrypto.CryptographicEngine.CreateDecryptor(key, encryptionVariables.IV)) {
 				var cryptoStream = new CryptoStream(plaintext, decryptor, CryptoStreamMode.Write);
 				await ciphertext.CopyToAsync(cryptoStream, 4096, cancellationToken);
@@ -219,7 +211,7 @@
 		/// The decrypted buffer.
 		/// </returns>
 		public static byte[] Decrypt(this CryptoSettings cryptoProvider, SymmetricEncryptionResult data) {
-			var symmetricKey = SymmetricAlgorithm.CreateSymmetricKey(data.Key);
+			var symmetricKey = cryptoProvider.CreateSymmetricAlgorithm().CreateSymmetricKey(data.Key);
 			return WinRTCrypto.CryptographicEngine.Decrypt(symmetricKey, data.Ciphertext, data.IV);
 		}
 
@@ -227,9 +219,9 @@
 		/// Generates a new set of encryption variables.
 		/// </summary>
 		/// <returns>A set of encryption variables.</returns>
-		private static SymmetricEncryptionVariables NewSymmetricEncryptionVariables(CryptoSettings cryptoProvider) {
+		private static SymmetricEncryptionVariables NewSymmetricEncryptionVariables(CryptoSettings cryptoProvider, ISymmetricKeyAlgorithmProvider algorithm) {
 			byte[] key = WinRTCrypto.CryptographicBuffer.GenerateRandom((uint)cryptoProvider.SymmetricEncryptionKeySize / 8);
-			byte[] iv = WinRTCrypto.CryptographicBuffer.GenerateRandom((uint)SymmetricAlgorithm.BlockLength);
+			byte[] iv = WinRTCrypto.CryptographicBuffer.GenerateRandom((uint)algorithm.BlockLength);
 			return new SymmetricEncryptionVariables(key, iv);
 		}
 
@@ -238,12 +230,12 @@
 		/// </summary>
 		/// <param name="encryptionVariables">The encryption variables.</param>
 		/// <returns>A valid set of encryption variables.</returns>
-		private static SymmetricEncryptionVariables ThisOrNewEncryptionVariables(CryptoSettings cryptoProvider, SymmetricEncryptionVariables encryptionVariables) {
+		private static SymmetricEncryptionVariables ThisOrNewEncryptionVariables(CryptoSettings cryptoProvider, ISymmetricKeyAlgorithmProvider algorithm, SymmetricEncryptionVariables encryptionVariables) {
 			if (encryptionVariables == null) {
-				return NewSymmetricEncryptionVariables(cryptoProvider);
+				return NewSymmetricEncryptionVariables(cryptoProvider, algorithm);
 			} else {
 				Requires.Argument(encryptionVariables.Key.Length == cryptoProvider.SymmetricEncryptionKeySize / 8, "key", "Incorrect length.");
-				Requires.Argument(encryptionVariables.IV.Length == cryptoProvider.SymmetricEncryptionBlockSize / 8, "iv", "Incorrect length.");
+				Requires.Argument(encryptionVariables.IV.Length == algorithm.BlockLength, "iv", "Incorrect length.");
 				return encryptionVariables;
 			}
 		}
