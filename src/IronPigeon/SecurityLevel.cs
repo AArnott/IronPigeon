@@ -32,11 +32,6 @@
 		public abstract HashAlgorithm SymmetricHashAlgorithm { get; }
 
 		/// <summary>
-		/// Gets the symmetric encryption configuration.
-		/// </summary>
-		public abstract EncryptionConfiguration SymmetricEncryptionConfiguration { get; }
-
-		/// <summary>
 		/// Gets the size of the encryption asymmetric key.
 		/// </summary>
 		/// <value>
@@ -68,7 +63,6 @@
 			Requires.NotNull(cryptoSettings, "cryptoSettings");
 
 			cryptoSettings.SymmetricHashAlgorithm = this.SymmetricHashAlgorithm;
-			cryptoSettings.SymmetricEncryptionConfiguration = this.SymmetricEncryptionConfiguration;
 			cryptoSettings.EncryptionAsymmetricKeySize = this.EncryptionAsymmetricKeySize;
 			cryptoSettings.SignatureAsymmetricKeySize = this.SignatureAsymmetricKeySize;
 			cryptoSettings.SymmetricEncryptionKeySize = this.BlobSymmetricKeySize;
@@ -86,13 +80,6 @@
 			/// </value>
 			public override HashAlgorithm SymmetricHashAlgorithm {
 				get { return HashAlgorithm.Sha1; }
-			}
-
-			/// <summary>
-			/// Gets the name of the symmetric algorithm to use.
-			/// </summary>
-			public override EncryptionConfiguration SymmetricEncryptionConfiguration {
-				get { return new EncryptionConfiguration("Rijndael", "CBC", "PKCS7"); }
 			}
 
 			/// <summary>
@@ -138,13 +125,6 @@
 			/// </value>
 			public override HashAlgorithm SymmetricHashAlgorithm {
 				get { return HashAlgorithm.Sha256; }
-			}
-
-			/// <summary>
-			/// Gets the name of the symmetric algorithm to use.
-			/// </summary>
-			public override EncryptionConfiguration SymmetricEncryptionConfiguration {
-				get { return new EncryptionConfiguration("Rijndael", "CBC", "PKCS7"); }
 			}
 
 			/// <summary>

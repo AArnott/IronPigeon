@@ -104,13 +104,6 @@
 			}
 
 			/// <summary>
-			/// Gets the name of the symmetric algorithm to use.
-			/// </summary>
-			public override EncryptionConfiguration SymmetricEncryptionConfiguration {
-				get { return new EncryptionConfiguration("Rijndael", "CBC", "PKCS7"); }
-			}
-
-			/// <summary>
 			/// Gets the size of the encryption asymmetric key.
 			/// </summary>
 			/// <value>
@@ -153,13 +146,6 @@
 			/// </value>
 			public override HashAlgorithm SymmetricHashAlgorithm {
 				get { return HashAlgorithm.Sha256; }
-			}
-
-			/// <summary>
-			/// Gets the name of the symmetric algorithm to use.
-			/// </summary>
-			public override EncryptionConfiguration SymmetricEncryptionConfiguration {
-				get { return new EncryptionConfiguration("Rijndael", "CBC", "PKCS7"); }
 			}
 
 			/// <summary>

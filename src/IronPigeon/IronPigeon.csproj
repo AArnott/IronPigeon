@@ -27,7 +27,6 @@
     <Compile Include="Channel.cs" />
     <Compile Include="CryptoSettings.cs" />
     <Compile Include="CryptoProviderExtensions.cs" />
-    <Compile Include="EncryptionConfiguration.cs" />
     <Compile Include="Endpoint.cs" />
     <Compile Include="ICloudBlobStorageProvider.cs" />
     <Compile Include="AddressBook.cs" />

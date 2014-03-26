@@ -24,7 +24,6 @@
 			this.SignatureAsymmetricKeySize = SecurityLevel.Maximum.SignatureAsymmetricKeySize;
 			this.SymmetricEncryptionKeySize = SecurityLevel.Maximum.BlobSymmetricKeySize;
 			this.EncryptionAsymmetricKeySize = SecurityLevel.Maximum.EncryptionAsymmetricKeySize;
-			this.SymmetricEncryptionConfiguration = SecurityLevel.Maximum.SymmetricEncryptionConfiguration;
 			this.SymmetricHashAlgorithm = SecurityLevel.Maximum.SymmetricHashAlgorithm;
 		}
 
@@ -52,11 +51,6 @@
 		public AsymmetricAlgorithm SigningAlgorithm { get; set; }
 
 		public AsymmetricAlgorithm EncryptionAlgorithm { get; set; }
-
-		/// <summary>
-		/// Gets or sets the configuration to use for symmetric encryption.
-		/// </summary>
-		public EncryptionConfiguration SymmetricEncryptionConfiguration { get; set; }
 
 		/// <summary>
 		/// Gets or sets the size of the key (in bits) used for asymmetric signatures.
