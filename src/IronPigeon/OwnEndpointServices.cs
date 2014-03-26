@@ -121,15 +121,7 @@
 			cancellationToken.ThrowIfCancellationRequested();
 			var signingKey = CryptoSettings.SigningAlgorithm.CreateKeyPair(this.CryptoProvider.AsymmetricKeySize);
 
-			var contact = new Endpoint() {
-				EncryptionKeyPublicMaterial = encryptionKey.ExportPublicKey(CryptoSettings.PublicKeyFormat),
-				SigningKeyPublicMaterial = signingKey.ExportPublicKey(CryptoSettings.PublicKeyFormat),
-			};
-
-			var ownContact = new OwnEndpoint(
-				contact,
-				signingKey.Export(CryptographicPrivateKeyBlobType.Capi1PrivateKey),
-				encryptionKey.Export(CryptographicPrivateKeyBlobType.Capi1PrivateKey));
+			var ownContact = new OwnEndpoint(signingKey, encryptionKey);
 			return ownContact;
 		}
 	}

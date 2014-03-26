@@ -35,19 +35,29 @@
 		/// <summary>
 		/// Initializes a new instance of the <see cref="OwnEndpoint" /> class.
 		/// </summary>
-		/// <param name="contact">The public information for this contact.</param>
-		/// <param name="signingPrivateKeyMaterial">The private signing key.</param>
-		/// <param name="encryptionPrivateKeyMaterial">The private encryption key.</param>
-		/// <param name="inboxOwnerCode">The secret that proves ownership of the inbox at the <see cref="Endpoint.MessageReceivingEndpoint"/>.</param>
-		public OwnEndpoint(Endpoint contact, byte[] signingPrivateKeyMaterial, byte[] encryptionPrivateKeyMaterial, string inboxOwnerCode = null)
+		/// <param name="signingKey">The signing key.</param>
+		/// <param name="encryptionKey">The encryption key.</param>
+		/// <param name="inboxOwnerCode">The secret that proves ownership of the inbox at the <see cref="Endpoint.MessageReceivingEndpoint" />.</param>
+		public OwnEndpoint(ICryptographicKey signingKey, ICryptographicKey encryptionKey, string inboxOwnerCode = null)
 			: this() {
-			Requires.NotNull(contact, "contact");
-			Requires.NotNull(signingPrivateKeyMaterial, "signingPrivateKeyMaterial");
-			Requires.NotNull(encryptionPrivateKeyMaterial, "encryptionPrivateKeyMaterial");
+			Requires.NotNull(signingKey, "signingKey");
+			Requires.NotNull(encryptionKey, "encryptionKey");
 
-			this.PublicEndpoint = contact;
-			this.SigningKeyPrivateMaterial = signingPrivateKeyMaterial;
-			this.EncryptionKeyPrivateMaterial = encryptionPrivateKeyMaterial;
+			this.PublicEndpoint = new Endpoint {
+				SigningKeyPublicMaterial = signingKey.ExportPublicKey(CryptoSettings.PublicKeyFormat),
+				EncryptionKeyPublicMaterial = encryptionKey.ExportPublicKey(CryptoSettings.PublicKeyFormat),
+			};
+
+			// We could preserve the key instances, but that could make
+			// our behavior a little less repeatable if we had problems
+			// with key serialization.
+			////this.signingKey = signingKey;
+			////this.encryptionKey = encryptionKey;
+
+			// Since this is a new endpoint we can choose a more modern format for the private keys.
+			this.PrivateKeyFormat = CryptographicPrivateKeyBlobType.Pkcs8RawPrivateKeyInfo;
+			this.SigningKeyPrivateMaterial = signingKey.Export(this.PrivateKeyFormat);
+			this.EncryptionKeyPrivateMaterial = encryptionKey.Export(this.PrivateKeyFormat);
 			this.InboxOwnerCode = inboxOwnerCode;
 		}
 
@@ -159,10 +169,7 @@
 			writer.SerializeDataContract(this.PublicEndpoint);
 			writer.Flush();
 			entry.SerializedEndpoint = ms.ToArray();
-			var key = CryptoSettings.SigningAlgorithm.ImportKeyPair(
-				this.SigningKeyPrivateMaterial,
-				CryptographicPrivateKeyBlobType.Capi1PrivateKey);
-			entry.Signature = WinRTCrypto.CryptographicEngine.Sign(key, entry.SerializedEndpoint);
+			entry.Signature = WinRTCrypto.CryptographicEngine.Sign(this.SigningKey, entry.SerializedEndpoint);
 			return entry;
 		}
 
@@ -181,6 +188,16 @@
 				ms.Position = 0;
 				return ms.CopyToAsync(target, 4096, cancellationToken);
 			}
+		}
+
+		public void SerializeKeys(CryptographicPrivateKeyBlobType? format = null) {
+			this.encryptionKeyMaterial = this.EncryptionKey != null
+				? this.EncryptionKey.Export(format ?? this.PrivateKeyFormat)
+				: null;
+
+			this.signingKeyMaterial = this.SigningKey != null
+				? this.SigningKey.Export(format ?? this.PrivateKeyFormat)
+				: null;
 		}
 	}
 }

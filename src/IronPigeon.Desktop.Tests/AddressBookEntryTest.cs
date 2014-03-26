@@ -61,7 +61,7 @@
 
 		[Test]
 		public void ExtractEndpoint() {
-			var ownContact = new OwnEndpoint(Valid.ReceivingEndpoint.PublicEndpoint, Valid.ReceivingEndpoint.SigningKeyPrivateMaterial, Valid.ReceivingEndpoint.EncryptionKeyPrivateMaterial);
+			var ownContact = new OwnEndpoint(Valid.ReceivingEndpoint.SigningKey, Valid.ReceivingEndpoint.EncryptionKey);
 			var cryptoServices = new CryptoSettings(SecurityLevel.Minimum);
 			var entry = ownContact.CreateAddressBookEntry(cryptoServices);
 

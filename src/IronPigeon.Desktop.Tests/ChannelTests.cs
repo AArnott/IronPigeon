@@ -42,15 +42,12 @@
 		[Test]
 		public void CtorParameters() {
 			var blobProvider = new Mock<ICloudBlobStorageProvider>();
-			var cryptoProvider = new Mock<CryptoSettings>();
 			var endpoint = new Mock<OwnEndpoint>();
 			var channel = new Channel() {
 				CloudBlobStorage = blobProvider.Object,
-				CryptoServices = cryptoProvider.Object,
 				Endpoint = endpoint.Object,
 			};
 			Assert.That(channel.CloudBlobStorage, Is.SameAs(blobProvider.Object));
-			Assert.That(channel.CryptoServices, Is.SameAs(cryptoProvider.Object));
 			Assert.That(channel.Endpoint, Is.SameAs(endpoint.Object));
 		}
 

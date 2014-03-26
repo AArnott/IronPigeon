@@ -21,10 +21,10 @@
 
 		[Fact]
 		public async Task CrossSecurityLevelAddressBookExchange() {
-			var lowLevelCrypto = new CryptoSettings(SecurityLevel.Minimum) { AsymmetricKeySize = 1014 };
+			var lowLevelCrypto = new CryptoSettings(SecurityLevel.Minimum);
 			var lowLevelEndpoint = Valid.GenerateOwnEndpoint(lowLevelCrypto);
 
-			var highLevelCrypto = new CryptoSettings(SecurityLevel.Minimum);
+			var highLevelCrypto = new CryptoSettings(SecurityLevel.Minimum) { AsymmetricKeySize = 2048 };
 			var highLevelEndpoint = Valid.GenerateOwnEndpoint(highLevelCrypto);
 
 			await this.TestSendAndReceiveAsync(lowLevelCrypto, lowLevelEndpoint, highLevelCrypto, highLevelEndpoint);
