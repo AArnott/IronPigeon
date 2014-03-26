@@ -41,7 +41,7 @@
 
 		[TestMethod]
 		public void SymmetricEncryptionRoundtripExplicitKeyAndIV() {
-			byte[] key = new byte[this.CryptoProvider.SymmetricEncryptionKeySize / 8];
+			byte[] key = new byte[this.CryptoProvider.SymmetricKeySize / 8];
 			byte[] iv = new byte[this.CryptoProvider.CreateSymmetricAlgorithm().BlockLength];
 			byte[] plaintext = new byte[10000];
 

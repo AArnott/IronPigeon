@@ -327,15 +327,6 @@
 		}
 
 		/// <summary>
-		/// Sets the specified security level's key lengths to the specified crypto provider.
-		/// </summary>
-		/// <param name="cryptoProvider">The crypto provider.</param>
-		/// <param name="level">The level of security to apply.</param>
-		public static void ApplySecurityLevel(this CryptoSettings cryptoProvider, SecurityLevel level) {
-			level.Apply(cryptoProvider);
-		}
-
-		/// <summary>
 		/// Shortens the specified long URL, but leaves the fragment part (if present) visibly applied to the shortened URL.
 		/// </summary>
 		/// <param name="shortener">The URL shortening service to use.</param>

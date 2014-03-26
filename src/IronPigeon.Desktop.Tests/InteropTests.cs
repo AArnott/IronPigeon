@@ -21,10 +21,10 @@
 
 		[Fact]
 		public async Task CrossSecurityLevelAddressBookExchange() {
-			var lowLevelCrypto = new CryptoSettings(new Level1());
+			var lowLevelCrypto = new CryptoSettings(SecurityLevel.Minimum) { AsymmetricKeySize = 1014 };
 			var lowLevelEndpoint = Valid.GenerateOwnEndpoint(lowLevelCrypto);
 
-			var highLevelCrypto = new CryptoSettings(new Level2());
+			var highLevelCrypto = new CryptoSettings(SecurityLevel.Minimum);
 			var highLevelEndpoint = Valid.GenerateOwnEndpoint(highLevelCrypto);
 
 			await this.TestSendAndReceiveAsync(lowLevelCrypto, lowLevelEndpoint, highLevelCrypto, highLevelEndpoint);
@@ -87,96 +87,6 @@
 			var messages = await channel.ReceiveAsync();
 			Assert.Equal(1, messages.Count);
 			Assert.Equal(Valid.Message, messages[0].Payload);
-		}
-
-		/// <summary>
-		/// A security level using SHA1 and RSA keys just under 1024 in size.
-		/// </summary>
-		private class Level1 : SecurityLevel {
-			/// <summary>
-			/// Gets the name of the hash algorithm to use for symmetric signatures.
-			/// </summary>
-			/// <value>
-			/// The name of the hash algorithm.
-			/// </value>
-			public override HashAlgorithm SymmetricHashAlgorithm {
-				get { return HashAlgorithm.Sha1; }
-			}
-
-			/// <summary>
-			/// Gets the size of the encryption asymmetric key.
-			/// </summary>
-			/// <value>
-			/// The size of the encryption asymmetric key.
-			/// </value>
-			public override int EncryptionAsymmetricKeySize {
-				get { return 1016; }
-			}
-
-			/// <summary>
-			/// Gets the size of the signature asymmetric key.
-			/// </summary>
-			/// <value>
-			/// The size of the signature asymmetric key.
-			/// </value>
-			public override int SignatureAsymmetricKeySize {
-				get { return 1016; }
-			}
-
-			/// <summary>
-			/// Gets the size of the BLOB symmetric key.
-			/// </summary>
-			/// <value>
-			/// The size of the BLOB symmetric key.
-			/// </value>
-			public override int BlobSymmetricKeySize {
-				get { return 128; }
-			}
-		}
-
-		/// <summary>
-		/// A security level using SHA156 and RSA keys of 1024 in size.
-		/// </summary>
-		private class Level2 : SecurityLevel {
-			/// <summary>
-			/// Gets the name of the hash algorithm to use for symmetric signatures.
-			/// </summary>
-			/// <value>
-			/// The name of the hash algorithm.
-			/// </value>
-			public override HashAlgorithm SymmetricHashAlgorithm {
-				get { return HashAlgorithm.Sha256; }
-			}
-
-			/// <summary>
-			/// Gets the size of the encryption asymmetric key.
-			/// </summary>
-			/// <value>
-			/// The size of the encryption asymmetric key.
-			/// </value>
-			public override int EncryptionAsymmetricKeySize {
-				get { return 1024; }
-			}
-
-			/// <summary>
-			/// Gets the size of the signature asymmetric key.
-			/// </summary>
-			/// <value>
-			/// The size of the signature asymmetric key.
-			/// </value>
-			public override int SignatureAsymmetricKeySize {
-				get { return 1024; }
-			}
-
-			/// <summary>
-			/// Gets the size of the BLOB symmetric key.
-			/// </summary>
-			/// <value>
-			/// The size of the BLOB symmetric key.
-			/// </value>
-			public override int BlobSymmetricKeySize {
-				get { return 192; }
-			}
 		}
 	}
 }

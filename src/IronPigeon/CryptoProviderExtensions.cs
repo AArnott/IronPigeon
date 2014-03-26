@@ -219,7 +219,7 @@
 		/// </summary>
 		/// <returns>A set of encryption variables.</returns>
 		private static SymmetricEncryptionVariables NewSymmetricEncryptionVariables(CryptoSettings cryptoProvider, ISymmetricKeyAlgorithmProvider algorithm) {
-			byte[] key = WinRTCrypto.CryptographicBuffer.GenerateRandom((uint)cryptoProvider.SymmetricEncryptionKeySize / 8);
+			byte[] key = WinRTCrypto.CryptographicBuffer.GenerateRandom((uint)cryptoProvider.SymmetricKeySize / 8);
 			byte[] iv = WinRTCrypto.CryptographicBuffer.GenerateRandom((uint)algorithm.BlockLength);
 			return new SymmetricEncryptionVariables(key, iv);
 		}
@@ -233,7 +233,7 @@
 			if (encryptionVariables == null) {
 				return NewSymmetricEncryptionVariables(cryptoProvider, algorithm);
 			} else {
-				Requires.Argument(encryptionVariables.Key.Length == cryptoProvider.SymmetricEncryptionKeySize / 8, "key", "Incorrect length.");
+				Requires.Argument(encryptionVariables.Key.Length == cryptoProvider.SymmetricKeySize / 8, "key", "Incorrect length.");
 				Requires.Argument(encryptionVariables.IV.Length == algorithm.BlockLength, "iv", "Incorrect length.");
 				return encryptionVariables;
 			}

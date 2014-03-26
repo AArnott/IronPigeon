@@ -14,30 +14,27 @@
 	/// Configuration for common crypto operations.
 	/// </summary>
 	public class CryptoSettings {
+		/// <summary>
+		/// The signing algorithm to use.
+		/// </summary>
 		public const AsymmetricAlgorithm SigningAlgorithm = AsymmetricAlgorithm.RsaSignPkcs1Sha256;
 
+		/// <summary>
+		/// The encryption algorithm to use.
+		/// </summary>
 		public const AsymmetricAlgorithm EncryptionAlgorithm = AsymmetricAlgorithm.RsaOaepSha1;
 
 		/// <summary>
-		/// Initializes a new instance of the <see cref="CryptoSettings"/> class.
+		/// Gets The symmetric encryption algorithm provider to use.
 		/// </summary>
-		public CryptoSettings() {
-			this.SymmetricAlgorithm = SymmetricAlgorithm.AesCbcPkcs7;
-			this.SignatureAsymmetricKeySize = SecurityLevel.Maximum.SignatureAsymmetricKeySize;
-			this.SymmetricEncryptionKeySize = SecurityLevel.Maximum.BlobSymmetricKeySize;
-			this.EncryptionAsymmetricKeySize = SecurityLevel.Maximum.EncryptionAsymmetricKeySize;
-			this.SymmetricHashAlgorithm = SecurityLevel.Maximum.SymmetricHashAlgorithm;
-		}
+		public const SymmetricAlgorithm SymmetricAlgorithm = SymmetricAlgorithm.AesCbcPkcs7;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="CryptoSettings"/> class.
 		/// </summary>
 		/// <param name="securityLevel">The security level.</param>
-		public CryptoSettings(SecurityLevel securityLevel)
-			: this() {
-			Requires.NotNull(securityLevel, "securityLevel");
-
-			securityLevel.Apply(this);
+		public CryptoSettings(SecurityLevel securityLevel = SecurityLevel.Maximum) {
+			this.ApplySecurityLevel(securityLevel);
 		}
 
 		/// <summary>
@@ -46,27 +43,38 @@
 		public HashAlgorithm SymmetricHashAlgorithm { get; set; }
 
 		/// <summary>
-		/// Gets or sets the symmetric encryption algorithm provider to use.
-		/// </summary>
-		public SymmetricAlgorithm SymmetricAlgorithm { get;set; }
-
-		/// <summary>
 		/// Gets or sets the size of the key (in bits) used for asymmetric signatures.
 		/// </summary>
-		public int SignatureAsymmetricKeySize { get; set; }
-
-		/// <summary>
-		/// Gets or sets the size of the key (in bits) used for asymmetric encryption.
-		/// </summary>
-		public int EncryptionAsymmetricKeySize { get; set; }
+		public int AsymmetricKeySize { get; set; }
 
 		/// <summary>
 		/// Gets or sets the size of the key (in bits) used for symmetric blob encryption.
 		/// </summary>
-		public int SymmetricEncryptionKeySize { get; set; }
+		public int SymmetricKeySize { get; set; }
 
 		public ISymmetricKeyAlgorithmProvider CreateSymmetricAlgorithm() {
-			return WinRTCrypto.SymmetricKeyAlgorithmProvider.OpenAlgorithm(this.SymmetricAlgorithm);
+			return WinRTCrypto.SymmetricKeyAlgorithmProvider.OpenAlgorithm(SymmetricAlgorithm);
+		}
+
+		/// <summary>
+		/// Applies a security level to this object.
+		/// </summary>
+		/// <param name="securityLevel">The security level.</param>
+		public void ApplySecurityLevel(SecurityLevel securityLevel) {
+			switch (securityLevel) {
+				case SecurityLevel.Minimum:
+					this.SymmetricKeySize = 128;
+					this.AsymmetricKeySize = 512;
+					this.SymmetricHashAlgorithm = HashAlgorithm.Sha1;
+					break;
+				case SecurityLevel.Maximum:
+					this.SymmetricKeySize = 256;
+					this.AsymmetricKeySize = 4096;
+					this.SymmetricHashAlgorithm = HashAlgorithm.Sha256;
+					break;
+				default:
+					throw new ArgumentException();
+			}
 		}
 	}
 }

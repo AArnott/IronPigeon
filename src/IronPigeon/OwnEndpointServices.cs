@@ -120,10 +120,10 @@
 
 			cancellationToken.ThrowIfCancellationRequested();
 			var encryptionAlgorithm = WinRTCrypto.AsymmetricKeyAlgorithmProvider.OpenAlgorithm(CryptoSettings.EncryptionAlgorithm);
-			var encryptionKey = encryptionAlgorithm.CreateKeyPair(this.CryptoProvider.EncryptionAsymmetricKeySize);
+			var encryptionKey = encryptionAlgorithm.CreateKeyPair(this.CryptoProvider.AsymmetricKeySize);
 			cancellationToken.ThrowIfCancellationRequested();
 			var signingAlgorithm = WinRTCrypto.AsymmetricKeyAlgorithmProvider.OpenAlgorithm(CryptoSettings.SigningAlgorithm);
-			var signingKey = signingAlgorithm.CreateKeyPair(this.CryptoProvider.SignatureAsymmetricKeySize);
+			var signingKey = signingAlgorithm.CreateKeyPair(this.CryptoProvider.AsymmetricKeySize);
 
 			var contact = new Endpoint() {
 				EncryptionKeyPublicMaterial = encryptionKey.ExportPublicKey(CryptoProviderExtensions.PublicKeyFormat),
