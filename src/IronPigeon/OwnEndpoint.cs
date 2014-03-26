@@ -16,10 +16,20 @@
 	/// </summary>
 	[DataContract]
 	public class OwnEndpoint {
+		private byte[] signingKeyMaterial;
+
+		private ICryptographicKey signingKey;
+
+		private byte[] encryptionKeyMaterial;
+
+		private ICryptographicKey encryptionKey;
+
 		/// <summary>
 		/// Initializes a new instance of the <see cref="OwnEndpoint"/> class.
 		/// </summary>
 		public OwnEndpoint() {
+			// This default is required for backward compat.
+			this.PrivateKeyFormat = CryptographicPrivateKeyBlobType.Capi1PrivateKey;
 		}
 
 		/// <summary>
@@ -29,7 +39,8 @@
 		/// <param name="signingPrivateKeyMaterial">The private signing key.</param>
 		/// <param name="encryptionPrivateKeyMaterial">The private encryption key.</param>
 		/// <param name="inboxOwnerCode">The secret that proves ownership of the inbox at the <see cref="Endpoint.MessageReceivingEndpoint"/>.</param>
-		public OwnEndpoint(Endpoint contact, byte[] signingPrivateKeyMaterial, byte[] encryptionPrivateKeyMaterial, string inboxOwnerCode = null) {
+		public OwnEndpoint(Endpoint contact, byte[] signingPrivateKeyMaterial, byte[] encryptionPrivateKeyMaterial, string inboxOwnerCode = null)
+			: this() {
 			Requires.NotNull(contact, "contact");
 			Requires.NotNull(signingPrivateKeyMaterial, "signingPrivateKeyMaterial");
 			Requires.NotNull(encryptionPrivateKeyMaterial, "encryptionPrivateKeyMaterial");
@@ -47,16 +58,70 @@
 		public Endpoint PublicEndpoint { get; set; }
 
 		/// <summary>
+		/// Gets or sets the private key format used.
+		/// </summary>
+		[DataMember]
+		public CryptographicPrivateKeyBlobType PrivateKeyFormat { get; set; }
+
+		/// <summary>
 		/// Gets or sets the key material for the private key this personality uses for signing messages.
 		/// </summary>
 		[DataMember]
-		public byte[] SigningKeyPrivateMaterial { get; set; }
+		public byte[] SigningKeyPrivateMaterial {
+			get {
+				return this.signingKeyMaterial;
+			}
+
+			set {
+				this.signingKeyMaterial = value;
+				this.signingKey = null;
+			}
+		}
 
 		/// <summary>
 		/// Gets or sets the key material for the private key used to decrypt messages.
 		/// </summary>
 		[DataMember]
-		public byte[] EncryptionKeyPrivateMaterial { get; set; }
+		public byte[] EncryptionKeyPrivateMaterial {
+			get {
+				return this.encryptionKeyMaterial;
+			}
+
+			set {
+				this.encryptionKeyMaterial = value;
+				this.encryptionKey = null;
+			}
+		}
+
+		/// <summary>
+		/// Gets the encryption key.
+		/// </summary>
+		public ICryptographicKey EncryptionKey {
+			get {
+				if (this.encryptionKey == null && this.EncryptionKeyPrivateMaterial != null) {
+					this.encryptionKey = CryptoSettings.EncryptionAlgorithm.ImportKeyPair(
+						this.EncryptionKeyPrivateMaterial,
+						this.PrivateKeyFormat);
+				}
+
+				return this.encryptionKey;
+			}
+		}
+
+		/// <summary>
+		/// Gets the signing key.
+		/// </summary>
+		public ICryptographicKey SigningKey {
+			get {
+				if (this.signingKey == null && this.SigningKeyPrivateMaterial != null) {
+					this.signingKey = CryptoSettings.SigningAlgorithm.ImportKeyPair(
+						this.SigningKeyPrivateMaterial,
+						this.PrivateKeyFormat);
+				}
+
+				return this.signingKey;
+			}
+		}
 
 		/// <summary>
 		/// Gets or sets the secret that proves ownership of the inbox at the <see cref="Endpoint.MessageReceivingEndpoint"/>.
@@ -73,7 +138,7 @@
 			Requires.NotNull(stream, "stream");
 
 			var ms = new MemoryStream();
-			await stream.CopyToAsync(ms);  // relies on the input stream containing only the endpoint.
+			await stream.CopyToAsync(ms);	// relies on the input stream containing only the endpoint.
 			ms.Position = 0;
 			using (var reader = new BinaryReader(ms)) {
 				return reader.DeserializeDataContract<OwnEndpoint>();

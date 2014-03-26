@@ -302,9 +302,7 @@
 			responseStreamCopy.Position = 0;
 
 			var encryptedKey = await responseStreamCopy.ReadSizeAndBufferAsync(cancellationToken);
-			var ownDecryptionKey = CryptoSettings.EncryptionAlgorithm
-				.ImportKeyPair(this.Endpoint.EncryptionKeyPrivateMaterial, CryptographicPrivateKeyBlobType.Capi1PrivateKey);
-			var key = WinRTCrypto.CryptographicEngine.Decrypt(ownDecryptionKey, encryptedKey);
+			var key = WinRTCrypto.CryptographicEngine.Decrypt(this.Endpoint.EncryptionKey, encryptedKey);
 			var iv = await responseStreamCopy.ReadSizeAndBufferAsync(cancellationToken);
 			var ciphertextStream = await responseStreamCopy.ReadSizeAndStreamAsync(cancellationToken);
 			var encryptedVariables = new SymmetricEncryptionVariables(key, iv);
@@ -391,10 +389,7 @@
 			plainTextPayloadWriter.Flush();
 			this.Log("Message invite plaintext", plainTextPayloadStream.ToArray());
 
-			var signingKey = CryptoSettings.SigningAlgorithm.ImportKeyPair(
-				this.Endpoint.SigningKeyPrivateMaterial,
-				 CryptographicPrivateKeyBlobType.Capi1PrivateKey);
-			byte[] notificationSignature = WinRTCrypto.CryptographicEngine.Sign(signingKey, plainTextPayloadStream.ToArray());
+			byte[] notificationSignature = WinRTCrypto.CryptographicEngine.Sign(this.Endpoint.SigningKey, plainTextPayloadStream.ToArray());
 			var signedPlainTextPayloadStream = new MemoryStream((int)plainTextPayloadStream.Length + notificationSignature.Length + 4);
 			////await signedPlainTextPayloadStream.WriteSizeAndBufferAsync(Encoding.UTF8.GetBytes(this.CryptoServices.HashAlgorithmName), cancellationToken);
 			await signedPlainTextPayloadStream.WriteSizeAndBufferAsync(notificationSignature, cancellationToken);
