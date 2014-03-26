@@ -25,7 +25,7 @@
 			Requires.NotNull(cryptoProvider, "cryptoProvider");
 			Requires.NotNull(buffer, "buffer");
 
-			var hasher = cryptoProvider.GetHashAlgorithm();
+			var hasher = WinRTCrypto.HashAlgorithmProvider.OpenAlgorithm(cryptoProvider.SymmetricHashAlgorithm);
 			var hash = hasher.HashData(buffer);
 			return Utilities.ToBase64WebSafe(hash);
 		}
@@ -44,7 +44,7 @@
 			byte[] allegedThumbprint = Convert.FromBase64String(Utilities.FromBase64WebSafe(allegedHashWebSafeBase64Thumbprint));
 			var hashAlgorithm = Utilities.GuessHashAlgorithmFromLength(allegedThumbprint.Length);
 
-			var hasher = GetHashAlgorithm(hashAlgorithm);
+			var hasher = WinRTCrypto.HashAlgorithmProvider.OpenAlgorithm(hashAlgorithm);
 			var actualThumbprint = hasher.HashData(buffer);
 			return Utilities.AreEquivalent(actualThumbprint, allegedThumbprint);
 		}
@@ -59,16 +59,16 @@
 		/// <returns>
 		/// <c>true</c> if the hashes came out equal; <c>false</c> otherwise.
 		/// </returns>
-		internal static bool IsHashMatchWithTolerantHashAlgorithm(this CryptoSettings cryptoProvider, byte[] data, byte[] expectedHash, string hashAlgorithmName) {
+		internal static bool IsHashMatchWithTolerantHashAlgorithm(this CryptoSettings cryptoProvider, byte[] data, byte[] expectedHash, HashAlgorithm? hashAlgorithm) {
 			Requires.NotNull(cryptoProvider, "cryptoProvider");
 			Requires.NotNull(data, "data");
 			Requires.NotNull(expectedHash, "expectedHash");
 
-			if (hashAlgorithmName == null) {
-				hashAlgorithmName = Utilities.GuessHashAlgorithmFromLength(expectedHash.Length);
+			if (!hashAlgorithm.HasValue) {
+				hashAlgorithm = Utilities.GuessHashAlgorithmFromLength(expectedHash.Length);
 			}
 
-			var hasher = GetHashAlgorithm(hashAlgorithmName);
+			var hasher = WinRTCrypto.HashAlgorithmProvider.OpenAlgorithm(hashAlgorithm.Value);
 			byte[] actualHash = hasher.HashData(data);
 			return Utilities.AreEquivalent(expectedHash, actualHash);
 		}
@@ -118,19 +118,6 @@
 				default:
 					throw new NotSupportedException();
 			}
-		}
-
-		internal static IHashAlgorithmProvider GetHashAlgorithm(this CryptoSettings cryptoProvider) {
-			Requires.NotNull(cryptoProvider, "cryptoProvider");
-
-			return GetHashAlgorithm(cryptoProvider.SymmetricHashAlgorithmName);
-		}
-
-		internal static IHashAlgorithmProvider GetHashAlgorithm(string algorithmName) {
-			Requires.NotNullOrEmpty(algorithmName, "algorithmName");
-
-			HashAlgorithm algorithm = (HashAlgorithm)Enum.Parse(typeof(HashAlgorithm), algorithmName, true);
-			return WinRTCrypto.HashAlgorithmProvider.OpenAlgorithm(algorithm);
 		}
 
 		/// <summary>
@@ -213,6 +200,18 @@
 		public static byte[] Decrypt(this CryptoSettings cryptoProvider, SymmetricEncryptionResult data) {
 			var symmetricKey = cryptoProvider.CreateSymmetricAlgorithm().CreateSymmetricKey(data.Key);
 			return WinRTCrypto.CryptographicEngine.Decrypt(symmetricKey, data.Ciphertext, data.IV);
+		}
+
+		public static string GetHashAlgorithmName(this HashAlgorithm algorithm) {
+			return algorithm.ToString();
+		}
+
+		public static HashAlgorithm? ParseHashAlgorithmName(string algorithmName) {
+			if (algorithmName == null) {
+				return null;
+			}
+
+			return (HashAlgorithm)Enum.Parse(typeof(HashAlgorithm), algorithmName, true);
 		}
 
 		/// <summary>

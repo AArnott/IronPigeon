@@ -12,6 +12,7 @@
 	using System.Text;
 	using System.Threading;
 	using System.Threading.Tasks;
+	using PCLCrypto;
 	using Validation;
 	using TaskEx = System.Threading.Tasks.Task;
 
@@ -525,12 +526,12 @@
 		/// <param name="hashLengthInBytes">The length of the output of the hash functino bytes.</param>
 		/// <returns>The probable hash algorithm.</returns>
 		/// <exception cref="System.NotSupportedException">Thrown when an unrecognized length is specified.</exception>
-		internal static string GuessHashAlgorithmFromLength(int hashLengthInBytes) {
+		internal static HashAlgorithm GuessHashAlgorithmFromLength(int hashLengthInBytes) {
 			switch (hashLengthInBytes) {
 				case 160 / 8:
-					return "SHA1";
+					return HashAlgorithm.Sha1;
 				case 256 / 8:
-					return "SHA256";
+					return HashAlgorithm.Sha256;
 				default:
 					throw new NotSupportedException();
 			}

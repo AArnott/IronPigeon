@@ -4,7 +4,7 @@
 	using System.Linq;
 	using System.Text;
 	using System.Threading.Tasks;
-
+	using PCLCrypto;
 	using Validation;
 
 	/// <summary>
@@ -29,7 +29,7 @@
 		/// <value>
 		/// The name of the hash algorithm.
 		/// </value>
-		public abstract string SymmetricHashAlgorithmName { get; }
+		public abstract HashAlgorithm SymmetricHashAlgorithm { get; }
 
 		/// <summary>
 		/// Gets the name of the hash algorithm to use for asymmetric signatures.
@@ -75,7 +75,7 @@
 		public void Apply(CryptoSettings cryptoSettings) {
 			Requires.NotNull(cryptoSettings, "cryptoSettings");
 
-			cryptoSettings.SymmetricHashAlgorithmName = this.SymmetricHashAlgorithmName;
+			cryptoSettings.SymmetricHashAlgorithm = this.SymmetricHashAlgorithm;
 			cryptoSettings.AsymmetricHashAlgorithmName = this.AsymmetricHashAlgorithmName;
 			cryptoSettings.SymmetricEncryptionConfiguration = this.SymmetricEncryptionConfiguration;
 			cryptoSettings.EncryptionAsymmetricKeySize = this.EncryptionAsymmetricKeySize;
@@ -93,8 +93,8 @@
 			/// <value>
 			/// The name of the hash algorithm.
 			/// </value>
-			public override string SymmetricHashAlgorithmName {
-				get { return "SHA1"; }
+			public override HashAlgorithm SymmetricHashAlgorithm {
+				get { return HashAlgorithm.Sha1; }
 			}
 
 			/// <summary>
@@ -155,8 +155,8 @@
 			/// <value>
 			/// The name of the hash algorithm.
 			/// </value>
-			public override string SymmetricHashAlgorithmName {
-				get { return "SHA256"; }
+			public override HashAlgorithm SymmetricHashAlgorithm {
+				get { return HashAlgorithm.Sha256; }
 			}
 
 			/// <summary>

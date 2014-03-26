@@ -238,13 +238,13 @@
 			this.Log("Message symmetric IV", encryptionVariables.IV);
 
 			cipherTextStream.Position = 0;
-			var hasher = this.CryptoServices.GetHashAlgorithm();
+			var hasher = WinRTCrypto.HashAlgorithmProvider.OpenAlgorithm(this.CryptoServices.SymmetricHashAlgorithm);
 			var messageHash = hasher.HashData(cipherTextStream.ToArray());
 			this.Log("Encrypted message hash", messageHash);
 
 			cipherTextStream.Position = 0;
 			Uri blobUri = await this.CloudBlobStorage.UploadMessageAsync(cipherTextStream, expiresUtc, contentType: message.ContentType, bytesCopiedProgress: bytesCopiedProgress, cancellationToken: cancellationToken);
-			return new PayloadReference(blobUri, messageHash, this.CryptoServices.SymmetricHashAlgorithmName, encryptionVariables.Key, encryptionVariables.IV, expiresUtc);
+			return new PayloadReference(blobUri, messageHash, this.CryptoServices.SymmetricHashAlgorithm.GetHashAlgorithmName(), encryptionVariables.Key, encryptionVariables.IV, expiresUtc);
 		}
 
 		/// <summary>
@@ -260,7 +260,7 @@
 			var messageBuffer = await responseMessage.Content.ReadAsByteArrayAsync();
 
 			// Calculate hash of downloaded message and check that it matches the referenced message hash.
-			if (!this.CryptoServices.IsHashMatchWithTolerantHashAlgorithm(messageBuffer, notification.Hash, notification.HashAlgorithmName)) {
+			if (!this.CryptoServices.IsHashMatchWithTolerantHashAlgorithm(messageBuffer, notification.Hash, CryptoProviderExtensions.ParseHashAlgorithmName(notification.HashAlgorithmName))) {
 				throw new InvalidMessageException();
 			}
 
@@ -313,7 +313,7 @@
 			await this.CryptoServices.DecryptAsync(ciphertextStream, plainTextPayloadStream, encryptedVariables, cancellationToken);
 
 			plainTextPayloadStream.Position = 0;
-			AsymmetricAlgorithm? signingHashAlgorithm = null; //// Encoding.UTF8.GetString(await plainTextPayloadStream.ReadSizeAndBufferAsync(cancellationToken));
+			AsymmetricAlgorithm? signingHashAlgorithm = null;  //// Encoding.UTF8.GetString(await plainTextPayloadStream.ReadSizeAndBufferAsync(cancellationToken));
 			byte[] signature = await plainTextPayloadStream.ReadSizeAndBufferAsync(cancellationToken);
 			long payloadStartPosition = plainTextPayloadStream.Position;
 			var signedBytes = new byte[plainTextPayloadStream.Length - plainTextPayloadStream.Position];
@@ -328,7 +328,7 @@
 			var messageReference = Utilities.DeserializeDataContract<PayloadReference>(plainTextPayloadReader);
 			messageReference.ReferenceLocation = inboxItem.Location;
 			if (messageReference.HashAlgorithmName == null) {
-				messageReference.HashAlgorithmName = Utilities.GuessHashAlgorithmFromLength(messageReference.Hash.Length);
+				messageReference.HashAlgorithmName = Utilities.GuessHashAlgorithmFromLength(messageReference.Hash.Length).GetHashAlgorithmName();
 			}
 
 			if (!CryptoProviderExtensions.VerifySignatureWithTolerantHashAlgorithm(notificationAuthor.SigningKeyPublicMaterial, signedBytes, signature, signingHashAlgorithm)) {
@@ -448,7 +448,8 @@
 			Requires.NotNullOrEmpty(claimedIdentifier, "claimedIdentifier");
 
 			Endpoint cachedEndpoint;
-			lock (this.resolvedIdentifiersCache) {
+			lock (this.resolvedIdentifiersCache)
+			{
 				if (this.resolvedIdentifiersCache.TryGetValue(claimedIdentifier, out cachedEndpoint)) {
 					return cachedEndpoint.Equals(claimingEndpoint);
 				}
@@ -461,7 +462,8 @@
 				cancellationToken);
 
 			if (matchingEndpoint != null) {
-				lock (this.resolvedIdentifiersCache) {
+				lock (this.resolvedIdentifiersCache)
+				{
 					if (!this.resolvedIdentifiersCache.ContainsKey(claimedIdentifier)) {
 						this.resolvedIdentifiersCache.Add(claimedIdentifier, matchingEndpoint);
 					}
