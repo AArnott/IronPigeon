@@ -37,7 +37,7 @@
 		/// <value>
 		/// The name of the hash algorithm.
 		/// </value>
-		public abstract string AsymmetricHashAlgorithmName { get; }
+		public abstract HashAlgorithm AsymmetricHashAlgorithm { get; }
 
 		/// <summary>
 		/// Gets the symmetric encryption configuration.
@@ -76,7 +76,7 @@
 			Requires.NotNull(cryptoSettings, "cryptoSettings");
 
 			cryptoSettings.SymmetricHashAlgorithm = this.SymmetricHashAlgorithm;
-			cryptoSettings.AsymmetricHashAlgorithmName = this.AsymmetricHashAlgorithmName;
+			cryptoSettings.AsymmetricHashAlgorithm = this.AsymmetricHashAlgorithm;
 			cryptoSettings.SymmetricEncryptionConfiguration = this.SymmetricEncryptionConfiguration;
 			cryptoSettings.EncryptionAsymmetricKeySize = this.EncryptionAsymmetricKeySize;
 			cryptoSettings.SignatureAsymmetricKeySize = this.SignatureAsymmetricKeySize;
@@ -103,8 +103,8 @@
 			/// <value>
 			/// The name of the hash algorithm.
 			/// </value>
-			public override string AsymmetricHashAlgorithmName {
-				get { return "SHA1"; }
+			public override HashAlgorithm AsymmetricHashAlgorithm {
+				get { return HashAlgorithm.Sha1; }
 			}
 
 			/// <summary>
@@ -165,8 +165,8 @@
 			/// <value>
 			/// The name of the hash algorithm.
 			/// </value>
-			public override string AsymmetricHashAlgorithmName {
-				get { return "SHA256"; }
+			public override HashAlgorithm AsymmetricHashAlgorithm {
+				get { return HashAlgorithm.Sha256; }
 			}
 
 			/// <summary>

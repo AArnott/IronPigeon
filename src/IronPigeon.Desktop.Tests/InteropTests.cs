@@ -109,8 +109,8 @@
 			/// <value>
 			/// The name of the hash algorithm.
 			/// </value>
-			public override string AsymmetricHashAlgorithmName {
-				get { return "SHA1"; }
+			public override HashAlgorithm AsymmetricHashAlgorithm {
+				get { return HashAlgorithm.Sha1; }
 			}
 
 			/// <summary>
@@ -171,8 +171,8 @@
 			/// <value>
 			/// The name of the hash algorithm.
 			/// </value>
-			public override string AsymmetricHashAlgorithmName {
-				get { return "SHA256"; }
+			public override HashAlgorithm AsymmetricHashAlgorithm {
+				get { return HashAlgorithm.Sha256; }
 			}
 
 			/// <summary>

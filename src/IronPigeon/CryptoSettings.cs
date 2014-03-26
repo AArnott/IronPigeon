@@ -25,7 +25,7 @@
 			this.SymmetricEncryptionKeySize = SecurityLevel.Maximum.BlobSymmetricKeySize;
 			this.EncryptionAsymmetricKeySize = SecurityLevel.Maximum.EncryptionAsymmetricKeySize;
 			this.SymmetricEncryptionConfiguration = SecurityLevel.Maximum.SymmetricEncryptionConfiguration;
-			this.AsymmetricHashAlgorithmName = SecurityLevel.Maximum.AsymmetricHashAlgorithmName;
+			this.AsymmetricHashAlgorithm = SecurityLevel.Maximum.AsymmetricHashAlgorithm;
 			this.SymmetricHashAlgorithm = SecurityLevel.Maximum.SymmetricHashAlgorithm;
 		}
 
@@ -48,7 +48,7 @@
 		/// <summary>
 		/// Gets or sets the name of the algorithm to use for asymmetric signatures.
 		/// </summary>
-		public string AsymmetricHashAlgorithmName { get; set; }
+		public HashAlgorithm AsymmetricHashAlgorithm { get; set; }
 
 		/// <summary>
 		/// Gets or sets the symmetric encryption algorithm provider to use.
