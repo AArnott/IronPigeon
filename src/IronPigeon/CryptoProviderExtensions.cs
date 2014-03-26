@@ -13,8 +13,6 @@
 	/// Extension methods to the <see cref="CryptoSettings"/> interface.
 	/// </summary>
 	public static class CryptoProviderExtensions {
-		internal static CryptographicPublicKeyBlobType PublicKeyFormat = CryptographicPublicKeyBlobType.Capi1PublicKey;
-
 		/// <summary>
 		/// Creates a web safe base64 thumbprint of some buffer.
 		/// </summary>
@@ -87,14 +85,14 @@
 		internal static bool VerifySignatureWithTolerantHashAlgorithm(byte[] signingPublicKey, byte[] data, byte[] signature, AsymmetricAlgorithm? signingAlgorithm = null) {
 			if (signingAlgorithm.HasValue) {
 				var key = WinRTCrypto.AsymmetricKeyAlgorithmProvider.OpenAlgorithm(signingAlgorithm.Value)
-					.ImportPublicKey(signingPublicKey, PublicKeyFormat);
+					.ImportPublicKey(signingPublicKey, CryptoSettings.PublicKeyFormat);
 				return WinRTCrypto.CryptographicEngine.VerifySignature(key, data, signature);
 			}
 
 			var key1 = WinRTCrypto.AsymmetricKeyAlgorithmProvider.OpenAlgorithm(AsymmetricAlgorithm.RsaSignPkcs1Sha1)
-				.ImportPublicKey(signingPublicKey, PublicKeyFormat);
+				.ImportPublicKey(signingPublicKey, CryptoSettings.PublicKeyFormat);
 			var key2 = WinRTCrypto.AsymmetricKeyAlgorithmProvider.OpenAlgorithm(AsymmetricAlgorithm.RsaSignPkcs1Sha256)
-				.ImportPublicKey(signingPublicKey, PublicKeyFormat);
+				.ImportPublicKey(signingPublicKey, CryptoSettings.PublicKeyFormat);
 			return WinRTCrypto.CryptographicEngine.VerifySignature(key1, data, signature)
 				|| WinRTCrypto.CryptographicEngine.VerifySignature(key2, data, signature);
 		}
