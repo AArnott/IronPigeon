@@ -25,25 +25,25 @@
 				<dependency id="Microsoft.Composition" version="[1.0.20, 2.0)" />
 				<dependency id="Microsoft.Tpl.Dataflow" version="[4.5.14, 5.0)" />
 				<dependency id="Microsoft.WindowsAzure.StorageClient.Async" version="0.3.2-preview" />
-				<dependency id="pclcrypto" version="0.4.0-beta" />
+				<dependency id="pclcrypto" version="0.4.1-beta" />
 			</group>
 			<group targetFramework="winrt">
 				<dependency id="Validation" version="[2.0.3, 3.0)" />
 				<dependency id="Microsoft.Net.Http" version="2.2.18" />
 				<dependency id="Microsoft.Composition" version="[1.0.20, 2.0)" />
 				<dependency id="Microsoft.Tpl.Dataflow" version="[4.5.14, 5.0)" />
-				<dependency id="pclcrypto" version="0.4.0-beta" />
+				<dependency id="pclcrypto" version="0.4.1-beta" />
 			</group>
 			<group targetFramework="MonoAndroid10">
 				<dependency id="Validation" version="[2.0.3, 3.0)" />
 				<dependency id="Microsoft.Net.Http" version="2.2.18" />
-				<dependency id="pclcrypto" version="0.4.0-beta" />
+				<dependency id="pclcrypto" version="0.4.1-beta" />
 				<dependency id="Microsoft.Composition" version="[1.0.20, 2.0)" />
 			</group>
 			<group targetFramework="MonoTouch10">
 				<dependency id="Validation" version="[2.0.3, 3.0)" />
 				<dependency id="Microsoft.Net.Http" version="2.2.18" />
-				<dependency id="pclcrypto" version="0.4.0-beta" />
+				<dependency id="pclcrypto" version="0.4.1-beta" />
 				<dependency id="Microsoft.Composition" version="[1.0.20, 2.0)" />
 			</group>
 			<group targetFramework="windowsphone8">
@@ -51,7 +51,7 @@
 				<dependency id="Microsoft.Net.Http" version="2.2.18" />
 				<!--<dependency id="Microsoft.Composition" version="[1.0.20, 2.0)" />-->
 				<dependency id="WinRTBouncyCastle" version="[0.1.1.1,2.0)" />
-				<dependency id="pclcrypto" version="0.4.0-beta" />
+				<dependency id="pclcrypto" version="0.4.1-beta" />
 			</group>
 		</dependencies>
 	</metadata>

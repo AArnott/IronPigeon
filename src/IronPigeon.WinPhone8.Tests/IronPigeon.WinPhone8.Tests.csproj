@@ -146,11 +146,13 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="PCLCrypto">
-      <HintPath>..\packages\PCLCrypto.0.4.0-beta\lib\wp8\PCLCrypto.dll</HintPath>
+    <Reference Include="PCLCrypto, Version=0.4.0.0, Culture=neutral, PublicKeyToken=d4421c8a4786956c, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\PCLCrypto.0.4.1-beta\lib\wp8\PCLCrypto.dll</HintPath>
     </Reference>
-    <Reference Include="PCLCrypto.Abstractions">
-      <HintPath>..\packages\PCLCrypto.0.4.0-beta\lib\wp8\PCLCrypto.Abstractions.dll</HintPath>
+    <Reference Include="PCLCrypto.Abstractions, Version=0.4.0.0, Culture=neutral, PublicKeyToken=d4421c8a4786956c, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\PCLCrypto.0.4.1-beta\lib\wp8\PCLCrypto.Abstractions.dll</HintPath>
     </Reference>
     <Reference Include="System.Net.Http, Version=1.5.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>

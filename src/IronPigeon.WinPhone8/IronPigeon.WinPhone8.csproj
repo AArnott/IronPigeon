@@ -68,11 +68,11 @@
   <ItemGroup>
     <Reference Include="PCLCrypto, Version=0.4.0.0, Culture=neutral, PublicKeyToken=d4421c8a4786956c, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\PCLCrypto.0.4.0-beta\lib\wp8\PCLCrypto.dll</HintPath>
+      <HintPath>..\packages\PCLCrypto.0.4.1-beta\lib\wp8\PCLCrypto.dll</HintPath>
     </Reference>
     <Reference Include="PCLCrypto.Abstractions, Version=0.4.0.0, Culture=neutral, PublicKeyToken=d4421c8a4786956c, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\PCLCrypto.0.4.0-beta\lib\wp8\PCLCrypto.Abstractions.dll</HintPath>
+      <HintPath>..\packages\PCLCrypto.0.4.1-beta\lib\wp8\PCLCrypto.Abstractions.dll</HintPath>
     </Reference>
     <Reference Include="System.Composition.AttributedModel">
       <HintPath>..\packages\Microsoft.Composition.1.0.20\lib\portable-net45+win8\System.Composition.AttributedModel.dll</HintPath>
