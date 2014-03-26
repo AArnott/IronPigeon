@@ -116,14 +116,10 @@
 		/// this method can take an extended period (several seconds) to complete.
 		/// </remarks>
 		private OwnEndpoint CreateEndpointWithKeys(CancellationToken cancellationToken) {
-			byte[] privateSigningKey, publicSigningKey;
-
 			cancellationToken.ThrowIfCancellationRequested();
-			var encryptionAlgorithm = WinRTCrypto.AsymmetricKeyAlgorithmProvider.OpenAlgorithm(CryptoSettings.EncryptionAlgorithm);
-			var encryptionKey = encryptionAlgorithm.CreateKeyPair(this.CryptoProvider.AsymmetricKeySize);
+			var encryptionKey = CryptoSettings.EncryptionAlgorithm.CreateKeyPair(this.CryptoProvider.AsymmetricKeySize);
 			cancellationToken.ThrowIfCancellationRequested();
-			var signingAlgorithm = WinRTCrypto.AsymmetricKeyAlgorithmProvider.OpenAlgorithm(CryptoSettings.SigningAlgorithm);
-			var signingKey = signingAlgorithm.CreateKeyPair(this.CryptoProvider.AsymmetricKeySize);
+			var signingKey = CryptoSettings.SigningAlgorithm.CreateKeyPair(this.CryptoProvider.AsymmetricKeySize);
 
 			var contact = new Endpoint() {
 				EncryptionKeyPublicMaterial = encryptionKey.ExportPublicKey(CryptoProviderExtensions.PublicKeyFormat),

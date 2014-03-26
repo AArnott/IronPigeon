@@ -73,7 +73,7 @@
 			Requires.NotNull(stream, "stream");
 
 			var ms = new MemoryStream();
-			await stream.CopyToAsync(ms); // relies on the input stream containing only the endpoint.
+			await stream.CopyToAsync(ms);  // relies on the input stream containing only the endpoint.
 			ms.Position = 0;
 			using (var reader = new BinaryReader(ms)) {
 				return reader.DeserializeDataContract<OwnEndpoint>();
@@ -94,8 +94,9 @@
 			writer.SerializeDataContract(this.PublicEndpoint);
 			writer.Flush();
 			entry.SerializedEndpoint = ms.ToArray();
-			var key = WinRTCrypto.AsymmetricKeyAlgorithmProvider.OpenAlgorithm(CryptoSettings.SigningAlgorithm)
-				.ImportKeyPair(this.SigningKeyPrivateMaterial, CryptographicPrivateKeyBlobType.Capi1PrivateKey);
+			var key = CryptoSettings.SigningAlgorithm.ImportKeyPair(
+				this.SigningKeyPrivateMaterial,
+				CryptographicPrivateKeyBlobType.Capi1PrivateKey);
 			entry.Signature = WinRTCrypto.CryptographicEngine.Sign(key, entry.SerializedEndpoint);
 			return entry;
 		}
