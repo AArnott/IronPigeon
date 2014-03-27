@@ -20,10 +20,13 @@
 	[Export]
 	[Shared]
 	public class OwnEndpointServices {
+		/// <summary>
+		/// The channel.
+		/// </summary>
 		private Channel channel;
 
 		/// <summary>
-		/// Gets the cryptographic services provider.
+		/// Gets or sets the cryptographic services provider.
 		/// </summary>
 		public CryptoSettings CryptoProvider { get; set; }
 
@@ -32,7 +35,10 @@
 		/// </summary>
 		[Import]
 		public Channel Channel {
-			get { return this.channel; }
+			get {
+				return this.channel;
+			}
+
 			set {
 				this.channel = value;
 

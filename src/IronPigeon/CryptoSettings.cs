@@ -14,7 +14,10 @@
 	/// Configuration for common crypto operations.
 	/// </summary>
 	public class CryptoSettings {
-		public static CryptographicPublicKeyBlobType PublicKeyFormat = CryptographicPublicKeyBlobType.Capi1PublicKey;
+		/// <summary>
+		/// The format public key are shared in.
+		/// </summary>
+		public static readonly CryptographicPublicKeyBlobType PublicKeyFormat = CryptographicPublicKeyBlobType.Capi1PublicKey;
 
 		/// <summary>
 		/// The signing algorithm to use.

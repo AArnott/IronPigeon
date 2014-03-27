@@ -46,7 +46,7 @@
 		public RelayCloudBlobStorageProvider MessageRelayService { get; set; }
 
 		/// <summary>
-		/// Gets or sets the crypto provider.
+		/// Gets the crypto provider.
 		/// </summary>
 		public CryptoSettings CryptoProvider {
 			get { return this.Channel.CryptoServices; }

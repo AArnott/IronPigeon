@@ -48,79 +48,9 @@
 		}
 
 		/// <summary>
-		/// Computes the hash of the specified buffer and checks for a match to an expected hash.
-		/// </summary>
-		/// <param name="cryptoProvider">The crypto provider.</param>
-		/// <param name="data">The data to hash.</param>
-		/// <param name="expectedHash">The expected hash.</param>
-		/// <param name="hashAlgorithmName">Name of the hash algorithm. If <c>null</c>, the algorithm is guessed from the length of the hash.</param>
-		/// <returns>
-		/// <c>true</c> if the hashes came out equal; <c>false</c> otherwise.
-		/// </returns>
-		internal static bool IsHashMatchWithTolerantHashAlgorithm(this CryptoSettings cryptoProvider, byte[] data, byte[] expectedHash, HashAlgorithm? hashAlgorithm) {
-			Requires.NotNull(cryptoProvider, "cryptoProvider");
-			Requires.NotNull(data, "data");
-			Requires.NotNull(expectedHash, "expectedHash");
-
-			if (!hashAlgorithm.HasValue) {
-				hashAlgorithm = Utilities.GuessHashAlgorithmFromLength(expectedHash.Length);
-			}
-
-			var hasher = WinRTCrypto.HashAlgorithmProvider.OpenAlgorithm(hashAlgorithm.Value);
-			byte[] actualHash = hasher.HashData(data);
-			return Utilities.AreEquivalent(expectedHash, actualHash);
-		}
-
-		/// <summary>
-		/// Verifies the asymmetric signature of some data blob.
-		/// </summary>
-		/// <param name="cryptoProvider">The crypto provider.</param>
-		/// <param name="signingPublicKey">The public key used to verify the signature.</param>
-		/// <param name="data">The data that was signed.</param>
-		/// <param name="signature">The signature.</param>
-		/// <param name="hashAlgorithm">The hash algorithm used to hash the data. If <c>null</c>, SHA1 and SHA256 will be tried.</param>
-		/// <returns>
-		/// A value indicating whether the signature is valid.
-		/// </returns>
-		internal static bool VerifySignatureWithTolerantHashAlgorithm(byte[] signingPublicKey, byte[] data, byte[] signature, AsymmetricAlgorithm? signingAlgorithm = null) {
-			if (signingAlgorithm.HasValue) {
-				var key = WinRTCrypto.AsymmetricKeyAlgorithmProvider.OpenAlgorithm(signingAlgorithm.Value)
-					.ImportPublicKey(signingPublicKey, CryptoSettings.PublicKeyFormat);
-				return WinRTCrypto.CryptographicEngine.VerifySignature(key, data, signature);
-			}
-
-			var key1 = WinRTCrypto.AsymmetricKeyAlgorithmProvider.OpenAlgorithm(AsymmetricAlgorithm.RsaSignPkcs1Sha1)
-				.ImportPublicKey(signingPublicKey, CryptoSettings.PublicKeyFormat);
-			var key2 = WinRTCrypto.AsymmetricKeyAlgorithmProvider.OpenAlgorithm(AsymmetricAlgorithm.RsaSignPkcs1Sha256)
-				.ImportPublicKey(signingPublicKey, CryptoSettings.PublicKeyFormat);
-			return WinRTCrypto.CryptographicEngine.VerifySignature(key1, data, signature)
-				|| WinRTCrypto.CryptographicEngine.VerifySignature(key2, data, signature);
-		}
-
-		/// <summary>
-		/// Gets the signature provider.
-		/// </summary>
-		/// <param name="hashAlgorithm">The hash algorithm to use.</param>
-		/// <returns>The asymmetric key provider.</returns>
-		/// <exception cref="System.NotSupportedException">Thrown if the arguments are not supported.</exception>
-		internal static AsymmetricAlgorithm GetSignatureProvider(string hashAlgorithm) {
-			switch (hashAlgorithm) {
-				case "SHA1":
-					return AsymmetricAlgorithm.RsaSignPkcs1Sha1;
-				case "SHA256":
-					return AsymmetricAlgorithm.RsaSignPkcs1Sha256;
-				case "SHA384":
-					return AsymmetricAlgorithm.RsaSignPkcs1Sha384;
-				case "SHA512":
-					return AsymmetricAlgorithm.RsaSignPkcs1Sha512;
-				default:
-					throw new NotSupportedException();
-			}
-		}
-
-		/// <summary>
 		/// Symmetrically encrypts the specified buffer using a randomly generated key.
 		/// </summary>
+		/// <param name="cryptoProvider">The crypto provider.</param>
 		/// <param name="data">The data to encrypt.</param>
 		/// <param name="encryptionVariables">Optional encryption variables to use; or <c>null</c> to use randomly generated ones.</param>
 		/// <returns>
@@ -198,10 +128,20 @@
 			return WinRTCrypto.CryptographicEngine.Decrypt(symmetricKey, data.Ciphertext, data.IV);
 		}
 
+		/// <summary>
+		/// Gets the name of the hash algorithm.
+		/// </summary>
+		/// <param name="algorithm">The algorithm.</param>
+		/// <returns>A non-empty string.</returns>
 		public static string GetHashAlgorithmName(this HashAlgorithm algorithm) {
 			return algorithm.ToString();
 		}
 
+		/// <summary>
+		/// Parses the name of the hash algorithm into an enum.
+		/// </summary>
+		/// <param name="algorithmName">Name of the algorithm. Null is allowed.</param>
+		/// <returns>The parsed form, or null if <paramref name="algorithmName"/> is null.</returns>
 		public static HashAlgorithm? ParseHashAlgorithmName(string algorithmName) {
 			if (algorithmName == null) {
 				return null;
@@ -211,9 +151,82 @@
 		}
 
 		/// <summary>
+		/// Computes the hash of the specified buffer and checks for a match to an expected hash.
+		/// </summary>
+		/// <param name="cryptoProvider">The crypto provider.</param>
+		/// <param name="data">The data to hash.</param>
+		/// <param name="expectedHash">The expected hash.</param>
+		/// <param name="hashAlgorithm">The hash algorithm.</param>
+		/// <returns>
+		///   <c>true</c> if the hashes came out equal; <c>false</c> otherwise.
+		/// </returns>
+		internal static bool IsHashMatchWithTolerantHashAlgorithm(this CryptoSettings cryptoProvider, byte[] data, byte[] expectedHash, HashAlgorithm? hashAlgorithm) {
+			Requires.NotNull(cryptoProvider, "cryptoProvider");
+			Requires.NotNull(data, "data");
+			Requires.NotNull(expectedHash, "expectedHash");
+
+			if (!hashAlgorithm.HasValue) {
+				hashAlgorithm = Utilities.GuessHashAlgorithmFromLength(expectedHash.Length);
+			}
+
+			var hasher = WinRTCrypto.HashAlgorithmProvider.OpenAlgorithm(hashAlgorithm.Value);
+			byte[] actualHash = hasher.HashData(data);
+			return Utilities.AreEquivalent(expectedHash, actualHash);
+		}
+
+		/// <summary>
+		/// Verifies the asymmetric signature of some data blob.
+		/// </summary>
+		/// <param name="signingPublicKey">The public key used to verify the signature.</param>
+		/// <param name="data">The data that was signed.</param>
+		/// <param name="signature">The signature.</param>
+		/// <param name="signingAlgorithm">The signing algorithm.</param>
+		/// <returns>
+		/// A value indicating whether the signature is valid.
+		/// </returns>
+		internal static bool VerifySignatureWithTolerantHashAlgorithm(byte[] signingPublicKey, byte[] data, byte[] signature, AsymmetricAlgorithm? signingAlgorithm = null) {
+			if (signingAlgorithm.HasValue) {
+				var key = WinRTCrypto.AsymmetricKeyAlgorithmProvider.OpenAlgorithm(signingAlgorithm.Value)
+					.ImportPublicKey(signingPublicKey, CryptoSettings.PublicKeyFormat);
+				return WinRTCrypto.CryptographicEngine.VerifySignature(key, data, signature);
+			}
+
+			var key1 = WinRTCrypto.AsymmetricKeyAlgorithmProvider.OpenAlgorithm(AsymmetricAlgorithm.RsaSignPkcs1Sha1)
+				.ImportPublicKey(signingPublicKey, CryptoSettings.PublicKeyFormat);
+			var key2 = WinRTCrypto.AsymmetricKeyAlgorithmProvider.OpenAlgorithm(AsymmetricAlgorithm.RsaSignPkcs1Sha256)
+				.ImportPublicKey(signingPublicKey, CryptoSettings.PublicKeyFormat);
+			return WinRTCrypto.CryptographicEngine.VerifySignature(key1, data, signature)
+				|| WinRTCrypto.CryptographicEngine.VerifySignature(key2, data, signature);
+		}
+
+		/// <summary>
+		/// Gets the signature provider.
+		/// </summary>
+		/// <param name="hashAlgorithm">The hash algorithm to use.</param>
+		/// <returns>The asymmetric key provider.</returns>
+		/// <exception cref="System.NotSupportedException">Thrown if the arguments are not supported.</exception>
+		internal static AsymmetricAlgorithm GetSignatureProvider(string hashAlgorithm) {
+			switch (hashAlgorithm) {
+				case "SHA1":
+					return AsymmetricAlgorithm.RsaSignPkcs1Sha1;
+				case "SHA256":
+					return AsymmetricAlgorithm.RsaSignPkcs1Sha256;
+				case "SHA384":
+					return AsymmetricAlgorithm.RsaSignPkcs1Sha384;
+				case "SHA512":
+					return AsymmetricAlgorithm.RsaSignPkcs1Sha512;
+				default:
+					throw new NotSupportedException();
+			}
+		}
+
+		/// <summary>
 		/// Generates a new set of encryption variables.
 		/// </summary>
-		/// <returns>A set of encryption variables.</returns>
+		/// <param name="cryptoProvider">The crypto provider.</param>
+		/// <returns>
+		/// A set of encryption variables.
+		/// </returns>
 		private static SymmetricEncryptionVariables NewSymmetricEncryptionVariables(CryptoSettings cryptoProvider) {
 			byte[] key = WinRTCrypto.CryptographicBuffer.GenerateRandom((uint)cryptoProvider.SymmetricKeySize / 8);
 			byte[] iv = WinRTCrypto.CryptographicBuffer.GenerateRandom((uint)CryptoSettings.SymmetricAlgorithm.BlockLength);
@@ -223,8 +236,11 @@
 		/// <summary>
 		/// Returns the specified encryption variables if they are non-null, or generates new ones.
 		/// </summary>
+		/// <param name="cryptoProvider">The crypto provider.</param>
 		/// <param name="encryptionVariables">The encryption variables.</param>
-		/// <returns>A valid set of encryption variables.</returns>
+		/// <returns>
+		/// A valid set of encryption variables.
+		/// </returns>
 		private static SymmetricEncryptionVariables ThisOrNewEncryptionVariables(CryptoSettings cryptoProvider, SymmetricEncryptionVariables encryptionVariables) {
 			if (encryptionVariables == null) {
 				return NewSymmetricEncryptionVariables(cryptoProvider);

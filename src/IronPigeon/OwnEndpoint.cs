@@ -16,12 +16,24 @@
 	/// </summary>
 	[DataContract]
 	public class OwnEndpoint {
+		/// <summary>
+		/// The signing key material
+		/// </summary>
 		private byte[] signingKeyMaterial;
 
+		/// <summary>
+		/// The signing key
+		/// </summary>
 		private ICryptographicKey signingKey;
 
+		/// <summary>
+		/// The encryption key material.
+		/// </summary>
 		private byte[] encryptionKeyMaterial;
 
+		/// <summary>
+		/// The encryption key
+		/// </summary>
 		private ICryptographicKey encryptionKey;
 
 		/// <summary>
@@ -188,16 +200,6 @@
 				ms.Position = 0;
 				return ms.CopyToAsync(target, 4096, cancellationToken);
 			}
-		}
-
-		public void SerializeKeys(CryptographicPrivateKeyBlobType? format = null) {
-			this.encryptionKeyMaterial = this.EncryptionKey != null
-				? this.EncryptionKey.Export(format ?? this.PrivateKeyFormat)
-				: null;
-
-			this.signingKeyMaterial = this.SigningKey != null
-				? this.SigningKey.Export(format ?? this.PrivateKeyFormat)
-				: null;
 		}
 	}
 }
