@@ -34,7 +34,7 @@
 					new InboxCreationResponse
 					{ InboxOwnerCode = "some owner code", MessageReceivingEndpoint = MessageReceivingEndpoint.AbsoluteUri }));
 			var endpointServices = new OwnEndpointServices {
-				CryptoProvider = cryptoProvider,
+				Channel = new Channel { CryptoServices = cryptoProvider },
 				EndpointInboxFactory = inboxFactory.Object,
 			};
 
