@@ -11,8 +11,8 @@
 
 		<Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
 		<Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-		<IntermediatePath>$(ProjectRoot)obj\$(Platform)\$(Configuration)\</IntermediatePath>
-		<OutputPath>$(ProjectRoot)bin\$(Platform)\$(Configuration)\</OutputPath>
+		<IntermediatePath>$(ProjectRoot)obj\$(Platform)\$(Configuration)\$(MSBuildProjectName)\</IntermediatePath>
+		<OutputPath>$(ProjectRoot)bin\$(Platform)\$(Configuration)\$(MSBuildProjectName)\</OutputPath>
 		<PlatformTarget>$(Platform)</PlatformTarget>
 
 		<!-- Release builds should break when StyleCop warnings exist. -->

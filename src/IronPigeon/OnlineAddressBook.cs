@@ -1,6 +1,7 @@
 ﻿namespace IronPigeon {
 	using System;
 	using System.Collections.Generic;
+	using System.Composition;
 	using System.IO;
 	using System.Linq;
 	using System.Net.Http;
@@ -37,6 +38,7 @@
 		/// <summary>
 		/// Gets or sets the HTTP client to use for outbound HTTP requests.
 		/// </summary>
+		[Import]
 		public HttpClient HttpClient { get; set; }
 
 		/// <summary>
@@ -76,17 +78,16 @@
 		/// <exception cref="BadAddressBookEntryException">Thrown when deserialization or signature verification of the address book entry fails.</exception>
 		protected async Task<Endpoint> DownloadEndpointAsync(Uri entryLocation, CancellationToken cancellationToken) {
 			Requires.NotNull(entryLocation, "entryLocation");
-			Verify.Operation(this.CryptoServices != null, Strings.CryptoServicesRequired);
 
 			var entry = await this.DownloadAddressBookEntryAsync(entryLocation, cancellationToken);
 			if (entry == null) {
 				return null;
 			}
 
-			var endpoint = entry.ExtractEndpoint(this.CryptoServices);
+			var endpoint = entry.ExtractEndpoint();
 
 			if (!string.IsNullOrEmpty(entryLocation.Fragment)) {
-				if (!this.CryptoServices.IsThumbprintMatch(endpoint.SigningKeyPublicMaterial, entryLocation.Fragment.Substring(1))) {
+				if (!CryptoProviderExtensions.IsThumbprintMatch(endpoint.SigningKeyPublicMaterial, entryLocation.Fragment.Substring(1))) {
 					throw new BadAddressBookEntryException("Fragment thumbprint mismatch.");
 				}
 			}

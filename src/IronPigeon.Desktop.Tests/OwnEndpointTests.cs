@@ -10,29 +10,29 @@
 	public class OwnEndpointTests {
 		[Test]
 		public void CtorInvalidArgs() {
-			Assert.Throws<ArgumentNullException>(() => new OwnEndpoint(null, Valid.ReceivingEndpoint.SigningKeyPrivateMaterial, Valid.ReceivingEndpoint.EncryptionKeyPrivateMaterial));
-			Assert.Throws<ArgumentNullException>(() => new OwnEndpoint(Valid.PublicEndpoint, null, Valid.ReceivingEndpoint.EncryptionKeyPrivateMaterial));
-			Assert.Throws<ArgumentNullException>(() => new OwnEndpoint(Valid.PublicEndpoint, Valid.ReceivingEndpoint.SigningKeyPrivateMaterial, null));
+			Assert.Throws<ArgumentNullException>(() => new OwnEndpoint(null, Valid.ReceivingEndpoint.EncryptionKey));
+			Assert.Throws<ArgumentNullException>(() => new OwnEndpoint(Valid.ReceivingEndpoint.SigningKey, null));
 		}
 
 		[Test]
 		public void Ctor() {
-			var ownContact = new OwnEndpoint(Valid.ReceivingEndpoint.PublicEndpoint, Valid.ReceivingEndpoint.SigningKeyPrivateMaterial, Valid.ReceivingEndpoint.EncryptionKeyPrivateMaterial);
-			Assert.That(ownContact.PublicEndpoint, Is.SameAs(Valid.ReceivingEndpoint.PublicEndpoint));
-			Assert.That(ownContact.EncryptionKeyPrivateMaterial, Is.SameAs(Valid.ReceivingEndpoint.EncryptionKeyPrivateMaterial));
-			Assert.That(ownContact.SigningKeyPrivateMaterial, Is.SameAs(Valid.ReceivingEndpoint.SigningKeyPrivateMaterial));
+			var ownContact = new OwnEndpoint(Valid.ReceivingEndpoint.SigningKey, Valid.ReceivingEndpoint.EncryptionKey);
+			ownContact.PublicEndpoint.MessageReceivingEndpoint = Valid.ReceivingEndpoint.PublicEndpoint.MessageReceivingEndpoint;
+			Assert.That(ownContact.PublicEndpoint, Is.EqualTo(Valid.ReceivingEndpoint.PublicEndpoint));
+			Assert.That(ownContact.EncryptionKeyPrivateMaterial, Is.EqualTo(Valid.ReceivingEndpoint.EncryptionKeyPrivateMaterial));
+			Assert.That(ownContact.SigningKeyPrivateMaterial, Is.EqualTo(Valid.ReceivingEndpoint.SigningKeyPrivateMaterial));
 		}
 
 		[Test]
 		public void CreateAddressBookEntryNullInput() {
-			var ownContact = new OwnEndpoint(Valid.ReceivingEndpoint.PublicEndpoint, Valid.ReceivingEndpoint.SigningKeyPrivateMaterial, Valid.ReceivingEndpoint.EncryptionKeyPrivateMaterial);
+			var ownContact = new OwnEndpoint(Valid.ReceivingEndpoint.SigningKey, Valid.ReceivingEndpoint.EncryptionKey);
 			Assert.Throws<ArgumentNullException>(() => ownContact.CreateAddressBookEntry(null));
 		}
 
 		[Test]
 		public void CreateAddressBookEntry() {
 			var ownContact = Valid.ReceivingEndpoint;
-			ICryptoProvider cryptoServices = new Mocks.MockCryptoProvider();
+			CryptoSettings cryptoServices = new CryptoSettings(SecurityLevel.Minimum);
 			var entry = ownContact.CreateAddressBookEntry(cryptoServices);
 			Assert.That(entry.Signature, Is.Not.Null.And.Not.Empty);
 			Assert.That(entry.SerializedEndpoint, Is.Not.Null.And.Not.Empty);

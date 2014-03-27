@@ -1,6 +1,7 @@
 ﻿namespace IronPigeon {
 	using System;
 	using System.Collections.Generic;
+	using System.Composition;
 	using System.IO;
 	using System.Linq;
 	using System.Net.Http;
@@ -9,31 +10,60 @@
 	using System.Threading;
 	using System.Threading.Tasks;
 	using IronPigeon.Relay;
+	using PCLCrypto;
 	using Validation;
 	using TaskEx = System.Threading.Tasks.Task;
 
 	/// <summary>
 	/// Creates and services <see cref="OwnEndpoint"/> instances.
 	/// </summary>
+	[Export]
+	[Shared]
 	public class OwnEndpointServices {
 		/// <summary>
-		/// Gets or sets the crypto provider.
+		/// The channel.
 		/// </summary>
-		public ICryptoProvider CryptoProvider { get; set; }
+		private Channel channel;
+
+		/// <summary>
+		/// Gets or sets the cryptographic services provider.
+		/// </summary>
+		public CryptoSettings CryptoProvider { get; set; }
+
+		/// <summary>
+		/// Gets or sets the channel.
+		/// </summary>
+		[Import]
+		public Channel Channel {
+			get {
+				return this.channel;
+			}
+
+			set {
+				this.channel = value;
+
+				if (value != null) {
+					this.CryptoProvider = value.CryptoServices;
+				}
+			}
+		}
 
 		/// <summary>
 		/// Gets or sets the cloud blob storage provider.
 		/// </summary>
+		[Import]
 		public ICloudBlobStorageProvider CloudBlobStorage { get; set; }
 
 		/// <summary>
 		/// Gets or sets the HTTP client.
 		/// </summary>
+		[Import]
 		public HttpClient HttpClient { get; set; }
 
 		/// <summary>
 		/// Gets or sets the service that creates new inboxes on a message relay.
 		/// </summary>
+		[Import]
 		public IEndpointInboxFactory EndpointInboxFactory { get; set; }
 
 		/// <summary>
@@ -92,20 +122,12 @@
 		/// this method can take an extended period (several seconds) to complete.
 		/// </remarks>
 		private OwnEndpoint CreateEndpointWithKeys(CancellationToken cancellationToken) {
-			byte[] privateEncryptionKey, publicEncryptionKey;
-			byte[] privateSigningKey, publicSigningKey;
-
 			cancellationToken.ThrowIfCancellationRequested();
-			this.CryptoProvider.GenerateEncryptionKeyPair(out privateEncryptionKey, out publicEncryptionKey);
+			var encryptionKey = CryptoSettings.EncryptionAlgorithm.CreateKeyPair(this.CryptoProvider.AsymmetricKeySize);
 			cancellationToken.ThrowIfCancellationRequested();
-			this.CryptoProvider.GenerateSigningKeyPair(out privateSigningKey, out publicSigningKey);
+			var signingKey = CryptoSettings.SigningAlgorithm.CreateKeyPair(this.CryptoProvider.AsymmetricKeySize);
 
-			var contact = new Endpoint() {
-				EncryptionKeyPublicMaterial = publicEncryptionKey,
-				SigningKeyPublicMaterial = publicSigningKey,
-			};
-
-			var ownContact = new OwnEndpoint(contact, privateSigningKey, privateEncryptionKey);
+			var ownContact = new OwnEndpoint(signingKey, encryptionKey);
 			return ownContact;
 		}
 	}

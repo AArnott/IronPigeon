@@ -1,6 +1,7 @@
 ﻿namespace WpfChatroom {
 	using System;
 	using System.Collections.Generic;
+	using System.Composition;
 	using System.Linq;
 	using System.Net.Http;
 	using System.Text;
@@ -20,6 +21,7 @@
 	/// <summary>
 	/// Interaction logic for ChatroomWindow.xaml
 	/// </summary>
+	[Export]
 	public partial class ChatroomWindow : Window {
 		private Dictionary<string, Endpoint> members = new Dictionary<string, Endpoint>();
 
@@ -33,12 +35,8 @@
 		/// <summary>
 		/// Gets or sets the channel.
 		/// </summary>
+		[Import]
 		public PostalService PostalService { get; set; }
-
-		/// <summary>
-		/// Gets or sets the crypto provider.
-		/// </summary>
-		public ICryptoProvider CryptoProvider { get; set; }
 
 		internal void AddMember(string friendlyName, Endpoint endpoint) {
 			if (this.members.Values.Contains(endpoint)) {
@@ -50,7 +48,7 @@
 		}
 
 		internal async Task InvitingMemberAsync(InviteMember inviteWindow) {
-			var addressBook = new DirectEntryAddressBook(this.CryptoProvider, new HttpClient());
+			var addressBook = new DirectEntryAddressBook(new HttpClient());
 			var endpoint = await addressBook.LookupAsync(inviteWindow.PublicEndpointUrlBox.Text);
 			if (endpoint != null) {
 				try {

@@ -15,9 +15,8 @@
 		private const string EncryptCompatTestKey = "moqF3FLtXrgsBgZh482WlUjGmbk0EKwkJKTJ1txp/HU=";
 		private const string EncryptCompatTestIV = "3Y4T+8qiTbskHIzaUzAqTg==";
 		private const string EncryptCompatTestPlaintext = "9aRJ8S7c6YpScuqCe8Y7BVuYIR7uFDw7YLMlaqzKDfDHsQQlcfHE6Alw0diSCRUym3koR9hSoeBoDpB6tn/diGX5usnCFZRq0zkUfUNjqFee888zocUYdRAjvWNgSjKKk0lzmE5LcIXlvnOfPSOdBWU53MKvquaf4US5nlgxCokGien58BAIU4NJTeNReDfshrj9J21v2uhj07cKkdEstLPqmLM6oxVVMIk/ZV0CTmgMzBegM+Mbl64BlhxY/sGxHZgwZ+CDsuOjqPfkL3WLYIVO/cS6jIHQzgAEOAz4/DHHjUjE0uaIiRo0/YrsNmg5dTaXCgH895AXX5jff3nWqqzFHKEsx42exXSqhY/35JeYy8PWYfEvy5a4rHJOqQmgXVLdJhnGDa2o+ESNUXEAH3sARrO1/0m6llELdBoaUBxqCSc9Gb590r0VLmitonkkt433TWJW6l4IIo/Iu5mTjagnI0hKwwa9gnT2oNHhDfPX5ryNIwK6FB7JNPcutRYkgqC/hn8x2vOGOsrtX0qMJxWb8NTcBWqlbQ4pgI8Ojs1e0R0xIYZ0pgzJBug3zLTUPQzhksRCR3w1GRhwCFljeKv9j40tWgWOJ0rHE/+CbqBaVUODLPwIG4qg+whuBJ2zZY48OjwmpuIGU2t6ejR9s6t3FrMW4Euv9XQDjF79ICOsFK1wRTNkM65gfNmRjqFVI0hc9u7qnIVDjUTIIhqDCTNIzWWGDG53E+IEtWRxHmfTrmkWoCo0wngoLbfumxGU3HOmScA7zhbZ5OIL5eYg0W/d9XSxbGgJEwvtXt+2iXjRcNjxy9Sml99SPLxHKdyRB1tIEKWc4nAKnTa1TXA3I1tqOnQNLwaaN12VXjCswekuXFaDbnjSNI1o5i2e8EpuGxlg3O5og9dVrdlIB4Q/XttMh/AatLXjmAbmpUnZ+0YSJkMWTOT7xdl+LsCeiSwJKYhRUmlaVGdkfETngd6OfLKTNeFAKBL2UMEXm4X0RQ7Z3HvBh6ncuNHcss+gE0T68LIOClRLyQB2WgKnQrnhbzc1DqRizPQItnwPZHVCVjx9HarT5jq6jhN7SyynNXYY+0OYawWflyO9BVTXO2WKMwTFKiUODYj8e4CR5oHHYYEG92gyqeo33oWHFeHm4lKu8Rcn4gpQCu27m++FDrGh9aPS0UT8V4kZjUyghvemFpkt4vVpoH92tex6dw77ss/U5SA+ExAOsZmNDlS+sIP2FIVWVyu7N1UjWxxXgeB7Htt8zKHXaAKIHzBb3JEruAVohGKIpFqkGK3KGrj0tjC4Eu95QuTiHquDzTj6X1vD+KMX7/x983qA1w==";
-		private const string DeriveKeyFromPasswordExpectedKey = "xveGC3HtpbrC1gMMmlrEBMlnlttpgYyI94CAdbaKe6Ota5fkDk+1vcajYNbWERtCmGiWHSW0Yg20dvjfLSHgSW7zYiuWIuBmaAgkSjc=";
 
-		protected abstract ICryptoProvider CryptoProvider { get; }
+		protected abstract CryptoSettings CryptoProvider { get; }
 
 		[TestMethod]
 		public void SymmetricEncryptionCompatTest() {
@@ -42,8 +41,8 @@
 
 		[TestMethod]
 		public void SymmetricEncryptionRoundtripExplicitKeyAndIV() {
-			byte[] key = new byte[this.CryptoProvider.SymmetricEncryptionKeySize / 8];
-			byte[] iv = new byte[this.CryptoProvider.SymmetricEncryptionBlockSize / 8];
+			byte[] key = new byte[this.CryptoProvider.SymmetricKeySize / 8];
+			byte[] iv = new byte[CryptoSettings.SymmetricAlgorithm.BlockLength];
 			byte[] plaintext = new byte[10000];
 
 			var rng = new Random();
@@ -73,83 +72,6 @@
 			cipherStream.Position = 0;
 			this.CryptoProvider.DecryptAsync(cipherStream, decryptedStream, cipherPacket).Wait();
 			CollectionAssert.AreEqual(plaintext, decryptedStream.ToArray());
-		}
-
-		[TestMethod]
-		public void AsymmetricSignatures() {
-			var data = new byte[] { 0x1, 0x2, 0x3 };
-			var tamperedData = new byte[] { 0x1, 0x2, 0x4 };
-			byte[] keyPair, publicKey;
-			this.CryptoProvider.GenerateSigningKeyPair(out keyPair, out publicKey);
-			byte[] signature = this.CryptoProvider.Sign(data, keyPair);
-			Assert.IsTrue(this.CryptoProvider.VerifySignature(publicKey, data, signature, this.CryptoProvider.AsymmetricHashAlgorithmName));
-			Assert.IsFalse(this.CryptoProvider.VerifySignature(publicKey, tamperedData, signature, this.CryptoProvider.AsymmetricHashAlgorithmName));
-		}
-
-		[TestMethod]
-		public void AsymmetricSignaturesMinimumSecurity() {
-			var data = new byte[] { 0x1, 0x2, 0x3 };
-			var tamperedData = new byte[] { 0x1, 0x2, 0x4 };
-			byte[] keyPair, publicKey;
-			this.CryptoProvider.ApplySecurityLevel(SecurityLevel.Minimum);
-			this.CryptoProvider.GenerateSigningKeyPair(out keyPair, out publicKey);
-			byte[] signature = this.CryptoProvider.Sign(data, keyPair);
-			Assert.IsTrue(this.CryptoProvider.VerifySignature(publicKey, data, signature, this.CryptoProvider.AsymmetricHashAlgorithmName));
-			Assert.IsFalse(this.CryptoProvider.VerifySignature(publicKey, tamperedData, signature, this.CryptoProvider.AsymmetricHashAlgorithmName));
-		}
-
-		[TestMethod]
-		public async Task HashAsync() {
-			var streamContent = new byte[5000]; // not aligned with natural 4096 block sizes deliberately.
-			streamContent[0] = 0x22;
-			var stream = new MemoryStream(streamContent);
-			string hash = Convert.ToBase64String(await this.CryptoProvider.HashAsync(stream, "SHA256"));
-			Assert.AreEqual("Dt3SUt9aw0h0ALEcIPIw8G6pIZA84nUF6jzUcPEaick=", hash);
-		}
-
-		[TestMethod]
-		public async Task ComputeAuthenticationCodeAsync() {
-			var streamContent = new byte[5000]; // not aligned with natural 4096 block sizes deliberately.
-			streamContent[0] = 0x22;
-			byte[] key = new byte[16];
-			key[1] = 0x44;
-			var stream = new MemoryStream(streamContent);
-			string code = Convert.ToBase64String(await this.CryptoProvider.ComputeAuthenticationCodeAsync(stream, key, "SHA256"));
-			Assert.AreEqual("uEkw2LhaJ8X5PIIdFaQZJOQclqmUdCavVVrtAoh/vCY=", code);
-		}
-
-		[TestMethod]
-		public void FillCryptoRandomBufferNull() {
-			AssertEx.Throws<ArgumentNullException>(() => this.CryptoProvider.FillCryptoRandomBuffer(null));
-		}
-
-		[TestMethod]
-		public void FillCryptoRandomBufferZeroLength() {
-			this.CryptoProvider.FillCryptoRandomBuffer(new byte[0]);
-		}
-
-		[TestMethod]
-		public void FillCryptoRandomBuffer() {
-			var buffer = new byte[48];
-			this.CryptoProvider.FillCryptoRandomBuffer(buffer);
-			Assert.IsFalse(buffer.All(b => b == 0));
-		}
-
-		[TestMethod]
-		public void DeriveKeyFromPasswordBoundsChecks() {
-			AssertEx.Throws<ArgumentNullException>(() => this.CryptoProvider.DeriveKeyFromPassword(null, new byte[15], 1, 15));
-			AssertEx.Throws<ArgumentNullException>(() => this.CryptoProvider.DeriveKeyFromPassword("foo", null, 1, 15));
-			AssertEx.Throws<ArgumentOutOfRangeException>(() => this.CryptoProvider.DeriveKeyFromPassword("foo", new byte[15], 0, 15));
-			AssertEx.Throws<ArgumentOutOfRangeException>(() => this.CryptoProvider.DeriveKeyFromPassword("foo", new byte[15], 1, 0));
-		}
-
-		[TestMethod]
-		public void DeriveKeyFromPassword() {
-			var salt = new byte[] { 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8 };
-			byte[] actualKey = this.CryptoProvider.DeriveKeyFromPassword("foo password", salt, 87, 77);
-			Assert.AreEqual(77, actualKey.Length);
-			string base64actualKey = Convert.ToBase64String(actualKey);
-			Assert.AreEqual(DeriveKeyFromPasswordExpectedKey, base64actualKey);
 		}
 	}
 }

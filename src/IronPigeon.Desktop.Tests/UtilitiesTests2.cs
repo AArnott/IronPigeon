@@ -10,17 +10,6 @@
 	[TestClass]
 	public class UtilitiesTests2 {
 		[TestMethod]
-		public void CreateWebSafeBase64Thumbprint() {
-			var buffer = new byte[] { 0x1 };
-			var mockCrypto = new Mocks.MockCryptoProvider();
-			AssertEx.Throws<ArgumentNullException>(() => CryptoProviderExtensions.CreateWebSafeBase64Thumbprint(null, buffer));
-			AssertEx.Throws<ArgumentNullException>(() => CryptoProviderExtensions.CreateWebSafeBase64Thumbprint(mockCrypto, null));
-
-			string thumbprint = CryptoProviderExtensions.CreateWebSafeBase64Thumbprint(mockCrypto, buffer);
-			Assert.AreEqual(Utilities.ToBase64WebSafe(mockCrypto.Hash(buffer, mockCrypto.SymmetricHashAlgorithmName)), thumbprint);
-		}
-
-		[TestMethod]
 		public void UrlEncode() {
 			var data = new Dictionary<string, string> { { "a", "b" }, { "a=b&c", "e=f&g" }, };
 			string urlEncoded = data.UrlEncode();

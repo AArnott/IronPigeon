@@ -12,6 +12,7 @@
 	using System.Text;
 	using System.Threading;
 	using System.Threading.Tasks;
+	using PCLCrypto;
 	using Validation;
 	using TaskEx = System.Threading.Tasks.Task;
 
@@ -297,6 +298,10 @@
 				throw new InvalidMessageException(Strings.MaxAllowableMessagePartSizeExceeded);
 			}
 
+			if (size < 0) {
+				throw new InvalidMessageException("Message corrupted.");
+			}
+
 			byte[] buffer = new byte[size];
 			await stream.ReadAsync(buffer, 0, size, cancellationToken);
 			return buffer;
@@ -319,15 +324,6 @@
 			}
 
 			return new Substream(stream, size);
-		}
-
-		/// <summary>
-		/// Sets the specified security level's key lengths to the specified crypto provider.
-		/// </summary>
-		/// <param name="cryptoProvider">The crypto provider.</param>
-		/// <param name="level">The level of security to apply.</param>
-		public static void ApplySecurityLevel(this ICryptoProvider cryptoProvider, SecurityLevel level) {
-			level.Apply(cryptoProvider);
 		}
 
 		/// <summary>
@@ -521,12 +517,12 @@
 		/// <param name="hashLengthInBytes">The length of the output of the hash functino bytes.</param>
 		/// <returns>The probable hash algorithm.</returns>
 		/// <exception cref="System.NotSupportedException">Thrown when an unrecognized length is specified.</exception>
-		internal static string GuessHashAlgorithmFromLength(int hashLengthInBytes) {
+		internal static HashAlgorithm GuessHashAlgorithmFromLength(int hashLengthInBytes) {
 			switch (hashLengthInBytes) {
 				case 160 / 8:
-					return "SHA1";
+					return HashAlgorithm.Sha1;
 				case 256 / 8:
-					return "SHA256";
+					return HashAlgorithm.Sha256;
 				default:
 					throw new NotSupportedException();
 			}

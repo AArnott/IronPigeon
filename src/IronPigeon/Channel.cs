@@ -2,6 +2,7 @@
 	using System;
 	using System.Collections.Generic;
 	using System.Collections.ObjectModel;
+	using System.Composition;
 	using System.Diagnostics;
 	using System.Globalization;
 	using System.IO;
@@ -16,6 +17,7 @@
 	using System.Threading.Tasks;
 	using IronPigeon.Providers;
 	using IronPigeon.Relay;
+	using PCLCrypto;
 	using Validation;
 
 	/// <summary>
@@ -38,11 +40,13 @@
 		/// Initializes a new instance of the <see cref="Channel" /> class.
 		/// </summary>
 		public Channel() {
+			this.CryptoServices = new CryptoSettings();
 		}
 
 		/// <summary>
 		/// Gets or sets the provider of blob storage.
 		/// </summary>
+		[Import]
 		public ICloudBlobStorageProvider CloudBlobStorage { get; set; }
 
 		/// <summary>
@@ -51,7 +55,7 @@
 		/// <value>
 		/// The crypto services.
 		/// </value>
-		public ICryptoProvider CryptoServices { get; set; }
+		public CryptoSettings CryptoServices { get; set; }
 
 		/// <summary>
 		/// Gets or sets the endpoint used to receive messages.
@@ -69,11 +73,13 @@
 		/// <summary>
 		/// Gets or sets the HTTP client used for outbound HTTP requests.
 		/// </summary>
+		[Import]
 		public HttpClient HttpClient { get; set; }
 
 		/// <summary>
 		/// Gets or sets the HTTP client to use for long poll HTTP requests.
 		/// </summary>
+		[Import]
 		public HttpClient HttpClientLongPoll {
 			get {
 				return this.httpClientLongPoll;
@@ -88,6 +94,7 @@
 		/// <summary>
 		/// Gets or sets the set of address books to use when verifying claimed identifiers on received messages.
 		/// </summary>
+		[ImportMany]
 		public IList<AddressBook> AddressBooks { get; set; }
 
 		/// <summary>
@@ -231,12 +238,13 @@
 			this.Log("Message symmetric IV", encryptionVariables.IV);
 
 			cipherTextStream.Position = 0;
-			var messageHash = await this.CryptoServices.HashAsync(cipherTextStream, this.CryptoServices.SymmetricHashAlgorithmName, cancellationToken);
+			var hasher = WinRTCrypto.HashAlgorithmProvider.OpenAlgorithm(this.CryptoServices.SymmetricHashAlgorithm);
+			var messageHash = hasher.HashData(cipherTextStream.ToArray());
 			this.Log("Encrypted message hash", messageHash);
 
 			cipherTextStream.Position = 0;
 			Uri blobUri = await this.CloudBlobStorage.UploadMessageAsync(cipherTextStream, expiresUtc, contentType: message.ContentType, bytesCopiedProgress: bytesCopiedProgress, cancellationToken: cancellationToken);
-			return new PayloadReference(blobUri, messageHash, this.CryptoServices.SymmetricHashAlgorithmName, encryptionVariables.Key, encryptionVariables.IV, expiresUtc);
+			return new PayloadReference(blobUri, messageHash, this.CryptoServices.SymmetricHashAlgorithm.GetHashAlgorithmName(), encryptionVariables.Key, encryptionVariables.IV, expiresUtc);
 		}
 
 		/// <summary>
@@ -252,7 +260,7 @@
 			var messageBuffer = await responseMessage.Content.ReadAsByteArrayAsync();
 
 			// Calculate hash of downloaded message and check that it matches the referenced message hash.
-			if (!this.CryptoServices.IsHashMatchWithTolerantHashAlgorithm(messageBuffer, notification.Hash, notification.HashAlgorithmName)) {
+			if (!this.CryptoServices.IsHashMatchWithTolerantHashAlgorithm(messageBuffer, notification.Hash, CryptoProviderExtensions.ParseHashAlgorithmName(notification.HashAlgorithmName))) {
 				throw new InvalidMessageException();
 			}
 
@@ -294,7 +302,7 @@
 			responseStreamCopy.Position = 0;
 
 			var encryptedKey = await responseStreamCopy.ReadSizeAndBufferAsync(cancellationToken);
-			var key = this.CryptoServices.Decrypt(this.Endpoint.EncryptionKeyPrivateMaterial, encryptedKey);
+			var key = WinRTCrypto.CryptographicEngine.Decrypt(this.Endpoint.EncryptionKey, encryptedKey);
 			var iv = await responseStreamCopy.ReadSizeAndBufferAsync(cancellationToken);
 			var ciphertextStream = await responseStreamCopy.ReadSizeAndStreamAsync(cancellationToken);
 			var encryptedVariables = new SymmetricEncryptionVariables(key, iv);
@@ -303,7 +311,7 @@
 			await this.CryptoServices.DecryptAsync(ciphertextStream, plainTextPayloadStream, encryptedVariables, cancellationToken);
 
 			plainTextPayloadStream.Position = 0;
-			string signingHashAlgorithm = null; //// Encoding.UTF8.GetString(await plainTextPayloadStream.ReadSizeAndBufferAsync(cancellationToken));
+			AsymmetricAlgorithm? signingHashAlgorithm = null;  //// Encoding.UTF8.GetString(await plainTextPayloadStream.ReadSizeAndBufferAsync(cancellationToken));
 			byte[] signature = await plainTextPayloadStream.ReadSizeAndBufferAsync(cancellationToken);
 			long payloadStartPosition = plainTextPayloadStream.Position;
 			var signedBytes = new byte[plainTextPayloadStream.Length - plainTextPayloadStream.Position];
@@ -318,10 +326,10 @@
 			var messageReference = Utilities.DeserializeDataContract<PayloadReference>(plainTextPayloadReader);
 			messageReference.ReferenceLocation = inboxItem.Location;
 			if (messageReference.HashAlgorithmName == null) {
-				messageReference.HashAlgorithmName = Utilities.GuessHashAlgorithmFromLength(messageReference.Hash.Length);
+				messageReference.HashAlgorithmName = Utilities.GuessHashAlgorithmFromLength(messageReference.Hash.Length).GetHashAlgorithmName();
 			}
 
-			if (!this.CryptoServices.VerifySignatureWithTolerantHashAlgorithm(notificationAuthor.SigningKeyPublicMaterial, signedBytes, signature, signingHashAlgorithm)) {
+			if (!CryptoProviderExtensions.VerifySignatureWithTolerantHashAlgorithm(notificationAuthor.SigningKeyPublicMaterial, signedBytes, signature, signingHashAlgorithm)) {
 				throw new InvalidMessageException();
 			}
 
@@ -381,7 +389,7 @@
 			plainTextPayloadWriter.Flush();
 			this.Log("Message invite plaintext", plainTextPayloadStream.ToArray());
 
-			byte[] notificationSignature = this.CryptoServices.Sign(plainTextPayloadStream.ToArray(), this.Endpoint.SigningKeyPrivateMaterial);
+			byte[] notificationSignature = WinRTCrypto.CryptographicEngine.Sign(this.Endpoint.SigningKey, plainTextPayloadStream.ToArray());
 			var signedPlainTextPayloadStream = new MemoryStream((int)plainTextPayloadStream.Length + notificationSignature.Length + 4);
 			////await signedPlainTextPayloadStream.WriteSizeAndBufferAsync(Encoding.UTF8.GetBytes(this.CryptoServices.HashAlgorithmName), cancellationToken);
 			await signedPlainTextPayloadStream.WriteSizeAndBufferAsync(notificationSignature, cancellationToken);
@@ -399,7 +407,10 @@
 			builder.Query += "&lifetime=" + lifetimeInMinutes.ToString(CultureInfo.InvariantCulture);
 
 			var postContent = new MemoryStream();
-			var encryptedKey = this.CryptoServices.Encrypt(recipient.EncryptionKeyPublicMaterial, encryptedVariables.Key);
+			var encryptionKey = CryptoSettings.EncryptionAlgorithm.ImportPublicKey(
+				recipient.EncryptionKeyPublicMaterial,
+				CryptoSettings.PublicKeyFormat);
+			var encryptedKey = WinRTCrypto.CryptographicEngine.Encrypt(encryptionKey, encryptedVariables.Key);
 			this.Log("Message invite encrypted key", encryptedKey);
 			await postContent.WriteSizeAndBufferAsync(encryptedKey, cancellationToken);
 			await postContent.WriteSizeAndBufferAsync(encryptedVariables.IV, cancellationToken);
@@ -434,7 +445,8 @@
 			Requires.NotNullOrEmpty(claimedIdentifier, "claimedIdentifier");
 
 			Endpoint cachedEndpoint;
-			lock (this.resolvedIdentifiersCache) {
+			lock (this.resolvedIdentifiersCache)
+			{
 				if (this.resolvedIdentifiersCache.TryGetValue(claimedIdentifier, out cachedEndpoint)) {
 					return cachedEndpoint.Equals(claimingEndpoint);
 				}
@@ -447,7 +459,8 @@
 				cancellationToken);
 
 			if (matchingEndpoint != null) {
-				lock (this.resolvedIdentifiersCache) {
+				lock (this.resolvedIdentifiersCache)
+				{
 					if (!this.resolvedIdentifiersCache.ContainsKey(claimedIdentifier)) {
 						this.resolvedIdentifiersCache.Add(claimedIdentifier, matchingEndpoint);
 					}

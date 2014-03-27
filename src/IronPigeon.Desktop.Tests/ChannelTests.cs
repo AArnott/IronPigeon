@@ -16,7 +16,7 @@
 	public class ChannelTests {
 		private Mocks.LoggerMock logger;
 
-		private ICryptoProvider desktopCryptoProvider;
+		private CryptoSettings desktopCryptoProvider;
 
 		[SetUp]
 		public void Setup() {
@@ -35,22 +35,19 @@
 		public void DefaultCtor() {
 			var channel = new Channel();
 			Assert.That(channel.CloudBlobStorage, Is.Null);
-			Assert.That(channel.CryptoServices, Is.Null);
+			Assert.That(channel.CryptoServices, Is.Not.Null);
 			Assert.That(channel.Endpoint, Is.Null);
 		}
 
 		[Test]
 		public void CtorParameters() {
 			var blobProvider = new Mock<ICloudBlobStorageProvider>();
-			var cryptoProvider = new Mock<ICryptoProvider>();
 			var endpoint = new Mock<OwnEndpoint>();
 			var channel = new Channel() {
 				CloudBlobStorage = blobProvider.Object,
-				CryptoServices = cryptoProvider.Object,
 				Endpoint = endpoint.Object,
 			};
 			Assert.That(channel.CloudBlobStorage, Is.SameAs(blobProvider.Object));
-			Assert.That(channel.CryptoServices, Is.SameAs(cryptoProvider.Object));
 			Assert.That(channel.Endpoint, Is.SameAs(endpoint.Object));
 		}
 
@@ -80,11 +77,11 @@
 
 				var cloudStorage = new Mocks.CloudBlobStorageProviderMock();
 				var inboxMock = new Mocks.InboxHttpHandlerMock(new[] { receiver.PublicEndpoint });
-				var cryptoProvider = new Mocks.MockCryptoProvider();
+				var cryptoProvider = new CryptoSettings(SecurityLevel.Minimum);
 
 				var sentMessage = Valid.Message;
 				await this.SendMessageAsync(cloudStorage, inboxMock, cryptoProvider, sender, receiver.PublicEndpoint, sentMessage);
-				var messages = await this.ReceiveMessageAsync(cloudStorage, inboxMock, new Mocks.MockCryptoProvider(), receiver);
+				var messages = await this.ReceiveMessageAsync(cloudStorage, inboxMock, new CryptoSettings(SecurityLevel.Minimum), receiver);
 
 				Assert.That(messages.Count, Is.EqualTo(1));
 				var receivedMessage = messages.Single();
@@ -139,7 +136,7 @@
 			}).GetAwaiter().GetResult();
 		}
 
-		private async Task SendMessageAsync(Mocks.CloudBlobStorageProviderMock cloudBlobStorage, Mocks.InboxHttpHandlerMock inboxMock, ICryptoProvider cryptoProvider, OwnEndpoint sender, Endpoint receiver, Payload message) {
+		private async Task SendMessageAsync(Mocks.CloudBlobStorageProviderMock cloudBlobStorage, Mocks.InboxHttpHandlerMock inboxMock, CryptoSettings cryptoProvider, OwnEndpoint sender, Endpoint receiver, Payload message) {
 			Requires.NotNull(cloudBlobStorage, "cloudBlobStorage");
 			Requires.NotNull(sender, "sender");
 			Requires.NotNull(message, "message");
@@ -160,7 +157,7 @@
 			await channel.PostAsync(Valid.Message, new[] { receiver }, Valid.ExpirationUtc);
 		}
 
-		private async Task<IReadOnlyCollection<Channel.PayloadReceipt>> ReceiveMessageAsync(Mocks.CloudBlobStorageProviderMock cloudBlobStorage, Mocks.InboxHttpHandlerMock inboxMock, ICryptoProvider cryptoProvider, OwnEndpoint receiver, bool expectMessage = true) {
+		private async Task<IReadOnlyCollection<Channel.PayloadReceipt>> ReceiveMessageAsync(Mocks.CloudBlobStorageProviderMock cloudBlobStorage, Mocks.InboxHttpHandlerMock inboxMock, CryptoSettings cryptoProvider, OwnEndpoint receiver, bool expectMessage = true) {
 			Requires.NotNull(cloudBlobStorage, "cloudBlobStorage");
 			Requires.NotNull(receiver, "receiver");
 

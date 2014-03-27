@@ -11,7 +11,6 @@
 		[SetUp]
 		public void SetUp() {
 			this.twitter = new TwitterAddressBook();
-			this.twitter.CryptoServices = TestUtilities.CreateAuthenticCryptoProvider();
 			this.twitter.HttpClient = new HttpClient(Mocks.HttpMessageHandlerRecorder.CreatePlayback());
 		}
 
@@ -29,7 +28,6 @@
 
 		[Test]
 		public void LookupEntryAsyncExistingUser() {
-			this.twitter.CryptoServices.ApplySecurityLevel(SecurityLevel.Maximum);
 			var endpoint = this.twitter.LookupAsync("@PrivacyNotFound").Result;
 			Assert.That(endpoint, Is.Not.Null);
 		}

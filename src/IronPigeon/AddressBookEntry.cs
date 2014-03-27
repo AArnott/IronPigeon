@@ -6,6 +6,7 @@
 	using System.Runtime.Serialization;
 	using System.Text;
 	using System.Threading.Tasks;
+	using PCLCrypto;
 	using Validation;
 
 	/// <summary>
@@ -48,12 +49,9 @@
 		/// <summary>
 		/// Deserializes an endpoint from an address book entry and validates that the signatures are correct.
 		/// </summary>
-		/// <param name="cryptoProvider">The cryptographic provider that will be used to verify the signature.</param>
 		/// <returns>The deserialized endpoint.</returns>
 		/// <exception cref="BadAddressBookEntryException">Thrown if the signatures are invalid.</exception>
-		public Endpoint ExtractEndpoint(ICryptoProvider cryptoProvider) {
-			Requires.NotNull(cryptoProvider, "cryptoProvider");
-
+		public Endpoint ExtractEndpoint() {
 			var reader = new BinaryReader(new MemoryStream(this.SerializedEndpoint));
 			Endpoint endpoint;
 			try {
@@ -63,7 +61,7 @@
 			}
 
 			try {
-				if (!cryptoProvider.VerifySignatureWithTolerantHashAlgorithm(endpoint.SigningKeyPublicMaterial, this.SerializedEndpoint, this.Signature, this.HashAlgorithmName)) {
+				if (!CryptoProviderExtensions.VerifySignatureWithTolerantHashAlgorithm(endpoint.SigningKeyPublicMaterial, this.SerializedEndpoint, this.Signature, this.HashAlgorithmName != null ? (AsymmetricAlgorithm?)CryptoProviderExtensions.GetSignatureProvider(this.HashAlgorithmName) : null)) {
 					throw new BadAddressBookEntryException(Strings.AddressBookEntrySignatureDoesNotMatch);
 				}
 			} catch (Exception ex) { // all those platform-specific exceptions that aren't available to portable libraries.
