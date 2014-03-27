@@ -17,9 +17,10 @@
 		[Test]
 		public void Ctor() {
 			var ownContact = new OwnEndpoint(Valid.ReceivingEndpoint.SigningKey, Valid.ReceivingEndpoint.EncryptionKey);
-			Assert.That(ownContact.PublicEndpoint, Is.SameAs(Valid.ReceivingEndpoint.PublicEndpoint));
-			Assert.That(ownContact.EncryptionKeyPrivateMaterial, Is.SameAs(Valid.ReceivingEndpoint.EncryptionKeyPrivateMaterial));
-			Assert.That(ownContact.SigningKeyPrivateMaterial, Is.SameAs(Valid.ReceivingEndpoint.SigningKeyPrivateMaterial));
+			ownContact.PublicEndpoint.MessageReceivingEndpoint = Valid.ReceivingEndpoint.PublicEndpoint.MessageReceivingEndpoint;
+			Assert.That(ownContact.PublicEndpoint, Is.EqualTo(Valid.ReceivingEndpoint.PublicEndpoint));
+			Assert.That(ownContact.EncryptionKeyPrivateMaterial, Is.EqualTo(Valid.ReceivingEndpoint.EncryptionKeyPrivateMaterial));
+			Assert.That(ownContact.SigningKeyPrivateMaterial, Is.EqualTo(Valid.ReceivingEndpoint.SigningKeyPrivateMaterial));
 		}
 
 		[Test]
