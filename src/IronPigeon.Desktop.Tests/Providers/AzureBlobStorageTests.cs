@@ -37,14 +37,14 @@
 			}
 		}
 
-		[Test]
+		[Test, Ignore]
 		public void CreateWithContainerAsync() {
 			// The SetUp method already called the method, so this tests the results of it.
 			var permissions = this.container.GetPermissions();
 			Assert.That(permissions.PublicAccess, Is.EqualTo(BlobContainerPublicAccessType.Blob));
 		}
 
-		[Test]
+		[Test, Ignore]
 		public void PurgeBlobsExpiringBeforeAsync() {
 			this.UploadMessageHelperAsync().GetAwaiter().GetResult();
 			this.provider.PurgeBlobsExpiringBeforeAsync(DateTime.UtcNow.AddDays(7)).GetAwaiter().GetResult();
