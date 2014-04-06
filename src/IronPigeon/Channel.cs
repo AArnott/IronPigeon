@@ -10,6 +10,7 @@
 	using System.Net;
 	using System.Net.Http;
 	using System.Net.Http.Headers;
+	using System.Runtime.ExceptionServices;
 	using System.Runtime.Serialization;
 	using System.Runtime.Serialization.Json;
 	using System.Text;
@@ -256,12 +257,44 @@
 		public virtual async Task<Payload> DownloadPayloadAsync(PayloadReference notification, CancellationToken cancellationToken = default(CancellationToken)) {
 			Requires.NotNull(notification, "notification");
 
-			var responseMessage = await this.HttpClient.GetAsync(notification.Location, cancellationToken);
-			var messageBuffer = await responseMessage.Content.ReadAsByteArrayAsync();
+			byte[] messageBuffer = null;
+			const int MaxAttempts = 2;
+			int retry;
+			Exception exceptionLeadingToRetry = null;
+			for (retry = 0; retry < MaxAttempts; retry++) {
+				exceptionLeadingToRetry = null;
+				try {
+					var responseMessage = await this.HttpClient.GetAsync(notification.Location, cancellationToken);
+					messageBuffer = await responseMessage.Content.ReadAsByteArrayAsync();
 
-			// Calculate hash of downloaded message and check that it matches the referenced message hash.
-			if (!this.CryptoServices.IsHashMatchWithTolerantHashAlgorithm(messageBuffer, notification.Hash, CryptoProviderExtensions.ParseHashAlgorithmName(notification.HashAlgorithmName))) {
-				throw new InvalidMessageException();
+					// Calculate hash of downloaded message and check that it matches the referenced message hash.
+					if (!this.CryptoServices.IsHashMatchWithTolerantHashAlgorithm(messageBuffer, notification.Hash, CryptoProviderExtensions.ParseHashAlgorithmName(notification.HashAlgorithmName))) {
+						// Sometimes when the hash mismatches, it's because the download was truncated
+						// (from switching out the application and then switching back, for example).
+						// Check for that before throwing.
+						if (responseMessage.Content.Headers.ContentLength.HasValue && responseMessage.Content.Headers.ContentLength.Value > messageBuffer.Length) {
+							// It looks like the message was truncated. Retry.
+							exceptionLeadingToRetry = new InvalidMessageException();
+							continue;
+						}
+
+						throw new InvalidMessageException();
+					}
+
+					// Stop retrying. We got something that worked!
+					break;
+				} catch (HttpRequestException ex) {
+					exceptionLeadingToRetry = ex;
+					continue;
+				}
+			}
+
+			if (exceptionLeadingToRetry != null) {
+				if (exceptionLeadingToRetry.StackTrace != null) {
+					ExceptionDispatchInfo.Capture(exceptionLeadingToRetry).Throw();
+				} else {
+					throw exceptionLeadingToRetry;
+				}
 			}
 
 			var encryptionVariables = new SymmetricEncryptionVariables(notification.Key, notification.IV);
