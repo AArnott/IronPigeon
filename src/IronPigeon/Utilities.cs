@@ -514,7 +514,7 @@
 		/// <summary>
 		/// Guesses the hash algorithm used given the length of the result.
 		/// </summary>
-		/// <param name="hashLengthInBytes">The length of the output of the hash functino bytes.</param>
+		/// <param name="hashLengthInBytes">The length of the output of the hash function bytes.</param>
 		/// <returns>The probable hash algorithm.</returns>
 		/// <exception cref="System.NotSupportedException">Thrown when an unrecognized length is specified.</exception>
 		internal static HashAlgorithm GuessHashAlgorithmFromLength(int hashLengthInBytes) {

@@ -3,6 +3,7 @@
 	using System.Collections.Generic;
 	using System.Composition;
 	using System.Diagnostics;
+	using System.Diagnostics.CodeAnalysis;
 	using System.IO;
 	using System.Linq;
 	using System.Net.Http;
@@ -19,10 +20,12 @@
 	/// </summary>
 	[Export(typeof(IUrlShortener))]
 	[Shared]
+	[SuppressMessage("Microsoft.StyleCop.CSharp.DocumentationRules", "SA1650:ElementDocumentationMustBeSpelledCorrectly", Justification = "StyleCop sees goo.gl as two mispelled words.")]
 	public class GoogleUrlShortener : IUrlShortener {
 		/// <summary>
 		/// The URL to the goog.gl shortening service.
 		/// </summary>
+		[SuppressMessage("Microsoft.StyleCop.CSharp.DocumentationRules", "SA1650:ElementDocumentationMustBeSpelledCorrectly", Justification = "StyleCop sees goo.gl as two mispelled words.")]
 		private static readonly Uri ShorteningService = new Uri("https://www.googleapis.com/urlshortener/v1/url");
 
 		/// <summary>

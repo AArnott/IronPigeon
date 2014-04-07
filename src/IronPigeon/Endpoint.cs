@@ -61,7 +61,7 @@
 		/// verified by the receiving end.
 		/// This property is present so that when a message arrives, the receiving end has a list of
 		/// identifiers to try to perform discovery on in order to provide the receiving user a human
-		/// recognizeable and verified idea of who sent the message.
+		/// recognizable and verified idea of who sent the message.
 		/// </remarks>
 		[DataMember]
 		public string[] AuthorizedIdentifiers { get; set; }
