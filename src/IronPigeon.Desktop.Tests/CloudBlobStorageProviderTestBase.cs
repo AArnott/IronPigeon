@@ -12,7 +12,7 @@
 	public abstract class CloudBlobStorageProviderTestBase {
 		protected ICloudBlobStorageProvider Provider { get; set; }
 
-		[Test]
+		[Test, Ignore]
 		public void UploadMessageAsync() {
 			var uri = this.UploadMessageHelperAsync().Result;
 			var client = new HttpClient();
