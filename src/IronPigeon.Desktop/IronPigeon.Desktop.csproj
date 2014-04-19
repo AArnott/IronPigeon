@@ -102,7 +102,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DesktopChannel.cs" />
     <Compile Include="Providers\AzureBlobStorage.cs" />
     <Compile Include="DesktopUtilities.cs" />
   </ItemGroup>

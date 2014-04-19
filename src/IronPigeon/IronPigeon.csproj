@@ -23,10 +23,13 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="AddressBookEntry.cs" />
+    <Compile Include="AndroidChannel.cs" />
+    <Compile Include="AppleChannel.cs" />
     <Compile Include="BadAddressBookEntryException.cs" />
     <Compile Include="Channel.cs" />
     <Compile Include="CryptoSettings.cs" />
     <Compile Include="CryptoProviderExtensions.cs" />
+    <Compile Include="DesktopChannel.cs" />
     <Compile Include="Endpoint.cs" />
     <Compile Include="ICloudBlobStorageProvider.cs" />
     <Compile Include="AddressBook.cs" />
@@ -62,6 +65,8 @@
     <Compile Include="Providers\TwitterAddressBook.cs" />
     <Compile Include="SymmetricEncryptionVariables.cs" />
     <Compile Include="Utilities.cs" />
+    <Compile Include="WinPhoneChannel.cs" />
+    <Compile Include="WinRTChannel.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Strings.resx">
