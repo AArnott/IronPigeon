@@ -44,22 +44,22 @@
       <HintPath>..\..\bin\x86\Debug\Microsoft.VisualStudio.TestPlatform.UnitTestFramework.dll</HintPath>
     </Reference>
     <Reference Include="PCLCrypto">
-      <HintPath>..\packages\PCLCrypto.0.4.1-beta\lib\portable-net40+sl50+wp80+win+MonoAndroid10+MonoTouch10\PCLCrypto.dll</HintPath>
+      <HintPath>..\packages\PCLCrypto.0.5.0.14108\lib\portable-net40+sl50+win+wpa81+wp80\PCLCrypto.dll</HintPath>
     </Reference>
     <Reference Include="PCLCrypto.Abstractions">
-      <HintPath>..\packages\PCLCrypto.0.4.1-beta\lib\portable-net40+sl50+wp80+win+MonoAndroid10+MonoTouch10\PCLCrypto.Abstractions.dll</HintPath>
+      <HintPath>..\packages\PCLCrypto.0.5.0.14108\lib\portable-net40+sl50+win+wpa81+wp80\PCLCrypto.Abstractions.dll</HintPath>
     </Reference>
     <Reference Include="System.Net.Http">
-      <HintPath>..\packages\Microsoft.Net.Http.2.2.19\lib\portable-net40+sl4+win8+wp71+wpa81\System.Net.Http.dll</HintPath>
+      <HintPath>..\packages\Microsoft.Net.Http.2.2.20\lib\portable-net40+sl4+win8+wp71+wpa81\System.Net.Http.dll</HintPath>
     </Reference>
     <Reference Include="System.Net.Http.Extensions">
-      <HintPath>..\packages\Microsoft.Net.Http.2.2.19\lib\portable-net40+sl4+win8+wp71+wpa81\System.Net.Http.Extensions.dll</HintPath>
+      <HintPath>..\packages\Microsoft.Net.Http.2.2.20\lib\portable-net40+sl4+win8+wp71+wpa81\System.Net.Http.Extensions.dll</HintPath>
     </Reference>
     <Reference Include="System.Net.Http.Primitives">
-      <HintPath>..\packages\Microsoft.Net.Http.2.2.19\lib\portable-net40+sl4+win8+wp71+wpa81\System.Net.Http.Primitives.dll</HintPath>
+      <HintPath>..\packages\Microsoft.Net.Http.2.2.20\lib\portable-net40+sl4+win8+wp71+wpa81\System.Net.Http.Primitives.dll</HintPath>
     </Reference>
     <Reference Include="Validation">
-      <HintPath>..\packages\Validation.2.0.3.13323\lib\portable-windows8+net40+sl5+windowsphone8+MonoAndroid+MonoTouch\Validation.dll</HintPath>
+      <HintPath>..\packages\Validation.2.0.4.14103\lib\portable-windows8+net40+sl5+wp8+wpa81+wp81+MonoAndroid+MonoTouch\Validation.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
