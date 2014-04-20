@@ -22,6 +22,12 @@
 		/// <summary>
 		/// Initializes a new instance of the <see cref="TinyUrlShortener"/> class.
 		/// </summary>
+		public TinyUrlShortener() {
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="TinyUrlShortener"/> class.
+		/// </summary>
 		/// <param name="httpClient">The HTTP client.</param>
 		public TinyUrlShortener(HttpClient httpClient) {
 			this.HttpClient = httpClient;

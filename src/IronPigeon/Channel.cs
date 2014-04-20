@@ -396,7 +396,7 @@
 		/// <param name="pushContent">Content of the push.</param>
 		/// <param name="cancellationToken">The cancellation token.</param>
 		/// <returns>A task representing the async operation.</returns>
-		public async Task RegisterPushNotificationChannelAsync(string packageSecurityIdentifier, Uri pushNotificationChannelUri, DateTime channelExpiration, string pushContent, CancellationToken cancellationToken = default(CancellationToken)) {
+		public async Task RegisterWindowsPushNotificationChannelAsync(string packageSecurityIdentifier, Uri pushNotificationChannelUri, DateTime channelExpiration, string pushContent, CancellationToken cancellationToken = default(CancellationToken)) {
 			Requires.NotNull(pushNotificationChannelUri, "pushNotificationChannelUri");
 			Requires.NotNullOrEmpty(packageSecurityIdentifier, "packageSecurityIdentifier");
 
