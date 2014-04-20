@@ -1,7 +1,6 @@
 ﻿namespace IronPigeon {
 	using System;
 	using System.Collections.Generic;
-	using System.Composition;
 	using System.IO;
 	using System.Linq;
 	using System.Net.Http;
@@ -17,9 +16,27 @@
 	/// <summary>
 	/// Creates and services <see cref="OwnEndpoint"/> instances.
 	/// </summary>
-	[Export]
-	[Shared]
 	public class OwnEndpointServices {
+		/// <summary>
+		/// Initializes a new instance of the <see cref="OwnEndpointServices"/> class.
+		/// </summary>
+		public OwnEndpointServices() {
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="OwnEndpointServices"/> class.
+		/// </summary>
+		/// <param name="channel">The channel.</param>
+		/// <param name="cloudBlobStorage">The cloud blob storage provider.</param>
+		/// <param name="httpClient">The HTTP client.</param>
+		/// <param name="endpointInboxFactory">The endpoint inbox factory.</param>
+		public OwnEndpointServices(Channel channel, ICloudBlobStorageProvider cloudBlobStorage, HttpClient httpClient, IEndpointInboxFactory endpointInboxFactory) {
+			this.Channel = channel;
+			this.CloudBlobStorage = cloudBlobStorage;
+			this.HttpClient = httpClient;
+			this.EndpointInboxFactory = endpointInboxFactory;
+		}
+
 		/// <summary>
 		/// Gets the cryptographic services provider.
 		/// </summary>
@@ -30,25 +47,21 @@
 		/// <summary>
 		/// Gets or sets the channel.
 		/// </summary>
-		[Import]
 		public Channel Channel { get; set; }
 
 		/// <summary>
 		/// Gets or sets the cloud blob storage provider.
 		/// </summary>
-		[Import]
 		public ICloudBlobStorageProvider CloudBlobStorage { get; set; }
 
 		/// <summary>
 		/// Gets or sets the HTTP client.
 		/// </summary>
-		[Import]
 		public HttpClient HttpClient { get; set; }
 
 		/// <summary>
 		/// Gets or sets the service that creates new inboxes on a message relay.
 		/// </summary>
-		[Import]
 		public IEndpointInboxFactory EndpointInboxFactory { get; set; }
 
 		/// <summary>

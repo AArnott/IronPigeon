@@ -1,7 +1,6 @@
 ﻿namespace IronPigeon.Tests {
 	using System;
 	using System.Collections.Generic;
-	using System.Composition.Hosting;
 	using System.Linq;
 	using System.Net.Http;
 	using System.Text;

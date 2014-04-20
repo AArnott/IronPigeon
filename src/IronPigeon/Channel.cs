@@ -2,7 +2,6 @@
 	using System;
 	using System.Collections.Generic;
 	using System.Collections.ObjectModel;
-	using System.Composition;
 	using System.Diagnostics;
 	using System.Globalization;
 	using System.IO;
@@ -45,9 +44,23 @@
 		}
 
 		/// <summary>
+		/// Initializes a new instance of the <see cref="Channel"/> class.
+		/// </summary>
+		/// <param name="cloudBlobStorage">The cloud blob storage.</param>
+		/// <param name="httpClient">The HTTP client.</param>
+		/// <param name="httpClientLongPoll">The HTTP client long poll.</param>
+		/// <param name="addressBooks">The address books.</param>
+		public Channel(ICloudBlobStorageProvider cloudBlobStorage, HttpClient httpClient, HttpClient httpClientLongPoll, IEnumerable<AddressBook> addressBooks)
+			: this() {
+			this.CloudBlobStorage = cloudBlobStorage;
+			this.HttpClient = httpClient;
+			this.HttpClientLongPoll = httpClientLongPoll;
+			this.AddressBooks = addressBooks != null ? addressBooks.ToList() : null;
+		}
+
+		/// <summary>
 		/// Gets or sets the provider of blob storage.
 		/// </summary>
-		[Import]
 		public ICloudBlobStorageProvider CloudBlobStorage { get; set; }
 
 		/// <summary>
@@ -74,13 +87,11 @@
 		/// <summary>
 		/// Gets or sets the HTTP client used for outbound HTTP requests.
 		/// </summary>
-		[Import]
 		public HttpClient HttpClient { get; set; }
 
 		/// <summary>
 		/// Gets or sets the HTTP client to use for long poll HTTP requests.
 		/// </summary>
-		[Import]
 		public HttpClient HttpClientLongPoll {
 			get {
 				return this.httpClientLongPoll;
@@ -95,7 +106,6 @@
 		/// <summary>
 		/// Gets or sets the set of address books to use when verifying claimed identifiers on received messages.
 		/// </summary>
-		[ImportMany]
 		public IList<AddressBook> AddressBooks { get; set; }
 
 		/// <summary>
@@ -309,6 +319,99 @@
 			return message;
 		}
 
+		/// <summary>
+		/// Registers an Android application to receive push notifications for incoming messages.
+		/// </summary>
+		/// <param name="googlePlayRegistrationId">The Google Cloud Messaging registration identifier.</param>
+		/// <param name="cancellationToken">The cancellation token.</param>
+		/// <returns>
+		/// A task representing the async operation.
+		/// </returns>
+		public async Task RegisterGooglePlayPushNotificationAsync(string googlePlayRegistrationId, CancellationToken cancellationToken = default(CancellationToken)) {
+			Requires.NotNullOrEmpty(googlePlayRegistrationId, "googlePlayRegistrationId");
+
+			var request = new HttpRequestMessage(HttpMethod.Put, this.Endpoint.PublicEndpoint.MessageReceivingEndpoint);
+			request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", this.Endpoint.InboxOwnerCode);
+			request.Content = new FormUrlEncodedContent(new Dictionary<string, string> {
+				{ "gcm_registration_id", googlePlayRegistrationId },
+			});
+			var response = await this.HttpClient.SendAsync(request, cancellationToken);
+			response.EnsureSuccessStatusCode();
+		}
+
+		/// <summary>
+		/// Registers an iOS application to receive push notifications for incoming messages.
+		/// </summary>
+		/// <param name="deviceToken">The Apple-assigned device token to use from the cloud to reach this device.</param>
+		/// <param name="cancellationToken">The cancellation token.</param>
+		/// <returns>
+		/// A task representing the async operation.
+		/// </returns>
+		public async Task RegisterApplePushNotificationAsync(string deviceToken, CancellationToken cancellationToken = default(CancellationToken)) {
+			Requires.NotNullOrEmpty(deviceToken, "deviceToken");
+
+			var request = new HttpRequestMessage(HttpMethod.Put, this.Endpoint.PublicEndpoint.MessageReceivingEndpoint);
+			request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", this.Endpoint.InboxOwnerCode);
+			request.Content = new FormUrlEncodedContent(new Dictionary<string, string> {
+				{ "ios_device_token", deviceToken },
+			});
+			var response = await this.HttpClient.SendAsync(request, cancellationToken);
+			response.EnsureSuccessStatusCode();
+		}
+
+		/// <summary>
+		/// Registers a Windows 8 application to receive push notifications for incoming messages.
+		/// </summary>
+		/// <param name="pushNotificationChannelUri">The push notification channel's ChannelUri property.</param>
+		/// <param name="pushContent">Content of the push.</param>
+		/// <param name="toastLine1">The first line in the toast notification to send.</param>
+		/// <param name="toastLine2">The second line in the toast notification to send.</param>
+		/// <param name="tileTemplate">The tile template used by the client app.</param>
+		/// <param name="cancellationToken">The cancellation token.</param>
+		/// <returns>
+		/// A task representing the async operation.
+		/// </returns>
+		public async Task RegisterWinPhonePushNotificationAsync(Uri pushNotificationChannelUri, string pushContent = null, string toastLine1 = null, string toastLine2 = null, string tileTemplate = null, CancellationToken cancellationToken = default(CancellationToken)) {
+			Requires.NotNull(pushNotificationChannelUri, "pushNotificationChannelUri");
+
+			var request = new HttpRequestMessage(HttpMethod.Put, this.Endpoint.PublicEndpoint.MessageReceivingEndpoint);
+			request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", this.Endpoint.InboxOwnerCode);
+			request.Content = new FormUrlEncodedContent(new Dictionary<string, string> {
+				{ "wp8_channel_uri", pushNotificationChannelUri.AbsoluteUri },
+				{ "wp8_channel_content", pushContent ?? string.Empty },
+				{ "wp8_channel_toast_text1", toastLine1 ?? string.Empty },
+				{ "wp8_channel_toast_text2", toastLine2 ?? string.Empty },
+				{ "wp8_channel_tile_template", tileTemplate ?? string.Empty },
+			});
+			var response = await this.HttpClient.SendAsync(request, cancellationToken);
+			response.EnsureSuccessStatusCode();
+		}
+
+		/// <summary>
+		/// Registers a Windows 8 application to receive push notifications for incoming messages.
+		/// </summary>
+		/// <param name="packageSecurityIdentifier">The package security identifier of the app.</param>
+		/// <param name="pushNotificationChannelUri">The push notification channel.</param>
+		/// <param name="channelExpiration">When the channel will expire.</param>
+		/// <param name="pushContent">Content of the push.</param>
+		/// <param name="cancellationToken">The cancellation token.</param>
+		/// <returns>A task representing the async operation.</returns>
+		public async Task RegisterPushNotificationChannelAsync(string packageSecurityIdentifier, Uri pushNotificationChannelUri, DateTime channelExpiration, string pushContent, CancellationToken cancellationToken = default(CancellationToken)) {
+			Requires.NotNull(pushNotificationChannelUri, "pushNotificationChannelUri");
+			Requires.NotNullOrEmpty(packageSecurityIdentifier, "packageSecurityIdentifier");
+
+			var request = new HttpRequestMessage(HttpMethod.Put, this.Endpoint.PublicEndpoint.MessageReceivingEndpoint);
+			request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", this.Endpoint.InboxOwnerCode);
+			request.Content = new FormUrlEncodedContent(new Dictionary<string, string> {
+				{ "package_security_identifier", packageSecurityIdentifier },
+				{ "channel_uri", pushNotificationChannelUri.AbsoluteUri },
+				{ "channel_content", pushContent ?? string.Empty },
+				{ "expiration", channelExpiration.ToString(CultureInfo.InvariantCulture) },
+			});
+			var response = await this.HttpClient.SendAsync(request, cancellationToken);
+			response.EnsureSuccessStatusCode();
+		}
+
 		#region Protected message sending/receiving methods
 
 		/// <summary>
@@ -344,7 +447,7 @@
 			await this.CryptoServices.DecryptAsync(ciphertextStream, plainTextPayloadStream, encryptedVariables, cancellationToken);
 
 			plainTextPayloadStream.Position = 0;
-			AsymmetricAlgorithm? signingHashAlgorithm = null;  //// Encoding.UTF8.GetString(await plainTextPayloadStream.ReadSizeAndBufferAsync(cancellationToken));
+			AsymmetricAlgorithm? signingHashAlgorithm = null;   //// Encoding.UTF8.GetString(await plainTextPayloadStream.ReadSizeAndBufferAsync(cancellationToken));
 			byte[] signature = await plainTextPayloadStream.ReadSizeAndBufferAsync(cancellationToken);
 			long payloadStartPosition = plainTextPayloadStream.Position;
 			var signedBytes = new byte[plainTextPayloadStream.Length - plainTextPayloadStream.Position];
@@ -478,8 +581,7 @@
 			Requires.NotNullOrEmpty(claimedIdentifier, "claimedIdentifier");
 
 			Endpoint cachedEndpoint;
-			lock (this.resolvedIdentifiersCache)
-			{
+			lock (this.resolvedIdentifiersCache) {
 				if (this.resolvedIdentifiersCache.TryGetValue(claimedIdentifier, out cachedEndpoint)) {
 					return cachedEndpoint.Equals(claimingEndpoint);
 				}
@@ -492,8 +594,7 @@
 				cancellationToken);
 
 			if (matchingEndpoint != null) {
-				lock (this.resolvedIdentifiersCache)
-				{
+				lock (this.resolvedIdentifiersCache) {
 					if (!this.resolvedIdentifiersCache.ContainsKey(claimedIdentifier)) {
 						this.resolvedIdentifiersCache.Add(claimedIdentifier, matchingEndpoint);
 					}
