@@ -18,6 +18,7 @@
 	using System.Windows.Media.Imaging;
 	using System.Windows.Navigation;
 	using System.Windows.Shapes;
+	using Autofac;
 	using IronPigeon;
 	using IronPigeon.Dart;
 	using IronPigeon.Providers;
@@ -27,11 +28,36 @@
 	/// Interaction logic for MainWindow.xaml
 	/// </summary>
 	public partial class MainWindow : Window {
+		private IContainer container;
+
 		/// <summary>
 		/// Initializes a new instance of the <see cref="MainWindow"/> class.
 		/// </summary>
 		public MainWindow() {
 			this.InitializeComponent();
+
+			var builder = new ContainerBuilder();
+			builder.RegisterTypes(
+					typeof(RelayCloudBlobStorageProvider),
+					typeof(Channel),
+					typeof(PostalService),
+					typeof(OwnEndpointServices),
+					typeof(DirectEntryAddressBook),
+					typeof(HttpClientWrapper))
+				.AsSelf()
+				.AsImplementedInterfaces()
+				.SingleInstance()
+				.PropertiesAutowired();
+			builder.RegisterType(
+				typeof(ChatroomWindow))
+				.AsSelf()
+				.PropertiesAutowired();
+			builder.Register(ctxt => ctxt.Resolve<HttpClientWrapper>().Client);
+			builder.RegisterInstance(this)
+				.AsSelf()
+				.PropertiesAutowired();
+			this.container = builder.Build();
+			this.container.Resolve<MainWindow>();  // get properties satisfied
 
 			this.MessageRelayService.BlobPostUrl = new Uri(ConfigurationManager.ConnectionStrings["RelayBlobService"].ConnectionString);
 			this.MessageRelayService.InboxServiceUrl = new Uri(ConfigurationManager.ConnectionStrings["RelayInboxService"].ConnectionString);
@@ -110,12 +136,12 @@
 		}
 
 		private void OpenChatroom_OnClick(object sender, RoutedEventArgs e) {
-			var chatroomWindow = new ChatroomWindow(this.PostalService);
+			var chatroomWindow = this.container.Resolve<ChatroomWindow>();
 			chatroomWindow.Show();
 		}
 
 		private async void ChatWithAuthor_OnClick(object sender, RoutedEventArgs e) {
-			var chatroomWindow = new ChatroomWindow(this.PostalService);
+			var chatroomWindow = this.container.Resolve<ChatroomWindow>();
 			chatroomWindow.Show();
 
 			var addressBook = new DirectEntryAddressBook(new HttpClient());

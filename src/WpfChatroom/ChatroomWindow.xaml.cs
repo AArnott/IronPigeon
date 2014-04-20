@@ -26,10 +26,8 @@
 		/// <summary>
 		/// Initializes a new instance of the <see cref="ChatroomWindow" /> class.
 		/// </summary>
-		/// <param name="postalService">The postal service.</param>
-		public ChatroomWindow(PostalService postalService) {
+		public ChatroomWindow() {
 			this.InitializeComponent();
-			this.PostalService = postalService;
 		}
 
 		/// <summary>
