@@ -4,9 +4,11 @@
 	using System.Configuration;
 	using System.IO;
 	using System.Linq;
+	using System.Net.Http;
 	using System.Text;
 	using System.Threading.Tasks;
 	using System.Windows.Forms;
+	using Autofac;
 	using IronPigeon;
 	using IronPigeon.Providers;
 	using Microsoft.WindowsAzure;
@@ -14,9 +16,6 @@
 	using Microsoft.WindowsAzure.Storage.Blob;
 	using Microsoft.WindowsAzure.StorageClient;
 	using Validation;
-	using Autofac;
-	using System.Net.Http;
-
 
 	/// <summary>
 	/// Simple console app that demonstrates the IronPigeon protocol in a live chat program.
