@@ -14,6 +14,9 @@
 	using Microsoft.WindowsAzure.Storage.Blob;
 	using Microsoft.WindowsAzure.StorageClient;
 	using Validation;
+	using Autofac;
+	using System.Net.Http;
+
 
 	/// <summary>
 	/// Simple console app that demonstrates the IronPigeon protocol in a live chat program.
@@ -57,7 +60,21 @@
 		/// <param name="args">The arguments passed into the console app.</param>
 		[STAThread]
 		private static void Main(string[] args) {
-			var program = new Program();
+			var builder = new ContainerBuilder();
+			builder.RegisterTypes(
+					typeof(Program),
+					typeof(RelayCloudBlobStorageProvider),
+					typeof(Channel),
+					typeof(OwnEndpointServices),
+					typeof(DirectEntryAddressBook),
+					typeof(HttpClientWrapper))
+				.AsSelf()
+				.AsImplementedInterfaces()
+				.SingleInstance()
+				.PropertiesAutowired();
+			builder.Register(ctxt => ctxt.Resolve<HttpClientWrapper>().Client);
+			var container = builder.Build();
+			var program = container.Resolve<Program>();
 			program.DoAsync().GetAwaiter().GetResult();
 		}
 

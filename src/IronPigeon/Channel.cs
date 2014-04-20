@@ -50,7 +50,8 @@
 		/// <param name="httpClient">The HTTP client.</param>
 		/// <param name="httpClientLongPoll">The HTTP client long poll.</param>
 		/// <param name="addressBooks">The address books.</param>
-		public Channel(ICloudBlobStorageProvider cloudBlobStorage, HttpClient httpClient, HttpClient httpClientLongPoll, IEnumerable<AddressBook> addressBooks) {
+		public Channel(ICloudBlobStorageProvider cloudBlobStorage, HttpClient httpClient, HttpClient httpClientLongPoll, IEnumerable<AddressBook> addressBooks)
+			: this() {
 			this.CloudBlobStorage = cloudBlobStorage;
 			this.HttpClient = httpClient;
 			this.HttpClientLongPoll = httpClientLongPoll;
@@ -446,7 +447,7 @@
 			await this.CryptoServices.DecryptAsync(ciphertextStream, plainTextPayloadStream, encryptedVariables, cancellationToken);
 
 			plainTextPayloadStream.Position = 0;
-			AsymmetricAlgorithm? signingHashAlgorithm = null;  //// Encoding.UTF8.GetString(await plainTextPayloadStream.ReadSizeAndBufferAsync(cancellationToken));
+			AsymmetricAlgorithm? signingHashAlgorithm = null;   //// Encoding.UTF8.GetString(await plainTextPayloadStream.ReadSizeAndBufferAsync(cancellationToken));
 			byte[] signature = await plainTextPayloadStream.ReadSizeAndBufferAsync(cancellationToken);
 			long payloadStartPosition = plainTextPayloadStream.Position;
 			var signedBytes = new byte[plainTextPayloadStream.Length - plainTextPayloadStream.Position];
@@ -580,8 +581,7 @@
 			Requires.NotNullOrEmpty(claimedIdentifier, "claimedIdentifier");
 
 			Endpoint cachedEndpoint;
-			lock (this.resolvedIdentifiersCache)
-			{
+			lock (this.resolvedIdentifiersCache) {
 				if (this.resolvedIdentifiersCache.TryGetValue(claimedIdentifier, out cachedEndpoint)) {
 					return cachedEndpoint.Equals(claimingEndpoint);
 				}
@@ -594,8 +594,7 @@
 				cancellationToken);
 
 			if (matchingEndpoint != null) {
-				lock (this.resolvedIdentifiersCache)
-				{
+				lock (this.resolvedIdentifiersCache) {
 					if (!this.resolvedIdentifiersCache.ContainsKey(claimedIdentifier)) {
 						this.resolvedIdentifiersCache.Add(claimedIdentifier, matchingEndpoint);
 					}
