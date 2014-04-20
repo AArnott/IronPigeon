@@ -22,9 +22,9 @@
 		</dependencies>
 	</metadata>
 	<files>
-		<file target="lib\portable-win+net45+wp80+MonoAndroid10+MonoTouch10" src="$OutputPath$IronPigeon\IronPigeon.dll" />
-		<file target="lib\portable-win+net45+wp80+MonoAndroid10+MonoTouch10" src="$OutputPath$IronPigeon\IronPigeon.pdb" />
-		<file target="lib\portable-win+net45+wp80+MonoAndroid10+MonoTouch10" src="$OutputPath$IronPigeon\IronPigeon.xml" />
+		<file target="lib\portable-net45+win+wpa81+wp80+MonoAndroid10+MonoTouch10" src="$OutputPath$IronPigeon\IronPigeon.dll" />
+		<file target="lib\portable-net45+win+wpa81+wp80+MonoAndroid10+MonoTouch10" src="$OutputPath$IronPigeon\IronPigeon.pdb" />
+		<file target="lib\portable-net45+win+wpa81+wp80+MonoAndroid10+MonoTouch10" src="$OutputPath$IronPigeon\IronPigeon.xml" />
 
 		<file target="src\IronPigeon" src="..\src\IronPigeon\**\*.cs" exclude="..\src\IronPigeon\obj\**" />
 		<file target="src\IronPigeon\Properties" src="$IntermediatePath$IronPigeon\IronPigeon.Version.cs" />

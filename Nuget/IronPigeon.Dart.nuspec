@@ -20,15 +20,15 @@
 		<tags>crypto cryptography mail email privacy</tags>
 		<dependencies>
 			<dependency id="IronPigeon" version="$version$" />
-			<dependency id="Validation" version="[2.0, 3.0)" />
+			<dependency id="Validation" version="[2.0.4, 3.0)" />
 		</dependencies>
 	</metadata>
 	<files>
-		<file src="$OutputPath$IronPigeon.Dart\IronPigeon.Dart.dll" target="lib\portable-win+net45+wp80+MonoAndroid+MonoTouch" />
-		<file src="$OutputPath$IronPigeon.Dart\IronPigeon.Dart.pdb" target="lib\portable-win+net45+wp80+MonoAndroid+MonoTouch" />
-		<file src="$OutputPath$IronPigeon.Dart\IronPigeon.Dart.xml" target="lib\portable-win+net45+wp80+MonoAndroid+MonoTouch" />
+		<file target="lib\portable-net45+win+wpa81+wp80+MonoAndroid10+MonoTouch10" src="$OutputPath$IronPigeon.Dart\IronPigeon.Dart.dll" />
+		<file target="lib\portable-net45+win+wpa81+wp80+MonoAndroid10+MonoTouch10" src="$OutputPath$IronPigeon.Dart\IronPigeon.Dart.pdb" />
+		<file target="lib\portable-net45+win+wpa81+wp80+MonoAndroid10+MonoTouch10" src="$OutputPath$IronPigeon.Dart\IronPigeon.Dart.xml" />
 
-		<file src="..\src\IronPigeon.Dart\**\*.cs" target="src\IronPigeon.Dart" exclude="..\src\IronPigeon.Dart\obj\**" />
-		<file src="$IntermediatePath$IronPigeon.Dart\IronPigeon.Dart.Version.cs" target="src\IronPigeon.Dart\Properties" />
+		<file target="src\IronPigeon.Dart" src="..\src\IronPigeon.Dart\**\*.cs" exclude="..\src\IronPigeon.Dart\obj\**" />
+		<file target="src\IronPigeon.Dart\Properties" src="$IntermediatePath$IronPigeon.Dart\IronPigeon.Dart.Version.cs" />
 	</files>
 </package>
