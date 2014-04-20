@@ -1,7 +1,6 @@
 ﻿namespace IronPigeon.Providers {
 	using System;
 	using System.Collections.Generic;
-	using System.Composition;
 	using System.Diagnostics;
 	using System.Diagnostics.CodeAnalysis;
 	using System.IO;
@@ -18,8 +17,6 @@
 	/// <summary>
 	/// Shortens URLs using the goo.gl URL shortener service.
 	/// </summary>
-	[Export(typeof(IUrlShortener))]
-	[Shared]
 	[SuppressMessage("Microsoft.StyleCop.CSharp.DocumentationRules", "SA1650:ElementDocumentationMustBeSpelledCorrectly", Justification = "StyleCop sees goo.gl as two mispelled words.")]
 	public class GoogleUrlShortener : IUrlShortener {
 		/// <summary>
@@ -34,10 +31,13 @@
 		public GoogleUrlShortener() {
 		}
 
+		public GoogleUrlShortener(HttpClient httpClient) {
+			this.HttpClient = httpClient;
+		}
+
 		/// <summary>
 		/// Gets or sets the HTTP client to use for outbound HTTP requests.
 		/// </summary>
-		[Import]
 		public HttpClient HttpClient { get; set; }
 
 		/// <summary>

@@ -1,7 +1,6 @@
 ﻿namespace WpfChatroom {
 	using System;
 	using System.Collections.Generic;
-	using System.Composition;
 	using System.Linq;
 	using System.Net.Http;
 	using System.Text;
@@ -21,21 +20,20 @@
 	/// <summary>
 	/// Interaction logic for ChatroomWindow.xaml
 	/// </summary>
-	[Export]
 	public partial class ChatroomWindow : Window {
 		private Dictionary<string, Endpoint> members = new Dictionary<string, Endpoint>();
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="ChatroomWindow"/> class.
 		/// </summary>
-		public ChatroomWindow() {
+		public ChatroomWindow(PostalService postalService) {
 			this.InitializeComponent();
+			this.PostalService = postalService;
 		}
 
 		/// <summary>
 		/// Gets or sets the channel.
 		/// </summary>
-		[Import]
 		public PostalService PostalService { get; set; }
 
 		internal void AddMember(string friendlyName, Endpoint endpoint) {

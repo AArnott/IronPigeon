@@ -1,9 +1,6 @@
 ﻿namespace ConsoleChat {
 	using System;
 	using System.Collections.Generic;
-	using System.Composition;
-	using System.Composition.Convention;
-	using System.Composition.Hosting;
 	using System.Configuration;
 	using System.IO;
 	using System.Linq;
@@ -21,7 +18,6 @@
 	/// <summary>
 	/// Simple console app that demonstrates the IronPigeon protocol in a live chat program.
 	/// </summary>
-	[Export]
 	internal class Program {
 		/// <summary>
 		/// The name of the table in Azure Table storage to create.
@@ -36,13 +32,11 @@
 		/// <summary>
 		/// Gets or sets the channel.
 		/// </summary>
-		[Import]
 		public Channel Channel { get; set; }
 
 		/// <summary>
 		/// Gets or sets the message relay service.
 		/// </summary>
-		[Import]
 		public RelayCloudBlobStorageProvider MessageRelayService { get; set; }
 
 		/// <summary>
@@ -55,7 +49,6 @@
 		/// <summary>
 		/// Gets or sets the own endpoint services.
 		/// </summary>
-		[Import]
 		public OwnEndpointServices OwnEndpointServices { get; set; }
 
 		/// <summary>
@@ -64,13 +57,7 @@
 		/// <param name="args">The arguments passed into the console app.</param>
 		[STAThread]
 		private static void Main(string[] args) {
-			var configuration = new ContainerConfiguration()
-				.WithAssembly(typeof(Channel).Assembly)
-				.WithPart(typeof(DesktopChannel))
-				.WithPart(typeof(Program));
-			var container = configuration.CreateContainer();
-			
-			var program = container.GetExport<Program>();
+			var program = new Program();
 			program.DoAsync().GetAwaiter().GetResult();
 		}
 

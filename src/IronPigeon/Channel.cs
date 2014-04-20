@@ -2,7 +2,6 @@
 	using System;
 	using System.Collections.Generic;
 	using System.Collections.ObjectModel;
-	using System.Composition;
 	using System.Diagnostics;
 	using System.Globalization;
 	using System.IO;
@@ -44,10 +43,16 @@
 			this.CryptoServices = new CryptoSettings();
 		}
 
+		public Channel(ICloudBlobStorageProvider cloudBlobStorage, HttpClient httpClient, HttpClient httpClientLongPoll, IEnumerable<AddressBook> addressBooks) {
+			this.CloudBlobStorage = cloudBlobStorage;
+			this.HttpClient = httpClient;
+			this.HttpClientLongPoll = httpClientLongPoll;
+			this.AddressBooks = addressBooks != null ? addressBooks.ToList() : null;
+		}
+
 		/// <summary>
 		/// Gets or sets the provider of blob storage.
 		/// </summary>
-		[Import]
 		public ICloudBlobStorageProvider CloudBlobStorage { get; set; }
 
 		/// <summary>
@@ -74,13 +79,11 @@
 		/// <summary>
 		/// Gets or sets the HTTP client used for outbound HTTP requests.
 		/// </summary>
-		[Import]
 		public HttpClient HttpClient { get; set; }
 
 		/// <summary>
 		/// Gets or sets the HTTP client to use for long poll HTTP requests.
 		/// </summary>
-		[Import]
 		public HttpClient HttpClientLongPoll {
 			get {
 				return this.httpClientLongPoll;
@@ -95,7 +98,6 @@
 		/// <summary>
 		/// Gets or sets the set of address books to use when verifying claimed identifiers on received messages.
 		/// </summary>
-		[ImportMany]
 		public IList<AddressBook> AddressBooks { get; set; }
 
 		/// <summary>

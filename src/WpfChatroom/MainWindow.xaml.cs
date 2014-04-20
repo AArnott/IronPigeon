@@ -1,8 +1,6 @@
 ﻿namespace WpfChatroom {
 	using System;
 	using System.Collections.Generic;
-	using System.Composition;
-	using System.Composition.Hosting;
 	using System.Configuration;
 	using System.IO;
 	using System.Linq;
@@ -35,14 +33,6 @@
 		public MainWindow() {
 			this.InitializeComponent();
 
-			var configuration =
-				new ContainerConfiguration().WithAssembly(typeof(Channel).Assembly)
-											.WithAssembly(typeof(PostalService).Assembly)
-											.WithPart(typeof(DesktopChannel))
-											.WithAssembly(Assembly.GetExecutingAssembly());
-			var container = configuration.CreateContainer();
-			container.SatisfyImports(this);
-
 			this.MessageRelayService.BlobPostUrl = new Uri(ConfigurationManager.ConnectionStrings["RelayBlobService"].ConnectionString);
 			this.MessageRelayService.InboxServiceUrl = new Uri(ConfigurationManager.ConnectionStrings["RelayInboxService"].ConnectionString);
 		}
@@ -50,13 +40,11 @@
 		/// <summary>
 		/// Gets or sets the own endpoint services.
 		/// </summary>
-		[Import]
 		public OwnEndpointServices OwnEndpointServices { get; set; }
 
 		/// <summary>
 		/// Gets or sets the message relay service.
 		/// </summary>
-		[Import]
 		public RelayCloudBlobStorageProvider MessageRelayService { get; set; }
 
 		/// <summary>
@@ -67,19 +55,11 @@
 		}
 
 		/// <summary>
-		/// Gets or sets the chatroom window factory.
-		/// </summary>
-		/// <value>
-		/// The chatroom window factory.
-		/// </value>
-		[Import]
-		public ExportFactory<ChatroomWindow> ChatroomWindowFactory { get; set; }
-
-		/// <summary>
 		/// Gets or sets the channel.
 		/// </summary>
-		[Import]
 		public Channel Channel { get; set; }
+
+		public PostalService PostalService { get; set; }
 
 		private async void CreateNewEndpoint_OnClick(object sender, RoutedEventArgs e) {
 			this.CreateNewEndpoint.IsEnabled = false;
@@ -127,17 +107,17 @@
 		}
 
 		private void OpenChatroom_OnClick(object sender, RoutedEventArgs e) {
-			var chatroomWindow = this.ChatroomWindowFactory.CreateExport();
-			chatroomWindow.Value.Show();
+			var chatroomWindow = new ChatroomWindow(this.PostalService);
+			chatroomWindow.Show();
 		}
 
 		private async void ChatWithAuthor_OnClick(object sender, RoutedEventArgs e) {
-			var chatroomWindow = this.ChatroomWindowFactory.CreateExport();
-			chatroomWindow.Value.Show();
+			var chatroomWindow = new ChatroomWindow(this.PostalService);
+			chatroomWindow.Show();
 
 			var addressBook = new DirectEntryAddressBook(new HttpClient());
 			var endpoint = await addressBook.LookupAsync("http://tinyurl.com/omhxu6l#-Rrs7LRrCE3bV8x58j1l4JUzAT3P2obKia73k3IFG9k");
-			chatroomWindow.Value.AddMember("App author", endpoint);
+			chatroomWindow.AddMember("App author", endpoint);
 		}
 
 		private Task SetEndpointAsync(OwnEndpoint endpoint, Uri addressBookEntry, CancellationToken cancellationToken = default(CancellationToken)) {

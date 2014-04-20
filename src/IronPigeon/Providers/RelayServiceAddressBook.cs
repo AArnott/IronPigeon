@@ -1,7 +1,6 @@
 ﻿namespace IronPigeon.Providers {
 	using System;
 	using System.Collections.Generic;
-	using System.Composition;
 	using System.Linq;
 	using System.Net.Http;
 	using System.Text;
@@ -14,9 +13,6 @@
 	/// An address book that resolves email addresses and email hashes
 	/// via the message relay service.
 	/// </summary>
-	[Export(typeof(AddressBook))]
-	[Export]
-	[Shared]
 	public class RelayServiceAddressBook : OnlineAddressBook {
 		/// <summary>
 		/// A regular expression that matches 64-character hex sequences (the type and length of a Microsoft account friend's hashed email).
