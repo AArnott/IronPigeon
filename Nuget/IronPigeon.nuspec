@@ -8,105 +8,25 @@
 		<owners>Andrew Arnott</owners>
 		<licenseUrl>http://opensource.org/licenses/MS-RL</licenseUrl>
 		<projectUrl>http://github.com/aarnott/ironpigeon</projectUrl>
-		<!--
-		<iconUrl>http://ICON_URL_HERE_OR_DELETE_THIS_LINE</iconUrl>
-		-->
 		<requireLicenseAcceptance>false</requireLicenseAcceptance>
 		<description>
 			An open source generic message passing protocol with focus on confidentiality and authentication.
 		</description>
-		<releaseNotes>MonoTouch and MonoAndroid targets added, but all stubbed out at present. PCLs should work though.</releaseNotes>
+		<releaseNotes></releaseNotes>
 		<copyright>Copyright © Andrew Arnott</copyright>
 		<tags>crypto cryptography mail email privacy</tags>
 		<dependencies>
-			<group targetFramework="net45">
-				<dependency id="Validation" version="[2.0.4, 3.0)" />
-				<dependency id="Microsoft.Net.Http" version="2.2.20" />
-				<dependency id="Microsoft.Composition" version="[1.0.20, 2.0)" />
-				<dependency id="Microsoft.Tpl.Dataflow" version="[4.5.14, 5.0)" />
-				<dependency id="Microsoft.WindowsAzure.StorageClient.Async" version="0.3.2-preview" />
-				<dependency id="pclcrypto" version="0.5.0" />
-			</group>
-			<group targetFramework="winrt">
-				<dependency id="Validation" version="[2.0.4, 3.0)" />
-				<dependency id="Microsoft.Net.Http" version="2.2.20" />
-				<dependency id="Microsoft.Composition" version="[1.0.20, 2.0)" />
-				<dependency id="Microsoft.Tpl.Dataflow" version="[4.5.14, 5.0)" />
-				<dependency id="pclcrypto" version="0.5.0" />
-			</group>
-			<group targetFramework="MonoAndroid10">
-				<dependency id="Validation" version="[2.0.4, 3.0)" />
-				<dependency id="Microsoft.Net.Http" version="2.2.20" />
-				<dependency id="pclcrypto" version="0.5.0" />
-				<dependency id="Microsoft.Composition" version="[1.0.20, 2.0)" />
-			</group>
-			<group targetFramework="MonoTouch10">
-				<dependency id="Validation" version="[2.0.4, 3.0)" />
-				<dependency id="Microsoft.Net.Http" version="2.2.20" />
-				<dependency id="pclcrypto" version="0.5.0" />
-				<dependency id="Microsoft.Composition" version="[1.0.20, 2.0)" />
-			</group>
-			<group targetFramework="windowsphone8">
-				<dependency id="Validation" version="[2.0.4, 3.0)" />
-				<dependency id="Microsoft.Net.Http" version="2.2.20" />
-				<!--<dependency id="Microsoft.Composition" version="[1.0.20, 2.0)" />-->
-				<dependency id="WinRTBouncyCastle" version="[0.1.1.1,2.0)" />
-				<dependency id="pclcrypto" version="0.5.0" />
-			</group>
+			<dependency id="Validation" version="[2.0.4, 3.0)" />
+			<dependency id="Microsoft.Net.Http" version="2.2.20" />
+			<dependency id="pclcrypto" version="0.5.0" />
 		</dependencies>
 	</metadata>
 	<files>
-		<file src="$OutputPath$IronPigeon\IronPigeon.dll" target="lib\portable-win+net45+wp80+MonoAndroid10+MonoTouch10" />
-		<file src="$OutputPath$IronPigeon\IronPigeon.pdb" target="lib\portable-win+net45+wp80+MonoAndroid10+MonoTouch10" />
-		<file src="$OutputPath$IronPigeon\IronPigeon.xml" target="lib\portable-win+net45+wp80+MonoAndroid10+MonoTouch10" />
+		<file target="lib\portable-win+net45+wp80+MonoAndroid10+MonoTouch10" src="$OutputPath$IronPigeon\IronPigeon.dll" />
+		<file target="lib\portable-win+net45+wp80+MonoAndroid10+MonoTouch10" src="$OutputPath$IronPigeon\IronPigeon.pdb" />
+		<file target="lib\portable-win+net45+wp80+MonoAndroid10+MonoTouch10" src="$OutputPath$IronPigeon\IronPigeon.xml" />
 
-		<file src="$OutputPath$IronPigeon\IronPigeon.dll" target="lib\net45" />
-		<file src="$OutputPath$IronPigeon\IronPigeon.pdb" target="lib\net45" />
-		<file src="$OutputPath$IronPigeon\IronPigeon.xml" target="lib\net45" />
-		<file src="$OutputPath$IronPigeon.Desktop\IronPigeon.Desktop.pdb" target="lib\net45" />
-		<file src="$OutputPath$IronPigeon.Desktop\IronPigeon.Desktop.xml" target="lib\net45" />
-		<file src="$OutputPath$IronPigeon.Desktop\IronPigeon.Desktop.dll" target="lib\net45" />
-
-		<file src="$OutputPath$IronPigeon\IronPigeon.dll" target="lib\netcore45" />
-		<file src="$OutputPath$IronPigeon\IronPigeon.pdb" target="lib\netcore45" />
-		<file src="$OutputPath$IronPigeon\IronPigeon.xml" target="lib\netcore45" />
-		<file src="$OutputPath$IronPigeon.WinRT\IronPigeon.WinRT.dll" target="lib\netcore45" />
-		<file src="$OutputPath$IronPigeon.WinRT\IronPigeon.WinRT.pdb" target="lib\netcore45" />
-		<file src="$OutputPath$IronPigeon.WinRT\IronPigeon.WinRT.xml" target="lib\netcore45" />
-
-		<file src="$OutputPath$IronPigeon\IronPigeon.dll" target="lib\windowsphone8" />
-		<file src="$OutputPath$IronPigeon\IronPigeon.pdb" target="lib\windowsphone8" />
-		<file src="$OutputPath$IronPigeon\IronPigeon.xml" target="lib\windowsphone8" />
-		<file src="$OutputPath$IronPigeon.WinPhone8\IronPigeon.WinPhone8.dll" target="lib\windowsphone8" />
-		<file src="$OutputPath$IronPigeon.WinPhone8\IronPigeon.WinPhone8.pdb" target="lib\windowsphone8" />
-		<file src="$OutputPath$IronPigeon.WinPhone8\IronPigeon.WinPhone8.xml" target="lib\windowsphone8" />
-
-		<file src="$OutputPath$IronPigeon\IronPigeon.dll" target="lib\MonoTouch" />
-		<file src="$OutputPath$IronPigeon\IronPigeon.pdb" target="lib\MonoTouch" />
-		<file src="$OutputPath$IronPigeon\IronPigeon.xml" target="lib\MonoTouch" />
-		<file src="$OutputPath$IronPigeon.MonoTouch\IronPigeon.MonoTouch.dll" target="lib\MonoTouch" />
-		<file src="$OutputPath$IronPigeon.MonoTouch\IronPigeon.MonoTouch.pdb" target="lib\MonoTouch" />
-		<file src="$OutputPath$IronPigeon.MonoTouch\IronPigeon.MonoTouch.xml" target="lib\MonoTouch" />
-
-		<file src="$OutputPath$IronPigeon\IronPigeon.dll" target="lib\MonoAndroid" />
-		<file src="$OutputPath$IronPigeon\IronPigeon.pdb" target="lib\MonoAndroid" />
-		<file src="$OutputPath$IronPigeon\IronPigeon.xml" target="lib\MonoAndroid" />
-		<file src="$OutputPath$IronPigeon.MonoAndroid\IronPigeon.MonoAndroid.dll" target="lib\MonoAndroid" />
-		<file src="$OutputPath$IronPigeon.MonoAndroid\IronPigeon.MonoAndroid.pdb" target="lib\MonoAndroid" />
-		<file src="$OutputPath$IronPigeon.MonoAndroid\IronPigeon.MonoAndroid.xml" target="lib\MonoAndroid" />
-
-		<file src="..\src\IronPigeon\**\*.cs" target="src\IronPigeon" exclude="..\src\IronPigeon\obj\**" />
-		<file src="..\src\IronPigeon.Desktop\**\*.cs" target="src\IronPigeon.Desktop" exclude="..\src\IronPigeon.Desktop\obj\**" />
-		<file src="..\src\IronPigeon.WinRT\**\*.cs" target="src\IronPigeon.WinRT" exclude="..\src\IronPigeon.WinRT\obj\**" />
-		<file src="..\src\IronPigeon.WinPhone8\**\*.cs" target="src\IronPigeon.WinPhone8" exclude="..\src\IronPigeon.WinPhone8\obj\**" />
-		<file src="..\src\IronPigeon.MonoAndroid\**\*.cs" target="src\IronPigeon.MonoAndroid" exclude="..\src\IronPigeon.MonoAndroid\obj\**" />
-		<file src="..\src\IronPigeon.MonoTouch\**\*.cs" target="src\IronPigeon.MonoTouch" exclude="..\src\IronPigeon.MonoTouch\obj\**" />
-
-		<file src="$IntermediatePath$IronPigeon\IronPigeon.Version.cs" target="src\IronPigeon\Properties" />
-		<file src="$IntermediatePath$IronPigeon.Desktop\IronPigeon.Desktop.Version.cs" target="src\IronPigeon.Desktop\Properties" />
-		<file src="$IntermediatePath$IronPigeon.WinRT\IronPigeon.WinRT.Version.cs" target="src\IronPigeon.WinRT\Properties" />
-		<file src="$IntermediatePath$IronPigeon.WinPhone8\IronPigeon.WinPhone8.Version.cs" target="src\IronPigeon.WinPhone8\Properties" />
-		<file src="$IntermediatePath$IronPigeon.MonoAndroid\IronPigeon.MonoAndroid.Version.cs" target="src\IronPigeon.MonoAndroid\Properties" />
-		<file src="$IntermediatePath$IronPigeon.MonoTouch\IronPigeon.MonoTouch.Version.cs" target="src\IronPigeon.MonoTouch\Properties" />
+		<file target="src\IronPigeon" src="..\src\IronPigeon\**\*.cs" exclude="..\src\IronPigeon\obj\**" />
+		<file target="src\IronPigeon\Properties" src="$IntermediatePath$IronPigeon\IronPigeon.Version.cs" />
 	</files>
 </package>
