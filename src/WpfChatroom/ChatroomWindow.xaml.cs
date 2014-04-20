@@ -24,8 +24,9 @@
 		private Dictionary<string, Endpoint> members = new Dictionary<string, Endpoint>();
 
 		/// <summary>
-		/// Initializes a new instance of the <see cref="ChatroomWindow"/> class.
+		/// Initializes a new instance of the <see cref="ChatroomWindow" /> class.
 		/// </summary>
+		/// <param name="postalService">The postal service.</param>
 		public ChatroomWindow(PostalService postalService) {
 			this.InitializeComponent();
 			this.PostalService = postalService;

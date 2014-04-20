@@ -13,9 +13,16 @@
 	/// An email sending and receiving service.
 	/// </summary>
 	public class PostalService {
+		/// <summary>
+		/// Initializes a new instance of the <see cref="PostalService"/> class.
+		/// </summary>
 		public PostalService() {
 		}
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="PostalService"/> class.
+		/// </summary>
+		/// <param name="channel">The channel.</param>
 		public PostalService(Channel channel) {
 			this.Channel = channel;
 		}

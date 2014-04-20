@@ -17,9 +17,19 @@
 	/// Creates and services <see cref="OwnEndpoint"/> instances.
 	/// </summary>
 	public class OwnEndpointServices {
+		/// <summary>
+		/// Initializes a new instance of the <see cref="OwnEndpointServices"/> class.
+		/// </summary>
 		public OwnEndpointServices() {
 		}
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="OwnEndpointServices"/> class.
+		/// </summary>
+		/// <param name="channel">The channel.</param>
+		/// <param name="cloudBlobStorage">The cloud blob storage provider.</param>
+		/// <param name="httpClient">The HTTP client.</param>
+		/// <param name="endpointInboxFactory">The endpoint inbox factory.</param>
 		public OwnEndpointServices(Channel channel, ICloudBlobStorageProvider cloudBlobStorage, HttpClient httpClient, IEndpointInboxFactory endpointInboxFactory) {
 			this.Channel = channel;
 			this.CloudBlobStorage = cloudBlobStorage;

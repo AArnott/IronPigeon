@@ -43,6 +43,13 @@
 			this.CryptoServices = new CryptoSettings();
 		}
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="Channel"/> class.
+		/// </summary>
+		/// <param name="cloudBlobStorage">The cloud blob storage.</param>
+		/// <param name="httpClient">The HTTP client.</param>
+		/// <param name="httpClientLongPoll">The HTTP client long poll.</param>
+		/// <param name="addressBooks">The address books.</param>
 		public Channel(ICloudBlobStorageProvider cloudBlobStorage, HttpClient httpClient, HttpClient httpClientLongPoll, IEnumerable<AddressBook> addressBooks) {
 			this.CloudBlobStorage = cloudBlobStorage;
 			this.HttpClient = httpClient;

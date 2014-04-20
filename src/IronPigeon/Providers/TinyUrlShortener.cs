@@ -19,6 +19,10 @@
 		/// </summary>
 		protected const string ShorteningService = "http://tinyurl.com/api-create.php?url={0}";
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="TinyUrlShortener"/> class.
+		/// </summary>
+		/// <param name="httpClient">The HTTP client.</param>
 		public TinyUrlShortener(HttpClient httpClient) {
 			this.HttpClient = httpClient;
 		}

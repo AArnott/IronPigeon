@@ -22,6 +22,10 @@
 		public RelayCloudBlobStorageProvider() {
 		}
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="RelayCloudBlobStorageProvider"/> class.
+		/// </summary>
+		/// <param name="httpClient">The HTTP client.</param>
 		public RelayCloudBlobStorageProvider(HttpClient httpClient) {
 			this.HttpClient = httpClient;
 		}

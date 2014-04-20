@@ -23,6 +23,10 @@
 			this.DefaultTimeout = DefaultTimeoutInitValue;
 		}
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="HttpClientWrapper"/> class.
+		/// </summary>
+		/// <param name="messageHandler">The message handler.</param>
 		public HttpClientWrapper(HttpMessageHandler messageHandler) {
 			this.MessageHandler = messageHandler;
 		}

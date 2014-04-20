@@ -59,6 +59,9 @@
 		/// </summary>
 		public Channel Channel { get; set; }
 
+		/// <summary>
+		/// Gets or sets the postal service.
+		/// </summary>
 		public PostalService PostalService { get; set; }
 
 		private async void CreateNewEndpoint_OnClick(object sender, RoutedEventArgs e) {

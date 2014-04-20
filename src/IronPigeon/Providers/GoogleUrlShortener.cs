@@ -31,6 +31,10 @@
 		public GoogleUrlShortener() {
 		}
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="GoogleUrlShortener"/> class.
+		/// </summary>
+		/// <param name="httpClient">The HTTP client.</param>
 		public GoogleUrlShortener(HttpClient httpClient) {
 			this.HttpClient = httpClient;
 		}
