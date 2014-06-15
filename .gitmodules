@@ -1,3 +1,0 @@
-[submodule "PCLCrypto"]
-	path = PCLCrypto
-	url = git@github.com:AArnott/pclcrypto.git
