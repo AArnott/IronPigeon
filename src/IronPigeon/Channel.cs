@@ -349,6 +349,7 @@
 		/// </returns>
 		public async Task RegisterApplePushNotificationAsync(string deviceToken, CancellationToken cancellationToken = default(CancellationToken)) {
 			Requires.NotNullOrEmpty(deviceToken, "deviceToken");
+			Verify.Operation(this.Endpoint != null, "Endpoint must be set first.");
 
 			var request = new HttpRequestMessage(HttpMethod.Put, this.Endpoint.PublicEndpoint.MessageReceivingEndpoint);
 			request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", this.Endpoint.InboxOwnerCode);
