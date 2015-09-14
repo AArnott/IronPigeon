@@ -19,8 +19,16 @@
         /// establish an encrypted and signed channel between two parties
         /// using asymmetric cryptography.
         /// This is NOT a demonstration of perfect forward secrecy because
-        /// the key used to encrypt the channel is can be determined later
+        /// the key used to encrypt the channel can be determined later
         /// by compromising one of the private keys.
+        /// To be perfect forward secrecy, Bob and Alice would likely have
+        /// a long-lived, persisted and shared key pair for authentication,
+        /// and then create another (ephemeral) key pair for encryption.
+        /// This encryption key pair would be (ideally) short-lived and never
+        /// persisted (so that it cannot be compromised). If it is compromised
+        /// only those messages it was used to encrypt are compromised.
+        /// If the long-lived (authentication) keys are compromised, they cannot be used to
+        /// recover any encryption keys because encryption keys were never transmitted.
         /// </summary>
         /// <returns></returns>
         [TestMethod, TestCategory("EC")]
