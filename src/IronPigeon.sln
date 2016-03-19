@@ -27,7 +27,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		..\Nuget\IronPigeon.nuspec = ..\Nuget\IronPigeon.nuspec
 		..\Nuget\IronPigeon.proj = ..\Nuget\IronPigeon.proj
 		..\README.md = ..\README.md
-		version.txt = version.txt
+		version.json = version.json
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IronPigeon.Tests", "IronPigeon.Tests\IronPigeon.Tests.csproj", "{D2FF68FF-68C8-400A-A6E2-6E3BA61D17A1}"
