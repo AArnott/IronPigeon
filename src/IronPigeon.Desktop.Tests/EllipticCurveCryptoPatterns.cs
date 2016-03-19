@@ -1,4 +1,8 @@
-﻿namespace IronPigeon.Tests {
+﻿// Copyright (c) Andrew Arnott. All rights reserved.
+// Licensed under the Microsoft Reciprocal License (Ms-RL) license. See LICENSE file in the project root for full license information.
+
+namespace IronPigeon.Tests
+{
     using System;
     using System.Collections.Generic;
     using System.IO;
@@ -13,7 +17,8 @@
     /// This test class doesn't test IronPigeon, but rather demonstrates how EC crypto works.
     /// </summary>
     [TestClass]
-    public class EllipticCurveCryptoPatterns {
+    public class EllipticCurveCryptoPatterns
+    {
         /// <summary>
         /// Demonstrates using elliptic curve cryptography to
         /// establish an encrypted and signed channel between two parties
@@ -30,9 +35,9 @@
         /// If the long-lived (authentication) keys are compromised, they cannot be used to
         /// recover any encryption keys because encryption keys were never transmitted.
         /// </summary>
-        /// <returns></returns>
         [TestMethod, TestCategory("EC")]
-        public async Task ECAsymmetricSigningAndEncryption() {
+        public async Task ECAsymmetricSigningAndEncryption()
+        {
             var bob = new ECDsaCng(521);
             var bobPublic = CngKey.Import(bob.Key.Export(CngKeyBlobFormat.EccPublicBlob), CngKeyBlobFormat.EccPublicBlob);
             var alice = new ECDsaCng(521);
@@ -115,7 +120,8 @@
         }
 
         [TestMethod, TestCategory("EC")]
-        public void ParameterizedAlgorithms() {
+        public void ParameterizedAlgorithms()
+        {
             var aa = (ECDiffieHellmanCng)AsymmetricAlgorithm.Create("ECDiffieHellman");
             string priv = aa.PublicKey.ToXmlString();
             string pub = aa.ToXmlString(ECKeyXmlFormat.Rfc4050);

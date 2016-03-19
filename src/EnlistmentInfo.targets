@@ -4,9 +4,14 @@
 		<MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFile)</MSBuildAllProjects>
 	</PropertyGroup>
 
-	<Import Project="$(ProjectRoot)Tools\StyleCop\StyleCop.targets"/>
-
 	<PropertyGroup>
 		<DocumentationFile Condition=" '$(NonShipping)' != 'true' and '$(NoDocumentationFile)' != 'true' ">$(OutputPath)$(AssemblyName).xml</DocumentationFile>
 	</PropertyGroup>
+
+  <ItemGroup>
+    <AdditionalFiles Include="..\stylecop.json">
+      <Link>stylecop.json</Link>
+      <Visible>true</Visible>
+    </AdditionalFiles>
+  </ItemGroup>
 </Project>

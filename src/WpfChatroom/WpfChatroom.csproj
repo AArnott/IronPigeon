@@ -35,9 +35,11 @@
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DocumentationFile />
+    <CodeAnalysisRuleSet>WpfChatroom.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DocumentationFile />
+    <CodeAnalysisRuleSet>WpfChatroom.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup>
     <ManifestCertificateThumbprint>BAA3581E31E8A6C79353005557F5851795E6867B</ManifestCertificateThumbprint>
@@ -128,6 +130,7 @@
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
     <AppDesigner Include="Properties\" />
+    <None Include="WpfChatroom.ruleset" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

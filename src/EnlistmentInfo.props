@@ -14,10 +14,6 @@
 		<OutputPath>$(ProjectRoot)bin\$(Platform)\$(Configuration)\$(MSBuildProjectName)\</OutputPath>
 		<PlatformTarget>$(Platform)</PlatformTarget>
 
-		<!-- Release builds should break when StyleCop warnings exist. -->
-		<StyleCopTreatErrorsAsWarnings Condition=" '$(StyleCopTreatErrorsAsWarnings)' == '' and '$(Configuration)' == 'Release' ">false</StyleCopTreatErrorsAsWarnings>
-		<StyleCopTreatErrorsAsWarnings Condition=" '$(StyleCopTreatErrorsAsWarnings)' == '' ">true</StyleCopTreatErrorsAsWarnings>
-
 		<ErrorReport>prompt</ErrorReport>
 		<WarningLevel>4</WarningLevel>
 

@@ -1,55 +1,65 @@
-﻿namespace IronPigeon.Providers {
-	using System;
-	using System.Collections.Generic;
-	using System.Linq;
-	using System.Net.Http;
-	using System.Text;
-	using System.Threading.Tasks;
+﻿// Copyright (c) Andrew Arnott. All rights reserved.
+// Licensed under the Microsoft Reciprocal License (Ms-RL) license. See LICENSE file in the project root for full license information.
 
-	/// <summary>
-	/// A simple MEF part that wraps an <see cref="HttpMessageHandler"/> in a new <see cref="HttpClient"/>
-	/// for all importers.
-	/// </summary>
-	public class HttpClientWrapper {
-		/// <summary>
-		/// The default timeout.
-		/// </summary>
-		public static readonly TimeSpan DefaultTimeoutInitValue = TimeSpan.FromSeconds(10);
+namespace IronPigeon.Providers
+{
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Net.Http;
+    using System.Text;
+    using System.Threading.Tasks;
 
-		/// <summary>
-		/// Initializes a new instance of the <see cref="HttpClientWrapper"/> class.
-		/// </summary>
-		public HttpClientWrapper() {
-			this.DefaultTimeout = DefaultTimeoutInitValue;
-		}
+    /// <summary>
+    /// A simple MEF part that wraps an <see cref="HttpMessageHandler"/> in a new <see cref="HttpClient"/>
+    /// for all importers.
+    /// </summary>
+    public class HttpClientWrapper
+    {
+        /// <summary>
+        /// The default timeout.
+        /// </summary>
+        public static readonly TimeSpan DefaultTimeoutInitValue = TimeSpan.FromSeconds(10);
 
-		/// <summary>
-		/// Initializes a new instance of the <see cref="HttpClientWrapper"/> class.
-		/// </summary>
-		/// <param name="messageHandler">The message handler.</param>
-		public HttpClientWrapper(HttpMessageHandler messageHandler) {
-			this.MessageHandler = messageHandler;
-		}
+        /// <summary>
+        /// Initializes a new instance of the <see cref="HttpClientWrapper"/> class.
+        /// </summary>
+        public HttpClientWrapper()
+        {
+            this.DefaultTimeout = DefaultTimeoutInitValue;
+        }
 
-		/// <summary>
-		/// Gets or sets the default timeout for HttpClient instances produced by this part.
-		/// </summary>
-		public TimeSpan DefaultTimeout { get; set; }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="HttpClientWrapper"/> class.
+        /// </summary>
+        /// <param name="messageHandler">The message handler.</param>
+        public HttpClientWrapper(HttpMessageHandler messageHandler)
+        {
+            this.MessageHandler = messageHandler;
+        }
 
-		/// <summary>
-		/// Gets a new instance of <see cref="HttpClient"/> that wraps an optionally custom <see cref="HttpMessageHandler"/>.
-		/// </summary>
-		public HttpClient Client {
-			get {
-				return new HttpClient(this.MessageHandler ?? new HttpClientHandler()) {
-					Timeout = this.DefaultTimeout
-				};
-			}
-		}
+        /// <summary>
+        /// Gets or sets the default timeout for HttpClient instances produced by this part.
+        /// </summary>
+        public TimeSpan DefaultTimeout { get; set; }
 
-		/// <summary>
-		/// Gets or sets a custom <see cref="HttpMessageHandler"/>.
-		/// </summary>
-		public HttpMessageHandler MessageHandler { get; set; }
-	}
+        /// <summary>
+        /// Gets a new instance of <see cref="HttpClient"/> that wraps an optionally custom <see cref="HttpMessageHandler"/>.
+        /// </summary>
+        public HttpClient Client
+        {
+            get
+            {
+                return new HttpClient(this.MessageHandler ?? new HttpClientHandler())
+                {
+                    Timeout = this.DefaultTimeout
+                };
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets a custom <see cref="HttpMessageHandler"/>.
+        /// </summary>
+        public HttpMessageHandler MessageHandler { get; set; }
+    }
 }

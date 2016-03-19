@@ -27,8 +27,10 @@
     <UseGlobalApplicationHostFile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <CodeAnalysisRuleSet>IronPigeon.Relay.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <CodeAnalysisRuleSet>IronPigeon.Relay.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />
@@ -61,12 +63,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="App_Code\ExtensionMethods.cs" />
+    <Compile Include="App_Code\InboxOwnerAuthorizeAttribute.cs" />
     <Compile Include="Code\HtmlExtensions.cs" />
-    <Compile Include="App_Code\InboxOwnerAuthorize.cs" />
     <Compile Include="App_Start\AzureStorageConfig.cs" />
     <Compile Include="Code\AuthorizationServerHost.cs" />
     <Compile Include="Code\MicrosoftTools.cs" />
-    <Compile Include="Code\OAuthAuthorize.cs" />
+    <Compile Include="Code\OAuthAuthorizeAttribute.cs" />
     <Compile Include="Code\GooglePushNotifications.cs" />
     <Compile Include="Code\WinPhonePushNotifications.cs" />
     <Compile Include="Controllers\AddressBookController.cs" />
@@ -135,6 +137,9 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="project.json" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="IronPigeon.Relay.ruleset" />
   </ItemGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">10.0</VisualStudioVersion>

@@ -18,8 +18,10 @@
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <CodeAnalysisRuleSet>IronPigeon.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <CodeAnalysisRuleSet>IronPigeon.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="AddressBookEntry.cs" />
@@ -74,6 +76,7 @@
       <Link>IronPigeon.nuspec</Link>
       <SubType>Designer</SubType>
     </None>
+    <None Include="IronPigeon.ruleset" />
     <None Include="project.json" />
   </ItemGroup>
   <ItemGroup>

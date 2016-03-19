@@ -16,8 +16,10 @@
     <NonShipping>true</NonShipping>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <CodeAnalysisRuleSet>IronPigeon.Desktop.Tests.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <CodeAnalysisRuleSet>IronPigeon.Desktop.Tests.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.VisualStudio.QualityTools.UnitTestFramework, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
@@ -92,6 +94,7 @@
     <EmbeddedResource Include="Providers\GoogleUrlShortenerTests.ShortenExcludeFragmentAsyncNoFragment\POST%2520https%253A%252F%252Fwww.googleapis.com%252Furlshortener%252Fv1%252Furl.headers" />
     <EmbeddedResource Include="Providers\GoogleUrlShortenerTests.ShortenExcludeFragmentAsync\POST%2520https%253A%252F%252Fwww.googleapis.com%252Furlshortener%252Fv1%252Furl.body" />
     <EmbeddedResource Include="Providers\GoogleUrlShortenerTests.ShortenExcludeFragmentAsync\POST%2520https%253A%252F%252Fwww.googleapis.com%252Furlshortener%252Fv1%252Furl.headers" />
+    <None Include="IronPigeon.Desktop.Tests.ruleset" />
     <None Include="project.json" />
   </ItemGroup>
   <ItemGroup>
