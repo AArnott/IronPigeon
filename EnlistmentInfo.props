@@ -7,7 +7,6 @@
 	<PropertyGroup>
 		<ProjectRoot>$(MSBuildThisFileDirectory)</ProjectRoot>
 		<SolutionDir>$(ProjectRoot)src\</SolutionDir>
-		<RestorePackages>true</RestorePackages>
 
 		<Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
 		<Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
