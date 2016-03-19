@@ -4,8 +4,8 @@
 		<MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFile)</MSBuildAllProjects>
 	</PropertyGroup>
 
-	<Import Project="Tools\StyleCop\StyleCop.targets"/>
-	<Import Project="Tools\Versioning.targets"/>
+	<Import Project="$(ProjectRoot)Tools\StyleCop\StyleCop.targets"/>
+	<Import Project="$(ProjectRoot)Tools\Versioning.targets"/>
 
 	<PropertyGroup>
 		<DocumentationFile Condition=" '$(NonShipping)' != 'true' and '$(NoDocumentationFile)' != 'true' ">$(OutputPath)$(AssemblyName).xml</DocumentationFile>

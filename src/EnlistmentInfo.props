@@ -5,8 +5,8 @@
 	</PropertyGroup>
 
 	<PropertyGroup>
-		<ProjectRoot>$(MSBuildThisFileDirectory)</ProjectRoot>
-		<SolutionDir>$(ProjectRoot)src\</SolutionDir>
+		<ProjectRoot>$(MSBuildThisFileDirectory)..\</ProjectRoot>
+		<SolutionDir>$(MSBuildThisFileDirectory</SolutionDir>
 
 		<Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
 		<Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
