@@ -9,17 +9,12 @@ namespace IronPigeon.Tests
     using System.Linq;
     using System.Text;
     using System.Threading.Tasks;
-#if NETFX_CORE || WINDOWS_PHONE
-	using Microsoft.VisualStudio.TestPlatform.UnitTestFramework;
-#else
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
-#endif
     using Validation;
+    using Xunit;
 
-    [TestClass]
     public class UtilitiesTests
     {
-        [TestMethod]
+        [Fact]
         public void Base64WebSafe()
         {
             var buffer = new byte[15];
@@ -30,13 +25,13 @@ namespace IronPigeon.Tests
             string web64 = Utilities.ToBase64WebSafe(buffer);
             string actualBase64 = Utilities.FromBase64WebSafe(web64);
 
-            Assert.AreEqual(expectedBase64, actualBase64);
+            Assert.Equal(expectedBase64, actualBase64);
 
             byte[] decoded = Convert.FromBase64String(actualBase64);
-            Assert.IsTrue(Utilities.AreEquivalent(buffer, decoded));
+            Assert.True(Utilities.AreEquivalent(buffer, decoded));
         }
 
-        [TestMethod]
+        [Fact]
         public async Task ReadStreamWithProgress()
         {
             var updates = new List<int>();
@@ -44,13 +39,13 @@ namespace IronPigeon.Tests
             var progress = new MockProgress<int>(u => updates.Add(u));
             var progressStream = largeStream.ReadStreamWithProgress(progress);
             await progressStream.CopyToAsync(Stream.Null);
-            Assert.AreNotEqual(0, updates.Count);
+            Assert.NotEqual(0, updates.Count);
             for (int i = 1; i < updates.Count; i++)
             {
-                Assert.IsTrue(updates[i] >= updates[i - 1]);
+                Assert.True(updates[i] >= updates[i - 1]);
             }
 
-            Assert.AreEqual(largeStream.Length, updates[updates.Count - 1]);
+            Assert.Equal(largeStream.Length, updates[updates.Count - 1]);
         }
 
         private class MockProgress<T> : IProgress<T>

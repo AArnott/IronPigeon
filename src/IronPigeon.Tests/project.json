@@ -3,6 +3,7 @@
     ".NETPortable,Version=v4.5,Profile=Profile78": { }
   },
   "dependencies": {
+    "xunit": "2.1.0"
   },
   "runtimes": {
     "win": { }

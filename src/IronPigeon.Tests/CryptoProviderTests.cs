@@ -7,13 +7,8 @@ namespace IronPigeon.Tests
     using System.IO;
     using System.Linq;
     using System.Threading.Tasks;
-#if NETFX_CORE || WINDOWS_PHONE
-	using Microsoft.VisualStudio.TestPlatform.UnitTestFramework;
-#else
-    using Microsoft.VisualStudio.TestTools.UnitTesting;
-#endif
+    using Xunit;
 
-    [TestClass]
     public abstract class CryptoProviderTests
     {
         private const string EncryptCompatTestCipher = "KnJEHw3HYQVgwCDPoYWI3kiMhhFJs20HL2+6L38ub6oXT17SQnNTdV9o+8BW4KTSdNspCall94jWiAAQqLn8Jumv74JnbuuClZkwClkjZOr43EjNUvDqCZFPPbhP3C8BqNRZkVZrJKizYZxUF3mPjoE1Wle4m1w+u9f7GD3pPiFqusSG63puHYMaaie3W9vVD3YF8+wraqNi9lpH9MFCtRMaTL/3AXAXLTgf6vQm8PvMkDLeu+vQ9IHi8385zYTE0V1OwIBTVFaN0tjT2VQMvLhwbdmZRk7l5XYfvx4OgZXZtNcARwgU184sOmYnHJPgQElrWMaV2ikv9T3qkL/HPtqEOsZMReCz8NykRhKi7WgYjXiHsj/XK4N5I7scrZikn25VRJSbcyFmSLXhmcuwIXJBdwdq9yPwWROxN66ge71VlWbRVwsieeKUne+MhSPCw6BnIkZsT0tfJ0/fiAZyFU/MefH4CiLs2nMIhilQv7FfTLRB1qOuj6cTKJkLiW+s97sRSd8HH1ifxfjfW87LPphxyLDNW2FmsHF0y7GlbRO8bgIyXVVh2HeMqULodq5jHU7vDhvgxwRpJVSwLKKYmaQoBvClMN976mW6HcPa8jnidxclnbHqk1qEHinNLVlLm+Y0wPy7sb+3MUODVjMd5Fc1wY8DM/wJsJRvxcKUAIN0jAsxlLGLVSn9SpZGpOKpMLu0koJp+x05QViS0NQbk4xn9lwVkWjeMKFgYZbEX8L+gbJYC9fcH5R6+Zp5HueGHDXs0+7L/FvApX1Olk7okqpkv4xa/bKZo04vSJQinxG4crHN0zSmu/BA6UfRrPKlIYZXtiKd4S92GUYrIKsYeThx4+AWysAZjc57vI4J545akZC6tIQ+Zb2yTbDgpl69CDOMwKsAnLRw4YE9UYupcniNkeCHPyKbcVMx//u0TTu0qg47i7EwncHkTjB/09GiBPxq7vtv7XMuQutu/ZYbT7dvD2ExIv7DfipgckLuSiNh3DgAbXwRor8u9RySiMdJ6FlBTvwHxDkv/a36rdiPyLv/kgyEiFgJr6B7liIyyfOllWLOvU8hfEMcRrgzur0M4EpEGVplywzSJbZQwEqbdqhkQkrmzk+S+eTCbeX/XeVMUPTLE/r3T1b2tUlOTE903FxmOzx6UXWVQuTz+B1/oJEqAw0n5MyjrGeR/0ah+I6+MersDv24o9qC1yxIE2rJkW3piFZwOTOQyiUnKRykNtsMsnANpWtLj2B1d1H2MjlCb3uswXmvOI/myLK6LnjRYvVVWlQ/RL4Goqa8jnGOPg5d3RHU3OCfHZceD1iKjSmV+4Wt34hi4YFJWW6UCzun";
@@ -23,7 +18,7 @@ namespace IronPigeon.Tests
 
         protected abstract CryptoSettings CryptoProvider { get; }
 
-        [TestMethod]
+        [Fact]
         public void SymmetricEncryptionCompatTest()
         {
             var encryptionResult = new SymmetricEncryptionResult(
@@ -32,10 +27,10 @@ namespace IronPigeon.Tests
                 Convert.FromBase64String(EncryptCompatTestCipher));
             byte[] plaintext = this.CryptoProvider.Decrypt(encryptionResult);
             byte[] expectedPlaintext = Convert.FromBase64String(EncryptCompatTestPlaintext);
-            CollectionAssert.AreEqual(expectedPlaintext, plaintext);
+            Assert.Equal(expectedPlaintext, plaintext);
         }
 
-        [TestMethod]
+        [Fact]
         public void SymmetricEncryptionRoundtrip()
         {
             var rng = new Random();
@@ -43,10 +38,10 @@ namespace IronPigeon.Tests
             rng.NextBytes(plaintext);
             var cipherPacket = this.CryptoProvider.Encrypt(plaintext);
             byte[] decryptedPlaintext = this.CryptoProvider.Decrypt(cipherPacket);
-            CollectionAssert.AreEqual(plaintext, decryptedPlaintext);
+            Assert.Equal(plaintext, decryptedPlaintext);
         }
 
-        [TestMethod]
+        [Fact]
         public void SymmetricEncryptionRoundtripExplicitKeyAndIV()
         {
             byte[] key = new byte[this.CryptoProvider.SymmetricKeySize / 8];
@@ -59,14 +54,14 @@ namespace IronPigeon.Tests
             rng.NextBytes(plaintext);
 
             var cipherPacket = this.CryptoProvider.Encrypt(plaintext, new SymmetricEncryptionVariables(key, iv));
-            CollectionAssert.AreEqual(key, cipherPacket.Key);
-            CollectionAssert.AreEqual(iv, cipherPacket.IV);
+            Assert.Equal(key, cipherPacket.Key);
+            Assert.Equal(iv, cipherPacket.IV);
 
             byte[] decryptedPlaintext = this.CryptoProvider.Decrypt(cipherPacket);
-            CollectionAssert.AreEqual(plaintext, decryptedPlaintext);
+            Assert.Equal(plaintext, decryptedPlaintext);
         }
 
-        [TestMethod]
+        [Fact]
         public void SymmetricEncryptionAsStreamRoundtrip()
         {
             var rng = new Random();
@@ -80,7 +75,7 @@ namespace IronPigeon.Tests
             var decryptedStream = new MemoryStream();
             cipherStream.Position = 0;
             this.CryptoProvider.DecryptAsync(cipherStream, decryptedStream, cipherPacket).Wait();
-            CollectionAssert.AreEqual(plaintext, decryptedStream.ToArray());
+            Assert.Equal(plaintext, decryptedStream.ToArray());
         }
     }
 }
