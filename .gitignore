@@ -69,6 +69,8 @@ local.properties
 
 packages/
 project.lock.json
+*.nuget.props
+*.nuget.targets
 
 # Visual C++ cache files
 ipch/

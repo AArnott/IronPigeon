@@ -5,20 +5,11 @@
 	</PropertyGroup>
 
 	<PropertyGroup>
-		<ProjectRoot>$(MSBuildThisFileDirectory)..\</ProjectRoot>
-		<SolutionDir>$(MSBuildThisFileDirectory</SolutionDir>
-
-		<Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-		<Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-		<IntermediatePath>$(ProjectRoot)obj\$(Platform)\$(Configuration)\$(MSBuildProjectName)\</IntermediatePath>
-		<OutputPath>$(ProjectRoot)bin\$(Platform)\$(Configuration)\$(MSBuildProjectName)\</OutputPath>
-		<PlatformTarget>$(Platform)</PlatformTarget>
-
 		<ErrorReport>prompt</ErrorReport>
 		<WarningLevel>4</WarningLevel>
 
 		<SignAssembly>true</SignAssembly>
-		<AssemblyOriginatorKeyFile>$(ProjectRoot)src\opensource.snk</AssemblyOriginatorKeyFile>
+		<AssemblyOriginatorKeyFile>$(RepoSrcRoot)\opensource.snk</AssemblyOriginatorKeyFile>
 
 		<AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
 	</PropertyGroup>

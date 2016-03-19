@@ -3,9 +3,9 @@
 	<Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildProjectDirectory), EnlistmentInfo.props))\EnlistmentInfo.props" Condition=" '$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildProjectDirectory), EnlistmentInfo.props))' != '' " />
 
 	<ItemGroup>
-		<ProjectReference Include="$(ProjectRoot)src\IronPigeon\IronPigeon.csproj" />
-		<ProjectReference Include="$(ProjectRoot)src\IronPigeon.Desktop\IronPigeon.Desktop.csproj" />
-		<ProjectReference Include="$(ProjectRoot)src\IronPigeon.Dart\IronPigeon.Dart.csproj" />
+		<ProjectReference Include="$(RepoRoot)src\IronPigeon\IronPigeon.csproj" />
+		<ProjectReference Include="$(RepoRoot)src\IronPigeon.Desktop\IronPigeon.Desktop.csproj" />
+		<ProjectReference Include="$(RepoRoot)src\IronPigeon.Dart\IronPigeon.Dart.csproj" />
 	</ItemGroup>
 
 	<Target Name="Rebuild" DependsOnTargets="Clean;Build" />
@@ -27,8 +27,8 @@
 
 		<ItemGroup>
 			<NuGetProperties Include="Version=$(NuGetPackageVersion)" />
-			<NuGetProperties Include="OutputPath=$(ProjectRoot)bin\$(Platform)\$(Configuration)\" />
-			<NuGetProperties Include="IntermediatePath=$(ProjectRoot)obj\$(Platform)\$(Configuration)\" />
+			<NuGetProperties Include="OutputPath=$(RepoBinRoot)$(Platform)\$(Configuration)\" />
+			<NuGetProperties Include="IntermediatePath=$(RepoIntermediatesRoot)\$(Platform)\$(Configuration)\" />
 		</ItemGroup>
 
 		<ItemGroup>
@@ -36,13 +36,13 @@
 				<Symbols>true</Symbols>
 				<Properties>@(NuGetProperties)</Properties>
 				<Version>$(NuGetPackageVersion)</Version>
-				<OutputPackageDirectory>$(ProjectRoot)bin\$(Platform)\$(Configuration)\</OutputPackageDirectory>
+				<OutputPackageDirectory>$(RepoBinRoot)\$(Platform)\$(Configuration)\</OutputPackageDirectory>
 			</NuGetSpecifications>
 			<NuGetSpecifications Include="IronPigeon.Dart.nuspec">
 				<Symbols>true</Symbols>
 				<Properties>@(NuGetProperties)</Properties>
 				<Version>$(NuGetPackageVersion)</Version>
-				<OutputPackageDirectory>$(ProjectRoot)bin\$(Platform)\$(Configuration)\</OutputPackageDirectory>
+				<OutputPackageDirectory>$(RepoBinRoot)\$(Platform)\$(Configuration)\</OutputPackageDirectory>
 			</NuGetSpecifications>
 		</ItemGroup>
 
@@ -52,7 +52,7 @@
 			Version="%(NuGetSpecifications.Version)"
 			OutputPackageDirectory="%(NuGetSpecifications.OutputPackageDirectory)"
 			Symbols="%(NuGetSpecifications.Symbols)"
-			ToolPath="$(ProjectRoot)src\.nuget\"
+			ToolPath="$(RepoSrcRoot)\.nuget\"
 			/>
 	</Target>
 
