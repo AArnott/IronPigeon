@@ -1,0 +1,10 @@
+﻿{
+  "frameworks": {
+    ".NETPortable,Version=v4.5,Profile=Profile78": { }
+  },
+  "dependencies": {
+  },
+  "runtimes": {
+    "win": { }
+  }
+}

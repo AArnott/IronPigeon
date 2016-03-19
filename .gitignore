@@ -1,5 +1,5 @@
 OldDeployments
-.vs
+.vs/
 
 #################
 ## Eclipse
@@ -67,8 +67,8 @@ local.properties
 .builds
 *.dotCover
 
-## TODO: If you have NuGet Package Restore enabled, uncomment this
 packages/
+project.lock.json
 
 # Visual C++ cache files
 ipch/
