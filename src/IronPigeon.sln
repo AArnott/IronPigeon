@@ -32,8 +32,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		version.json = version.json
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IronPigeon.Tests", "IronPigeon.Tests\IronPigeon.Tests.csproj", "{D2FF68FF-68C8-400A-A6E2-6E3BA61D17A1}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WpfChatroom", "WpfChatroom\WpfChatroom.csproj", "{4DE86407-877D-4C6B-B457-1236B20F8823}"
 EndProject
 Global
@@ -148,20 +146,6 @@ Global
 		{7413FF6F-DC39-4B86-AD14-EAC145F5C3B7}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{7413FF6F-DC39-4B86-AD14-EAC145F5C3B7}.Release|x64.ActiveCfg = Release|Any CPU
 		{7413FF6F-DC39-4B86-AD14-EAC145F5C3B7}.Release|x86.ActiveCfg = Release|Any CPU
-		{D2FF68FF-68C8-400A-A6E2-6E3BA61D17A1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D2FF68FF-68C8-400A-A6E2-6E3BA61D17A1}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D2FF68FF-68C8-400A-A6E2-6E3BA61D17A1}.Debug|ARM.ActiveCfg = Debug|Any CPU
-		{D2FF68FF-68C8-400A-A6E2-6E3BA61D17A1}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
-		{D2FF68FF-68C8-400A-A6E2-6E3BA61D17A1}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
-		{D2FF68FF-68C8-400A-A6E2-6E3BA61D17A1}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{D2FF68FF-68C8-400A-A6E2-6E3BA61D17A1}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{D2FF68FF-68C8-400A-A6E2-6E3BA61D17A1}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D2FF68FF-68C8-400A-A6E2-6E3BA61D17A1}.Release|Any CPU.Build.0 = Release|Any CPU
-		{D2FF68FF-68C8-400A-A6E2-6E3BA61D17A1}.Release|ARM.ActiveCfg = Release|Any CPU
-		{D2FF68FF-68C8-400A-A6E2-6E3BA61D17A1}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
-		{D2FF68FF-68C8-400A-A6E2-6E3BA61D17A1}.Release|Mixed Platforms.Build.0 = Release|Any CPU
-		{D2FF68FF-68C8-400A-A6E2-6E3BA61D17A1}.Release|x64.ActiveCfg = Release|Any CPU
-		{D2FF68FF-68C8-400A-A6E2-6E3BA61D17A1}.Release|x86.ActiveCfg = Release|Any CPU
 		{4DE86407-877D-4C6B-B457-1236B20F8823}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{4DE86407-877D-4C6B-B457-1236B20F8823}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4DE86407-877D-4C6B-B457-1236B20F8823}.Debug|ARM.ActiveCfg = Debug|Any CPU
