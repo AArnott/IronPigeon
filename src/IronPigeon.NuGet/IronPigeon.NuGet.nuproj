@@ -14,6 +14,7 @@
     <ProjectGuid>3de0b8b4-d67b-4bb9-89f7-a7ed5891427b</ProjectGuid>
   </PropertyGroup>
   <PropertyGroup>
+    <NuSpecTemplate>IronPigeon.nuspec</NuSpecTemplate>
     <NuProjPath>$(UserProfile)\.nuget\packages\NuProj\0.10.40-beta-g6df38a957a\tools\</NuProjPath>
     <VersionDependsOn>$(VersionDependsOn);GetNuPkgVersion</VersionDependsOn>
   </PropertyGroup>
@@ -34,6 +35,7 @@
     <EmbedSourceFiles>true</EmbedSourceFiles>
   </PropertyGroup>
   <ItemGroup>
+    <None Include="IronPigeon.nuspec" />
     <None Include="project.json" />
   </ItemGroup>
   <ItemGroup>

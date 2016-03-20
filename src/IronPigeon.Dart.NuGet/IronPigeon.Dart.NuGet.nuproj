@@ -14,6 +14,7 @@
     <ProjectGuid>0e5ef076-7470-4faa-a63b-4f9d5e16443d</ProjectGuid>
   </PropertyGroup>
   <PropertyGroup>
+    <NuSpecTemplate>IronPigeon.Dart.nuspec</NuSpecTemplate>
     <NuProjPath>$(UserProfile)\.nuget\packages\NuProj\0.10.40-beta-g6df38a957a\tools\</NuProjPath>
     <VersionDependsOn>$(VersionDependsOn);GetNuPkgVersion</VersionDependsOn>
   </PropertyGroup>
@@ -39,6 +40,9 @@
   <ItemGroup>
     <ProjectReference Include="..\IronPigeon.Dart\IronPigeon.Dart.csproj" />
     <ProjectReference Include="..\IronPigeon.NuGet\IronPigeon.NuGet.nuproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="IronPigeon.Dart.nuspec" />
   </ItemGroup>
   <Import Project="$(NuProjPath)\NuProj.targets" />
   <Target Name="GetNuPkgVersion" DependsOnTargets="GetBuildVersion">
