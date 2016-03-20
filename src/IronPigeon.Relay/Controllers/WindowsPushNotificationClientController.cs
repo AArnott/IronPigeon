@@ -19,7 +19,7 @@ namespace IronPigeon.Relay.Controllers
     using Validation;
 
 #if !DEBUG
-	[RequireHttps]
+    [RequireHttps]
 #endif
     public class WindowsPushNotificationClientController : Controller
     {
