@@ -1,193 +1,221 @@
-﻿namespace IronPigeon.Tests {
-	using System;
-	using System.Collections.Generic;
-	using System.Diagnostics;
-	using System.Linq;
-	using System.Net.Http;
-	using System.Text;
-	using System.Threading.Tasks;
+﻿// Copyright (c) Andrew Arnott. All rights reserved.
+// Licensed under the Microsoft Reciprocal License (Ms-RL) license. See LICENSE file in the project root for full license information.
 
-	using Moq;
+namespace IronPigeon.Tests
+{
+    using System;
+    using System.Collections.Generic;
+    using System.Diagnostics;
+    using System.Linq;
+    using System.Net.Http;
+    using System.Text;
+    using System.Threading.Tasks;
 
-	using NUnit.Framework;
-	using Validation;
+    using Moq;
 
-	[TestFixture]
-	public class ChannelTests {
-		private Mocks.LoggerMock logger;
+    using NUnit.Framework;
+    using Validation;
 
-		private CryptoSettings desktopCryptoProvider;
+    [TestFixture]
+    public class ChannelTests
+    {
+        private Mocks.LoggerMock logger;
 
-		[SetUp]
-		public void Setup() {
-			this.logger = new Mocks.LoggerMock();
-			this.desktopCryptoProvider = TestUtilities.CreateAuthenticCryptoProvider();
-		}
+        private CryptoSettings desktopCryptoProvider;
 
-		[TearDown]
-		public void Teardown() {
-			if (TestContext.CurrentContext.Result.Status == TestStatus.Failed) {
-				Console.WriteLine(this.logger.Messages);
-			}
-		}
+        [SetUp]
+        public void Setup()
+        {
+            this.logger = new Mocks.LoggerMock();
+            this.desktopCryptoProvider = TestUtilities.CreateAuthenticCryptoProvider();
+        }
 
-		[Test]
-		public void DefaultCtor() {
-			var channel = new Channel();
-			Assert.That(channel.CloudBlobStorage, Is.Null);
-			Assert.That(channel.CryptoServices, Is.Not.Null);
-			Assert.That(channel.Endpoint, Is.Null);
-		}
+        [TearDown]
+        public void Teardown()
+        {
+            if (TestContext.CurrentContext.Result.Status == TestStatus.Failed)
+            {
+                Console.WriteLine(this.logger.Messages);
+            }
+        }
 
-		[Test]
-		public void CtorParameters() {
-			var blobProvider = new Mock<ICloudBlobStorageProvider>();
-			var endpoint = new Mock<OwnEndpoint>();
-			var channel = new Channel() {
-				CloudBlobStorage = blobProvider.Object,
-				Endpoint = endpoint.Object,
-			};
-			Assert.That(channel.CloudBlobStorage, Is.SameAs(blobProvider.Object));
-			Assert.That(channel.Endpoint, Is.SameAs(endpoint.Object));
-		}
+        [Test]
+        public void DefaultCtor()
+        {
+            var channel = new Channel();
+            Assert.That(channel.CloudBlobStorage, Is.Null);
+            Assert.That(channel.CryptoServices, Is.Not.Null);
+            Assert.That(channel.Endpoint, Is.Null);
+        }
 
-		[Test]
-		public void HttpClient() {
-			var channel = new Channel();
-			Assert.That(channel.HttpClient, Is.Null);
-			var handler = new HttpClient();
-			channel.HttpClient = handler;
-			Assert.That(channel.HttpClient, Is.SameAs(handler));
-		}
+        [Test]
+        public void CtorParameters()
+        {
+            var blobProvider = new Mock<ICloudBlobStorageProvider>();
+            var endpoint = new Mock<OwnEndpoint>();
+            var channel = new Channel()
+            {
+                CloudBlobStorage = blobProvider.Object,
+                Endpoint = endpoint.Object,
+            };
+            Assert.That(channel.CloudBlobStorage, Is.SameAs(blobProvider.Object));
+            Assert.That(channel.Endpoint, Is.SameAs(endpoint.Object));
+        }
 
-		[Test]
-		public void PostAsyncBadArgs() {
-			var channel = new Channel();
-			Assert.Throws<ArgumentNullException>(() => channel.PostAsync(null, Valid.OneEndpoint, Valid.ExpirationUtc).GetAwaiter().GetResult());
-			Assert.Throws<ArgumentNullException>(() => channel.PostAsync(Valid.Message, null, Valid.ExpirationUtc).GetAwaiter().GetResult());
-			Assert.Throws<ArgumentException>(() => channel.PostAsync(Valid.Message, Valid.EmptyEndpoints, Valid.ExpirationUtc).GetAwaiter().GetResult());
-			Assert.Throws<ArgumentException>(() => channel.PostAsync(Valid.Message, Valid.OneEndpoint, Invalid.ExpirationUtc).GetAwaiter().GetResult());
-		}
+        [Test]
+        public void HttpClient()
+        {
+            var channel = new Channel();
+            Assert.That(channel.HttpClient, Is.Null);
+            var handler = new HttpClient();
+            channel.HttpClient = handler;
+            Assert.That(channel.HttpClient, Is.SameAs(handler));
+        }
 
-		[Test]
-		public void PostAndReceiveAsync() {
-			Task.Run(async delegate {
-				var sender = Valid.GenerateOwnEndpoint();
-				var receiver = Valid.GenerateOwnEndpoint();
+        [Test]
+        public void PostAsyncBadArgs()
+        {
+            var channel = new Channel();
+            Assert.Throws<ArgumentNullException>(() => channel.PostAsync(null, Valid.OneEndpoint, Valid.ExpirationUtc).GetAwaiter().GetResult());
+            Assert.Throws<ArgumentNullException>(() => channel.PostAsync(Valid.Message, null, Valid.ExpirationUtc).GetAwaiter().GetResult());
+            Assert.Throws<ArgumentException>(() => channel.PostAsync(Valid.Message, Valid.EmptyEndpoints, Valid.ExpirationUtc).GetAwaiter().GetResult());
+            Assert.Throws<ArgumentException>(() => channel.PostAsync(Valid.Message, Valid.OneEndpoint, Invalid.ExpirationUtc).GetAwaiter().GetResult());
+        }
 
-				var cloudStorage = new Mocks.CloudBlobStorageProviderMock();
-				var inboxMock = new Mocks.InboxHttpHandlerMock(new[] { receiver.PublicEndpoint });
-				var cryptoProvider = new CryptoSettings(SecurityLevel.Minimum);
+        [Test]
+        public void PostAndReceiveAsync()
+        {
+            Task.Run(async delegate
+            {
+                var sender = Valid.GenerateOwnEndpoint();
+                var receiver = Valid.GenerateOwnEndpoint();
 
-				var sentMessage = Valid.Message;
-				await this.SendMessageAsync(cloudStorage, inboxMock, cryptoProvider, sender, receiver.PublicEndpoint, sentMessage);
-				var messages = await this.ReceiveMessageAsync(cloudStorage, inboxMock, new CryptoSettings(SecurityLevel.Minimum), receiver);
+                var cloudStorage = new Mocks.CloudBlobStorageProviderMock();
+                var inboxMock = new Mocks.InboxHttpHandlerMock(new[] { receiver.PublicEndpoint });
+                var cryptoProvider = new CryptoSettings(SecurityLevel.Minimum);
 
-				Assert.That(messages.Count, Is.EqualTo(1));
-				var receivedMessage = messages.Single();
-				Assert.That(receivedMessage.Payload.ContentType, Is.EqualTo(sentMessage.ContentType));
-				Assert.That(receivedMessage.Payload.Content, Is.EqualTo(sentMessage.Content));
-			}).GetAwaiter().GetResult();
-		}
+                var sentMessage = Valid.Message;
+                await this.SendMessageAsync(cloudStorage, inboxMock, cryptoProvider, sender, receiver.PublicEndpoint, sentMessage);
+                var messages = await this.ReceiveMessageAsync(cloudStorage, inboxMock, new CryptoSettings(SecurityLevel.Minimum), receiver);
 
-		[Test]
-		public void PayloadReferenceTamperingTests() {
-			Task.Run(async delegate {
-				var sender = Valid.GenerateOwnEndpoint(this.desktopCryptoProvider);
-				var receiver = Valid.GenerateOwnEndpoint(this.desktopCryptoProvider);
+                Assert.That(messages.Count, Is.EqualTo(1));
+                var receivedMessage = messages.Single();
+                Assert.That(receivedMessage.Payload.ContentType, Is.EqualTo(sentMessage.ContentType));
+                Assert.That(receivedMessage.Payload.Content, Is.EqualTo(sentMessage.Content));
+            }).GetAwaiter().GetResult();
+        }
 
-				for (int i = 0; i < 100; i++) {
-					var cloudStorage = new Mocks.CloudBlobStorageProviderMock();
-					var inboxMock = new Mocks.InboxHttpHandlerMock(new[] { receiver.PublicEndpoint });
+        [Test]
+        public void PayloadReferenceTamperingTests()
+        {
+            Task.Run(async delegate
+            {
+                var sender = Valid.GenerateOwnEndpoint(this.desktopCryptoProvider);
+                var receiver = Valid.GenerateOwnEndpoint(this.desktopCryptoProvider);
 
-					var sentMessage = Valid.Message;
-					await this.SendMessageAsync(cloudStorage, inboxMock, this.desktopCryptoProvider, sender, receiver.PublicEndpoint, sentMessage);
+                for (int i = 0; i < 100; i++)
+                {
+                    var cloudStorage = new Mocks.CloudBlobStorageProviderMock();
+                    var inboxMock = new Mocks.InboxHttpHandlerMock(new[] { receiver.PublicEndpoint });
 
-					// Tamper with the payload reference.
-					TestUtilities.ApplyFuzzing(inboxMock.Inboxes[receiver.PublicEndpoint][0].Item2, 1);
+                    var sentMessage = Valid.Message;
+                    await this.SendMessageAsync(cloudStorage, inboxMock, this.desktopCryptoProvider, sender, receiver.PublicEndpoint, sentMessage);
 
-					var receivedMessages =
-						await this.ReceiveMessageAsync(cloudStorage, inboxMock, this.desktopCryptoProvider, receiver, expectMessage: false);
-					Assert.AreEqual(0, receivedMessages.Count);
-				}
-			}).GetAwaiter().GetResult();
-		}
+                    // Tamper with the payload reference.
+                    TestUtilities.ApplyFuzzing(inboxMock.Inboxes[receiver.PublicEndpoint][0].Item2, 1);
 
-		[Test]
-		public void PayloadTamperingTests() {
-			Task.Run(async delegate {
-				var sender = Valid.GenerateOwnEndpoint(this.desktopCryptoProvider);
-				var receiver = Valid.GenerateOwnEndpoint(this.desktopCryptoProvider);
+                    var receivedMessages =
+                        await this.ReceiveMessageAsync(cloudStorage, inboxMock, this.desktopCryptoProvider, receiver, expectMessage: false);
+                    Assert.AreEqual(0, receivedMessages.Count);
+                }
+            }).GetAwaiter().GetResult();
+        }
 
-				for (int i = 0; i < 100; i++) {
-					var cloudStorage = new Mocks.CloudBlobStorageProviderMock();
-					var inboxMock = new Mocks.InboxHttpHandlerMock(new[] { receiver.PublicEndpoint });
+        [Test]
+        public void PayloadTamperingTests()
+        {
+            Task.Run(async delegate
+            {
+                var sender = Valid.GenerateOwnEndpoint(this.desktopCryptoProvider);
+                var receiver = Valid.GenerateOwnEndpoint(this.desktopCryptoProvider);
 
-					var sentMessage = Valid.Message;
-					await this.SendMessageAsync(cloudStorage, inboxMock, this.desktopCryptoProvider, sender, receiver.PublicEndpoint, sentMessage);
+                for (int i = 0; i < 100; i++)
+                {
+                    var cloudStorage = new Mocks.CloudBlobStorageProviderMock();
+                    var inboxMock = new Mocks.InboxHttpHandlerMock(new[] { receiver.PublicEndpoint });
 
-					// Tamper with the payload itself.
-					TestUtilities.ApplyFuzzing(cloudStorage.Blobs.Single().Value, 1);
+                    var sentMessage = Valid.Message;
+                    await this.SendMessageAsync(cloudStorage, inboxMock, this.desktopCryptoProvider, sender, receiver.PublicEndpoint, sentMessage);
 
-					var receivedMessages =
-						await this.ReceiveMessageAsync(cloudStorage, inboxMock, this.desktopCryptoProvider, receiver, expectMessage: false);
-					Assert.AreEqual(0, receivedMessages.Count);
-				}
-			}).GetAwaiter().GetResult();
-		}
+                    // Tamper with the payload itself.
+                    TestUtilities.ApplyFuzzing(cloudStorage.Blobs.Single().Value, 1);
 
-		private async Task SendMessageAsync(Mocks.CloudBlobStorageProviderMock cloudBlobStorage, Mocks.InboxHttpHandlerMock inboxMock, CryptoSettings cryptoProvider, OwnEndpoint sender, Endpoint receiver, Payload message) {
-			Requires.NotNull(cloudBlobStorage, "cloudBlobStorage");
-			Requires.NotNull(sender, "sender");
-			Requires.NotNull(message, "message");
+                    var receivedMessages =
+                        await this.ReceiveMessageAsync(cloudStorage, inboxMock, this.desktopCryptoProvider, receiver, expectMessage: false);
+                    Assert.AreEqual(0, receivedMessages.Count);
+                }
+            }).GetAwaiter().GetResult();
+        }
 
-			var httpHandler = new Mocks.HttpMessageHandlerMock();
+        private async Task SendMessageAsync(Mocks.CloudBlobStorageProviderMock cloudBlobStorage, Mocks.InboxHttpHandlerMock inboxMock, CryptoSettings cryptoProvider, OwnEndpoint sender, Endpoint receiver, Payload message)
+        {
+            Requires.NotNull(cloudBlobStorage, "cloudBlobStorage");
+            Requires.NotNull(sender, "sender");
+            Requires.NotNull(message, "message");
 
-			cloudBlobStorage.AddHttpHandler(httpHandler);
-			inboxMock.Register(httpHandler);
+            var httpHandler = new Mocks.HttpMessageHandlerMock();
 
-			var channel = new Channel() {
-				HttpClient = new HttpClient(httpHandler),
-				CloudBlobStorage = cloudBlobStorage,
-				CryptoServices = cryptoProvider,
-				Endpoint = sender,
-				Logger = this.logger,
-			};
+            cloudBlobStorage.AddHttpHandler(httpHandler);
+            inboxMock.Register(httpHandler);
 
-			await channel.PostAsync(Valid.Message, new[] { receiver }, Valid.ExpirationUtc);
-		}
+            var channel = new Channel()
+            {
+                HttpClient = new HttpClient(httpHandler),
+                CloudBlobStorage = cloudBlobStorage,
+                CryptoServices = cryptoProvider,
+                Endpoint = sender,
+                Logger = this.logger,
+            };
 
-		private async Task<IReadOnlyCollection<Channel.PayloadReceipt>> ReceiveMessageAsync(Mocks.CloudBlobStorageProviderMock cloudBlobStorage, Mocks.InboxHttpHandlerMock inboxMock, CryptoSettings cryptoProvider, OwnEndpoint receiver, bool expectMessage = true) {
-			Requires.NotNull(cloudBlobStorage, "cloudBlobStorage");
-			Requires.NotNull(receiver, "receiver");
+            await channel.PostAsync(Valid.Message, new[] { receiver }, Valid.ExpirationUtc);
+        }
 
-			var httpHandler = new Mocks.HttpMessageHandlerMock();
+        private async Task<IReadOnlyCollection<Channel.PayloadReceipt>> ReceiveMessageAsync(Mocks.CloudBlobStorageProviderMock cloudBlobStorage, Mocks.InboxHttpHandlerMock inboxMock, CryptoSettings cryptoProvider, OwnEndpoint receiver, bool expectMessage = true)
+        {
+            Requires.NotNull(cloudBlobStorage, "cloudBlobStorage");
+            Requires.NotNull(receiver, "receiver");
 
-			cloudBlobStorage.AddHttpHandler(httpHandler);
-			inboxMock.Register(httpHandler);
+            var httpHandler = new Mocks.HttpMessageHandlerMock();
 
-			var channel = new Channel {
-				HttpClient = new HttpClient(httpHandler),
-				HttpClientLongPoll = new HttpClient(httpHandler),
-				CloudBlobStorage = cloudBlobStorage,
-				CryptoServices = cryptoProvider,
-				Endpoint = receiver,
-				Logger = this.logger,
-			};
+            cloudBlobStorage.AddHttpHandler(httpHandler);
+            inboxMock.Register(httpHandler);
 
-			var progressMessage = new TaskCompletionSource<Payload>();
-			var progress = new Progress<Channel.PayloadReceipt>(m => progressMessage.SetResult(m.Payload));
+            var channel = new Channel
+            {
+                HttpClient = new HttpClient(httpHandler),
+                HttpClientLongPoll = new HttpClient(httpHandler),
+                CloudBlobStorage = cloudBlobStorage,
+                CryptoServices = cryptoProvider,
+                Endpoint = receiver,
+                Logger = this.logger,
+            };
 
-			var messages = await channel.ReceiveAsync(progress: progress);
-			if (expectMessage) {
-				Assert.That(messages.Count, Is.EqualTo(1));
-				await progressMessage.Task;
-				Assert.That(progressMessage.Task.Result, Is.SameAs(messages.Single().Payload));
-			} else {
-				Assert.That(messages.Count, Is.EqualTo(0));
-			}
+            var progressMessage = new TaskCompletionSource<Payload>();
+            var progress = new Progress<Channel.PayloadReceipt>(m => progressMessage.SetResult(m.Payload));
 
-			return messages;
-		}
-	}
+            var messages = await channel.ReceiveAsync(progress: progress);
+            if (expectMessage)
+            {
+                Assert.That(messages.Count, Is.EqualTo(1));
+                await progressMessage.Task;
+                Assert.That(progressMessage.Task.Result, Is.SameAs(messages.Single().Payload));
+            }
+            else
+            {
+                Assert.That(messages.Count, Is.EqualTo(0));
+            }
+
+            return messages;
+        }
+    }
 }

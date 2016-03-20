@@ -1,42 +1,51 @@
-﻿namespace IronPigeon.Relay.Models {
-	using System;
-	using System.Collections.Generic;
-	using System.Linq;
-	using System.Threading.Tasks;
-	using System.Web;
-	using Microsoft.WindowsAzure.Storage.Table;
-	using Microsoft.WindowsAzure.Storage.Table.DataServices;
-	using Microsoft.WindowsAzure.StorageClient;
-	using Validation;
+﻿// Copyright (c) Andrew Arnott. All rights reserved.
+// Licensed under the Microsoft Reciprocal License (Ms-RL) license. See LICENSE file in the project root for full license information.
 
-	public class PushNotificationContext : TableServiceContext {
-		public PushNotificationContext(CloudTableClient client, string tableName)
-			: base(client) {
-			Requires.NotNullOrEmpty(tableName, "tableName");
-			this.TableName = tableName;
-		}
+namespace IronPigeon.Relay.Models
+{
+    using System;
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Threading.Tasks;
+    using System.Web;
+    using Microsoft.WindowsAzure.Storage.Table;
+    using Microsoft.WindowsAzure.Storage.Table.DataServices;
+    using Microsoft.WindowsAzure.StorageClient;
+    using Validation;
 
-		public string TableName { get; private set; }
+    public class PushNotificationContext : TableServiceContext
+    {
+        public PushNotificationContext(CloudTableClient client, string tableName)
+            : base(client)
+        {
+            Requires.NotNullOrEmpty(tableName, "tableName");
+            this.TableName = tableName;
+        }
 
-		public virtual async Task<PushNotificationClientEntity> GetAsync(string clientPackageSecurityIdentifier) {
-			Requires.NotNullOrEmpty(clientPackageSecurityIdentifier, "clientPackageSecurityIdentifier");
-			Requires.Argument(clientPackageSecurityIdentifier == null || clientPackageSecurityIdentifier.StartsWith(PushNotificationClientEntity.SchemePrefix), "clientPackageSecurityIdentifier", "Prefix {0} not found", PushNotificationClientEntity.SchemePrefix);
+        public string TableName { get; private set; }
 
-			var query = this.GetQuery(clientPackageSecurityIdentifier.Substring(PushNotificationClientEntity.SchemePrefix.Length));
-			var result = await query.ExecuteSegmentedAsync();
-			return result.FirstOrDefault();
-		}
+        public virtual async Task<PushNotificationClientEntity> GetAsync(string clientPackageSecurityIdentifier)
+        {
+            Requires.NotNullOrEmpty(clientPackageSecurityIdentifier, "clientPackageSecurityIdentifier");
+            Requires.Argument(clientPackageSecurityIdentifier == null || clientPackageSecurityIdentifier.StartsWith(PushNotificationClientEntity.SchemePrefix), "clientPackageSecurityIdentifier", "Prefix {0} not found", PushNotificationClientEntity.SchemePrefix);
 
-		public void AddObject(PushNotificationClientEntity entity) {
-			this.AddObject(this.TableName, entity);
-		}
+            var query = this.GetQuery(clientPackageSecurityIdentifier.Substring(PushNotificationClientEntity.SchemePrefix.Length));
+            var result = await query.ExecuteSegmentedAsync();
+            return result.FirstOrDefault();
+        }
 
-		private TableServiceQuery<PushNotificationClientEntity> GetQuery(string rowKey) {
-			Requires.NotNullOrEmpty(rowKey, "rowKey");
+        public void AddObject(PushNotificationClientEntity entity)
+        {
+            this.AddObject(this.TableName, entity);
+        }
 
-			return (from inbox in this.CreateQuery<PushNotificationClientEntity>(this.TableName)
-					where inbox.RowKey == rowKey
-					select inbox).AsTableServiceQuery(this);
-		}
-	}
+        private TableServiceQuery<PushNotificationClientEntity> GetQuery(string rowKey)
+        {
+            Requires.NotNullOrEmpty(rowKey, "rowKey");
+
+            return (from inbox in this.CreateQuery<PushNotificationClientEntity>(this.TableName)
+                    where inbox.RowKey == rowKey
+                    select inbox).AsTableServiceQuery(this);
+        }
+    }
 }

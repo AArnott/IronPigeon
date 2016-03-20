@@ -1,67 +1,83 @@
-﻿namespace IronPigeon.Tests.Mocks {
-	using System;
-	using System.Collections.Generic;
-	using System.IO;
-	using System.Linq;
-	using System.Net.Http;
-	using System.Runtime.Serialization.Json;
-	using System.Text;
-	using System.Threading.Tasks;
+﻿// Copyright (c) Andrew Arnott. All rights reserved.
+// Licensed under the Microsoft Reciprocal License (Ms-RL) license. See LICENSE file in the project root for full license information.
 
-	internal class InboxHttpHandlerMock {
-		internal const string InboxBaseUri = "http://localhost/inbox/";
+namespace IronPigeon.Tests.Mocks
+{
+    using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Linq;
+    using System.Net.Http;
+    using System.Runtime.Serialization.Json;
+    using System.Text;
+    using System.Threading.Tasks;
 
-		private readonly Dictionary<Endpoint, List<Tuple<DateTime, byte[]>>> recipients;
+    internal class InboxHttpHandlerMock
+    {
+        internal const string InboxBaseUri = "http://localhost/inbox/";
 
-		internal InboxHttpHandlerMock(IReadOnlyList<Endpoint> recipients) {
-			this.recipients = recipients.ToDictionary(r => r, r => new List<Tuple<DateTime, byte[]>>());
-		}
+        private readonly Dictionary<Endpoint, List<Tuple<DateTime, byte[]>>> recipients;
 
-		internal Dictionary<Endpoint, List<Tuple<DateTime, byte[]>>> Inboxes {
-			get { return this.recipients; }
-		}
+        internal InboxHttpHandlerMock(IReadOnlyList<Endpoint> recipients)
+        {
+            this.recipients = recipients.ToDictionary(r => r, r => new List<Tuple<DateTime, byte[]>>());
+        }
 
-		internal void Register(HttpMessageHandlerMock httpMock) {
-			httpMock.RegisterHandler(this.HttpHandler);
-		}
+        internal Dictionary<Endpoint, List<Tuple<DateTime, byte[]>>> Inboxes
+        {
+            get { return this.recipients; }
+        }
 
-		private async Task<HttpResponseMessage> HttpHandler(HttpRequestMessage request) {
-			if (request.Method == HttpMethod.Post) {
-				var recipient = this.recipients.Keys.FirstOrDefault(r => r.MessageReceivingEndpoint.AbsolutePath == request.RequestUri.AbsolutePath);
-				if (recipient != null) {
-					var inbox = this.recipients[recipient];
-					var buffer = await request.Content.ReadAsByteArrayAsync();
-					inbox.Add(Tuple.Create(DateTime.UtcNow, buffer));
-					return new HttpResponseMessage();
-				}
-			} else if (request.Method == HttpMethod.Get) {
-				var recipient = this.recipients.Keys.FirstOrDefault(r => r.MessageReceivingEndpoint == request.RequestUri);
-				if (recipient != null) {
-					var inbox = this.recipients[recipient];
-					var list = new IncomingList();
-					string locationBase = recipient.MessageReceivingEndpoint.AbsoluteUri + "/";
-					list.Items = new List<IncomingList.IncomingItem>();
-					for (int i = 0; i < inbox.Count; i++) {
-						list.Items.Add(new IncomingList.IncomingItem { DatePostedUtc = inbox[i].Item1, Location = new Uri(locationBase + i) });
-					}
+        internal void Register(HttpMessageHandlerMock httpMock)
+        {
+            httpMock.RegisterHandler(this.HttpHandler);
+        }
 
-					var serializer = new DataContractJsonSerializer(typeof(IncomingList));
-					var contentStream = new MemoryStream();
-					serializer.WriteObject(contentStream, list);
-					contentStream.Position = 0;
-					return new HttpResponseMessage { Content = new StreamContent(contentStream) };
-				}
+        private async Task<HttpResponseMessage> HttpHandler(HttpRequestMessage request)
+        {
+            if (request.Method == HttpMethod.Post)
+            {
+                var recipient = this.recipients.Keys.FirstOrDefault(r => r.MessageReceivingEndpoint.AbsolutePath == request.RequestUri.AbsolutePath);
+                if (recipient != null)
+                {
+                    var inbox = this.recipients[recipient];
+                    var buffer = await request.Content.ReadAsByteArrayAsync();
+                    inbox.Add(Tuple.Create(DateTime.UtcNow, buffer));
+                    return new HttpResponseMessage();
+                }
+            }
+            else if (request.Method == HttpMethod.Get)
+            {
+                var recipient = this.recipients.Keys.FirstOrDefault(r => r.MessageReceivingEndpoint == request.RequestUri);
+                if (recipient != null)
+                {
+                    var inbox = this.recipients[recipient];
+                    var list = new IncomingList();
+                    string locationBase = recipient.MessageReceivingEndpoint.AbsoluteUri + "/";
+                    list.Items = new List<IncomingList.IncomingItem>();
+                    for (int i = 0; i < inbox.Count; i++)
+                    {
+                        list.Items.Add(new IncomingList.IncomingItem { DatePostedUtc = inbox[i].Item1, Location = new Uri(locationBase + i) });
+                    }
 
-				recipient = this.recipients.Keys.FirstOrDefault(r => request.RequestUri.AbsolutePath.StartsWith(r.MessageReceivingEndpoint.AbsolutePath + "/"));
-				if (recipient != null) {
-					var messageIndex = int.Parse(request.RequestUri.Segments[request.RequestUri.Segments.Length - 1]);
-					var message = this.recipients[recipient][messageIndex];
-					byte[] messageBuffer = message.Item2;
-					return new HttpResponseMessage { Content = new StreamContent(new MemoryStream(messageBuffer)) };
-				}
-			}
+                    var serializer = new DataContractJsonSerializer(typeof(IncomingList));
+                    var contentStream = new MemoryStream();
+                    serializer.WriteObject(contentStream, list);
+                    contentStream.Position = 0;
+                    return new HttpResponseMessage { Content = new StreamContent(contentStream) };
+                }
 
-			return null;
-		}
-	}
+                recipient = this.recipients.Keys.FirstOrDefault(r => request.RequestUri.AbsolutePath.StartsWith(r.MessageReceivingEndpoint.AbsolutePath + "/"));
+                if (recipient != null)
+                {
+                    var messageIndex = int.Parse(request.RequestUri.Segments[request.RequestUri.Segments.Length - 1]);
+                    var message = this.recipients[recipient][messageIndex];
+                    byte[] messageBuffer = message.Item2;
+                    return new HttpResponseMessage { Content = new StreamContent(new MemoryStream(messageBuffer)) };
+                }
+            }
+
+            return null;
+        }
+    }
 }
