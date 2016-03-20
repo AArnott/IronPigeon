@@ -7,12 +7,6 @@ environment:
     secure: Ql19CstT9GvFNeSIAjXvgHXZg+/pNaYJ2jVkzde4LT2vwSyjiQgQ+M332wVYtu+r
 cache:
 - '%USERPROFILE%\.nuget\packages'
-xamarin:
-  email: andrewarnott@gmail.com
-  password:
-    secure: dWaYN3ShMMzKvXN0kx2UTYneK+QKaDHmXGUWvHAo/MI=
-  android: true
-  ios: true
 before_build:
 - ps: nuget restore src -Verbosity quiet
 build:
