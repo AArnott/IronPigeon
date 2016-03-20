@@ -38,10 +38,6 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\Nuget\IronPigeon.Dart.nuspec">
-      <Link>IronPigeon.Dart.nuspec</Link>
-      <SubType>Designer</SubType>
-    </None>
     <None Include="project.json" />
   </ItemGroup>
   <ItemGroup>

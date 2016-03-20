@@ -9,7 +9,7 @@
 		<WarningLevel>4</WarningLevel>
 
 		<SignAssembly>true</SignAssembly>
-		<AssemblyOriginatorKeyFile>$(RepoSrcRoot)\opensource.snk</AssemblyOriginatorKeyFile>
+		<AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)\opensource.snk</AssemblyOriginatorKeyFile>
 
 		<AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
 	</PropertyGroup>

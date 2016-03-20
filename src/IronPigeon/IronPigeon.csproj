@@ -73,10 +73,6 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\..\Nuget\IronPigeon.nuspec">
-      <Link>IronPigeon.nuspec</Link>
-      <SubType>Designer</SubType>
-    </None>
     <None Include="IronPigeon.ruleset" />
     <None Include="project.json" />
   </ItemGroup>
