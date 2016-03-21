@@ -20,8 +20,8 @@ build:
 artifacts:
 - path: bin\**\*.nupkg
   name: NuGet Package
-test:
-  assemblies: 'bin\**\*Tests.dll'
+test: off
+#  assemblies: 'bin\**\*Tests.dll'
 on_success:
 - ps: >-
     if ($env:NuGetApiKey -and $env:APPVEYOR_REPO_TAG_NAME -match "^v\d\.\d") {
