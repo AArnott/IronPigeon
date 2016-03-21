@@ -26,6 +26,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		..\appveyor.yml = ..\appveyor.yml
 		EnlistmentInfo.props = EnlistmentInfo.props
 		EnlistmentInfo.targets = EnlistmentInfo.targets
+		..\Install-Dependencies.ps1 = ..\Install-Dependencies.ps1
 		..\LICENSE.txt = ..\LICENSE.txt
 		NuGet.config = NuGet.config
 		..\README.md = ..\README.md
