@@ -1,0 +1,52 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|AnyCPU">
+      <Configuration>Debug</Configuration>
+      <Platform>AnyCPU</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|AnyCPU">
+      <Configuration>Release</Configuration>
+      <Platform>AnyCPU</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>3de0b8b4-d67b-4bb9-89f7-a7ed5891427b</ProjectGuid>
+  </PropertyGroup>
+  <PropertyGroup>
+    <NuSpecTemplate>IronPigeon.nuspec</NuSpecTemplate>
+    <NuProjPath>$(UserProfile)\.nuget\packages\NuProj\0.10.40-beta-g6df38a957a\tools\</NuProjPath>
+    <VersionDependsOn>$(VersionDependsOn);GetNuPkgVersion</VersionDependsOn>
+  </PropertyGroup>
+  <Import Project="$(NuProjPath)\NuProj.props" Condition="Exists('$(NuProjPath)\NuProj.props')" />
+  <PropertyGroup Label="Configuration">
+    <Id>IronPigeon</Id>
+    <Title>IronPigeon</Title>
+    <Authors>Andrew Arnott</Authors>
+    <Owners>Andrew Arnott</Owners>
+    <Summary>An open source generic message passing protocol with focus on confidentiality and authentication.</Summary>
+    <Description>An open source generic message passing protocol with focus on confidentiality and authentication.</Description>
+    <ReleaseNotes>
+    </ReleaseNotes>
+    <ProjectUrl>http://github.com/aarnott/ironpigeon</ProjectUrl>
+    <Copyright>Copyright © Andrew Arnott</Copyright>
+    <LicenseUrl>https://raw.githubusercontent.com/AArnott/IronPigeon/$CommitId$/LICENSE.txt</LicenseUrl>
+    <Tags>crypto cryptography mail email privacy</Tags>
+    <EmbedSourceFiles>true</EmbedSourceFiles>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="IronPigeon.nuspec" />
+    <None Include="project.json" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\IronPigeon.Desktop\IronPigeon.Desktop.csproj" />
+    <ProjectReference Include="..\IronPigeon\IronPigeon.csproj" />
+  </ItemGroup>
+  <Import Project="$(NuProjPath)\NuProj.targets" />
+  <Target Name="GetNuPkgVersion" DependsOnTargets="GetBuildVersion">
+    <PropertyGroup>
+      <Version>$(NuGetPackageVersion)</Version>
+      <NuSpecProperties>$(NuGetProperties);CommitId=$(GitCommitIdShort)</NuSpecProperties>
+    </PropertyGroup>
+  </Target>
+</Project>

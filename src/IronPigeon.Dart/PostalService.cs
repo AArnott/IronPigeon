@@ -1,164 +1,186 @@
-﻿namespace IronPigeon.Dart {
-	using System;
-	using System.Collections.Generic;
-	using System.Collections.ObjectModel;
-	using System.IO;
-	using System.Linq;
-	using System.Text;
-	using System.Threading;
-	using System.Threading.Tasks;
-	using Validation;
+﻿// Copyright (c) Andrew Arnott. All rights reserved.
+// Licensed under the Microsoft Reciprocal License (Ms-RL) license. See LICENSE file in the project root for full license information.
 
-	/// <summary>
-	/// An email sending and receiving service.
-	/// </summary>
-	public class PostalService {
-		/// <summary>
-		/// Initializes a new instance of the <see cref="PostalService"/> class.
-		/// </summary>
-		public PostalService() {
-		}
+namespace IronPigeon.Dart
+{
+    using System;
+    using System.Collections.Generic;
+    using System.Collections.ObjectModel;
+    using System.IO;
+    using System.Linq;
+    using System.Text;
+    using System.Threading;
+    using System.Threading.Tasks;
+    using Validation;
 
-		/// <summary>
-		/// Initializes a new instance of the <see cref="PostalService"/> class.
-		/// </summary>
-		/// <param name="channel">The channel.</param>
-		public PostalService(Channel channel) {
-			this.Channel = channel;
-		}
+    /// <summary>
+    /// An email sending and receiving service.
+    /// </summary>
+    public class PostalService
+    {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="PostalService"/> class.
+        /// </summary>
+        public PostalService()
+        {
+        }
 
-		/// <summary>
-		/// Gets or sets the channel used to send and receive messages.
-		/// </summary>
-		public Channel Channel { get; set; }
+        /// <summary>
+        /// Initializes a new instance of the <see cref="PostalService"/> class.
+        /// </summary>
+        /// <param name="channel">The channel.</param>
+        public PostalService(Channel channel)
+        {
+            this.Channel = channel;
+        }
 
-		/// <summary>
-		/// Sends the specified dart to the recipients specified in the message.
-		/// </summary>
-		/// <param name="message">The dart to send.</param>
-		/// <param name="bytesCopiedProgress">Progress feedback in terms of bytes uploaded.</param>
-		/// <param name="cancellationToken">The cancellation token.</param>
-		/// <returns>The asynchronous result.</returns>
-		public virtual Task<IReadOnlyCollection<Channel.NotificationPostedReceipt>> PostAsync(Message message, IProgress<int> bytesCopiedProgress = null, CancellationToken cancellationToken = default(CancellationToken)) {
-			Requires.NotNull(message, "message");
+        /// <summary>
+        /// Gets or sets the channel used to send and receive messages.
+        /// </summary>
+        public Channel Channel { get; set; }
 
-			var ms = new MemoryStream();
-			var writer = new BinaryWriter(ms);
-			writer.SerializeDataContract(message);
-			writer.Flush();
-			ms.Position = 0;
+        /// <summary>
+        /// Sends the specified dart to the recipients specified in the message.
+        /// </summary>
+        /// <param name="message">The dart to send.</param>
+        /// <param name="bytesCopiedProgress">Progress feedback in terms of bytes uploaded.</param>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns>The asynchronous result.</returns>
+        public virtual Task<IReadOnlyCollection<Channel.NotificationPostedReceipt>> PostAsync(Message message, IProgress<int> bytesCopiedProgress = null, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            Requires.NotNull(message, "message");
 
-			var payload = new Payload(ms.ToArray(), Message.ContentType);
-			var allRecipients = new List<Endpoint>(message.Recipients);
-			if (message.CarbonCopyRecipients != null) {
-				allRecipients.AddRange(message.CarbonCopyRecipients);
-			}
+            var ms = new MemoryStream();
+            var writer = new BinaryWriter(ms);
+            writer.SerializeDataContract(message);
+            writer.Flush();
+            ms.Position = 0;
 
-			var readOnlyRecipients = new ReadOnlyCollection<Endpoint>(allRecipients);
-			return this.Channel.PostAsync(payload, readOnlyRecipients, message.ExpirationUtc, bytesCopiedProgress, cancellationToken);
-		}
+            var payload = new Payload(ms.ToArray(), Message.ContentType);
+            var allRecipients = new List<Endpoint>(message.Recipients);
+            if (message.CarbonCopyRecipients != null)
+            {
+                allRecipients.AddRange(message.CarbonCopyRecipients);
+            }
 
-		/// <summary>
-		/// Retrieves all messages waiting for pickup at our endpoint.
-		/// </summary>
-		/// <param name="longPoll">if set to <c>true</c> [long poll].</param>
-		/// <param name="purgeUnsupportedMessages">A value indicating whether to purge any messages that are not Dart messages. False will skip the messages but will not delete them from the server.</param>
-		/// <param name="progress">A callback to invoke for each downloaded message as it arrives.</param>
-		/// <param name="cancellationToken">The cancellation token.</param>
-		/// <returns>
-		/// A task whose result is the complete list of received messages.
-		/// </returns>
-		public virtual async Task<IReadOnlyList<MessageReceipt>> ReceiveAsync(bool longPoll = false, bool purgeUnsupportedMessages = false, IProgress<MessageReceipt> progress = null, CancellationToken cancellationToken = default(CancellationToken)) {
-			var messages = new List<MessageReceipt>();
-			IReadOnlyList<Channel.PayloadReceipt> payloads = null;
-			var payloadProgress = new ProgressWithCompletion<Channel.PayloadReceipt>(
-				async payload => {
-					var messageReceipt = FromPayload(payload);
-					if (messageReceipt != null) {
-						var message = messageReceipt.Message;
+            var readOnlyRecipients = new ReadOnlyCollection<Endpoint>(allRecipients);
+            return this.Channel.PostAsync(payload, readOnlyRecipients, message.ExpirationUtc, bytesCopiedProgress, cancellationToken);
+        }
 
-						// Sterilize the message of its claimed endpoint's claimed identifiers,
-						// so that only verifiable identifiers are passed onto our application.
-						var verifiedIdentifiers = await this.Channel.GetVerifiableIdentifiersAsync(message.Author, cancellationToken);
-						message.Author.AuthorizedIdentifiers = verifiedIdentifiers.ToArray();
+        /// <summary>
+        /// Retrieves all messages waiting for pickup at our endpoint.
+        /// </summary>
+        /// <param name="longPoll">if set to <c>true</c> [long poll].</param>
+        /// <param name="purgeUnsupportedMessages">A value indicating whether to purge any messages that are not Dart messages. False will skip the messages but will not delete them from the server.</param>
+        /// <param name="progress">A callback to invoke for each downloaded message as it arrives.</param>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns>
+        /// A task whose result is the complete list of received messages.
+        /// </returns>
+        public virtual async Task<IReadOnlyList<MessageReceipt>> ReceiveAsync(bool longPoll = false, bool purgeUnsupportedMessages = false, IProgress<MessageReceipt> progress = null, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            var messages = new List<MessageReceipt>();
+            IReadOnlyList<Channel.PayloadReceipt> payloads = null;
+            var payloadProgress = new ProgressWithCompletion<Channel.PayloadReceipt>(
+                async payload =>
+                {
+                    var messageReceipt = FromPayload(payload);
+                    if (messageReceipt != null)
+                    {
+                        var message = messageReceipt.Message;
 
-						lock (messages) {
-							messages.Add(messageReceipt);
-						}
+                        // Sterilize the message of its claimed endpoint's claimed identifiers,
+                        // so that only verifiable identifiers are passed onto our application.
+                        var verifiedIdentifiers = await this.Channel.GetVerifiableIdentifiersAsync(message.Author, cancellationToken);
+                        message.Author.AuthorizedIdentifiers = verifiedIdentifiers.ToArray();
 
-						if (progress != null) {
-							progress.Report(messageReceipt);
-						}
-					} else if (purgeUnsupportedMessages) {
-						await this.Channel.DeleteInboxItemAsync(payload.Payload, cancellationToken);
-					}
-				});
+                        lock (messages)
+                        {
+                            messages.Add(messageReceipt);
+                        }
 
-			payloads = await this.Channel.ReceiveAsync(longPoll, payloadProgress, cancellationToken);
+                        if (progress != null)
+                        {
+                            progress.Report(messageReceipt);
+                        }
+                    }
+                    else if (purgeUnsupportedMessages)
+                    {
+                        await this.Channel.DeleteInboxItemAsync(payload.Payload, cancellationToken);
+                    }
+                });
 
-			// Ensure that we've receives the asynchronous progress notifications for all the payloads
-			// so we don't return a partial result.
-			await payloadProgress.WaitAsync();
+            payloads = await this.Channel.ReceiveAsync(longPoll, payloadProgress, cancellationToken);
 
-			return messages;
-		}
+            // Ensure that we've receives the asynchronous progress notifications for all the payloads
+            // so we don't return a partial result.
+            await payloadProgress.WaitAsync();
 
-		/// <summary>
-		/// Deletes the specified message from its online inbox so it won't be retrieved again.
-		/// </summary>
-		/// <param name="message">The message to delete from its online location.</param>
-		/// <param name="cancellationToken">The cancellation token.</param>
-		/// <returns>The asynchronous result.</returns>
-		public virtual Task DeleteAsync(Message message, CancellationToken cancellationToken = default(CancellationToken)) {
-			Requires.NotNull(message, "message");
-			Requires.Argument(message.OriginatingPayload != null, "message", "Original message payload no longer available.");
-			return this.Channel.DeleteInboxItemAsync(message.OriginatingPayload, cancellationToken);
-		}
+            return messages;
+        }
 
-		/// <summary>
-		/// Extracts a message from its serialized payload wrapper.
-		/// </summary>
-		/// <param name="payloadReceipt">The payload to extract the message from.</param>
-		/// <returns>The extracted message.</returns>
-		private static MessageReceipt FromPayload(Channel.PayloadReceipt payloadReceipt) {
-			Requires.NotNull(payloadReceipt, "payloadReceipt");
+        /// <summary>
+        /// Deletes the specified message from its online inbox so it won't be retrieved again.
+        /// </summary>
+        /// <param name="message">The message to delete from its online location.</param>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns>The asynchronous result.</returns>
+        public virtual Task DeleteAsync(Message message, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            Requires.NotNull(message, "message");
+            Requires.Argument(message.OriginatingPayload != null, "message", "Original message payload no longer available.");
+            return this.Channel.DeleteInboxItemAsync(message.OriginatingPayload, cancellationToken);
+        }
 
-			var payload = payloadReceipt.Payload;
-			if (payload.ContentType != Message.ContentType) {
-				return null;
-			}
+        /// <summary>
+        /// Extracts a message from its serialized payload wrapper.
+        /// </summary>
+        /// <param name="payloadReceipt">The payload to extract the message from.</param>
+        /// <returns>The extracted message.</returns>
+        private static MessageReceipt FromPayload(Channel.PayloadReceipt payloadReceipt)
+        {
+            Requires.NotNull(payloadReceipt, "payloadReceipt");
 
-			using (var reader = new BinaryReader(new MemoryStream(payload.Content))) {
-				var message = reader.DeserializeDataContract<Message>();
-				message.OriginatingPayload = payload;
-				return new MessageReceipt(message, payloadReceipt.DateNotificationPosted);
-			}
-		}
+            var payload = payloadReceipt.Payload;
+            if (payload.ContentType != Message.ContentType)
+            {
+                return null;
+            }
 
-		/// <summary>
-		/// A message and the time notification of it was received by the cloud inbox.
-		/// </summary>
-		public class MessageReceipt {
-			/// <summary>
-			/// Initializes a new instance of the <see cref="MessageReceipt"/> class.
-			/// </summary>
-			/// <param name="message">The message itself.</param>
-			/// <param name="dateNotificationPosted">The date the cloud inbox received notification of the payload.</param>
-			public MessageReceipt(Message message, DateTimeOffset dateNotificationPosted) {
-				Requires.NotNull(message, "message");
-				this.Message = message;
-				this.DateNotificationPosted = dateNotificationPosted;
-			}
+            using (var reader = new BinaryReader(new MemoryStream(payload.Content)))
+            {
+                var message = reader.DeserializeDataContract<Message>();
+                message.OriginatingPayload = payload;
+                return new MessageReceipt(message, payloadReceipt.DateNotificationPosted);
+            }
+        }
 
-			/// <summary>
-			/// Gets the payload itself.
-			/// </summary>
-			public Message Message { get; private set; }
+        /// <summary>
+        /// A message and the time notification of it was received by the cloud inbox.
+        /// </summary>
+        public class MessageReceipt
+        {
+            /// <summary>
+            /// Initializes a new instance of the <see cref="MessageReceipt"/> class.
+            /// </summary>
+            /// <param name="message">The message itself.</param>
+            /// <param name="dateNotificationPosted">The date the cloud inbox received notification of the payload.</param>
+            public MessageReceipt(Message message, DateTimeOffset dateNotificationPosted)
+            {
+                Requires.NotNull(message, "message");
+                this.Message = message;
+                this.DateNotificationPosted = dateNotificationPosted;
+            }
 
-			/// <summary>
-			/// Gets the time the cloud inbox received notification of the payload.
-			/// </summary>
-			public DateTimeOffset DateNotificationPosted { get; private set; }
-		}
-	}
+            /// <summary>
+            /// Gets the payload itself.
+            /// </summary>
+            public Message Message { get; private set; }
+
+            /// <summary>
+            /// Gets the time the cloud inbox received notification of the payload.
+            /// </summary>
+            public DateTimeOffset DateNotificationPosted { get; private set; }
+        }
+    }
 }

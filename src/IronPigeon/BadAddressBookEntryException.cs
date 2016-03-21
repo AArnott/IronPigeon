@@ -1,31 +1,39 @@
-﻿namespace IronPigeon {
-	using System;
+﻿// Copyright (c) Andrew Arnott. All rights reserved.
+// Licensed under the Microsoft Reciprocal License (Ms-RL) license. See LICENSE file in the project root for full license information.
 
-	/// <summary>
-	/// An exception thrown when an error occurs while reading an address book entry.
-	/// </summary>
-	public class BadAddressBookEntryException : Exception {
-		/// <summary>
-		/// Initializes a new instance of the <see cref="BadAddressBookEntryException" /> class.
-		/// </summary>
-		public BadAddressBookEntryException() {
-		}
+namespace IronPigeon
+{
+    using System;
 
-		/// <summary>
-		/// Initializes a new instance of the <see cref="BadAddressBookEntryException" /> class.
-		/// </summary>
-		/// <param name="message">The message that describes the error.</param>
-		public BadAddressBookEntryException(string message)
-			: base(message) {
-		}
+    /// <summary>
+    /// An exception thrown when an error occurs while reading an address book entry.
+    /// </summary>
+    public class BadAddressBookEntryException : Exception
+    {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="BadAddressBookEntryException" /> class.
+        /// </summary>
+        public BadAddressBookEntryException()
+        {
+        }
 
-		/// <summary>
-		/// Initializes a new instance of the <see cref="BadAddressBookEntryException" /> class.
-		/// </summary>
-		/// <param name="message">The error message that explains the reason for the exception.</param>
-		/// <param name="inner">The inner exception.</param>
-		public BadAddressBookEntryException(string message, Exception inner)
-			: base(message, inner) {
-		}
-	}
+        /// <summary>
+        /// Initializes a new instance of the <see cref="BadAddressBookEntryException" /> class.
+        /// </summary>
+        /// <param name="message">The message that describes the error.</param>
+        public BadAddressBookEntryException(string message)
+            : base(message)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="BadAddressBookEntryException" /> class.
+        /// </summary>
+        /// <param name="message">The error message that explains the reason for the exception.</param>
+        /// <param name="inner">The inner exception.</param>
+        public BadAddressBookEntryException(string message, Exception inner)
+            : base(message, inner)
+        {
+        }
+    }
 }

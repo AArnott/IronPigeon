@@ -1,5 +1,5 @@
 OldDeployments
-.vs
+.vs/
 
 #################
 ## Eclipse
@@ -67,8 +67,10 @@ local.properties
 .builds
 *.dotCover
 
-## TODO: If you have NuGet Package Restore enabled, uncomment this
 packages/
+project.lock.json
+*.nuget.props
+*.nuget.targets
 
 # Visual C++ cache files
 ipch/
@@ -108,7 +110,6 @@ sql
 TestResults
 *.Cache
 ClientBin
-stylecop.*
 ~$*
 *.dbmdl
 Generated_Code #added for RIA/Silverlight projects

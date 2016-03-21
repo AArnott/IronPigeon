@@ -1,37 +1,46 @@
-﻿namespace IronPigeon.Relay.Code {
-	using System;
-	using System.Collections.Generic;
-	using System.Configuration;
-	using System.Linq;
-	using System.Security.Cryptography;
-	using System.Text;
-	using System.Web;
-	using Validation;
+﻿// Copyright (c) Andrew Arnott. All rights reserved.
+// Licensed under the Microsoft Reciprocal License (Ms-RL) license. See LICENSE file in the project root for full license information.
 
-	public static class MicrosoftTools {
-		public static string GetEmailHash(string email) {
-			Requires.NotNullOrEmpty(email, "email");
+namespace IronPigeon.Relay.Code
+{
+    using System;
+    using System.Collections.Generic;
+    using System.Configuration;
+    using System.Linq;
+    using System.Security.Cryptography;
+    using System.Text;
+    using System.Web;
+    using Validation;
 
-			email = email.Trim();
-			var clientId = ConfigurationManager.AppSettings["TrustedClientId"].Trim();
+    public static class MicrosoftTools
+    {
+        public static string GetEmailHash(string email)
+        {
+            Requires.NotNullOrEmpty(email, "email");
 
-			var concat = email + clientId;
-			concat = concat.ToLowerInvariant();
-			var buffer = Encoding.UTF8.GetBytes(concat);
-			using (var hashAlgorithm = HashAlgorithm.Create("sha256")) {
-				var hashBuffer = hashAlgorithm.ComputeHash(buffer);
-				string liveHash = ByteArrayToString(hashBuffer);
-				return liveHash;
-			}
-		}
+            email = email.Trim();
+            var clientId = ConfigurationManager.AppSettings["TrustedClientId"].Trim();
 
-		private static string ByteArrayToString(byte[] ba) {
-			StringBuilder hex = new StringBuilder(ba.Length * 2);
-			foreach (byte b in ba) {
-				hex.AppendFormat("{0:x2}", b);
-			}
+            var concat = email + clientId;
+            concat = concat.ToLowerInvariant();
+            var buffer = Encoding.UTF8.GetBytes(concat);
+            using (var hashAlgorithm = HashAlgorithm.Create("sha256"))
+            {
+                var hashBuffer = hashAlgorithm.ComputeHash(buffer);
+                string liveHash = ByteArrayToString(hashBuffer);
+                return liveHash;
+            }
+        }
 
-			return hex.ToString();
-		}
-	}
+        private static string ByteArrayToString(byte[] ba)
+        {
+            StringBuilder hex = new StringBuilder(ba.Length * 2);
+            foreach (byte b in ba)
+            {
+                hex.AppendFormat("{0:x2}", b);
+            }
+
+            return hex.ToString();
+        }
+    }
 }

@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2013/01/nuspec.xsd">
+  <metadata>
+    <id>IronPigeon</id>
+    <version>$version$</version>
+    <authors>aarnott</authors>
+    <owners></owners>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>to be overwritten by project file</description>
+    <releaseNotes></releaseNotes>
+    <copyright></copyright>
+    <tags></tags>
+    <dependencies>
+      <dependency id="Microsoft.Net.Http" version="2.2.29" />
+      <dependency id="PCLCrypto" version="2.0.131-rc" />
+    </dependencies>
+  </metadata>
+</package>
