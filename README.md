@@ -4,6 +4,7 @@ IronPigeon
 *IronPigeon is a decentralized communication protocol that provides high
 confidentiality and authenticity for the messages.*
 
+[![Build status](https://ci.appveyor.com/api/projects/status/2865kk127fxvou27/branch/master?svg=true)](https://ci.appveyor.com/project/AArnott/ironpigeon/branch/master)
 [![NuGet package](https://img.shields.io/nuget/v/IronPigeon.svg)](https://nuget.org/packages/IronPigeon)
 
 Messages are signed for authenticity, encrypted for confidentiality,
