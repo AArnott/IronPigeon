@@ -6,7 +6,7 @@ environment:
   NuGetApiKey:
     secure: Ql19CstT9GvFNeSIAjXvgHXZg+/pNaYJ2jVkzde4LT2vwSyjiQgQ+M332wVYtu+r
 cache:
-- '%USERPROFILE%\.nuget\packages'
+- '%USERPROFILE%\.nuget\packages -> **\project.json'
 install:
 - ps: >-
     .\Install-Dependencies.ps1
