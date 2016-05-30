@@ -8,44 +8,44 @@ namespace IronPigeon.Tests
     using System.Linq;
     using System.Text;
     using System.Threading.Tasks;
-    using NUnit.Framework;
+    using Xunit;
 
-    [TestFixture]
     public class EndpointTests
     {
-        [Test]
+        [Fact]
         public void DefaultContactCtor()
         {
             var contact = new Endpoint();
-            Assert.That(contact.MessageReceivingEndpoint, Is.Null);
-            Assert.That(contact.EncryptionKeyPublicMaterial, Is.Null);
-            Assert.That(contact.SigningKeyPublicMaterial, Is.Null);
-            Assert.That(contact.CreatedOnUtc, Is.EqualTo(DateTime.UtcNow).Within(TimeSpan.FromMinutes(1)));
+            Assert.Null(contact.MessageReceivingEndpoint);
+            Assert.Null(contact.EncryptionKeyPublicMaterial);
+            Assert.Null(contact.SigningKeyPublicMaterial);
+            var skew = TimeSpan.FromMinutes(1);
+            Assert.InRange(contact.CreatedOnUtc, DateTime.UtcNow - skew, DateTime.UtcNow + skew);
         }
 
-        [Test]
+        [Fact]
         public void Equals()
         {
             var contact1 = new Endpoint();
-            Assert.That(contact1.Equals(null), Is.False);
-            Assert.That(contact1.Equals(contact1), Is.True);
-            Assert.That(contact1.Equals(Valid.PublicEndpoint), Is.False);
+            Assert.False(contact1.Equals(null));
+            Assert.True(contact1.Equals(contact1));
+            Assert.False(contact1.Equals(Valid.PublicEndpoint));
 
             contact1.MessageReceivingEndpoint = Valid.PublicEndpoint.MessageReceivingEndpoint;
             contact1.SigningKeyPublicMaterial = Valid.PublicEndpoint.SigningKeyPublicMaterial;
             contact1.EncryptionKeyPublicMaterial = Valid.PublicEndpoint.EncryptionKeyPublicMaterial;
-            Assert.That(contact1, Is.EqualTo(Valid.PublicEndpoint));
+            Assert.Equal(Valid.PublicEndpoint, contact1);
 
             contact1.MessageReceivingEndpoint = null;
-            Assert.That(contact1, Is.Not.EqualTo(Valid.PublicEndpoint));
+            Assert.NotEqual(Valid.PublicEndpoint, contact1);
             contact1.MessageReceivingEndpoint = Valid.PublicEndpoint.MessageReceivingEndpoint;
 
             contact1.SigningKeyPublicMaterial = null;
-            Assert.That(contact1, Is.Not.EqualTo(Valid.PublicEndpoint));
+            Assert.NotEqual(Valid.PublicEndpoint, contact1);
             contact1.SigningKeyPublicMaterial = Valid.PublicEndpoint.SigningKeyPublicMaterial;
 
             contact1.EncryptionKeyPublicMaterial = null;
-            Assert.That(contact1, Is.Not.EqualTo(Valid.PublicEndpoint));
+            Assert.NotEqual(Valid.PublicEndpoint, contact1);
             contact1.EncryptionKeyPublicMaterial = Valid.PublicEndpoint.EncryptionKeyPublicMaterial;
         }
     }

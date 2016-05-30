@@ -10,45 +10,33 @@ namespace IronPigeon.Tests
     using System.Net.Http;
     using System.Text;
     using System.Threading.Tasks;
-
     using Moq;
-
-    using NUnit.Framework;
     using Validation;
+    using Xunit;
+    using Xunit.Abstractions;
 
-    [TestFixture]
     public class ChannelTests
     {
         private Mocks.LoggerMock logger;
 
         private CryptoSettings desktopCryptoProvider;
 
-        [SetUp]
-        public void Setup()
+        public ChannelTests(ITestOutputHelper logger)
         {
-            this.logger = new Mocks.LoggerMock();
+            this.logger = new Mocks.LoggerMock(logger);
             this.desktopCryptoProvider = TestUtilities.CreateAuthenticCryptoProvider();
         }
 
-        [TearDown]
-        public void Teardown()
-        {
-            if (TestContext.CurrentContext.Result.Status == TestStatus.Failed)
-            {
-                Console.WriteLine(this.logger.Messages);
-            }
-        }
-
-        [Test]
+        [Fact]
         public void DefaultCtor()
         {
             var channel = new Channel();
-            Assert.That(channel.CloudBlobStorage, Is.Null);
-            Assert.That(channel.CryptoServices, Is.Not.Null);
-            Assert.That(channel.Endpoint, Is.Null);
+            Assert.Null(channel.CloudBlobStorage);
+            Assert.NotNull(channel.CryptoServices);
+            Assert.Null(channel.Endpoint);
         }
 
-        [Test]
+        [Fact]
         public void CtorParameters()
         {
             var blobProvider = new Mock<ICloudBlobStorageProvider>();
@@ -58,21 +46,21 @@ namespace IronPigeon.Tests
                 CloudBlobStorage = blobProvider.Object,
                 Endpoint = endpoint.Object,
             };
-            Assert.That(channel.CloudBlobStorage, Is.SameAs(blobProvider.Object));
-            Assert.That(channel.Endpoint, Is.SameAs(endpoint.Object));
+            Assert.Same(channel.CloudBlobStorage, blobProvider.Object);
+            Assert.Same(channel.Endpoint, endpoint.Object);
         }
 
-        [Test]
+        [Fact]
         public void HttpClient()
         {
             var channel = new Channel();
-            Assert.That(channel.HttpClient, Is.Null);
+            Assert.Null(channel.HttpClient);
             var handler = new HttpClient();
             channel.HttpClient = handler;
-            Assert.That(channel.HttpClient, Is.SameAs(handler));
+            Assert.Same(channel.HttpClient, handler);
         }
 
-        [Test]
+        [Fact]
         public void PostAsyncBadArgs()
         {
             var channel = new Channel();
@@ -82,7 +70,7 @@ namespace IronPigeon.Tests
             Assert.Throws<ArgumentException>(() => channel.PostAsync(Valid.Message, Valid.OneEndpoint, Invalid.ExpirationUtc).GetAwaiter().GetResult());
         }
 
-        [Test]
+        [Fact]
         public void PostAndReceiveAsync()
         {
             Task.Run(async delegate
@@ -98,14 +86,14 @@ namespace IronPigeon.Tests
                 await this.SendMessageAsync(cloudStorage, inboxMock, cryptoProvider, sender, receiver.PublicEndpoint, sentMessage);
                 var messages = await this.ReceiveMessageAsync(cloudStorage, inboxMock, new CryptoSettings(SecurityLevel.Minimum), receiver);
 
-                Assert.That(messages.Count, Is.EqualTo(1));
+                Assert.Equal(1, messages.Count);
                 var receivedMessage = messages.Single();
-                Assert.That(receivedMessage.Payload.ContentType, Is.EqualTo(sentMessage.ContentType));
-                Assert.That(receivedMessage.Payload.Content, Is.EqualTo(sentMessage.Content));
+                Assert.Equal(receivedMessage.Payload.ContentType, sentMessage.ContentType);
+                Assert.Equal(receivedMessage.Payload.Content, sentMessage.Content);
             }).GetAwaiter().GetResult();
         }
 
-        [Test]
+        [Fact]
         public void PayloadReferenceTamperingTests()
         {
             Task.Run(async delegate
@@ -126,12 +114,12 @@ namespace IronPigeon.Tests
 
                     var receivedMessages =
                         await this.ReceiveMessageAsync(cloudStorage, inboxMock, this.desktopCryptoProvider, receiver, expectMessage: false);
-                    Assert.AreEqual(0, receivedMessages.Count);
+                    Assert.Equal(0, receivedMessages.Count);
                 }
             }).GetAwaiter().GetResult();
         }
 
-        [Test]
+        [Fact]
         public void PayloadTamperingTests()
         {
             Task.Run(async delegate
@@ -152,7 +140,7 @@ namespace IronPigeon.Tests
 
                     var receivedMessages =
                         await this.ReceiveMessageAsync(cloudStorage, inboxMock, this.desktopCryptoProvider, receiver, expectMessage: false);
-                    Assert.AreEqual(0, receivedMessages.Count);
+                    Assert.Equal(0, receivedMessages.Count);
                 }
             }).GetAwaiter().GetResult();
         }
@@ -206,13 +194,13 @@ namespace IronPigeon.Tests
             var messages = await channel.ReceiveAsync(progress: progress);
             if (expectMessage)
             {
-                Assert.That(messages.Count, Is.EqualTo(1));
+                Assert.Equal(1, messages.Count);
                 await progressMessage.Task;
-                Assert.That(progressMessage.Task.Result, Is.SameAs(messages.Single().Payload));
+                Assert.Same(progressMessage.Task.Result, messages.Single().Payload);
             }
             else
             {
-                Assert.That(messages.Count, Is.EqualTo(0));
+                Assert.Equal(0, messages.Count);
             }
 
             return messages;

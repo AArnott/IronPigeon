@@ -10,24 +10,28 @@ namespace IronPigeon.Tests.Mocks
     using System.Linq;
     using System.Text;
     using System.Threading.Tasks;
+    using Xunit.Abstractions;
 
     public class LoggerMock : ILogger
     {
+        private readonly ITestOutputHelper xunitLogger;
+
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         private List<string> messages = new List<string>();
 
-        internal IReadOnlyList<string> Messages
+        public LoggerMock(ITestOutputHelper xunitLogger)
         {
-            get { return this.messages; }
+            this.xunitLogger = xunitLogger;
         }
+
+        internal IReadOnlyList<string> Messages => this.messages;
 
         public void WriteLine(string unformattedMessage, byte[] buffer)
         {
             string message = string.Format(CultureInfo.CurrentCulture, "{0}: {1}", unformattedMessage, BitConverter.ToString(buffer).Replace("-", string.Empty).ToLowerInvariant());
 
             this.messages.Add(message);
-            Trace.WriteLine(message);
-            Console.WriteLine(message);
+            this.xunitLogger.WriteLine(message);
         }
 
         public override string ToString()

@@ -71,4 +71,9 @@
   <Rules AnalyzerId="StyleCop.Analyzers" RuleNamespace="StyleCop.Analyzers">
     <Rule Id="SA1027" Action="None" />
   </Rules>
+  <Rules AnalyzerId="AsyncUsageAnalyzers" RuleNamespace="AsyncUsageAnalyzers">
+    <Rule Id="UseConfigureAwait" Action="Warning" />
+    <Rule Id="AvoidAsyncSuffix" Action="Hidden" />
+    <Rule Id="UseAsyncSuffix" Action="Hidden" />
+  </Rules>
 </RuleSet>

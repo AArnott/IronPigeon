@@ -8,12 +8,11 @@ namespace IronPigeon.Tests
     using System.Linq;
     using System.Text;
     using System.Threading.Tasks;
-    using NUnit.Framework;
+    using Xunit;
 
-    [TestFixture]
     public class MessageTests
     {
-        [Test]
+        [Fact]
         public void CtorInvalidArgs()
         {
             Assert.Throws<ArgumentNullException>(() => new Payload(null, Valid.ContentType));
@@ -21,12 +20,12 @@ namespace IronPigeon.Tests
             Assert.Throws<ArgumentException>(() => new Payload(Valid.MessageContent, string.Empty));
         }
 
-        [Test]
+        [Fact]
         public void Ctor()
         {
             var message = new Payload(Valid.MessageContent, Valid.ContentType);
-            Assert.That(message.Content, Is.SameAs(Valid.MessageContent));
-            Assert.That(message.ContentType, Is.EqualTo(Valid.ContentType));
+            Assert.Same(Valid.MessageContent, message.Content);
+            Assert.Equal(Valid.ContentType, message.ContentType);
         }
     }
 }

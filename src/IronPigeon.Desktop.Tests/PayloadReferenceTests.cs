@@ -8,12 +8,11 @@ namespace IronPigeon.Tests
     using System.Linq;
     using System.Text;
     using System.Threading.Tasks;
-    using NUnit.Framework;
+    using Xunit;
 
-    [TestFixture]
     public class PayloadReferenceTests
     {
-        [Test]
+        [Fact]
         public void CtorInvalidInputs()
         {
             Assert.Throws<ArgumentNullException>(() => new PayloadReference(null, Valid.Hash, Valid.HashAlgorithmName, Valid.Key, Valid.IV, Valid.ExpirationUtc));
@@ -28,16 +27,16 @@ namespace IronPigeon.Tests
             Assert.Throws<ArgumentException>(() => new PayloadReference(Valid.Location, Valid.Hash, Valid.HashAlgorithmName, Valid.Key, Invalid.IV, Valid.ExpirationUtc));
         }
 
-        [Test]
+        [Fact]
         public void Ctor()
         {
             var reference = new PayloadReference(Valid.Location, Valid.Hash, Valid.HashAlgorithmName, Valid.Key, Valid.IV, Valid.ExpirationUtc);
-            Assert.That(reference.Location, Is.SameAs(Valid.Location));
-            Assert.That(reference.HashAlgorithmName, Is.EqualTo(Valid.HashAlgorithmName));
-            Assert.That(reference.Hash, Is.SameAs(Valid.Hash));
-            Assert.That(reference.Key, Is.SameAs(Valid.Key));
-            Assert.That(reference.IV, Is.SameAs(Valid.IV));
-            Assert.That(reference.ExpiresUtc, Is.EqualTo(Valid.ExpirationUtc));
+            Assert.Same(Valid.Location, reference.Location);
+            Assert.Equal(Valid.HashAlgorithmName, reference.HashAlgorithmName);
+            Assert.Same(Valid.Hash, reference.Hash);
+            Assert.Same(Valid.Key, reference.Key);
+            Assert.Same(Valid.IV, reference.IV);
+            Assert.Equal(Valid.ExpirationUtc, reference.ExpiresUtc);
         }
     }
 }

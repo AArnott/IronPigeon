@@ -85,10 +85,10 @@ namespace IronPigeon
         public async Task<OwnEndpoint> CreateAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
             // Create new key pairs.
-            var endpoint = await TaskEx.Run(() => this.CreateEndpointWithKeys(cancellationToken), cancellationToken);
+            var endpoint = await TaskEx.Run(() => this.CreateEndpointWithKeys(cancellationToken), cancellationToken).ConfigureAwait(false);
 
             // Set up the inbox on a message relay.
-            var inboxResponse = await this.EndpointInboxFactory.CreateInboxAsync(cancellationToken);
+            var inboxResponse = await this.EndpointInboxFactory.CreateInboxAsync(cancellationToken).ConfigureAwait(false);
             endpoint.PublicEndpoint.MessageReceivingEndpoint = new Uri(inboxResponse.MessageReceivingEndpoint, UriKind.Absolute);
             endpoint.InboxOwnerCode = inboxResponse.InboxOwnerCode;
 
@@ -108,9 +108,9 @@ namespace IronPigeon
 
             var abe = endpoint.CreateAddressBookEntry(this.CryptoProvider);
             var abeWriter = new StringWriter();
-            await Utilities.SerializeDataContractAsBase64Async(abeWriter, abe);
+            await Utilities.SerializeDataContractAsBase64Async(abeWriter, abe).ConfigureAwait(false);
             var ms = new MemoryStream(Encoding.UTF8.GetBytes(abeWriter.ToString()));
-            var location = await this.CloudBlobStorage.UploadMessageAsync(ms, DateTime.MaxValue, AddressBookEntry.ContentType, cancellationToken: cancellationToken);
+            var location = await this.CloudBlobStorage.UploadMessageAsync(ms, DateTime.MaxValue, AddressBookEntry.ContentType, cancellationToken: cancellationToken).ConfigureAwait(false);
 
             var fullLocationWithFragment = new Uri(
                 location,

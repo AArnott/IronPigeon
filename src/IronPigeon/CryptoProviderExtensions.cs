@@ -94,7 +94,7 @@ namespace IronPigeon
             using (var encryptor = WinRTCrypto.CryptographicEngine.CreateEncryptor(key, encryptionVariables.IV))
             {
                 var cryptoStream = new CryptoStream(ciphertext, encryptor, CryptoStreamMode.Write);
-                await plaintext.CopyToAsync(cryptoStream, 4096, cancellationToken);
+                await plaintext.CopyToAsync(cryptoStream, 4096, cancellationToken).ConfigureAwait(false);
                 cryptoStream.FlushFinalBlock();
             }
 
@@ -122,7 +122,7 @@ namespace IronPigeon
             using (var decryptor = WinRTCrypto.CryptographicEngine.CreateDecryptor(key, encryptionVariables.IV))
             {
                 var cryptoStream = new CryptoStream(plaintext, decryptor, CryptoStreamMode.Write);
-                await ciphertext.CopyToAsync(cryptoStream, 4096, cancellationToken);
+                await ciphertext.CopyToAsync(cryptoStream, 4096, cancellationToken).ConfigureAwait(false);
                 cryptoStream.FlushFinalBlock();
             }
         }

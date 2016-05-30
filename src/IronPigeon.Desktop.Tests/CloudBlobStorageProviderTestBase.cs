@@ -10,20 +10,19 @@ namespace IronPigeon.Tests
     using System.Net.Http;
     using System.Text;
     using System.Threading.Tasks;
-    using NUnit.Framework;
+    using Xunit;
 
-    [TestFixture]
     public abstract class CloudBlobStorageProviderTestBase
     {
         protected ICloudBlobStorageProvider Provider { get; set; }
 
-        [Test, Ignore]
+        [Fact(Skip = "Ignored")]
         public void UploadMessageAsync()
         {
             var uri = this.UploadMessageHelperAsync().Result;
             var client = new HttpClient();
             var downloadedBody = client.GetByteArrayAsync(uri).Result;
-            Assert.That(downloadedBody, Is.EqualTo(Valid.MessageContent));
+            Assert.Equal(Valid.MessageContent, downloadedBody);
         }
 
         protected async Task<Uri> UploadMessageHelperAsync()

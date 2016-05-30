@@ -14,14 +14,15 @@ namespace IronPigeon.Tests
     using PCLCrypto;
     using Validation;
     using Xunit;
+    using Xunit.Abstractions;
 
     public class InteropTests
     {
         private Mocks.LoggerMock logger;
 
-        public void Setup()
+        public InteropTests(ITestOutputHelper logger)
         {
-            this.logger = new Mocks.LoggerMock();
+            this.logger = new Mocks.LoggerMock(logger);
         }
 
         [Fact]

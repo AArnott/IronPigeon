@@ -17,7 +17,11 @@
       "version": "0.1.24-beta",
       "suppressParent": "none"
     },
-    "StyleCop.Analyzers": "1.0.0"
+    "StyleCop.Analyzers": "1.0.0",
+    "AsyncUsageAnalyzers": {
+      "version": "1.0.0-alpha003",
+      "suppressParent": "all"
+    }
   },
   "runtimes": {
     "win": { }

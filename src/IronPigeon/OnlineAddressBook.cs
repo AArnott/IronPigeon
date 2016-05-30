@@ -59,18 +59,18 @@ namespace IronPigeon
 
             var request = new HttpRequestMessage(HttpMethod.Get, entryLocation);
             request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(AddressBookEntry.ContentType));
-            var response = await this.HttpClient.SendAsync(request, cancellationToken);
+            var response = await this.HttpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
             if (!response.IsSuccessStatusCode)
             {
                 return null;
             }
 
-            using (var stream = await response.Content.ReadAsStreamAsync())
+            using (var stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false))
             {
                 var reader = new StreamReader(stream);
                 try
                 {
-                    var entry = await Utilities.DeserializeDataContractFromBase64Async<AddressBookEntry>(reader);
+                    var entry = await Utilities.DeserializeDataContractFromBase64Async<AddressBookEntry>(reader).ConfigureAwait(false);
                     return entry;
                 }
                 catch (SerializationException ex)
@@ -91,7 +91,7 @@ namespace IronPigeon
         {
             Requires.NotNull(entryLocation, "entryLocation");
 
-            var entry = await this.DownloadAddressBookEntryAsync(entryLocation, cancellationToken);
+            var entry = await this.DownloadAddressBookEntryAsync(entryLocation, cancellationToken).ConfigureAwait(false);
             if (entry == null)
             {
                 return null;

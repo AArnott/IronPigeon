@@ -8,15 +8,14 @@ namespace IronPigeon.Tests
     using System.Linq;
     using System.Text;
     using System.Threading.Tasks;
-    using NUnit.Framework;
+    using Xunit;
 
-    [TestFixture]
     public class SymmetricEncryptionResultTests
     {
         private static readonly byte[] EmptyBuffer = new byte[0];
         private static readonly byte[] NonEmptyBuffer = new byte[1];
 
-        [Test]
+        [Fact]
         public void CtorThrowsOnNullBuffer()
         {
             Assert.Throws<ArgumentNullException>(() => new SymmetricEncryptionResult(null, NonEmptyBuffer, NonEmptyBuffer));
@@ -24,7 +23,7 @@ namespace IronPigeon.Tests
             Assert.Throws<ArgumentNullException>(() => new SymmetricEncryptionResult(NonEmptyBuffer, NonEmptyBuffer, null));
         }
 
-        [Test]
+        [Fact]
         public void CtorThrowsOnEmptyBuffer()
         {
             Assert.Throws<ArgumentException>(() => new SymmetricEncryptionResult(EmptyBuffer, NonEmptyBuffer, NonEmptyBuffer));
@@ -32,16 +31,16 @@ namespace IronPigeon.Tests
             Assert.Throws<ArgumentException>(() => new SymmetricEncryptionResult(NonEmptyBuffer, NonEmptyBuffer, EmptyBuffer));
         }
 
-        [Test]
+        [Fact]
         public void CtorAcceptsValidArguments()
         {
             var key = new byte[1];
             var iv = new byte[1];
             var ciphertext = new byte[1];
             var result = new SymmetricEncryptionResult(key, iv, ciphertext);
-            Assert.That(result.Key, Is.SameAs(key));
-            Assert.That(result.IV, Is.SameAs(iv));
-            Assert.That(result.Ciphertext, Is.SameAs(ciphertext));
+            Assert.Same(key, result.Key);
+            Assert.Same(iv, result.IV);
+            Assert.Same(ciphertext, result.Ciphertext);
         }
     }
 }

@@ -10,28 +10,26 @@ namespace IronPigeon.Tests
     using System.Runtime.Serialization;
     using System.Text;
     using System.Threading.Tasks;
-    using NUnit.Framework;
+    using Xunit;
 
-    [TestFixture]
     public class AddressBookEntryTest
     {
         private CryptoSettings desktopCryptoProvider;
 
-        [SetUp]
-        public void Setup()
+        public AddressBookEntryTest()
         {
             this.desktopCryptoProvider = TestUtilities.CreateAuthenticCryptoProvider();
         }
 
-        [Test]
+        [Fact]
         public void Ctor()
         {
             var entry = new AddressBookEntry();
-            Assert.That(entry.SerializedEndpoint, Is.Null);
-            Assert.That(entry.Signature, Is.Null);
+            Assert.Null(entry.SerializedEndpoint);
+            Assert.Null(entry.Signature);
         }
 
-        [Test]
+        [Fact]
         public void PropertySetGet()
         {
             var serializedEndpoint = new byte[] { 0x1, 0x2 };
@@ -41,11 +39,11 @@ namespace IronPigeon.Tests
                 SerializedEndpoint = serializedEndpoint,
                 Signature = signature,
             };
-            Assert.That(entry.SerializedEndpoint, Is.EqualTo(serializedEndpoint));
-            Assert.That(entry.Signature, Is.EqualTo(signature));
+            Assert.Equal(serializedEndpoint, entry.SerializedEndpoint);
+            Assert.Equal(signature, entry.Signature);
         }
 
-        [Test]
+        [Fact]
         public void Serializability()
         {
             var entry = new AddressBookEntry()
@@ -60,18 +58,18 @@ namespace IronPigeon.Tests
             ms.Position = 0;
             var deserializedEntry = (AddressBookEntry)serializer.ReadObject(ms);
 
-            Assert.That(deserializedEntry.SerializedEndpoint, Is.EqualTo(entry.SerializedEndpoint));
-            Assert.That(deserializedEntry.Signature, Is.EqualTo(entry.Signature));
+            Assert.Equal(entry.SerializedEndpoint, deserializedEntry.SerializedEndpoint);
+            Assert.Equal(entry.Signature, deserializedEntry.Signature);
         }
 
-        [Test]
+        [Fact]
         public void ExtractEndpointWithoutCrypto()
         {
             var entry = new AddressBookEntry();
             Assert.Throws<ArgumentNullException>(() => entry.ExtractEndpoint());
         }
 
-        [Test]
+        [Fact]
         public void ExtractEndpoint()
         {
             var ownContact = new OwnEndpoint(Valid.ReceivingEndpoint.SigningKey, Valid.ReceivingEndpoint.EncryptionKey);
@@ -79,10 +77,10 @@ namespace IronPigeon.Tests
             var entry = ownContact.CreateAddressBookEntry(cryptoServices);
 
             var endpoint = entry.ExtractEndpoint();
-            Assert.That(endpoint, Is.EqualTo(ownContact.PublicEndpoint));
+            Assert.Equal(ownContact.PublicEndpoint, endpoint);
         }
 
-        [Test]
+        [Fact]
         public void ExtractEndpointDetectsTampering()
         {
             var ownContact = Valid.GenerateOwnEndpoint(this.desktopCryptoProvider);

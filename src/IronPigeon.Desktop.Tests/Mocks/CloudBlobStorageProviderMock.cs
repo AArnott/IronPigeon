@@ -11,8 +11,8 @@ namespace IronPigeon.Tests.Mocks
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
-    using NUnit.Framework;
     using Validation;
+    using Xunit;
 
     internal class CloudBlobStorageProviderMock : ICloudBlobStorageProvider
     {
@@ -31,8 +31,8 @@ namespace IronPigeon.Tests.Mocks
 
         public async Task<Uri> UploadMessageAsync(Stream encryptedMessageContent, DateTime expiration, string contentType, string contentEncoding, IProgress<int> bytesCopiedProgress, CancellationToken cancellationToken)
         {
-            Assert.That(encryptedMessageContent.Length, Is.GreaterThan(0));
-            Assert.That(encryptedMessageContent.Position, Is.EqualTo(0));
+            Assert.NotEqual(0, encryptedMessageContent.Length);
+            Assert.Equal(0, encryptedMessageContent.Position);
 
             var buffer = new byte[encryptedMessageContent.Length - encryptedMessageContent.Position];
             await encryptedMessageContent.ReadAsync(buffer, 0, buffer.Length);

@@ -212,7 +212,7 @@ namespace IronPigeon
             string entireBase64 = Convert.ToBase64String(ms.ToArray());
             for (int i = 0; i < entireBase64.Length; i += MaxLineLength)
             {
-                await writer.WriteLineAsync(entireBase64.Substring(i, Math.Min(MaxLineLength, entireBase64.Length - i)));
+                await writer.WriteLineAsync(entireBase64.Substring(i, Math.Min(MaxLineLength, entireBase64.Length - i))).ConfigureAwait(false);
             }
         }
 
@@ -229,7 +229,7 @@ namespace IronPigeon
 
             var builder = new StringBuilder();
             string line;
-            while ((line = await reader.ReadLineAsync()) != null)
+            while ((line = await reader.ReadLineAsync().ConfigureAwait(false)) != null)
             {
                 builder.Append(line);
             }
@@ -292,8 +292,8 @@ namespace IronPigeon
             Requires.NotNull(buffer, "buffer");
 
             byte[] lengthBuffer = BitConverter.GetBytes(buffer.Length);
-            await stream.WriteAsync(lengthBuffer, 0, lengthBuffer.Length, cancellationToken);
-            await stream.WriteAsync(buffer, 0, buffer.Length, cancellationToken);
+            await stream.WriteAsync(lengthBuffer, 0, lengthBuffer.Length, cancellationToken).ConfigureAwait(false);
+            await stream.WriteAsync(buffer, 0, buffer.Length, cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -309,8 +309,8 @@ namespace IronPigeon
             Requires.NotNull(sourceStream, "sourceStream");
 
             byte[] streamLength = BitConverter.GetBytes((int)(sourceStream.Length - sourceStream.Position));
-            await stream.WriteAsync(streamLength, 0, streamLength.Length, cancellationToken);
-            await sourceStream.CopyToAsync(stream, 4096, cancellationToken);
+            await stream.WriteAsync(streamLength, 0, streamLength.Length, cancellationToken).ConfigureAwait(false);
+            await sourceStream.CopyToAsync(stream, 4096, cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -324,7 +324,7 @@ namespace IronPigeon
         public static async Task<byte[]> ReadSizeAndBufferAsync(this Stream stream, CancellationToken cancellationToken, int maxSize = 10 * 1024)
         {
             byte[] lengthBuffer = new byte[sizeof(int)];
-            await stream.ReadAsync(lengthBuffer, 0, lengthBuffer.Length, cancellationToken);
+            await stream.ReadAsync(lengthBuffer, 0, lengthBuffer.Length, cancellationToken).ConfigureAwait(false);
             int size = BitConverter.ToInt32(lengthBuffer, 0);
             if (size > maxSize)
             {
@@ -337,7 +337,7 @@ namespace IronPigeon
             }
 
             byte[] buffer = new byte[size];
-            await stream.ReadAsync(buffer, 0, size, cancellationToken);
+            await stream.ReadAsync(buffer, 0, size, cancellationToken).ConfigureAwait(false);
             return buffer;
         }
 
@@ -352,7 +352,7 @@ namespace IronPigeon
         public static async Task<Stream> ReadSizeAndStreamAsync(this Stream stream, CancellationToken cancellationToken, int maxSize = 10 * 1024)
         {
             byte[] lengthBuffer = new byte[sizeof(int)];
-            await stream.ReadAsync(lengthBuffer, 0, lengthBuffer.Length, cancellationToken);
+            await stream.ReadAsync(lengthBuffer, 0, lengthBuffer.Length, cancellationToken).ConfigureAwait(false);
             int size = BitConverter.ToInt32(lengthBuffer, 0);
             if (size > maxSize)
             {
@@ -385,7 +385,7 @@ namespace IronPigeon
                 longUriWithoutFragment = removeFragmentBuilder.Uri;
             }
 
-            var shortUrl = await shortener.ShortenAsync(longUriWithoutFragment, cancellationToken);
+            var shortUrl = await shortener.ShortenAsync(longUriWithoutFragment, cancellationToken).ConfigureAwait(false);
 
             if (longUrl.Fragment.Length > 0)
             {
@@ -415,7 +415,7 @@ namespace IronPigeon
             // NOTE: we could optimize this to return as soon as the *first* address book
             // returned a non-null result, and cancel the rest, rather than wait for
             // results from all of them.
-            var results = await Task.WhenAll(addressBooks.Select(ab => ab.LookupAsync(identifier, cancellationToken)));
+            var results = await Task.WhenAll(addressBooks.Select(ab => ab.LookupAsync(identifier, cancellationToken))).ConfigureAwait(false);
             return results.FirstOrDefault(result => result != null);
         }
 
@@ -444,14 +444,15 @@ namespace IronPigeon
             return builder.ToString();
         }
 
-        /// <summary>
-        /// Wraps a task with one that will complete as cancelled based on a cancellation token,
-        /// allowing someone to await a task but be able to break out early by cancelling the token.
-        /// </summary>
-        /// <typeparam name="T">The type of value returned by the task.</typeparam>
-        /// <param name="task">The task to wrap.</param>
-        /// <param name="cancellationToken">The token that can be canceled to break out of the await.</param>
-        /// <returns>The wrapping task.</returns>
+#pragma warning disable UseAsyncSuffix // Use Async suffix
+                                      /// <summary>
+                                      /// Wraps a task with one that will complete as cancelled based on a cancellation token,
+                                      /// allowing someone to await a task but be able to break out early by cancelling the token.
+                                      /// </summary>
+                                      /// <typeparam name="T">The type of value returned by the task.</typeparam>
+                                      /// <param name="task">The task to wrap.</param>
+                                      /// <param name="cancellationToken">The token that can be canceled to break out of the await.</param>
+                                      /// <returns>The wrapping task.</returns>
         public static async Task<T> WithCancellation<T>(this Task<T> task, CancellationToken cancellationToken)
         {
             if (cancellationToken.CanBeCanceled)
@@ -459,7 +460,7 @@ namespace IronPigeon
                 var tcs = new TaskCompletionSource<bool>();
                 using (cancellationToken.Register(s => ((TaskCompletionSource<bool>)s).TrySetResult(true), tcs))
                 {
-                    if (task != await Task.WhenAny(task, tcs.Task))
+                    if (task != await Task.WhenAny(task, tcs.Task).ConfigureAwait(false))
                     {
                         cancellationToken.ThrowIfCancellationRequested();
                     }
@@ -467,7 +468,7 @@ namespace IronPigeon
             }
 
             // Return result or rethrow any fault/cancellation exception.
-            return await task;
+            return await task.ConfigureAwait(false);
         }
 
         /// <summary>
@@ -484,7 +485,7 @@ namespace IronPigeon
                 var tcs = new TaskCompletionSource<bool>();
                 using (cancellationToken.Register(s => ((TaskCompletionSource<bool>)s).TrySetResult(true), tcs))
                 {
-                    if (task != await Task.WhenAny(task, tcs.Task))
+                    if (task != await Task.WhenAny(task, tcs.Task).ConfigureAwait(false))
                     {
                         cancellationToken.ThrowIfCancellationRequested();
                     }
@@ -492,8 +493,9 @@ namespace IronPigeon
             }
 
             // Rethrow any fault/cancellation exception.
-            await task;
+            await task.ConfigureAwait(false);
         }
+#pragma warning restore UseAsyncSuffix // Use Async suffix
 
         /// <summary>
         /// Executes an operation against a collection of providers simultaneously and accepts the first
@@ -513,7 +515,7 @@ namespace IronPigeon
 
             while (tasks.Count > 0)
             {
-                var completingTask = await Task.WhenAny(tasks);
+                var completingTask = await Task.WhenAny(tasks).ConfigureAwait(false);
                 if (qualifyingTest(completingTask.Result))
                 {
                     cts.Cancel();
@@ -629,9 +631,9 @@ namespace IronPigeon
         {
             Requires.NotNull(client, "client");
 
-            var response = await client.GetAsync(location, cancellationToken);
+            var response = await client.GetAsync(location, cancellationToken).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
-            return await response.Content.ReadAsBufferedStreamAsync(cancellationToken);
+            return await response.Content.ReadAsBufferedStreamAsync(cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -645,10 +647,10 @@ namespace IronPigeon
             Requires.NotNull(content, "content");
 
             cancellationToken.ThrowIfCancellationRequested();
-            using (var stream = await content.ReadAsStreamAsync())
+            using (var stream = await content.ReadAsStreamAsync().ConfigureAwait(false))
             {
                 var memoryStream = new MemoryStream();
-                await stream.CopyToAsync(memoryStream, 4096, cancellationToken);
+                await stream.CopyToAsync(memoryStream, 4096, cancellationToken).ConfigureAwait(false);
                 memoryStream.Position = 0;
                 return memoryStream;
             }

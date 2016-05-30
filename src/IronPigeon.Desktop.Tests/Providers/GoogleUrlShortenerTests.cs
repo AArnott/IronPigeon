@@ -10,48 +10,52 @@ namespace IronPigeon.Tests.Providers
     using System.Text;
     using System.Threading.Tasks;
     using IronPigeon.Providers;
-    using NUnit.Framework;
+    using Mocks;
+    using Xunit;
 
-    [TestFixture]
     public class GoogleUrlShortenerTests
     {
+        private readonly HttpMessageHandlerRecorder messageRecorder;
         private IUrlShortener shortener;
 
-        [SetUp]
-        public void SetUp()
+        public GoogleUrlShortenerTests()
         {
             var shortener = new GoogleUrlShortener();
             this.shortener = shortener;
-            shortener.HttpClient = new HttpClient(Mocks.HttpMessageHandlerRecorder.CreatePlayback());
+            this.messageRecorder = HttpMessageHandlerRecorder.CreatePlayback(typeof(GoogleUrlShortenerTests));
+            shortener.HttpClient = new HttpClient(this.messageRecorder);
         }
 
-        [Test]
+        [Fact]
         public void ShortenAsyncNull()
         {
             Assert.Throws<ArgumentNullException>(() => this.shortener.ShortenAsync(null).GetAwaiter().GetResult());
         }
 
-        [Test]
+        [Fact]
         public void ShortenAsync()
         {
+            this.messageRecorder.SetTestName();
             Uri shortUrl = this.shortener.ShortenAsync(new Uri("http://www.google.com/")).GetAwaiter().GetResult();
-            Assert.AreEqual("http://goo.gl/fbsS", shortUrl.AbsoluteUri);
+            Assert.Equal("http://goo.gl/fbsS", shortUrl.AbsoluteUri);
         }
 
-        [Test]
+        [Fact]
         public void ShortenExcludeFragmentAsync()
         {
+            this.messageRecorder.SetTestName();
             var shortUrl =
                 this.shortener.ShortenExcludeFragmentAsync(new Uri("http://www.google.com/#hashtest")).GetAwaiter().GetResult();
-            Assert.AreEqual("http://goo.gl/fbsS#hashtest", shortUrl.AbsoluteUri);
+            Assert.Equal("http://goo.gl/fbsS#hashtest", shortUrl.AbsoluteUri);
         }
 
-        [Test]
+        [Fact]
         public void ShortenExcludeFragmentAsyncNoFragment()
         {
+            this.messageRecorder.SetTestName();
             var shortUrl =
                 this.shortener.ShortenExcludeFragmentAsync(new Uri("http://www.google.com/")).GetAwaiter().GetResult();
-            Assert.AreEqual("http://goo.gl/fbsS", shortUrl.AbsoluteUri);
+            Assert.Equal("http://goo.gl/fbsS", shortUrl.AbsoluteUri);
         }
     }
 }

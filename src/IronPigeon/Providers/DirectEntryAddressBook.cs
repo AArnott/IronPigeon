@@ -52,7 +52,7 @@ namespace IronPigeon.Providers
 
             try
             {
-                var endpoint = await this.DownloadEndpointAsync(entryLocation, cancellationToken);
+                var endpoint = await this.DownloadEndpointAsync(entryLocation, cancellationToken).ConfigureAwait(false);
                 return endpoint;
             }
             catch (HttpRequestException)

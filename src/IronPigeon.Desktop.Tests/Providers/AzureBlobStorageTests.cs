@@ -16,17 +16,15 @@ namespace IronPigeon.Tests.Providers
     using Microsoft.WindowsAzure;
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Blob;
-    using NUnit.Framework;
+    using Xunit;
 
-    [TestFixture]
-    public class AzureBlobStorageTests : CloudBlobStorageProviderTestBase
+    public class AzureBlobStorageTests : CloudBlobStorageProviderTestBase, IDisposable
     {
         private string testContainerName;
         private CloudBlobContainer container;
         private AzureBlobStorage provider;
 
-        [SetUp]
-        public void Initialize()
+        public AzureBlobStorageTests()
         {
             this.testContainerName = "unittests" + Guid.NewGuid().ToString();
             var account = CloudStorageAccount.DevelopmentStorageAccount;
@@ -36,8 +34,7 @@ namespace IronPigeon.Tests.Providers
             this.container = blobClient.GetContainerReference(this.testContainerName);
         }
 
-        [TearDown]
-        public void TearDown()
+        public void Dispose()
         {
             if (this.container != null)
             {
@@ -45,20 +42,20 @@ namespace IronPigeon.Tests.Providers
             }
         }
 
-        [Test, Ignore]
+        [Fact(Skip = "Ignored")]
         public void CreateWithContainerAsync()
         {
             // The SetUp method already called the method, so this tests the results of it.
             var permissions = this.container.GetPermissions();
-            Assert.That(permissions.PublicAccess, Is.EqualTo(BlobContainerPublicAccessType.Blob));
+            Assert.Equal(BlobContainerPublicAccessType.Blob, permissions.PublicAccess);
         }
 
-        [Test, Ignore]
+        [Fact(Skip = "Ignored")]
         public void PurgeBlobsExpiringBeforeAsync()
         {
             this.UploadMessageHelperAsync().GetAwaiter().GetResult();
             this.provider.PurgeBlobsExpiringBeforeAsync(DateTime.UtcNow.AddDays(7)).GetAwaiter().GetResult();
-            Assert.That(this.container.ListBlobs().Count(), Is.EqualTo(0));
+            Assert.Equal(0, this.container.ListBlobs().Count());
         }
     }
 }

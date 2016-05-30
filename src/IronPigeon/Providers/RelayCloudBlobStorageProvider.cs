@@ -82,11 +82,11 @@ namespace IronPigeon.Providers
             }
 
             int lifetime = expirationUtc == DateTime.MaxValue ? int.MaxValue : (int)(expirationUtc - DateTime.UtcNow).TotalMinutes;
-            var response = await this.HttpClient.PostAsync(this.BlobPostUrl.AbsoluteUri + "?lifetimeInMinutes=" + lifetime, httpContent);
+            var response = await this.HttpClient.PostAsync(this.BlobPostUrl.AbsoluteUri + "?lifetimeInMinutes=" + lifetime, httpContent).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
 
             var serializer = new DataContractJsonSerializer(typeof(string));
-            var location = (string)serializer.ReadObject(await response.Content.ReadAsStreamAsync());
+            var location = (string)serializer.ReadObject(await response.Content.ReadAsStreamAsync().ConfigureAwait(false));
             return new Uri(location, UriKind.Absolute);
         }
 
@@ -102,9 +102,9 @@ namespace IronPigeon.Providers
             var registerUrl = new Uri(this.InboxServiceUrl, "create");
 
             var responseMessage =
-                await this.HttpClient.PostAsync(registerUrl, null, cancellationToken);
+                await this.HttpClient.PostAsync(registerUrl, null, cancellationToken).ConfigureAwait(false);
             responseMessage.EnsureSuccessStatusCode();
-            using (var responseStream = await responseMessage.Content.ReadAsStreamAsync())
+            using (var responseStream = await responseMessage.Content.ReadAsStreamAsync().ConfigureAwait(false))
             {
                 var deserializer = new DataContractJsonSerializer(typeof(InboxCreationResponse));
                 var creationResponse = (InboxCreationResponse)deserializer.ReadObject(responseStream);

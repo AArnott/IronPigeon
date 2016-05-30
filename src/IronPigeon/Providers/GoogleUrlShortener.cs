@@ -71,10 +71,10 @@ namespace IronPigeon.Providers
             var requestContent = new StreamContent(requestStream);
             requestContent.Headers.ContentType = new MediaTypeHeaderValue("application/json");
 
-            var postResponse = await this.HttpClient.PostAsync(ShorteningService, requestContent, cancellationToken);
+            var postResponse = await this.HttpClient.PostAsync(ShorteningService, requestContent, cancellationToken).ConfigureAwait(false);
 
             postResponse.EnsureSuccessStatusCode();
-            var responseStream = await postResponse.Content.ReadAsStreamAsync();
+            var responseStream = await postResponse.Content.ReadAsStreamAsync().ConfigureAwait(false);
             var responseSerializer = new DataContractJsonSerializer(typeof(ShortenResponse));
             var response = (ShortenResponse)responseSerializer.ReadObject(responseStream);
             return new Uri(response.ShortUrl, UriKind.Absolute);

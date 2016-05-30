@@ -127,7 +127,7 @@ namespace IronPigeon
         public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
             long bytesRemaining = this.length - this.positionRelativeToStart;
-            int bytesRead = await this.underlyingStream.ReadAsync(buffer, offset, Math.Min(count, (int)bytesRemaining), cancellationToken);
+            int bytesRead = await this.underlyingStream.ReadAsync(buffer, offset, Math.Min(count, (int)bytesRemaining), cancellationToken).ConfigureAwait(false);
             this.positionRelativeToStart += bytesRead;
             return bytesRead;
         }

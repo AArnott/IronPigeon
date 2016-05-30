@@ -12,6 +12,7 @@ namespace IronPigeon.Tests.Mocks
     using System.Net;
     using System.Net.Http;
     using System.Reflection;
+    using System.Runtime.CompilerServices;
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
@@ -19,8 +20,9 @@ namespace IronPigeon.Tests.Mocks
 
     internal class HttpMessageHandlerRecorder : HttpClientHandler
     {
-        private readonly string recordingPath;
+        internal const string TestNameMacro = "{TestName}";
         private readonly Mode mode;
+        private string recordingPath;
 
         private HttpMessageHandlerRecorder(string recordingPath, Mode mode)
         {
@@ -36,12 +38,19 @@ namespace IronPigeon.Tests.Mocks
             Playback,
         }
 
-        internal static HttpMessageHandlerRecorder CreateRecorder()
+        protected string RecordingPath
         {
-            Type testClass;
-            string testName;
-            TestUtilities.GetUnitTestInfo(out testClass, out testName);
-            string scenario = testClass.Name + "." + testName;
+            get
+            {
+                Verify.Operation(!this.recordingPath.Contains(TestNameMacro), "The scenario has not had its test name set yet.");
+                return this.recordingPath;
+            }
+        }
+
+        internal static HttpMessageHandlerRecorder CreateRecorder(Type testClass)
+        {
+            Requires.NotNull(testClass, nameof(testClass));
+            string scenario = $"{testClass.Name}.{TestNameMacro}";
 
             var stack = new StackTrace(1, true);
             string testClassDirectory = null;
@@ -57,14 +66,20 @@ namespace IronPigeon.Tests.Mocks
             return new HttpMessageHandlerRecorder(Path.Combine(testClassDirectory, scenario), Mode.Recording);
         }
 
-        internal static HttpMessageHandlerRecorder CreatePlayback()
+        internal static HttpMessageHandlerRecorder CreatePlayback(Type testClass)
         {
-            Type testClass;
-            string testName;
-            TestUtilities.GetUnitTestInfo(out testClass, out testName);
-            string scenario = testClass.Name + "." + testName;
+            Requires.NotNull(testClass, nameof(testClass));
+            string scenario = $"{testClass.Name}.{TestNameMacro}";
 
             return new HttpMessageHandlerRecorder(testClass.Namespace + "." + scenario, Mode.Playback);
+        }
+
+        internal void SetTestName([CallerMemberName] string testName = "")
+        {
+            Requires.NotNullOrEmpty(testName, nameof(testName));
+
+            Verify.Operation(this.recordingPath.Contains(TestNameMacro), "The scenario doesn't have a {TestName} macro to replace.");
+            this.recordingPath = this.recordingPath.Replace(TestNameMacro, testName);
         }
 
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
@@ -90,13 +105,13 @@ namespace IronPigeon.Tests.Mocks
 
             if (this.mode == Mode.Recording)
             {
-                headerFile = Path.Combine(this.recordingPath, Uri.EscapeDataString(persistedUri + ".headers"));
-                bodyFile = Path.Combine(this.recordingPath, Uri.EscapeDataString(persistedUri + ".body"));
+                headerFile = Path.Combine(this.RecordingPath, Uri.EscapeDataString(persistedUri + ".headers"));
+                bodyFile = Path.Combine(this.RecordingPath, Uri.EscapeDataString(persistedUri + ".body"));
             }
             else
             {
-                headerFile = this.recordingPath + "." + persistedUri + ".headers";
-                bodyFile = this.recordingPath + "." + persistedUri + ".body";
+                headerFile = this.RecordingPath + "." + persistedUri + ".headers";
+                bodyFile = this.RecordingPath + "." + persistedUri + ".body";
             }
         }
 

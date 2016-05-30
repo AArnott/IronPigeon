@@ -61,13 +61,13 @@ namespace IronPigeon.Providers
 
             try
             {
-                var entryLocation = await this.DiscoverAddressBookEntryUrlAsync(identifier.Substring(1), cancellationToken);
+                var entryLocation = await this.DiscoverAddressBookEntryUrlAsync(identifier.Substring(1), cancellationToken).ConfigureAwait(false);
                 if (entryLocation == null)
                 {
                     return null;
                 }
 
-                var endpoint = await this.DownloadEndpointAsync(entryLocation, cancellationToken);
+                var endpoint = await this.DownloadEndpointAsync(entryLocation, cancellationToken).ConfigureAwait(false);
                 return endpoint;
             }
             catch (HttpRequestException)
@@ -87,7 +87,7 @@ namespace IronPigeon.Providers
             Requires.NotNullOrEmpty(twitterUsername, "identifier");
 
             Uri twitterUserProfileLocation = new Uri(string.Format(CultureInfo.InvariantCulture, TwitterUriFormattingString, Uri.EscapeDataString(twitterUsername)));
-            using (var userProfileStream = await this.HttpClient.GetBufferedStreamAsync(twitterUserProfileLocation, cancellationToken))
+            using (var userProfileStream = await this.HttpClient.GetBufferedStreamAsync(twitterUserProfileLocation, cancellationToken).ConfigureAwait(false))
             {
                 var jsonSerializer = new DataContractJsonSerializer(typeof(TwitterUserInfo));
                 var userInfo = (TwitterUserInfo)jsonSerializer.ReadObject(userProfileStream);

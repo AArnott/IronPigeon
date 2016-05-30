@@ -6,47 +6,52 @@ namespace IronPigeon.Tests.Providers
     using System.Net.Http;
     using IronPigeon.Providers;
     using IronPigeon.Tests;
-    using NUnit.Framework;
+    using Mocks;
+    using Xunit;
 
-    [TestFixture]
     public class TwitterAddressBookTests
     {
+        private readonly HttpMessageHandlerRecorder messageRecorder;
         private TwitterAddressBook twitter;
 
-        [SetUp]
-        public void SetUp()
+        public TwitterAddressBookTests()
         {
             this.twitter = new TwitterAddressBook();
-            this.twitter.HttpClient = new HttpClient(Mocks.HttpMessageHandlerRecorder.CreatePlayback());
+            this.messageRecorder = Mocks.HttpMessageHandlerRecorder.CreatePlayback(typeof(TwitterAddressBookTests));
+            this.twitter.HttpClient = new HttpClient(this.messageRecorder);
         }
 
-        [Test]
+        [Fact]
         public void LookupEntryAsyncNonExistentUser()
         {
+            this.messageRecorder.SetTestName();
             var endpoint = this.twitter.LookupAsync("@NonExistentUser2394872352").Result;
-            Assert.That(endpoint, Is.Null);
+            Assert.Null(endpoint);
         }
 
-        [Test]
+        [Fact]
         public void LookupEntryAsyncValidUserWithNoEntry()
         {
+            this.messageRecorder.SetTestName();
             var endpoint = this.twitter.LookupAsync("@shanselman").Result;
-            Assert.That(endpoint, Is.Null);
+            Assert.Null(endpoint);
         }
 
-        [Test]
+        [Fact]
         public void LookupEntryAsyncExistingUser()
         {
+            this.messageRecorder.SetTestName();
             var endpoint = this.twitter.LookupAsync("@PrivacyNotFound").Result;
-            Assert.That(endpoint, Is.Not.Null);
+            Assert.NotNull(endpoint);
         }
 
         /// <summary>
         /// Verifies that the #fragment in the URL is verified to match the thumbprint of the downloaded address book entry.
         /// </summary>
-        [Test]
+        [Fact]
         public void LookupEntryAsyncExistingUserReplacedEndpoint()
         {
+            this.messageRecorder.SetTestName();
             Assert.Throws<BadAddressBookEntryException>(() => this.twitter.LookupAsync("@PrivacyNotFound").GetAwaiter().GetResult());
         }
     }

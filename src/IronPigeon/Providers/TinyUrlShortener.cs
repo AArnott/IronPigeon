@@ -63,9 +63,9 @@ namespace IronPigeon.Providers
 
             string shorteningRequestUrl = string.Format(
                 CultureInfo.InvariantCulture, ShorteningService, Uri.EscapeDataString(longUrl.AbsoluteUri));
-            var response = await this.HttpClient.GetAsync(shorteningRequestUrl, cancellationToken);
+            var response = await this.HttpClient.GetAsync(shorteningRequestUrl, cancellationToken).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
-            string responseAsString = await response.Content.ReadAsStringAsync();
+            string responseAsString = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
             return new Uri(responseAsString, UriKind.Absolute);
         }
     }

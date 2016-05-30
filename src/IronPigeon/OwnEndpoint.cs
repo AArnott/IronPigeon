@@ -181,7 +181,7 @@ namespace IronPigeon
             Requires.NotNull(stream, "stream");
 
             var ms = new MemoryStream();
-            await stream.CopyToAsync(ms);   // relies on the input stream containing only the endpoint.
+            await stream.CopyToAsync(ms).ConfigureAwait(false);   // relies on the input stream containing only the endpoint.
             ms.Position = 0;
             using (var reader = new BinaryReader(ms))
             {

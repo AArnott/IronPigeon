@@ -67,7 +67,7 @@ namespace IronPigeon.Providers
 
             var builder = new UriBuilder(this.AddressBookLookupUrl);
             builder.Query = queryString.UrlEncode();
-            return await this.DownloadEndpointAsync(builder.Uri, cancellationToken);
+            return await this.DownloadEndpointAsync(builder.Uri, cancellationToken).ConfigureAwait(false);
         }
     }
 }

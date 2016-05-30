@@ -46,15 +46,5 @@ namespace IronPigeon.Tests
         {
             return new CryptoSettings(SecurityLevel.Minimum);
         }
-
-        internal static void GetUnitTestInfo(out Type testFixture, out string testMethod)
-        {
-            string testFullName = NUnit.Framework.TestContext.CurrentContext.Test.FullName;
-            int methodStartIndex = testFullName.LastIndexOf('.');
-            string testClassName = testFullName.Substring(0, methodStartIndex);
-            string testMethodName = testFullName.Substring(methodStartIndex + 1);
-            testFixture = Type.GetType(testClassName);
-            testMethod = testMethodName;
-        }
     }
 }
