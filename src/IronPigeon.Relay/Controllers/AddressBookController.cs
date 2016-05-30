@@ -25,7 +25,7 @@ namespace IronPigeon.Relay.Controllers
     /// for IronPigeon communication.
     /// </summary>
 #if !DEBUG
-	[RequireHttps]
+    [RequireHttps]
 #endif
     public class AddressBookController : Controller
     {
