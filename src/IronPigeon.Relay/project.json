@@ -6,8 +6,10 @@
     "DotNetOpenAuth.OAuth2.AuthorizationServer": "4.3.4.13329",
     "DotNetOpenAuth.OAuth2.Client": "4.3.4.13329",
     "DotNetOpenAuth.OAuth2.ResourceServer": "4.3.4.13329",
-    "Microsoft.AspNet.Mvc": "5.1.2",
-    "Microsoft.AspNet.WebApi": "5.1.2",
+    "Microsoft.AspNet.Mvc": "5.2.3",
+    "Microsoft.AspNet.WebApi": "5.2.3",
+    "Microsoft.CodeDom.Providers.DotNetCompilerPlatform": "1.0.0",
+    "Newtonsoft.Json": "6.0.8",
     "PushSharp": "2.0.4"
   },
   "runtimes": {

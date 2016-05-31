@@ -4,6 +4,7 @@
   },
   "dependencies": {
     "Moq": "4.2.1402.2112",
+    "ReadOnlySourceTree": "0.1.37-beta",
     "xunit": "2.1.0"
   },
   "runtimes": {
