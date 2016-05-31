@@ -27,10 +27,10 @@ namespace IronPigeon.Relay.Tests.Controllers
    ""link"": ""http://profile.live.com/cid-063d0c265f96e43d/"", 
    ""gender"": ""male"", 
    ""emails"": {
-	  ""preferred"": ""andrewarnott@gmail.com"", 
-	  ""account"": ""andrewarnott@live.com"", 
-	  ""personal"": null, 
-	  ""business"": null
+      ""preferred"": ""andrewarnott@gmail.com"", 
+      ""account"": ""andrewarnott@live.com"", 
+      ""personal"": null, 
+      ""business"": null
    }, 
    ""locale"": ""en_US"", 
    ""updated_time"": ""2012-09-23T22:56:27+0000""
