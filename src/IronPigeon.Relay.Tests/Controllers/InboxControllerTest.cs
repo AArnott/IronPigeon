@@ -25,11 +25,10 @@ namespace IronPigeon.Relay.Tests.Controllers
     using Microsoft.WindowsAzure.StorageClient;
     using Moq;
     using Newtonsoft.Json;
-    using NUnit.Framework;
     using Validation;
+    using Xunit;
 
-    [TestFixture]
-    public class InboxControllerTest
+    public class InboxControllerTest : IDisposable
     {
         private const string CloudConfigurationName = "StorageConnectionString";
         private const string MockClientIdentifier = "ms-app://w8id/";
@@ -48,8 +47,7 @@ namespace IronPigeon.Relay.Tests.Controllers
         private string testTableName;
         private string testContainerName;
 
-        [SetUp]
-        public void SetUp()
+        public InboxControllerTest()
         {
             AzureStorageConfig.RegisterConfiguration();
 
@@ -64,8 +62,7 @@ namespace IronPigeon.Relay.Tests.Controllers
             this.controller = this.CreateController();
         }
 
-        [TearDown]
-        public void TearDown()
+        public void Dispose()
         {
             try
             {
@@ -93,15 +90,15 @@ namespace IronPigeon.Relay.Tests.Controllers
             }
         }
 
-        [Test]
+        [Fact]
         public void GetInboxItemsAsyncAction()
         {
             this.CreateInboxHelperAsync().Wait();
             var data = this.GetInboxItemsAsyncHelper().Result;
-            Assert.That(data.Items, Is.Empty);
+            Assert.Empty(data.Items);
         }
 
-        [Test]
+        [Fact]
         public void PostNotificationActionRejectsNonPositiveLifetime()
         {
             Assert.Throws<ArgumentOutOfRangeException>(() => this.controller.PostNotificationAsync("thumbprint", 0).GetAwaiter().GetResult());
@@ -112,7 +109,7 @@ namespace IronPigeon.Relay.Tests.Controllers
         /// Verifies that even before a purge removes an expired inbox entry,
         /// those entries are not returned in query results.
         /// </summary>
-        [Test]
+        [Fact]
         public void GetInboxItemsOnlyReturnsUnexpiredItems()
         {
             this.CreateInboxHelperAsync().Wait();
@@ -127,11 +124,11 @@ namespace IronPigeon.Relay.Tests.Controllers
             freshBlob.SetMetadata();
 
             var results = this.GetInboxItemsAsyncHelper().Result;
-            Assert.That(results.Items.Count, Is.EqualTo(1));
-            Assert.That(results.Items[0].Location, Is.EqualTo(freshBlob.Uri));
+            Assert.Equal(1, results.Items.Count);
+            Assert.Equal(freshBlob.Uri, results.Items[0].Location);
         }
 
-        [Test]
+        [Fact]
         public void DeleteNotificationAction()
         {
             this.CreateInboxHelperAsync().Wait();
@@ -140,12 +137,12 @@ namespace IronPigeon.Relay.Tests.Controllers
             this.controller.DeleteAsync(this.inboxId, inbox.Items[0].Location.AbsoluteUri).GetAwaiter().GetResult();
 
             var blobReference = this.container.GetBlockBlobReference(inbox.Items[0].Location.AbsoluteUri);
-            Assert.That(blobReference.DeleteIfExists(), Is.False, "The blob should have already been deleted.");
+            Assert.False(blobReference.DeleteIfExists(), "The blob should have already been deleted.");
             inbox = this.GetInboxItemsAsyncHelper().Result;
-            Assert.That(inbox.Items, Is.Empty);
+            Assert.Empty(inbox.Items);
         }
 
-        [Test]
+        [Fact]
         public void PostNotificationAction()
         {
             this.CreateInboxHelperAsync().Wait();
@@ -154,17 +151,18 @@ namespace IronPigeon.Relay.Tests.Controllers
 
             // Confirm that retrieving the inbox now includes the posted message.
             var getResult = this.GetInboxItemsAsyncHelper().Result;
-            Assert.That(getResult.Items.Count, Is.EqualTo(1));
-            Assert.That(getResult.Items[0].Location, Is.Not.Null);
-            Assert.That(getResult.Items[0].DatePostedUtc, Is.EqualTo(DateTime.UtcNow).Within(TimeSpan.FromMinutes(1)));
+            Assert.Equal(1, getResult.Items.Count);
+            Assert.NotNull(getResult.Items[0].Location);
+            var tolerance = TimeSpan.FromMinutes(1);
+            Assert.InRange(getResult.Items[0].DatePostedUtc, DateTime.UtcNow - tolerance, DateTime.UtcNow + tolerance);
 
             var blobStream = this.httpClient.GetStreamAsync(getResult.Items[0].Location).Result;
             var blobMemoryStream = new MemoryStream();
             blobStream.CopyTo(blobMemoryStream);
-            Assert.That(blobMemoryStream.ToArray(), Is.EqualTo(inputStream.ToArray()));
+            Assert.Equal(inputStream.ToArray(), blobMemoryStream.ToArray());
         }
 
-        [Test]
+        [Fact]
         public void PostNotificationActionHasExpirationCeiling()
         {
             this.CreateInboxHelperAsync().Wait();
@@ -173,20 +171,24 @@ namespace IronPigeon.Relay.Tests.Controllers
             var results = this.GetInboxItemsAsyncHelper().Result;
             var blob = this.container.GetBlockBlobReference(results.Items[0].Location.AbsoluteUri);
             blob.FetchAttributes();
-            Assert.That(
+            var tolerance = TimeSpan.FromMinutes(1);
+            var target = DateTime.UtcNow + InboxController.MaxLifetimeCeiling;
+            Assert.InRange(
                 DateTime.Parse(blob.Metadata[InboxController.ExpirationDateMetadataKey]),
-                Is.EqualTo(DateTime.UtcNow + InboxController.MaxLifetimeCeiling).Within(TimeSpan.FromMinutes(1)));
+                target - tolerance,
+                target + tolerance);
         }
 
-        [Test]
+        [Fact]
         public void PostNotificationActionRejectsLargePayloads()
         {
+            this.CreateInboxHelperAsync().Wait();
             var inputStream = new MemoryStream(new byte[InboxController.MaxNotificationSize + 1]);
             Assert.Throws<ArgumentException>(
                 () => this.PostNotificationHelper(this.controller, inputStream: inputStream).GetAwaiter().GetResult());
         }
 
-        [Test]
+        [Fact]
         public void PurgeExpiredAsync()
         {
             this.container.CreateIfNotExists();
@@ -203,11 +205,11 @@ namespace IronPigeon.Relay.Tests.Controllers
 
             InboxController.PurgeExpiredAsync(this.container).GetAwaiter().GetResult();
 
-            Assert.That(expiredBlob.DeleteIfExists(), Is.False);
-            Assert.That(freshBlob.DeleteIfExists(), Is.True);
+            Assert.False(expiredBlob.DeleteIfExists());
+            Assert.True(freshBlob.DeleteIfExists());
         }
 
-        [Test, Category("Stress")]
+        [Fact, Trait("Stress", "true")]
         public async Task HighFrequencyPostingTest()
         {
             const int MessageCount = 5;
@@ -224,7 +226,7 @@ namespace IronPigeon.Relay.Tests.Controllers
                 return this.PostNotificationHelper(controller);
             }));
             var getResult = await this.GetInboxItemsAsyncHelper();
-            Assert.AreEqual(MessageCount, getResult.Items.Count);
+            Assert.Equal(MessageCount, getResult.Items.Count);
         }
 
         /// <summary>
@@ -232,7 +234,7 @@ namespace IronPigeon.Relay.Tests.Controllers
         /// that changes are merged together successfully.
         /// </summary>
         /// <returns>A task representing the async test.</returns>
-        [Test, Category("Stress")]
+        [Fact, Trait("Stress", "true")]
         public async Task OptimisticLockingMergeResolution()
         {
             await this.CreateInboxHelperAsync();
@@ -254,8 +256,8 @@ namespace IronPigeon.Relay.Tests.Controllers
 
             // Verify that a fresh entity obtained has both property changes preserved.
             var inbox3 = inboxContext3.Get(this.inboxId).Single();
-            Assert.AreEqual("new text1", inbox3.WinPhone8ToastText1);
-            Assert.AreEqual("new text2", inbox3.WinPhone8ToastText2);
+            Assert.Equal("new text1", inbox3.WinPhone8ToastText1);
+            Assert.Equal("new text2", inbox3.WinPhone8ToastText2);
         }
 
         private static string AssembleQueryString(NameValueCollection args)
@@ -336,9 +338,9 @@ namespace IronPigeon.Relay.Tests.Controllers
             SetupNextRequest(controller, "POST", inputStream);
 
             var result = await controller.PostNotificationAsync(this.inboxId, lifetimeInMinutes);
-            Assert.That(result, Is.InstanceOf<HttpStatusCodeResult>());
+            Assert.IsType(typeof(HttpStatusCodeResult), result);
             var actualStatus = (HttpStatusCode)((HttpStatusCodeResult)result).StatusCode;
-            Assert.AreEqual(HttpStatusCode.Created, actualStatus);
+            Assert.Equal(HttpStatusCode.Created, actualStatus);
         }
 
         private InboxControllerForTest CreateController()
@@ -350,11 +352,11 @@ namespace IronPigeon.Relay.Tests.Controllers
         {
             ActionResult result = await this.controller.GetInboxItemsAsync(this.inboxId);
 
-            Assert.That(result, Is.InstanceOf<JsonResult>());
+            Assert.IsType(typeof(JsonResult), result);
             var jsonResult = (JsonResult)result;
-            Assert.That(jsonResult.JsonRequestBehavior, Is.EqualTo(JsonRequestBehavior.AllowGet));
+            Assert.Equal(JsonRequestBehavior.AllowGet, jsonResult.JsonRequestBehavior);
             var data = (IncomingList)jsonResult.Data;
-            Assert.That(data, Is.Not.Null);
+            Assert.NotNull(data);
             return data;
         }
 

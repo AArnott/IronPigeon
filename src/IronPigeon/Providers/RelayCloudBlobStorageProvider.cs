@@ -65,6 +65,9 @@ namespace IronPigeon.Providers
         /// <inheritdoc/>
         public async Task<Uri> UploadMessageAsync(Stream content, DateTime expirationUtc, string contentType = null, string contentEncoding = null, IProgress<int> bytesCopiedProgress = null, CancellationToken cancellationToken = default(CancellationToken))
         {
+            Requires.NotNull(content, nameof(content));
+            Verify.Operation(this.HttpClient != null, $"{nameof(this.HttpClient)} must be set first.");
+
             var httpContent = new StreamContent(content.ReadStreamWithProgress(bytesCopiedProgress));
             if (content.CanSeek)
             {
@@ -99,6 +102,9 @@ namespace IronPigeon.Providers
         /// </returns>
         public async Task<InboxCreationResponse> CreateInboxAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
+            Verify.Operation(this.InboxServiceUrl != null, $"{nameof(this.InboxServiceUrl)} must be set first.");
+            Verify.Operation(this.HttpClient != null, $"{nameof(this.HttpClient)} must be set first.");
+
             var registerUrl = new Uri(this.InboxServiceUrl, "create");
 
             var responseMessage =

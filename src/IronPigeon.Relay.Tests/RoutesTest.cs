@@ -11,24 +11,20 @@ namespace IronPigeon.Relay.Tests
     using System.Threading.Tasks;
     using System.Web;
     using System.Web.Routing;
-
     using Moq;
+    using Xunit;
 
-    using NUnit.Framework;
-
-    [TestFixture]
     public class RoutesTest
     {
         private RouteCollection routes;
 
-        [SetUp]
-        public void SetUp()
+        public RoutesTest()
         {
             this.routes = new RouteCollection();
             RouteConfig.RegisterRoutes(this.routes);
         }
 
-        [Test]
+        [Fact]
         public void InboxCreateRoute()
         {
             var httpContextMock = new Mock<HttpContextBase>();
@@ -37,11 +33,11 @@ namespace IronPigeon.Relay.Tests
 
             RouteData routeData = this.routes.GetRouteData(httpContextMock.Object);
             Assert.NotNull(routeData);
-            Assert.That(routeData.Values["controller"], Is.EqualTo("Inbox"));
-            Assert.That(routeData.Values["action"], Is.EqualTo("create"));
+            Assert.Equal("Inbox", routeData.Values["controller"]);
+            Assert.Equal("create", routeData.Values["action"]);
         }
 
-        [Test]
+        [Fact]
         public void InboxPushRoute()
         {
             var httpContextMock = new Mock<HttpContextBase>();
@@ -50,12 +46,12 @@ namespace IronPigeon.Relay.Tests
 
             RouteData routeData = this.routes.GetRouteData(httpContextMock.Object);
             Assert.NotNull(routeData);
-            Assert.That(routeData.Values["controller"], Is.EqualTo("Inbox"));
-            Assert.That(routeData.Values["action"], Is.EqualTo("Push"));
-            Assert.That(routeData.Values["id"], Is.EqualTo("somethumbprint"));
+            Assert.Equal("Inbox", routeData.Values["controller"]);
+            Assert.Equal("Push", routeData.Values["action"]);
+            Assert.Equal("somethumbprint", routeData.Values["id"]);
         }
 
-        [Test]
+        [Fact]
         public void InboxSlotRoute()
         {
             var httpContextMock = new Mock<HttpContextBase>();
@@ -64,9 +60,9 @@ namespace IronPigeon.Relay.Tests
 
             RouteData routeData = this.routes.GetRouteData(httpContextMock.Object);
             Assert.NotNull(routeData);
-            Assert.That(routeData.Values["controller"], Is.EqualTo("Inbox"));
-            Assert.That(routeData.Values["action"], Is.EqualTo("slot"));
-            Assert.That(routeData.Values["id"], Is.EqualTo("somethumbprint"));
+            Assert.Equal("Inbox", routeData.Values["controller"]);
+            Assert.Equal("slot", routeData.Values["action"]);
+            Assert.Equal("somethumbprint", routeData.Values["id"]);
         }
     }
 }

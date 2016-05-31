@@ -11,12 +11,11 @@ namespace IronPigeon.Relay.Tests.Controllers
     using System.Threading.Tasks;
     using IronPigeon.Relay.Controllers;
     using Newtonsoft.Json;
-    using NUnit.Framework;
+    using Xunit;
 
-    [TestFixture]
     public class OAuthControllerTests
     {
-        [Test]
+        [Fact]
         public void MicrosoftAccountMeInfoDeserialization()
         {
             const string JsonInfo = @"
@@ -40,14 +39,14 @@ namespace IronPigeon.Relay.Tests.Controllers
             var serializer = new JsonSerializer();
             var jsonReader = new JsonTextReader(new StringReader(JsonInfo));
             var microsoftAccountInfo = serializer.Deserialize<OAuthController.MicrosoftAccountInfo>(jsonReader);
-            Assert.That(microsoftAccountInfo.Id, Is.EqualTo("063d0c265f96e43d"));
-            Assert.That(microsoftAccountInfo.FirstName, Is.EqualTo("Andrew"));
-            Assert.That(microsoftAccountInfo.LastName, Is.EqualTo("Arnott"));
-            Assert.That(microsoftAccountInfo.Emails.Count, Is.EqualTo(4));
-            Assert.That(microsoftAccountInfo.Emails["preferred"], Is.EqualTo("andrewarnott@gmail.com"));
-            Assert.That(microsoftAccountInfo.Emails["account"], Is.EqualTo("andrewarnott@live.com"));
-            Assert.That(microsoftAccountInfo.Emails["personal"], Is.Null);
-            Assert.That(microsoftAccountInfo.Emails["business"], Is.Null);
+            Assert.Equal("063d0c265f96e43d", microsoftAccountInfo.Id);
+            Assert.Equal("Andrew", microsoftAccountInfo.FirstName);
+            Assert.Equal("Arnott", microsoftAccountInfo.LastName);
+            Assert.Equal(4, microsoftAccountInfo.Emails.Count);
+            Assert.Equal("andrewarnott@gmail.com", microsoftAccountInfo.Emails["preferred"]);
+            Assert.Equal("andrewarnott@live.com", microsoftAccountInfo.Emails["account"]);
+            Assert.Null(microsoftAccountInfo.Emails["personal"]);
+            Assert.Null(microsoftAccountInfo.Emails["business"]);
         }
     }
 }

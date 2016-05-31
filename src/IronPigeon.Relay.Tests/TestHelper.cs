@@ -10,10 +10,8 @@ namespace IronPigeon.Relay.Tests
     using System.Threading.Tasks;
     using System.Web;
     using System.Web.Routing;
-
     using Moq;
-
-    using NUnit.Framework;
+    using Xunit;
 
     internal class TestHelper
     {
@@ -24,7 +22,7 @@ namespace IronPigeon.Relay.Tests
                 .Returns(url);
 
             RouteData routeData = routes.GetRouteData(httpContextMock.Object);
-            Assert.IsNotNull(routeData, "Should have found the route");
+            Assert.NotNull(routeData); // "Should have found the route"
 
             foreach (var kvp in new RouteValueDictionary(expectations))
             {
