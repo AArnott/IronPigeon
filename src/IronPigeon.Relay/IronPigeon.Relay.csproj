@@ -14,7 +14,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>IronPigeon.Relay</RootNamespace>
     <AssemblyName>IronPigeon.Relay</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <MvcBuildViews>false</MvcBuildViews>
     <UseIISExpress>true</UseIISExpress>
     <IISExpressSSLPort />
@@ -25,6 +25,7 @@
     <NoDocumentationFile>true</NoDocumentationFile>
     <OutputPath>bin\</OutputPath>
     <UseGlobalApplicationHostFile />
+    <Use64BitIISExpress />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <CodeAnalysisRuleSet>IronPigeon.Relay.ruleset</CodeAnalysisRuleSet>
@@ -111,10 +112,6 @@
     <Content Include="Views\Inbox\Index.cshtml" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\IronPigeon.Desktop\IronPigeon.Desktop.csproj">
-      <Project>{2acabe1a-13da-4248-b200-8b9d63486e45}</Project>
-      <Name>IronPigeon.Desktop</Name>
-    </ProjectReference>
     <ProjectReference Include="..\IronPigeon\IronPigeon.csproj">
       <Project>{befb82d5-c686-4d50-91c7-419846c8f201}</Project>
       <Name>IronPigeon</Name>

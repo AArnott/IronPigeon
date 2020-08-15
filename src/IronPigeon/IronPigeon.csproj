@@ -1,84 +1,25 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
-  <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildProjectDirectory), EnlistmentInfo.props))\EnlistmentInfo.props" Condition=" '$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildProjectDirectory), EnlistmentInfo.props))' != '' " />
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <MinimumVisualStudioVersion>10.0</MinimumVisualStudioVersion>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{BEFB82D5-C686-4D50-91C7-419846C8F201}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>IronPigeon</RootNamespace>
-    <AssemblyName>IronPigeon</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
-    <TargetFrameworkProfile>Profile259</TargetFrameworkProfile>
-    <FileAlignment>512</FileAlignment>
-    <ProjectTypeGuids>{786C830F-07A1-408B-BD7F-6EE04809D6DB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
-    <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
-    <OutputPath Condition=" '$(OutputPath)' == '' ">bin</OutputPath>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <CodeAnalysisRuleSet>IronPigeon.ruleset</CodeAnalysisRuleSet>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <CodeAnalysisRuleSet>IronPigeon.ruleset</CodeAnalysisRuleSet>
+    <Description>An open source generic message passing protocol with focus on confidentiality and authentication.</Description>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="AddressBookEntry.cs" />
-    <Compile Include="BadAddressBookEntryException.cs" />
-    <Compile Include="Channel.cs" />
-    <Compile Include="CryptoSettings.cs" />
-    <Compile Include="CryptoProviderExtensions.cs" />
-    <Compile Include="Endpoint.cs" />
-    <Compile Include="ICloudBlobStorageProvider.cs" />
-    <Compile Include="AddressBook.cs" />
-    <Compile Include="ProgressWithCompletion.cs" />
-    <Compile Include="Providers\RelayServiceAddressBook.cs" />
-    <Compile Include="Providers\TinyUrlShortener.cs" />
-    <Compile Include="ReadStreamWithProgress.cs" />
-    <Compile Include="Relay\IEndpointInboxFactory.cs" />
-    <Compile Include="ILogger.cs" />
-    <Compile Include="IncomingList.cs" />
-    <Compile Include="InvalidMessageException.cs" />
-    <Compile Include="IUrlShortener.cs" />
-    <Compile Include="OnlineAddressBook.cs" />
-    <Compile Include="OwnEndpointServices.cs" />
-    <Compile Include="Payload.cs" />
-    <Compile Include="OwnEndpoint.cs" />
-    <Compile Include="PayloadReference.cs">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="Providers\DirectEntryAddressBook.cs" />
-    <Compile Include="Providers\GoogleUrlShortener.cs" />
-    <Compile Include="Providers\HttpClientWrapper.cs" />
-    <Compile Include="Providers\RelayCloudBlobStorageProvider.cs" />
-    <Compile Include="SecurityLevel.cs" />
-    <Compile Include="Relay\InboxCreationResponse.cs" />
-    <Compile Include="Strings.Designer.cs">
+    <Compile Update="Strings.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Strings.resx</DependentUpon>
     </Compile>
-    <Compile Include="Substream.cs" />
-    <Compile Include="SymmetricEncryptionResult.cs" />
-    <Compile Include="Providers\TwitterAddressBook.cs" />
-    <Compile Include="SymmetricEncryptionVariables.cs" />
-    <Compile Include="Utilities.cs" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Strings.resx">
+    <EmbeddedResource Update="Strings.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Strings.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <None Include="IronPigeon.ruleset" />
-    <None Include="project.json" />
+    <PackageReference Include="Microsoft.WindowsAzure.StorageClient.Async" Version="0.3.2-preview" />
+    <PackageReference Include="PCLCrypto" Version="2.0.147" />
+    <PackageReference Include="System.Net.Http" Version="4.3.4" />
+    <PackageReference Include="System.Threading.Tasks.Dataflow" Version="4.11.1" />
+    <PackageReference Include="Validation" Version="2.4.22" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Properties\" />
-  </ItemGroup>
-  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />
-  <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildProjectDirectory), EnlistmentInfo.targets))\EnlistmentInfo.targets" Condition=" '$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildProjectDirectory), EnlistmentInfo.targets))' != '' " />
 </Project>
