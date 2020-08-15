@@ -123,6 +123,9 @@
   <data name="CryptoServicesRequired" xml:space="preserve">
     <value>An instance of ICryptoServices must be supplied first.</value>
   </data>
+  <data name="IncorrectLength" xml:space="preserve">
+    <value>Incorrect length.</value>
+  </data>
   <data name="InvalidMessage" xml:space="preserve">
     <value>Error when reading incoming message.</value>
   </data>
@@ -131,6 +134,9 @@
   </data>
   <data name="MisdirectedMessage" xml:space="preserve">
     <value>Message notification not intended for this recipient.</value>
+  </data>
+  <data name="PropertyMustBeSetFirst" xml:space="preserve">
+    <value>The property {0} must be set first.</value>
   </data>
   <data name="UTCTimeRequired" xml:space="preserve">
     <value>The time must be given in UTC.</value>

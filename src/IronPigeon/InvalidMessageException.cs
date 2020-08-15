@@ -32,7 +32,7 @@ namespace IronPigeon
         /// </summary>
         /// <param name="message">The error message that explains the reason for the exception.</param>
         /// <param name="inner">The inner exception.</param>
-        public InvalidMessageException(string message, Exception inner)
+        public InvalidMessageException(string message, Exception? inner)
             : base(message, inner)
         {
         }

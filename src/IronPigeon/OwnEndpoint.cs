@@ -3,17 +3,12 @@
 
 namespace IronPigeon
 {
-    using System;
-    using System.Collections.Generic;
     using System.IO;
-    using System.Linq;
     using System.Runtime.Serialization;
-    using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
+    using Microsoft;
     using PCLCrypto;
-    using Validation;
-    using TaskEx = System.Threading.Tasks.Task;
 
     /// <summary>
     /// The personal contact information for receiving one's own messages.
@@ -22,24 +17,24 @@ namespace IronPigeon
     public class OwnEndpoint
     {
         /// <summary>
-        /// The signing key material
+        /// The signing key material.
         /// </summary>
-        private byte[] signingKeyMaterial;
+        private byte[]? signingKeyMaterial;
 
         /// <summary>
-        /// The signing key
+        /// The signing key.
         /// </summary>
-        private ICryptographicKey signingKey;
+        private ICryptographicKey? signingKey;
 
         /// <summary>
         /// The encryption key material.
         /// </summary>
-        private byte[] encryptionKeyMaterial;
+        private byte[]? encryptionKeyMaterial;
 
         /// <summary>
-        /// The encryption key
+        /// The encryption key.
         /// </summary>
-        private ICryptographicKey encryptionKey;
+        private ICryptographicKey? encryptionKey;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="OwnEndpoint"/> class.
@@ -56,11 +51,11 @@ namespace IronPigeon
         /// <param name="signingKey">The signing key.</param>
         /// <param name="encryptionKey">The encryption key.</param>
         /// <param name="inboxOwnerCode">The secret that proves ownership of the inbox at the <see cref="Endpoint.MessageReceivingEndpoint" />.</param>
-        public OwnEndpoint(ICryptographicKey signingKey, ICryptographicKey encryptionKey, string inboxOwnerCode = null)
+        public OwnEndpoint(ICryptographicKey signingKey, ICryptographicKey encryptionKey, string? inboxOwnerCode = null)
             : this()
         {
-            Requires.NotNull(signingKey, "signingKey");
-            Requires.NotNull(encryptionKey, "encryptionKey");
+            Requires.NotNull(signingKey, nameof(signingKey));
+            Requires.NotNull(encryptionKey, nameof(encryptionKey));
 
             this.PublicEndpoint = new Endpoint
             {
@@ -85,7 +80,7 @@ namespace IronPigeon
         /// Gets or sets the public information associated with this endpoint.
         /// </summary>
         [DataMember]
-        public Endpoint PublicEndpoint { get; set; }
+        public Endpoint? PublicEndpoint { get; set; }
 
         /// <summary>
         /// Gets or sets the private key format used.
@@ -97,7 +92,7 @@ namespace IronPigeon
         /// Gets or sets the key material for the private key this personality uses for signing messages.
         /// </summary>
         [DataMember]
-        public byte[] SigningKeyPrivateMaterial
+        public byte[]? SigningKeyPrivateMaterial
         {
             get
             {
@@ -115,7 +110,7 @@ namespace IronPigeon
         /// Gets or sets the key material for the private key used to decrypt messages.
         /// </summary>
         [DataMember]
-        public byte[] EncryptionKeyPrivateMaterial
+        public byte[]? EncryptionKeyPrivateMaterial
         {
             get
             {
@@ -132,7 +127,7 @@ namespace IronPigeon
         /// <summary>
         /// Gets the encryption key.
         /// </summary>
-        public ICryptographicKey EncryptionKey
+        public ICryptographicKey? EncryptionKey
         {
             get
             {
@@ -150,7 +145,7 @@ namespace IronPigeon
         /// <summary>
         /// Gets the signing key.
         /// </summary>
-        public ICryptographicKey SigningKey
+        public ICryptographicKey? SigningKey
         {
             get
             {
@@ -169,7 +164,7 @@ namespace IronPigeon
         /// Gets or sets the secret that proves ownership of the inbox at the <see cref="Endpoint.MessageReceivingEndpoint"/>.
         /// </summary>
         [DataMember]
-        public string InboxOwnerCode { get; set; }
+        public string? InboxOwnerCode { get; set; }
 
         /// <summary>
         /// Loads endpoint information including private data from the specified stream.
@@ -178,7 +173,7 @@ namespace IronPigeon
         /// <returns>A task whose result is the deserialized instance of <see cref="OwnEndpoint"/>.</returns>
         public static async Task<OwnEndpoint> OpenAsync(Stream stream)
         {
-            Requires.NotNull(stream, "stream");
+            Requires.NotNull(stream, nameof(stream));
 
             var ms = new MemoryStream();
             await stream.CopyToAsync(ms).ConfigureAwait(false);   // relies on the input stream containing only the endpoint.
@@ -196,10 +191,10 @@ namespace IronPigeon
         /// <returns>The address book entry.</returns>
         public AddressBookEntry CreateAddressBookEntry(CryptoSettings cryptoServices)
         {
-            Requires.NotNull(cryptoServices, "cryptoServices");
+            Requires.NotNull(cryptoServices, nameof(cryptoServices));
 
-            var ms = new MemoryStream();
-            var writer = new BinaryWriter(ms);
+            using var ms = new MemoryStream();
+            using var writer = new BinaryWriter(ms);
             var entry = new AddressBookEntry();
             writer.SerializeDataContract(this.PublicEndpoint);
             writer.Flush();
@@ -216,7 +211,7 @@ namespace IronPigeon
         /// <returns>A task whose completion signals the save is complete.</returns>
         public Task SaveAsync(Stream target, CancellationToken cancellationToken = default(CancellationToken))
         {
-            Requires.NotNull(target, "target");
+            Requires.NotNull(target, nameof(target));
 
             var ms = new MemoryStream();
             using (var writer = new BinaryWriter(ms))

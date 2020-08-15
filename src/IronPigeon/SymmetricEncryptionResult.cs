@@ -3,11 +3,7 @@
 
 namespace IronPigeon
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Text;
-    using Validation;
+    using Microsoft;
 
     /// <summary>
     /// The result of symmetric encryption using a random key, IV.
@@ -23,7 +19,7 @@ namespace IronPigeon
         public SymmetricEncryptionResult(byte[] key, byte[] iv, byte[] ciphertext)
             : base(key, iv)
         {
-            Requires.NotNullOrEmpty(ciphertext, "ciphertext");
+            Requires.NotNullOrEmpty(ciphertext, nameof(ciphertext));
 
             this.Ciphertext = ciphertext;
         }
@@ -34,7 +30,7 @@ namespace IronPigeon
         /// <param name="encryptionVariables">The key and IV used to encrypt the ciphertext.</param>
         /// <param name="ciphertext">The encrypted data.</param>
         public SymmetricEncryptionResult(SymmetricEncryptionVariables encryptionVariables, byte[] ciphertext)
-            : this(Requires.NotNull(encryptionVariables, "encryptionVariables").Key, encryptionVariables.IV, ciphertext)
+            : this(Requires.NotNull(encryptionVariables, nameof(encryptionVariables)).Key, encryptionVariables.IV, ciphertext)
         {
         }
 

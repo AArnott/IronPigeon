@@ -14,21 +14,21 @@ namespace IronPigeon.Tests
 
     public abstract class CloudBlobStorageProviderTestBase
     {
-        protected ICloudBlobStorageProvider Provider { get; set; }
+        protected ICloudBlobStorageProvider? Provider { get; set; }
 
         [Fact(Skip = "Ignored")]
         public void UploadMessageAsync()
         {
-            var uri = this.UploadMessageHelperAsync().Result;
-            var client = new HttpClient();
+            Uri? uri = this.UploadMessageHelperAsync().Result;
+            using var client = new HttpClient();
             var downloadedBody = client.GetByteArrayAsync(uri).Result;
             Assert.Equal(Valid.MessageContent, downloadedBody);
         }
 
         protected async Task<Uri> UploadMessageHelperAsync()
         {
-            var body = new MemoryStream(Valid.MessageContent);
-            var uri = await this.Provider.UploadMessageAsync(body, Valid.ExpirationUtc);
+            using var body = new MemoryStream(Valid.MessageContent);
+            Uri? uri = await this.Provider.UploadMessageAsync(body, Valid.ExpirationUtc);
             return uri;
         }
     }

@@ -8,7 +8,7 @@ namespace IronPigeon
     using System.Linq;
     using System.Text;
     using System.Threading.Tasks;
-    using Validation;
+    using Microsoft;
 
     /// <summary>
     /// Captures the key and IV used for a symmetric encryption.
@@ -22,8 +22,8 @@ namespace IronPigeon
         /// <param name="iv">The initialization vector used to encrypt the data.</param>
         public SymmetricEncryptionVariables(byte[] key, byte[] iv)
         {
-            Requires.NotNullOrEmpty(key, "key");
-            Requires.NotNullOrEmpty(iv, "iv");
+            Requires.NotNullOrEmpty(key, nameof(key));
+            Requires.NotNullOrEmpty(iv, nameof(iv));
 
             this.Key = key;
             this.IV = iv;

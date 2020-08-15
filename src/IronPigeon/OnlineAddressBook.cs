@@ -13,7 +13,7 @@ namespace IronPigeon
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
-    using Validation;
+    using Microsoft;
 
     /// <summary>
     /// Retrieves contacts from some online store.
@@ -44,7 +44,7 @@ namespace IronPigeon
         /// <summary>
         /// Gets or sets the HTTP client to use for outbound HTTP requests.
         /// </summary>
-        public HttpClient HttpClient { get; set; }
+        public HttpClient? HttpClient { get; set; }
 
         /// <summary>
         /// Downloads an address book entry from the specified URL.  No signature validation is performed.
@@ -53,24 +53,25 @@ namespace IronPigeon
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>A task whose result is the downloaded address book entry.</returns>
         /// <exception cref="BadAddressBookEntryException">Thrown when deserialization of the downloaded address book entry fails.</exception>
-        protected async Task<AddressBookEntry> DownloadAddressBookEntryAsync(Uri entryLocation, CancellationToken cancellationToken)
+        protected async Task<AddressBookEntry?> DownloadAddressBookEntryAsync(Uri entryLocation, CancellationToken cancellationToken)
         {
-            Requires.NotNull(entryLocation, "entryLocation");
+            Requires.NotNull(entryLocation, nameof(entryLocation));
+            Verify.Operation(this.HttpClient is object, Strings.PropertyMustBeSetFirst, nameof(this.HttpClient));
 
-            var request = new HttpRequestMessage(HttpMethod.Get, entryLocation);
+            using var request = new HttpRequestMessage(HttpMethod.Get, entryLocation);
             request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(AddressBookEntry.ContentType));
-            var response = await this.HttpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
+            HttpResponseMessage? response = await this.HttpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
             if (!response.IsSuccessStatusCode)
             {
                 return null;
             }
 
-            using (var stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false))
+            using (Stream? stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false))
             {
-                var reader = new StreamReader(stream);
+                using var reader = new StreamReader(stream);
                 try
                 {
-                    var entry = await Utilities.DeserializeDataContractFromBase64Async<AddressBookEntry>(reader).ConfigureAwait(false);
+                    AddressBookEntry? entry = await Utilities.DeserializeDataContractFromBase64Async<AddressBookEntry>(reader).ConfigureAwait(false);
                     return entry;
                 }
                 catch (SerializationException ex)
@@ -87,17 +88,17 @@ namespace IronPigeon
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>A task whose result is the endpoint described and signed by the address book entry.</returns>
         /// <exception cref="BadAddressBookEntryException">Thrown when deserialization or signature verification of the address book entry fails.</exception>
-        protected async Task<Endpoint> DownloadEndpointAsync(Uri entryLocation, CancellationToken cancellationToken)
+        protected async Task<Endpoint?> DownloadEndpointAsync(Uri entryLocation, CancellationToken cancellationToken)
         {
-            Requires.NotNull(entryLocation, "entryLocation");
+            Requires.NotNull(entryLocation, nameof(entryLocation));
 
-            var entry = await this.DownloadAddressBookEntryAsync(entryLocation, cancellationToken).ConfigureAwait(false);
+            AddressBookEntry? entry = await this.DownloadAddressBookEntryAsync(entryLocation, cancellationToken).ConfigureAwait(false);
             if (entry == null)
             {
                 return null;
             }
 
-            var endpoint = entry.ExtractEndpoint();
+            Endpoint? endpoint = entry.ExtractEndpoint();
 
             if (!string.IsNullOrEmpty(entryLocation.Fragment))
             {

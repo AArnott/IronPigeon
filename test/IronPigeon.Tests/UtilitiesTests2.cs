@@ -16,7 +16,7 @@ namespace IronPigeon.Tests
             string urlEncoded = data.UrlEncode();
             Assert.Equal("a=b&a%3Db%26c=e%3Df%26g", urlEncoded);
 
-            var decoded = HttpUtility.ParseQueryString(urlEncoded);
+            System.Collections.Specialized.NameValueCollection? decoded = HttpUtility.ParseQueryString(urlEncoded);
             Assert.Equal(data.Count, decoded.Count);
             foreach (string key in decoded)
             {

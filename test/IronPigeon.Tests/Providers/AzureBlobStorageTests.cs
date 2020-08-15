@@ -27,8 +27,8 @@ namespace IronPigeon.Tests.Providers
         public AzureBlobStorageTests()
         {
             this.testContainerName = "unittests" + Guid.NewGuid().ToString();
-            var account = CloudStorageAccount.DevelopmentStorageAccount;
-            var blobClient = account.CreateCloudBlobClient();
+            CloudStorageAccount? account = CloudStorageAccount.DevelopmentStorageAccount;
+            CloudBlobClient? blobClient = account.CreateCloudBlobClient();
             this.Provider = this.provider = new AzureBlobStorage(account, this.testContainerName);
             this.provider.CreateContainerIfNotExistAsync().GetAwaiter().GetResult();
             this.container = blobClient.GetContainerReference(this.testContainerName);
@@ -46,7 +46,7 @@ namespace IronPigeon.Tests.Providers
         public void CreateWithContainerAsync()
         {
             // The SetUp method already called the method, so this tests the results of it.
-            var permissions = this.container.GetPermissions();
+            BlobContainerPermissions? permissions = this.container.GetPermissions();
             Assert.Equal(BlobContainerPublicAccessType.Blob, permissions.PublicAccess);
         }
 
@@ -55,7 +55,7 @@ namespace IronPigeon.Tests.Providers
         {
             this.UploadMessageHelperAsync().GetAwaiter().GetResult();
             this.provider.PurgeBlobsExpiringBeforeAsync(DateTime.UtcNow.AddDays(7)).GetAwaiter().GetResult();
-            Assert.Equal(0, this.container.ListBlobs().Count());
+            Assert.Empty(this.container.ListBlobs());
         }
     }
 }

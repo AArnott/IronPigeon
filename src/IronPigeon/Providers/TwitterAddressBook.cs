@@ -16,7 +16,7 @@ namespace IronPigeon.Providers
     using System.Text.RegularExpressions;
     using System.Threading;
     using System.Threading.Tasks;
-    using Validation;
+    using Microsoft;
 
     /// <summary>
     /// Discovers an address book entry by searching for the URL to it on the user's Twitter bio.
@@ -51,23 +51,23 @@ namespace IronPigeon.Providers
         /// A task whose result is the contact, or null if no match is found.
         /// </returns>
         /// <exception cref="IronPigeon.BadAddressBookEntryException">Thrown when a validation error occurs while reading the address book entry.</exception>
-        public override async Task<Endpoint> LookupAsync(string identifier, CancellationToken cancellationToken = default(CancellationToken))
+        public override async Task<Endpoint?> LookupAsync(string identifier, CancellationToken cancellationToken = default(CancellationToken))
         {
-            Requires.NotNullOrEmpty(identifier, "identifier");
-            if (!identifier.StartsWith("@"))
+            Requires.NotNullOrEmpty(identifier, nameof(identifier));
+            if (!identifier.StartsWith("@", StringComparison.Ordinal))
             {
                 return null;
             }
 
             try
             {
-                var entryLocation = await this.DiscoverAddressBookEntryUrlAsync(identifier.Substring(1), cancellationToken).ConfigureAwait(false);
+                Uri? entryLocation = await this.DiscoverAddressBookEntryUrlAsync(identifier.Substring(1), cancellationToken).ConfigureAwait(false);
                 if (entryLocation == null)
                 {
                     return null;
                 }
 
-                var endpoint = await this.DownloadEndpointAsync(entryLocation, cancellationToken).ConfigureAwait(false);
+                Endpoint? endpoint = await this.DownloadEndpointAsync(entryLocation, cancellationToken).ConfigureAwait(false);
                 return endpoint;
             }
             catch (HttpRequestException)
@@ -82,18 +82,18 @@ namespace IronPigeon.Providers
         /// <param name="twitterUsername">The Twitter account username.  It should <em>not</em> begin with an @ character.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>A task whose result is either the discovered URL, or <c>null</c> if none was found.</returns>
-        private async Task<Uri> DiscoverAddressBookEntryUrlAsync(string twitterUsername, CancellationToken cancellationToken)
+        private async Task<Uri?> DiscoverAddressBookEntryUrlAsync(string twitterUsername, CancellationToken cancellationToken)
         {
-            Requires.NotNullOrEmpty(twitterUsername, "identifier");
+            Requires.NotNullOrEmpty(twitterUsername, nameof(twitterUsername));
 
             Uri twitterUserProfileLocation = new Uri(string.Format(CultureInfo.InvariantCulture, TwitterUriFormattingString, Uri.EscapeDataString(twitterUsername)));
-            using (var userProfileStream = await this.HttpClient.GetBufferedStreamAsync(twitterUserProfileLocation, cancellationToken).ConfigureAwait(false))
+            using (Stream? userProfileStream = await this.HttpClient.GetBufferedStreamAsync(twitterUserProfileLocation, cancellationToken).ConfigureAwait(false))
             {
                 var jsonSerializer = new DataContractJsonSerializer(typeof(TwitterUserInfo));
                 var userInfo = (TwitterUserInfo)jsonSerializer.ReadObject(userProfileStream);
 
                 // TODO: add support for discovering the magic link from the TwitterUserInfo.WebSite property as well.
-                var match = AddressBookEntryWithThumbprintFragmentRegex.Match(userInfo.Description);
+                Match? match = AddressBookEntryWithThumbprintFragmentRegex.Match(userInfo.Description);
                 Uri addressBookEntryUrl;
                 if (match.Success && Uri.TryCreate(match.Value, UriKind.Absolute, out addressBookEntryUrl))
                 {
@@ -114,13 +114,13 @@ namespace IronPigeon.Providers
             /// Gets or sets the Twitter account's Bio field.
             /// </summary>
             [DataMember(Name = "description")]
-            public string Description { get; set; }
+            public string? Description { get; set; }
 
             /// <summary>
             /// Gets or sets the Twitter account's web site URL.
             /// </summary>
             [DataMember(Name = "url")]
-            public string WebSite { get; set; }
+            public string? WebSite { get; set; }
         }
     }
 }

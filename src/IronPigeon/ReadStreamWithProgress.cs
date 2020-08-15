@@ -10,7 +10,7 @@ namespace IronPigeon
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
-    using Validation;
+    using Microsoft;
 
     /// <summary>
     /// A wrapper of a readable stream that reports progress in terms of bytes read.
@@ -44,8 +44,8 @@ namespace IronPigeon
         /// <param name="bytesReadProgress">The receiver of progress updates.</param>
         internal ReadStreamWithProgress(Stream inner, IProgress<int> bytesReadProgress)
         {
-            Requires.NotNull(inner, "inner");
-            Requires.NotNull(bytesReadProgress, "bytesReadProgress");
+            Requires.NotNull(inner, nameof(inner));
+            Requires.NotNull(bytesReadProgress, nameof(bytesReadProgress));
             Requires.Argument(inner.CanRead, "inner", "Readable stream required.");
 
             this.inner = inner;

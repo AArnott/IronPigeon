@@ -10,7 +10,7 @@ namespace IronPigeon.Tests
     using System.Text;
     using System.Threading.Tasks;
     using IronPigeon.Providers;
-    using Validation;
+    using Microsoft;
 
     internal static class TestUtilities
     {
@@ -26,7 +26,7 @@ namespace IronPigeon.Tests
 
         internal static byte[] CopyBuffer(this byte[] buffer)
         {
-            Requires.NotNull(buffer, "buffer");
+            Requires.NotNull(buffer, nameof(buffer));
 
             var copy = new byte[buffer.Length];
             Array.Copy(buffer, copy, buffer.Length);
@@ -35,8 +35,8 @@ namespace IronPigeon.Tests
 
         internal static void CopyBuffer(this byte[] buffer, byte[] to)
         {
-            Requires.NotNull(buffer, "buffer");
-            Requires.NotNull(to, "to");
+            Requires.NotNull(buffer, nameof(buffer));
+            Requires.NotNull(to, nameof(to));
             Requires.Argument(buffer.Length == to.Length, "to", "Lengths do not match");
 
             Array.Copy(buffer, to, buffer.Length);

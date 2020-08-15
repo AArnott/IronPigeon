@@ -11,7 +11,7 @@ namespace IronPigeon.Providers
     using System.Text.RegularExpressions;
     using System.Threading;
     using System.Threading.Tasks;
-    using Validation;
+    using Microsoft;
 
     /// <summary>
     /// An address book that resolves email addresses and email hashes
@@ -32,7 +32,7 @@ namespace IronPigeon.Providers
         /// <summary>
         /// Gets or sets the URL that can be used to look up certificates for Dart users.
         /// </summary>
-        public Uri AddressBookLookupUrl { get; set; }
+        public Uri? AddressBookLookupUrl { get; set; }
 
         /// <summary>
         /// Retrieves a contact with some user supplied identifier.
@@ -42,14 +42,14 @@ namespace IronPigeon.Providers
         /// <returns>
         /// A task whose result is the contact, or null if no match is found.
         /// </returns>
-        public override async Task<Endpoint> LookupAsync(string identifier, CancellationToken cancellationToken = default(CancellationToken))
+        public override async Task<Endpoint?> LookupAsync(string identifier, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (string.IsNullOrEmpty(identifier))
             {
                 return null;
             }
 
-            Verify.Operation(this.AddressBookLookupUrl != null, "AddressBookLookupUrl not initialized");
+            Verify.Operation(this.AddressBookLookupUrl != null, "{0} not initialized", nameof(this.AddressBookLookupUrl));
 
             var queryString = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             if (HashedEmailRegEx.IsMatch(identifier))

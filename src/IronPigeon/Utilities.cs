@@ -5,26 +5,32 @@ namespace IronPigeon
 {
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics.Contracts;
-    using System.Globalization;
+    using System.Diagnostics.CodeAnalysis;
     using System.IO;
     using System.Linq;
-    using System.Net;
     using System.Net.Http;
     using System.Net.Http.Headers;
     using System.Runtime.Serialization;
     using System.Text;
+    using System.Text.RegularExpressions;
     using System.Threading;
     using System.Threading.Tasks;
+    using Microsoft;
+    using Microsoft.WindowsAzure.Storage.Blob;
+    using Microsoft.WindowsAzure.StorageClient;
+    using Nerdbank.Streams;
     using PCLCrypto;
-    using Validation;
-    using TaskEx = System.Threading.Tasks.Task;
 
     /// <summary>
     /// Common utilities for IronPigeon apps.
     /// </summary>
     public static class Utilities
     {
+        /// <summary>
+        /// The recommended length of a randomly generated string used to name uploaded blobs.
+        /// </summary>
+        internal const int BlobNameLength = 15;
+
         /// <summary>
         /// The encoding to use when writing out POST entity strings.
         /// </summary>
@@ -99,7 +105,7 @@ namespace IronPigeon
         /// <returns>A base64web encoded string.</returns>
         public static string ToBase64WebSafe(byte[] array)
         {
-            Requires.NotNull(array, "array");
+            Requires.NotNull(array, nameof(array));
 
             return ToBase64WebSafe(Convert.ToBase64String(array));
         }
@@ -111,7 +117,7 @@ namespace IronPigeon
         /// <returns>A standard base64 encoded string.</returns>
         public static string FromBase64WebSafe(string base64WebSafe)
         {
-            Requires.NotNull(base64WebSafe, "base64WebSafe");
+            Requires.NotNull(base64WebSafe, nameof(base64WebSafe));
             if (base64WebSafe.IndexOfAny(WebSafeSpecificBase64Characters) < 0 && (base64WebSafe.Length % 4) == 0)
             {
                 // This web-safe base64 encoded string is equivalent to its standard base64 form.
@@ -135,14 +141,14 @@ namespace IronPigeon
         /// Creates a random string of characters that can appear without escaping in URIs.
         /// </summary>
         /// <param name="length">The desired length of the random string.</param>
-        /// <returns>The random string</returns>
+        /// <returns>The random string.</returns>
         /// <remarks>
         /// The randomization is not cryptographically strong.
         /// </remarks>
         public static string CreateRandomWebSafeName(int length)
         {
             Requires.Range(length > 0, "length");
-            var random = NonCryptoRandomGenerator.Value;
+            Random? random = NonCryptoRandomGenerator.Value;
             var buffer = new byte[length];
             random.NextBytes(buffer);
             return ToBase64WebSafe(buffer).Substring(0, length);
@@ -159,11 +165,11 @@ namespace IronPigeon
         /// </remarks>
         public static void SerializeDataContract<T>(this BinaryWriter writer, T graph)
         {
-            Requires.NotNull(writer, "writer");
+            Requires.NotNull(writer, nameof(writer));
             Requires.NotNullAllowStructs(graph, "graph");
 
             var serializer = new DataContractSerializer(typeof(T));
-            var ms = new MemoryStream();
+            using var ms = new MemoryStream();
             serializer.WriteObject(ms, graph);
             writer.Write((int)ms.Length);
             writer.Write(ms.ToArray(), 0, (int)ms.Length);
@@ -180,11 +186,11 @@ namespace IronPigeon
         /// </remarks>
         public static T DeserializeDataContract<T>(this BinaryReader binaryReader)
         {
-            Requires.NotNull(binaryReader, "binaryReader");
+            Requires.NotNull(binaryReader, nameof(binaryReader));
 
             var serializer = new DataContractSerializer(typeof(T));
             int length = binaryReader.ReadInt32();
-            var ms = new MemoryStream(binaryReader.ReadBytes(length));
+            using var ms = new MemoryStream(binaryReader.ReadBytes(length));
             return (T)serializer.ReadObject(ms);
         }
 
@@ -199,11 +205,11 @@ namespace IronPigeon
         public static async Task SerializeDataContractAsBase64Async<T>(TextWriter writer, T graph)
             where T : class
         {
-            Requires.NotNull(writer, "writer");
-            Requires.NotNull(graph, "graph");
+            Requires.NotNull(writer, nameof(writer));
+            Requires.NotNull(graph, nameof(graph));
 
             var ms = new MemoryStream();
-            var binaryWriter = new BinaryWriter(ms);
+            using var binaryWriter = new BinaryWriter(ms);
             SerializeDataContract(binaryWriter, graph);
             binaryWriter.Flush();
             ms.Position = 0;
@@ -225,7 +231,7 @@ namespace IronPigeon
         public static async Task<T> DeserializeDataContractFromBase64Async<T>(TextReader reader)
             where T : class
         {
-            Requires.NotNull(reader, "reader");
+            Requires.NotNull(reader, nameof(reader));
 
             var builder = new StringBuilder();
             string line;
@@ -245,8 +251,8 @@ namespace IronPigeon
             }
 
             var ms = new MemoryStream(buffer);
-            var binaryReader = new BinaryReader(ms);
-            var value = DeserializeDataContract<T>(binaryReader);
+            using var binaryReader = new BinaryReader(ms);
+            T? value = DeserializeDataContract<T>(binaryReader);
             return value;
         }
 
@@ -257,7 +263,7 @@ namespace IronPigeon
         /// <returns>The buffer.</returns>
         public static byte[] ReadSizeAndBuffer(this BinaryReader reader)
         {
-            Requires.NotNull(reader, "reader");
+            Requires.NotNull(reader, nameof(reader));
 
             int size = reader.ReadInt32();
             var buffer = new byte[size];
@@ -272,8 +278,8 @@ namespace IronPigeon
         /// <param name="buffer">The buffer.</param>
         public static void WriteSizeAndBuffer(this BinaryWriter writer, byte[] buffer)
         {
-            Requires.NotNull(writer, "writer");
-            Requires.NotNull(buffer, "buffer");
+            Requires.NotNull(writer, nameof(writer));
+            Requires.NotNull(buffer, nameof(buffer));
 
             writer.Write(buffer.Length);
             writer.Write(buffer);
@@ -288,8 +294,8 @@ namespace IronPigeon
         /// <returns>A task whose completion indicates the async operation has completed.</returns>
         public static async Task WriteSizeAndBufferAsync(this Stream stream, byte[] buffer, CancellationToken cancellationToken)
         {
-            Requires.NotNull(stream, "stream");
-            Requires.NotNull(buffer, "buffer");
+            Requires.NotNull(stream, nameof(stream));
+            Requires.NotNull(buffer, nameof(buffer));
 
             byte[] lengthBuffer = BitConverter.GetBytes(buffer.Length);
             await stream.WriteAsync(lengthBuffer, 0, lengthBuffer.Length, cancellationToken).ConfigureAwait(false);
@@ -305,8 +311,8 @@ namespace IronPigeon
         /// <returns>A task whose completion indicates the async operation has completed.</returns>
         public static async Task WriteSizeAndStreamAsync(this Stream stream, Stream sourceStream, CancellationToken cancellationToken)
         {
-            Requires.NotNull(stream, "stream");
-            Requires.NotNull(sourceStream, "sourceStream");
+            Requires.NotNull(stream, nameof(stream));
+            Requires.NotNull(sourceStream, nameof(sourceStream));
 
             byte[] streamLength = BitConverter.GetBytes((int)(sourceStream.Length - sourceStream.Position));
             await stream.WriteAsync(streamLength, 0, streamLength.Length, cancellationToken).ConfigureAwait(false);
@@ -323,6 +329,8 @@ namespace IronPigeon
         /// <exception cref="InvalidMessageException">Thrown if the buffer length read from the stream exceeds the maximum allowable size.</exception>
         public static async Task<byte[]> ReadSizeAndBufferAsync(this Stream stream, CancellationToken cancellationToken, int maxSize = 10 * 1024)
         {
+            Requires.NotNull(stream, nameof(stream));
+
             byte[] lengthBuffer = new byte[sizeof(int)];
             await stream.ReadAsync(lengthBuffer, 0, lengthBuffer.Length, cancellationToken).ConfigureAwait(false);
             int size = BitConverter.ToInt32(lengthBuffer, 0);
@@ -359,7 +367,7 @@ namespace IronPigeon
                 throw new InvalidMessageException(Strings.MaxAllowableMessagePartSizeExceeded);
             }
 
-            return new Substream(stream, size);
+            return stream.ReadSlice(size);
         }
 
         /// <summary>
@@ -371,7 +379,7 @@ namespace IronPigeon
         /// <returns>The short URL.</returns>
         public static async Task<Uri> ShortenExcludeFragmentAsync(this IUrlShortener shortener, Uri longUrl, CancellationToken cancellationToken = default(CancellationToken))
         {
-            Requires.NotNull(shortener, "shortener");
+            Requires.NotNull(shortener, nameof(shortener));
 
             Uri longUriWithoutFragment;
             if (longUrl.Fragment.Length == 0)
@@ -385,7 +393,7 @@ namespace IronPigeon
                 longUriWithoutFragment = removeFragmentBuilder.Uri;
             }
 
-            var shortUrl = await shortener.ShortenAsync(longUriWithoutFragment, cancellationToken).ConfigureAwait(false);
+            Uri? shortUrl = await shortener.ShortenAsync(longUriWithoutFragment, cancellationToken).ConfigureAwait(false);
 
             if (longUrl.Fragment.Length > 0)
             {
@@ -407,15 +415,15 @@ namespace IronPigeon
         /// A task whose result is the contact, or null if no match is found.
         /// </returns>
         /// <exception cref="BadAddressBookEntryException">Thrown when a validation error occurs while reading the address book entry.</exception>
-        public static async Task<Endpoint> LookupAsync(this IEnumerable<AddressBook> addressBooks, string identifier, CancellationToken cancellationToken = default(CancellationToken))
+        public static async Task<Endpoint?> LookupAsync(this IEnumerable<AddressBook> addressBooks, string identifier, CancellationToken cancellationToken = default(CancellationToken))
         {
-            Requires.NotNull(addressBooks, "addressBooks");
-            Requires.NotNullOrEmpty(identifier, "identifier");
+            Requires.NotNull(addressBooks, nameof(addressBooks));
+            Requires.NotNullOrEmpty(identifier, nameof(identifier));
 
             // NOTE: we could optimize this to return as soon as the *first* address book
             // returned a non-null result, and cancel the rest, rather than wait for
             // results from all of them.
-            var results = await Task.WhenAll(addressBooks.Select(ab => ab.LookupAsync(identifier, cancellationToken))).ConfigureAwait(false);
+            Endpoint?[]? results = await Task.WhenAll(addressBooks.Select(ab => ab.LookupAsync(identifier, cancellationToken))).ConfigureAwait(false);
             return results.FirstOrDefault(result => result != null);
         }
 
@@ -426,10 +434,10 @@ namespace IronPigeon
         /// <returns>The URL-encoded string.</returns>
         public static string UrlEncode(this IEnumerable<KeyValuePair<string, string>> data)
         {
-            Requires.NotNull(data, "data");
+            Requires.NotNull(data, nameof(data));
 
             var builder = new StringBuilder();
-            foreach (var pair in data)
+            foreach (KeyValuePair<string, string> pair in data)
             {
                 if (builder.Length > 0)
                 {
@@ -444,59 +452,6 @@ namespace IronPigeon
             return builder.ToString();
         }
 
-#pragma warning disable UseAsyncSuffix // Use Async suffix
-                                      /// <summary>
-                                      /// Wraps a task with one that will complete as cancelled based on a cancellation token,
-                                      /// allowing someone to await a task but be able to break out early by cancelling the token.
-                                      /// </summary>
-                                      /// <typeparam name="T">The type of value returned by the task.</typeparam>
-                                      /// <param name="task">The task to wrap.</param>
-                                      /// <param name="cancellationToken">The token that can be canceled to break out of the await.</param>
-                                      /// <returns>The wrapping task.</returns>
-        public static async Task<T> WithCancellation<T>(this Task<T> task, CancellationToken cancellationToken)
-        {
-            if (cancellationToken.CanBeCanceled)
-            {
-                var tcs = new TaskCompletionSource<bool>();
-                using (cancellationToken.Register(s => ((TaskCompletionSource<bool>)s).TrySetResult(true), tcs))
-                {
-                    if (task != await Task.WhenAny(task, tcs.Task).ConfigureAwait(false))
-                    {
-                        cancellationToken.ThrowIfCancellationRequested();
-                    }
-                }
-            }
-
-            // Return result or rethrow any fault/cancellation exception.
-            return await task.ConfigureAwait(false);
-        }
-
-        /// <summary>
-        /// Wraps a task with one that will complete as cancelled based on a cancellation token,
-        /// allowing someone to await a task but be able to break out early by cancelling the token.
-        /// </summary>
-        /// <param name="task">The task to wrap.</param>
-        /// <param name="cancellationToken">The token that can be canceled to break out of the await.</param>
-        /// <returns>The wrapping task.</returns>
-        public static async Task WithCancellation(this Task task, CancellationToken cancellationToken)
-        {
-            if (cancellationToken.CanBeCanceled)
-            {
-                var tcs = new TaskCompletionSource<bool>();
-                using (cancellationToken.Register(s => ((TaskCompletionSource<bool>)s).TrySetResult(true), tcs))
-                {
-                    if (task != await Task.WhenAny(task, tcs.Task).ConfigureAwait(false))
-                    {
-                        cancellationToken.ThrowIfCancellationRequested();
-                    }
-                }
-            }
-
-            // Rethrow any fault/cancellation exception.
-            await task.ConfigureAwait(false);
-        }
-#pragma warning restore UseAsyncSuffix // Use Async suffix
-
         /// <summary>
         /// Executes an operation against a collection of providers simultaneously and accepts the first
         /// qualifying result, cancelling the slower responses.
@@ -509,17 +464,18 @@ namespace IronPigeon
         /// <param name="cancellationToken">The overall cancellation token.</param>
         /// <returns>A task whose result is the qualifying result, or <c>default(TOutput)</c> if no result qualified.</returns>
         public static async Task<TOutput> FastestQualifyingResultAsync<TInput, TOutput>(IEnumerable<TInput> inputs, Func<CancellationToken, TInput, Task<TOutput>> asyncOperation, Func<TOutput, bool> qualifyingTest, CancellationToken cancellationToken = default(CancellationToken))
+            where TOutput : class?
         {
-            CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            using CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             List<Task<TOutput>> tasks = inputs.Select(i => asyncOperation(cts.Token, i)).ToList();
 
             while (tasks.Count > 0)
             {
-                var completingTask = await Task.WhenAny(tasks).ConfigureAwait(false);
-                if (qualifyingTest(completingTask.Result))
+                Task<TOutput>? completingTask = await Task.WhenAny(tasks).ConfigureAwait(false);
+                if (qualifyingTest(await completingTask.ConfigureAwait(false)))
                 {
                     cts.Cancel();
-                    return completingTask.Result;
+                    return await completingTask.ConfigureAwait(false);
                 }
                 else
                 {
@@ -527,7 +483,7 @@ namespace IronPigeon
                 }
             }
 
-            return default(TOutput);
+            return default;
         }
 
         /// <summary>
@@ -536,7 +492,7 @@ namespace IronPigeon
         /// <param name="request">The request.</param>
         public static void ApplyNoCachePolicy(this HttpRequestMessage request)
         {
-            Requires.NotNull(request, "request");
+            Requires.NotNull(request, nameof(request));
 
             // The no-cache headers don't seem to impact the client at all, but perhaps they prevent any intermediaries from caching?
             request.Headers.CacheControl = new CacheControlHeaderValue() { NoCache = true };
@@ -550,9 +506,9 @@ namespace IronPigeon
         /// <param name="stream">The stream to read.</param>
         /// <param name="bytesReadProgress">The progress receiver. May be <c>null</c>.</param>
         /// <returns>The progress-reporting stream.</returns>
-        public static Stream ReadStreamWithProgress(this Stream stream, IProgress<int> bytesReadProgress)
+        public static Stream ReadStreamWithProgress(this Stream stream, IProgress<int>? bytesReadProgress)
         {
-            Requires.NotNull(stream, "stream");
+            Requires.NotNull(stream, nameof(stream));
 
             return bytesReadProgress != null ? new ReadStreamWithProgress(stream, bytesReadProgress) : stream;
         }
@@ -565,13 +521,83 @@ namespace IronPigeon
         /// <param name="password">The password.</param>
         public static void AuthorizeBasic(this HttpRequestMessage request, string userName, string password)
         {
-            Requires.NotNull(request, "request");
-            Requires.NotNullOrEmpty(userName, "userName");
-            Requires.NotNull(password, "password");
+            Requires.NotNull(request, nameof(request));
+            Requires.NotNullOrEmpty(userName, nameof(userName));
+            Requires.NotNull(password, nameof(password));
 
             string value = userName + ":" + password;
             string encoded = Convert.ToBase64String(Encoding.UTF8.GetBytes(value));
             request.Headers.Authorization = new AuthenticationHeaderValue("Basic", encoded);
+        }
+
+        /// <summary>
+        /// Determines whether the specified string constitutes a valid Azure blob container name.
+        /// </summary>
+        /// <param name="containerName">Name of the container.</param>
+        /// <returns>
+        ///   <c>true</c> if the string is a valid container name; otherwise, <c>false</c>.
+        /// </returns>
+        public static bool IsValidBlobContainerName(string containerName)
+        {
+            if (containerName == null)
+            {
+                return false;
+            }
+
+            // Rule #1: can only contain (lowercase) letters, numbers and dashes.
+            if (!Regex.IsMatch(containerName, @"^[a-z0-9\-]+$"))
+            {
+                return false;
+            }
+
+            // Rule #2: all dashes must be preceded and followed by a letter or number.
+            if (containerName.StartsWith("-") || containerName.EndsWith("-") || containerName.Contains("--"))
+            {
+                return false;
+            }
+
+            // Rule #3: all lowercase.
+#pragma warning disable CA1308 // Normalize strings to uppercase
+            if (containerName.ToLowerInvariant() != containerName)
+#pragma warning restore CA1308 // Normalize strings to uppercase
+            {
+                return false;
+            }
+
+            // Rule #4: length is 3-63
+            if (containerName.Length < 3 || containerName.Length > 63)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Creates a blob container and sets its permission to public blobs, if the container does not already exist.
+        /// </summary>
+        /// <param name="container">The container to create.</param>
+        /// <returns>
+        /// A task whose result is <c>true</c> if the container did not exist before this method;
+        ///  <c>false</c> otherwise.
+        /// </returns>
+        public static async Task<bool> CreateContainerWithPublicBlobsIfNotExistAsync(this CloudBlobContainer container)
+        {
+            Requires.NotNull(container, nameof(container));
+
+            if (await container.CreateIfNotExistAsync().ConfigureAwait(false))
+            {
+                var permissions = new BlobContainerPermissions
+                {
+                    PublicAccess = BlobContainerPublicAccessType.Blob,
+                };
+                await container.SetPermissionsAsync(permissions).ConfigureAwait(false);
+                return true;
+            }
+            else
+            {
+                return false;
+            }
         }
 
         /// <summary>
@@ -600,9 +626,6 @@ namespace IronPigeon
         /// <returns>A base64web encoded string.</returns>
         internal static string ToBase64WebSafe(string base64)
         {
-            Contract.Requires(base64 != null);
-            Contract.Ensures(Contract.Result<string>() != null);
-
             if (base64.IndexOfAny(UnsafeBase64Characters) < 0)
             {
                 // The base64 encoded characters happen to already be web-safe.
@@ -629,9 +652,9 @@ namespace IronPigeon
         /// <returns>A task whose result is the buffered response stream.</returns>
         internal static async Task<Stream> GetBufferedStreamAsync(this HttpClient client, Uri location, CancellationToken cancellationToken)
         {
-            Requires.NotNull(client, "client");
+            Requires.NotNull(client, nameof(client));
 
-            var response = await client.GetAsync(location, cancellationToken).ConfigureAwait(false);
+            HttpResponseMessage? response = await client.GetAsync(location, cancellationToken).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
             return await response.Content.ReadAsBufferedStreamAsync(cancellationToken).ConfigureAwait(false);
         }
@@ -644,10 +667,10 @@ namespace IronPigeon
         /// <returns>A task whose result is the buffered response stream.</returns>
         internal static async Task<Stream> ReadAsBufferedStreamAsync(this HttpContent content, CancellationToken cancellationToken)
         {
-            Requires.NotNull(content, "content");
+            Requires.NotNull(content, nameof(content));
 
             cancellationToken.ThrowIfCancellationRequested();
-            using (var stream = await content.ReadAsStreamAsync().ConfigureAwait(false))
+            using (Stream? stream = await content.ReadAsStreamAsync().ConfigureAwait(false))
             {
                 var memoryStream = new MemoryStream();
                 await stream.CopyToAsync(memoryStream, 4096, cancellationToken).ConfigureAwait(false);
@@ -666,11 +689,11 @@ namespace IronPigeon
         /// <returns>The asynchronous HTTP response.</returns>
         internal static Task<HttpResponseMessage> GetAsync(this HttpClient httpClient, Uri location, string bearerToken, CancellationToken cancellationToken)
         {
-            Requires.NotNull(httpClient, "httpClient");
-            Requires.NotNull(location, "location");
-            Requires.NotNullOrEmpty(bearerToken, "bearerToken");
+            Requires.NotNull(httpClient, nameof(httpClient));
+            Requires.NotNull(location, nameof(location));
+            Requires.NotNullOrEmpty(bearerToken, nameof(bearerToken));
 
-            var request = new HttpRequestMessage(HttpMethod.Get, location);
+            using var request = new HttpRequestMessage(HttpMethod.Get, location);
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", bearerToken);
 
             // Aggressively disable caching since WP8 is rather aggressive at enabling it.
@@ -694,11 +717,11 @@ namespace IronPigeon
         /// <returns>The asynchronous HTTP response.</returns>
         internal static Task<HttpResponseMessage> DeleteAsync(this HttpClient httpClient, Uri location, string bearerToken, CancellationToken cancellationToken)
         {
-            Requires.NotNull(httpClient, "httpClient");
-            Requires.NotNull(location, "location");
-            Requires.NotNullOrEmpty(bearerToken, "bearerToken");
+            Requires.NotNull(httpClient, nameof(httpClient));
+            Requires.NotNull(location, nameof(location));
+            Requires.NotNullOrEmpty(bearerToken, nameof(bearerToken));
 
-            var request = new HttpRequestMessage(HttpMethod.Delete, location);
+            using var request = new HttpRequestMessage(HttpMethod.Delete, location);
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", bearerToken);
             return httpClient.SendAsync(request, cancellationToken);
         }
@@ -711,8 +734,8 @@ namespace IronPigeon
         /// <returns>A string.</returns>
         internal static string GetString(this Encoding encoding, byte[] buffer)
         {
-            Requires.NotNull(encoding, "encoding");
-            Requires.NotNull(buffer, "buffer");
+            Requires.NotNull(encoding, nameof(encoding));
+            Requires.NotNull(buffer, nameof(buffer));
 
             return encoding.GetString(buffer, 0, buffer.Length);
         }

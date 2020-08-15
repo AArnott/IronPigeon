@@ -1,9 +1,6 @@
 ﻿// Copyright (c) Andrew Arnott. All rights reserved.
 // Licensed under the Microsoft Reciprocal License (Ms-RL) license. See LICENSE file in the project root for full license information.
 
-using System.Reflection;
-using System.Resources;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Windows;
 
@@ -21,7 +18,7 @@ using System.Windows;
 
 ////[assembly: NeutralResourcesLanguage("en-US", UltimateResourceFallbackLocation.Satellite)]
 
-#pragma warning disable SA1115 // Parameter must follow comma
+#pragma warning disable SA1515 // Single-line comment should be preceded by blank line
 [assembly: ThemeInfo(
     ResourceDictionaryLocation.None, // where theme specific resource dictionaries are located
                                      // (used if a resource is not found in the page,

@@ -10,7 +10,7 @@ namespace IronPigeon.Tests
     [SuppressMessage("Microsoft.StyleCop.CSharp.OrderingRules", "SA1202:ElementsMustBeOrderedByAccess", Justification = "Declaration order impacts execution order.")]
     internal static class Invalid
     {
-        private static readonly byte[] EmptyBuffer = new byte[0];
+        private static readonly byte[] EmptyBuffer = Array.Empty<byte>();
 
         internal static readonly byte[] Hash = EmptyBuffer;
         internal static readonly byte[] Key = EmptyBuffer;

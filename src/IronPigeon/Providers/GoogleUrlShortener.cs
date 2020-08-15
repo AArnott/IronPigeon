@@ -16,7 +16,7 @@ namespace IronPigeon.Providers
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
-    using Validation;
+    using Microsoft;
 
     /// <summary>
     /// Shortens URLs using the goo.gl URL shortener service.
@@ -49,7 +49,7 @@ namespace IronPigeon.Providers
         /// <summary>
         /// Gets or sets the HTTP client to use for outbound HTTP requests.
         /// </summary>
-        public HttpClient HttpClient { get; set; }
+        public HttpClient? HttpClient { get; set; }
 
         /// <summary>
         /// Shortens the specified long URL.
@@ -61,20 +61,21 @@ namespace IronPigeon.Providers
         /// </returns>
         public async Task<Uri> ShortenAsync(Uri longUrl, CancellationToken cancellationToken)
         {
-            Requires.NotNull(longUrl, "longUrl");
+            Requires.NotNull(longUrl, nameof(longUrl));
+            Verify.Operation(this.HttpClient is object, Strings.PropertyMustBeSetFirst, nameof(this.HttpClient));
 
             var requestSerializer = new DataContractJsonSerializer(typeof(ShortenRequest));
             var request = new ShortenRequest() { LongUrl = longUrl.AbsoluteUri };
             var requestStream = new MemoryStream();
             requestSerializer.WriteObject(requestStream, request);
             requestStream.Position = 0;
-            var requestContent = new StreamContent(requestStream);
+            using var requestContent = new StreamContent(requestStream);
             requestContent.Headers.ContentType = new MediaTypeHeaderValue("application/json");
 
-            var postResponse = await this.HttpClient.PostAsync(ShorteningService, requestContent, cancellationToken).ConfigureAwait(false);
+            HttpResponseMessage? postResponse = await this.HttpClient.PostAsync(ShorteningService, requestContent, cancellationToken).ConfigureAwait(false);
 
             postResponse.EnsureSuccessStatusCode();
-            var responseStream = await postResponse.Content.ReadAsStreamAsync().ConfigureAwait(false);
+            Stream? responseStream = await postResponse.Content.ReadAsStreamAsync().ConfigureAwait(false);
             var responseSerializer = new DataContractJsonSerializer(typeof(ShortenResponse));
             var response = (ShortenResponse)responseSerializer.ReadObject(responseStream);
             return new Uri(response.ShortUrl, UriKind.Absolute);
@@ -90,7 +91,7 @@ namespace IronPigeon.Providers
             /// Gets or sets the long URL to be shortened.
             /// </summary>
             [DataMember(Name = "longUrl")]
-            public string LongUrl { get; set; }
+            public string? LongUrl { get; set; }
         }
 
         /// <summary>
@@ -106,7 +107,7 @@ namespace IronPigeon.Providers
             /// The kind.
             /// </value>
             [DataMember(Name = "kind")]
-            public string Kind { get; set; }
+            public string? Kind { get; set; }
 
             /// <summary>
             /// Gets or sets the short URL.
@@ -115,7 +116,7 @@ namespace IronPigeon.Providers
             /// The short URL.
             /// </value>
             [DataMember(Name = "id")]
-            public string ShortUrl { get; set; }
+            public string? ShortUrl { get; set; }
 
             /// <summary>
             /// Gets or sets the normalized long URL.
@@ -124,7 +125,7 @@ namespace IronPigeon.Providers
             /// The long URL.
             /// </value>
             [DataMember(Name = "longUrl")]
-            public string LongUrl { get; set; }
+            public string? LongUrl { get; set; }
         }
     }
 }

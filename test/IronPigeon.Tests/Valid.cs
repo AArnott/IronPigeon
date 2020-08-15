@@ -26,11 +26,11 @@ namespace IronPigeon.Tests
         internal static readonly string ContactIdentifier = "some identifier";
         internal static readonly Uri MessageReceivingEndpoint = new Uri("http://localhost/inbox/someone");
         internal static readonly OwnEndpoint ReceivingEndpoint = GenerateOwnEndpoint();
-        internal static readonly Endpoint PublicEndpoint = GenerateOwnEndpoint().PublicEndpoint;
-        internal static readonly Endpoint[] OneEndpoint = new Endpoint[] { PublicEndpoint };
-        internal static readonly Endpoint[] EmptyEndpoints = new Endpoint[0];
+        internal static readonly Endpoint PublicEndpoint = GenerateOwnEndpoint().PublicEndpoint!;
+        internal static readonly Endpoint[] OneEndpoint = new Endpoint[] { PublicEndpoint! };
+        internal static readonly Endpoint[] EmptyEndpoints = Array.Empty<Endpoint>();
 
-        internal static OwnEndpoint GenerateOwnEndpoint(CryptoSettings cryptoProvider = null)
+        internal static OwnEndpoint GenerateOwnEndpoint(CryptoSettings? cryptoProvider = null)
         {
             cryptoProvider = cryptoProvider ?? new CryptoSettings(SecurityLevel.Minimum);
 
@@ -45,7 +45,7 @@ namespace IronPigeon.Tests
                 EndpointInboxFactory = inboxFactory.Object,
             };
 
-            var ownContact = endpointServices.CreateAsync().Result;
+            OwnEndpoint? ownContact = endpointServices.CreateAsync().Result;
             return ownContact;
         }
     }

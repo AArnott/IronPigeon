@@ -11,7 +11,7 @@ namespace IronPigeon.Providers
     using System.Threading;
     using System.Threading.Tasks;
 
-    using Validation;
+    using Microsoft;
 
     /// <summary>
     /// An address book whose identifiers are URLs to the online address book entries.
@@ -42,7 +42,7 @@ namespace IronPigeon.Providers
         /// <returns>
         /// A task whose result is the contact, or null if no match is found.
         /// </returns>
-        public override async Task<Endpoint> LookupAsync(string identifier, CancellationToken cancellationToken = default(CancellationToken))
+        public override async Task<Endpoint?> LookupAsync(string identifier, CancellationToken cancellationToken = default(CancellationToken))
         {
             Uri entryLocation;
             if (!Uri.TryCreate(identifier, UriKind.Absolute, out entryLocation))
@@ -52,7 +52,7 @@ namespace IronPigeon.Providers
 
             try
             {
-                var endpoint = await this.DownloadEndpointAsync(entryLocation, cancellationToken).ConfigureAwait(false);
+                Endpoint? endpoint = await this.DownloadEndpointAsync(entryLocation, cancellationToken).ConfigureAwait(false);
                 return endpoint;
             }
             catch (HttpRequestException)

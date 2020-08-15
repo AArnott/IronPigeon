@@ -52,7 +52,7 @@ namespace IronPigeon.Providers
             {
                 return new HttpClient(this.MessageHandler ?? new HttpClientHandler())
                 {
-                    Timeout = this.DefaultTimeout
+                    Timeout = this.DefaultTimeout,
                 };
             }
         }
@@ -60,6 +60,6 @@ namespace IronPigeon.Providers
         /// <summary>
         /// Gets or sets a custom <see cref="HttpMessageHandler"/>.
         /// </summary>
-        public HttpMessageHandler MessageHandler { get; set; }
+        public HttpMessageHandler? MessageHandler { get; set; }
     }
 }

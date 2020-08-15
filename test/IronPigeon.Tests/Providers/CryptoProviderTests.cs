@@ -36,7 +36,7 @@ namespace IronPigeon.Tests
             var rng = new Random();
             byte[] plaintext = new byte[10000];
             rng.NextBytes(plaintext);
-            var cipherPacket = this.CryptoProvider.Encrypt(plaintext);
+            SymmetricEncryptionResult? cipherPacket = this.CryptoProvider.Encrypt(plaintext);
             byte[] decryptedPlaintext = this.CryptoProvider.Decrypt(cipherPacket);
             Assert.Equal(plaintext, decryptedPlaintext);
         }
@@ -53,7 +53,7 @@ namespace IronPigeon.Tests
             rng.NextBytes(iv);
             rng.NextBytes(plaintext);
 
-            var cipherPacket = this.CryptoProvider.Encrypt(plaintext, new SymmetricEncryptionVariables(key, iv));
+            SymmetricEncryptionResult? cipherPacket = this.CryptoProvider.Encrypt(plaintext, new SymmetricEncryptionVariables(key, iv));
             Assert.Equal(key, cipherPacket.Key);
             Assert.Equal(iv, cipherPacket.IV);
 
@@ -68,11 +68,11 @@ namespace IronPigeon.Tests
             byte[] plaintext = new byte[10000];
             rng.NextBytes(plaintext);
 
-            var plaintextStream = new MemoryStream(plaintext);
-            var cipherStream = new MemoryStream();
-            var cipherPacket = this.CryptoProvider.EncryptAsync(plaintextStream, cipherStream).Result;
+            using var plaintextStream = new MemoryStream(plaintext);
+            using var cipherStream = new MemoryStream();
+            SymmetricEncryptionVariables? cipherPacket = this.CryptoProvider.EncryptAsync(plaintextStream, cipherStream).Result;
 
-            var decryptedStream = new MemoryStream();
+            using var decryptedStream = new MemoryStream();
             cipherStream.Position = 0;
             this.CryptoProvider.DecryptAsync(cipherStream, decryptedStream, cipherPacket).Wait();
             Assert.Equal(plaintext, decryptedStream.ToArray());

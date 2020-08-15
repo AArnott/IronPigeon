@@ -52,7 +52,7 @@ namespace IronPigeon.Tests
                 Signature = new byte[] { 0x3, 0x4 },
             };
 
-            var ms = new MemoryStream();
+            using var ms = new MemoryStream();
             var serializer = new DataContractSerializer(typeof(AddressBookEntry));
             serializer.WriteObject(ms, entry);
             ms.Position = 0;
@@ -74,17 +74,17 @@ namespace IronPigeon.Tests
         {
             var ownContact = new OwnEndpoint(Valid.ReceivingEndpoint.SigningKey, Valid.ReceivingEndpoint.EncryptionKey);
             var cryptoServices = new CryptoSettings(SecurityLevel.Minimum);
-            var entry = ownContact.CreateAddressBookEntry(cryptoServices);
+            AddressBookEntry? entry = ownContact.CreateAddressBookEntry(cryptoServices);
 
-            var endpoint = entry.ExtractEndpoint();
+            Endpoint? endpoint = entry.ExtractEndpoint();
             Assert.Equal(ownContact.PublicEndpoint, endpoint);
         }
 
         [Fact]
         public void ExtractEndpointDetectsTampering()
         {
-            var ownContact = Valid.GenerateOwnEndpoint(this.desktopCryptoProvider);
-            var entry = ownContact.CreateAddressBookEntry(this.desktopCryptoProvider);
+            OwnEndpoint? ownContact = Valid.GenerateOwnEndpoint(this.desktopCryptoProvider);
+            AddressBookEntry? entry = ownContact.CreateAddressBookEntry(this.desktopCryptoProvider);
 
             var untamperedEndpoint = entry.SerializedEndpoint.CopyBuffer();
             for (int i = 0; i < 100; i++)

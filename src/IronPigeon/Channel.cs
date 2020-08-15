@@ -5,7 +5,7 @@ namespace IronPigeon
 {
     using System;
     using System.Collections.Generic;
-    using System.Collections.ObjectModel;
+    using System.ComponentModel;
     using System.Diagnostics;
     using System.Globalization;
     using System.IO;
@@ -19,10 +19,8 @@ namespace IronPigeon
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
-    using IronPigeon.Providers;
-    using IronPigeon.Relay;
+    using Microsoft;
     using PCLCrypto;
-    using Validation;
 
     /// <summary>
     /// A channel for sending or receiving secure messages.
@@ -39,7 +37,7 @@ namespace IronPigeon
         /// The HTTP client to use for long poll HTTP requests.
         /// </summary>
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        private HttpClient httpClientLongPoll;
+        private HttpClient? httpClientLongPoll;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Channel" /> class.
@@ -68,7 +66,7 @@ namespace IronPigeon
         /// <summary>
         /// Gets or sets the provider of blob storage.
         /// </summary>
-        public ICloudBlobStorageProvider CloudBlobStorage { get; set; }
+        public ICloudBlobStorageProvider? CloudBlobStorage { get; set; }
 
         /// <summary>
         /// Gets or sets the provider for cryptographic operations.
@@ -84,22 +82,22 @@ namespace IronPigeon
         /// <value>
         /// The endpoint.
         /// </value>
-        public OwnEndpoint Endpoint { get; set; }
+        public OwnEndpoint? Endpoint { get; set; }
 
         /// <summary>
         /// Gets or sets the logger.
         /// </summary>
-        public ILogger Logger { get; set; }
+        public ILogger? Logger { get; set; }
 
         /// <summary>
         /// Gets or sets the HTTP client used for outbound HTTP requests.
         /// </summary>
-        public HttpClient HttpClient { get; set; }
+        public HttpClient? HttpClient { get; set; }
 
         /// <summary>
         /// Gets or sets the HTTP client to use for long poll HTTP requests.
         /// </summary>
-        public HttpClient HttpClientLongPoll
+        public HttpClient? HttpClientLongPoll
         {
             get
             {
@@ -108,7 +106,11 @@ namespace IronPigeon
 
             set
             {
-                value.Timeout = TimeSpan.FromMilliseconds(Timeout.Infinite);
+                if (value is object)
+                {
+                    value.Timeout = TimeSpan.FromMilliseconds(Timeout.Infinite);
+                }
+
                 this.httpClientLongPoll = value;
             }
         }
@@ -116,7 +118,7 @@ namespace IronPigeon
         /// <summary>
         /// Gets or sets the set of address books to use when verifying claimed identifiers on received messages.
         /// </summary>
-        public IList<AddressBook> AddressBooks { get; set; }
+        public IList<AddressBook>? AddressBooks { get; set; }
 
         /// <summary>
         /// Downloads messages from the server.
@@ -126,24 +128,24 @@ namespace IronPigeon
         /// <param name="cancellationToken">A token whose cancellation signals lost interest in the result of this method.</param>
         /// <returns>A collection of all messages that were waiting at the time this method was invoked.</returns>
         /// <exception cref="HttpRequestException">Thrown when a connection to the server could not be established, or was terminated.</exception>
-        public async Task<IReadOnlyList<PayloadReceipt>> ReceiveAsync(bool longPoll = false, IProgress<PayloadReceipt> progress = null, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<IReadOnlyList<PayloadReceipt>> ReceiveAsync(bool longPoll = false, IProgress<PayloadReceipt>? progress = null, CancellationToken cancellationToken = default(CancellationToken))
         {
-            var inboxItems = await this.DownloadIncomingItemsAsync(longPoll, cancellationToken).ConfigureAwait(false);
+            IReadOnlyList<IncomingList.IncomingItem>? inboxItems = await this.DownloadIncomingItemsAsync(longPoll, cancellationToken).ConfigureAwait(false);
 
             var payloads = new List<PayloadReceipt>();
-            foreach (var item in inboxItems)
+            foreach (IncomingList.IncomingItem? item in inboxItems)
             {
                 try
                 {
                     try
                     {
-                        var invite = await this.DownloadPayloadReferenceAsync(item, cancellationToken).ConfigureAwait(false);
+                        PayloadReference? invite = await this.DownloadPayloadReferenceAsync(item, cancellationToken).ConfigureAwait(false);
                         if (invite == null)
                         {
                             continue;
                         }
 
-                        var message = await this.DownloadPayloadAsync(invite, cancellationToken).ConfigureAwait(false);
+                        Payload? message = await this.DownloadPayloadAsync(invite, cancellationToken).ConfigureAwait(false);
                         var receipt = new PayloadReceipt(message, item.DatePostedUtc);
                         payloads.Add(receipt);
                         if (progress != null)
@@ -182,7 +184,7 @@ namespace IronPigeon
                     Debug.WriteLine(ex);
 
                     // Delete the payload reference since it was an invalid message.
-                    var nowait = this.DeletePayloadReferenceAsync(item.Location, cancellationToken);
+                    Task? nowait = this.DeletePayloadReferenceAsync(item.Location, cancellationToken);
                 }
             }
 
@@ -198,13 +200,13 @@ namespace IronPigeon
         /// <param name="bytesCopiedProgress">Progress in terms of bytes copied.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>The task representing the asynchronous operation.</returns>
-        public async Task<IReadOnlyCollection<NotificationPostedReceipt>> PostAsync(Payload message, IReadOnlyCollection<Endpoint> recipients, DateTime expiresUtc, IProgress<int> bytesCopiedProgress = null, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<IReadOnlyCollection<NotificationPostedReceipt>> PostAsync(Payload message, IReadOnlyCollection<Endpoint> recipients, DateTime expiresUtc, IProgress<int>? bytesCopiedProgress = null, CancellationToken cancellationToken = default(CancellationToken))
         {
-            Requires.NotNull(message, "message");
-            Requires.That(expiresUtc.Kind == DateTimeKind.Utc, "expiresUtc", Strings.UTCTimeRequired);
-            Requires.NotNullOrEmpty(recipients, "recipients");
+            Requires.NotNull(message, nameof(message));
+            Requires.Argument(expiresUtc.Kind == DateTimeKind.Utc, nameof(expiresUtc), Strings.UTCTimeRequired);
+            Requires.NotNullOrEmpty(recipients, nameof(recipients));
 
-            var payloadReference = await this.PostPayloadAsync(message, expiresUtc, bytesCopiedProgress, cancellationToken).ConfigureAwait(false);
+            PayloadReference? payloadReference = await this.PostPayloadAsync(message, expiresUtc, bytesCopiedProgress, cancellationToken).ConfigureAwait(false);
             return await this.PostPayloadReferenceAsync(payloadReference, recipients, cancellationToken).ConfigureAwait(false);
         }
 
@@ -220,7 +222,7 @@ namespace IronPigeon
         /// </remarks>
         public Task DeleteInboxItemAsync(Payload payload, CancellationToken cancellationToken = default(CancellationToken))
         {
-            Requires.NotNull(payload, "payload");
+            Requires.NotNull(payload, nameof(payload));
             Requires.Argument(payload.PayloadReferenceUri != null, "payload", "Original payload reference URI no longer available.");
 
             return this.DeletePayloadReferenceAsync(payload.PayloadReferenceUri, cancellationToken);
@@ -234,7 +236,7 @@ namespace IronPigeon
         /// <returns>A task whose result is the set of verified identifiers.</returns>
         public async Task<IReadOnlyCollection<string>> GetVerifiableIdentifiersAsync(Endpoint endpoint, CancellationToken cancellationToken = default(CancellationToken))
         {
-            Requires.NotNull(endpoint, "endpoint");
+            Requires.NotNull(endpoint, nameof(endpoint));
 
             var verifiedIdentifiers = new List<string>();
             if (endpoint.AuthorizedIdentifiers != null)
@@ -243,9 +245,9 @@ namespace IronPigeon
                     id => id,
                     id => this.IsVerifiableIdentifierAsync(endpoint, id, cancellationToken));
                 await Task.WhenAll(map.Values).ConfigureAwait(false);
-                foreach (var result in map)
+                foreach (KeyValuePair<string, Task<bool>> result in map)
                 {
-                    if (result.Value.Result)
+                    if (await result.Value.ConfigureAwait(false))
                     {
                         verifiedIdentifiers.Add(result.Key);
                     }
@@ -263,16 +265,16 @@ namespace IronPigeon
         /// <param name="bytesCopiedProgress">Receives progress in terms of number of bytes uploaded.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>The task whose result is a reference to the uploaded payload including decryption key.</returns>
-        public virtual async Task<PayloadReference> PostPayloadAsync(Payload message, DateTime expiresUtc, IProgress<int> bytesCopiedProgress = null, CancellationToken cancellationToken = default(CancellationToken))
+        public virtual async Task<PayloadReference> PostPayloadAsync(Payload message, DateTime expiresUtc, IProgress<int>? bytesCopiedProgress = null, CancellationToken cancellationToken = default(CancellationToken))
         {
-            Requires.NotNull(message, "message");
-            Requires.That(expiresUtc.Kind == DateTimeKind.Utc, "expiresUtc", Strings.UTCTimeRequired);
-            Requires.ValidState(this.CloudBlobStorage != null, "BlobStorageProvider must not be null");
+            Requires.NotNull(message, nameof(message));
+            Requires.Argument(expiresUtc.Kind == DateTimeKind.Utc, nameof(expiresUtc), Strings.UTCTimeRequired);
+            Verify.Operation(this.CloudBlobStorage != null, "{0} must not be null", nameof(this.CloudBlobStorage));
 
             cancellationToken.ThrowIfCancellationRequested();
 
             var plainTextStream = new MemoryStream();
-            var writer = new BinaryWriter(plainTextStream);
+            using var writer = new BinaryWriter(plainTextStream);
             writer.SerializeDataContract(message);
             writer.Flush();
             var plainTextBuffer = plainTextStream.ToArray();
@@ -280,13 +282,13 @@ namespace IronPigeon
 
             plainTextStream.Position = 0;
             var cipherTextStream = new MemoryStream();
-            var encryptionVariables = await this.CryptoServices.EncryptAsync(plainTextStream, cipherTextStream, cancellationToken: cancellationToken).ConfigureAwait(false);
+            SymmetricEncryptionVariables? encryptionVariables = await this.CryptoServices.EncryptAsync(plainTextStream, cipherTextStream, cancellationToken: cancellationToken).ConfigureAwait(false);
             this.Log("Message symmetrically encrypted", cipherTextStream.ToArray());
             this.Log("Message symmetric key", encryptionVariables.Key);
             this.Log("Message symmetric IV", encryptionVariables.IV);
 
             cipherTextStream.Position = 0;
-            var hasher = WinRTCrypto.HashAlgorithmProvider.OpenAlgorithm(this.CryptoServices.SymmetricHashAlgorithm);
+            IHashAlgorithmProvider? hasher = WinRTCrypto.HashAlgorithmProvider.OpenAlgorithm(this.CryptoServices.SymmetricHashAlgorithm);
             var messageHash = hasher.HashData(cipherTextStream.ToArray());
             this.Log("Encrypted message hash", messageHash);
 
@@ -303,18 +305,19 @@ namespace IronPigeon
         /// <returns>The task representing the asynchronous operation.</returns>
         public virtual async Task<Payload> DownloadPayloadAsync(PayloadReference notification, CancellationToken cancellationToken = default(CancellationToken))
         {
-            Requires.NotNull(notification, "notification");
+            Requires.NotNull(notification, nameof(notification));
+            Verify.Operation(this.HttpClient is object, Strings.PropertyMustBeSetFirst, nameof(this.HttpClient));
 
-            byte[] messageBuffer = null;
+            byte[]? messageBuffer = null;
             const int MaxAttempts = 2;
             int retry;
-            Exception exceptionLeadingToRetry = null;
+            Exception? exceptionLeadingToRetry = null;
             for (retry = 0; retry < MaxAttempts; retry++)
             {
                 exceptionLeadingToRetry = null;
                 try
                 {
-                    var responseMessage = await this.HttpClient.GetAsync(notification.Location, cancellationToken).ConfigureAwait(false);
+                    HttpResponseMessage? responseMessage = await this.HttpClient.GetAsync(notification.Location, cancellationToken).ConfigureAwait(false);
                     messageBuffer = await responseMessage.Content.ReadAsByteArrayAsync().ConfigureAwait(false);
 
                     // Calculate hash of downloaded message and check that it matches the referenced message hash.
@@ -357,12 +360,12 @@ namespace IronPigeon
 
             var encryptionVariables = new SymmetricEncryptionVariables(notification.Key, notification.IV);
 
-            var cipherStream = new MemoryStream(messageBuffer);
+            using var cipherStream = new MemoryStream(messageBuffer);
             var plainTextStream = new MemoryStream();
             await this.CryptoServices.DecryptAsync(cipherStream, plainTextStream, encryptionVariables, cancellationToken).ConfigureAwait(false);
             plainTextStream.Position = 0;
-            var plainTextReader = new BinaryReader(plainTextStream);
-            var message = Utilities.DeserializeDataContract<Payload>(plainTextReader);
+            using var plainTextReader = new BinaryReader(plainTextStream);
+            Payload? message = Utilities.DeserializeDataContract<Payload>(plainTextReader);
             message.PayloadReferenceUri = notification.ReferenceLocation;
             return message;
         }
@@ -377,15 +380,17 @@ namespace IronPigeon
         /// </returns>
         public async Task RegisterGooglePlayPushNotificationAsync(string googlePlayRegistrationId, CancellationToken cancellationToken = default(CancellationToken))
         {
-            Requires.NotNullOrEmpty(googlePlayRegistrationId, "googlePlayRegistrationId");
+            Requires.NotNullOrEmpty(googlePlayRegistrationId, nameof(googlePlayRegistrationId));
+            Verify.Operation(this.Endpoint is object, Strings.PropertyMustBeSetFirst, nameof(this.Endpoint));
+            Verify.Operation(this.HttpClient is object, Strings.PropertyMustBeSetFirst, nameof(this.HttpClient));
 
-            var request = new HttpRequestMessage(HttpMethod.Put, this.Endpoint.PublicEndpoint.MessageReceivingEndpoint);
+            using var request = new HttpRequestMessage(HttpMethod.Put, this.Endpoint.PublicEndpoint.MessageReceivingEndpoint);
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", this.Endpoint.InboxOwnerCode);
             request.Content = new FormUrlEncodedContent(new Dictionary<string, string>
             {
                 { "gcm_registration_id", googlePlayRegistrationId },
             });
-            var response = await this.HttpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
+            HttpResponseMessage? response = await this.HttpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
         }
 
@@ -399,7 +404,7 @@ namespace IronPigeon
         /// </returns>
         public async Task RegisterApplePushNotificationAsync(string deviceToken, CancellationToken cancellationToken = default(CancellationToken))
         {
-            Requires.NotNullOrEmpty(deviceToken, "deviceToken");
+            Requires.NotNullOrEmpty(deviceToken, nameof(deviceToken));
             Verify.Operation(this.Endpoint != null, "Endpoint must be set first.");
 
             var request = new HttpRequestMessage(HttpMethod.Put, this.Endpoint.PublicEndpoint.MessageReceivingEndpoint);
@@ -408,7 +413,7 @@ namespace IronPigeon
             {
                 { "ios_device_token", deviceToken },
             });
-            var response = await this.HttpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
+            HttpResponseMessage? response = await this.HttpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
         }
 
@@ -424,11 +429,13 @@ namespace IronPigeon
         /// <returns>
         /// A task representing the async operation.
         /// </returns>
-        public async Task RegisterWinPhonePushNotificationAsync(Uri pushNotificationChannelUri, string pushContent = null, string toastLine1 = null, string toastLine2 = null, string tileTemplate = null, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task RegisterWinPhonePushNotificationAsync(Uri pushNotificationChannelUri, string? pushContent = null, string? toastLine1 = null, string? toastLine2 = null, string? tileTemplate = null, CancellationToken cancellationToken = default(CancellationToken))
         {
-            Requires.NotNull(pushNotificationChannelUri, "pushNotificationChannelUri");
+            Requires.NotNull(pushNotificationChannelUri, nameof(pushNotificationChannelUri));
+            Verify.Operation(this.Endpoint is object, Strings.PropertyMustBeSetFirst, nameof(this.Endpoint));
+            Verify.Operation(this.HttpClient is object, Strings.PropertyMustBeSetFirst, nameof(this.HttpClient));
 
-            var request = new HttpRequestMessage(HttpMethod.Put, this.Endpoint.PublicEndpoint.MessageReceivingEndpoint);
+            using var request = new HttpRequestMessage(HttpMethod.Put, this.Endpoint.PublicEndpoint.MessageReceivingEndpoint);
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", this.Endpoint.InboxOwnerCode);
             request.Content = new FormUrlEncodedContent(new Dictionary<string, string>
             {
@@ -438,7 +445,7 @@ namespace IronPigeon
                 { "wp8_channel_toast_text2", toastLine2 ?? string.Empty },
                 { "wp8_channel_tile_template", tileTemplate ?? string.Empty },
             });
-            var response = await this.HttpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
+            HttpResponseMessage? response = await this.HttpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
         }
 
@@ -453,10 +460,10 @@ namespace IronPigeon
         /// <returns>A task representing the async operation.</returns>
         public async Task RegisterWindowsPushNotificationChannelAsync(string packageSecurityIdentifier, Uri pushNotificationChannelUri, DateTime channelExpiration, string pushContent, CancellationToken cancellationToken = default(CancellationToken))
         {
-            Requires.NotNull(pushNotificationChannelUri, "pushNotificationChannelUri");
-            Requires.NotNullOrEmpty(packageSecurityIdentifier, "packageSecurityIdentifier");
+            Requires.NotNull(pushNotificationChannelUri, nameof(pushNotificationChannelUri));
+            Requires.NotNullOrEmpty(packageSecurityIdentifier, nameof(packageSecurityIdentifier));
 
-            var request = new HttpRequestMessage(HttpMethod.Put, this.Endpoint.PublicEndpoint.MessageReceivingEndpoint);
+            using var request = new HttpRequestMessage(HttpMethod.Put, this.Endpoint.PublicEndpoint.MessageReceivingEndpoint);
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", this.Endpoint.InboxOwnerCode);
             request.Content = new FormUrlEncodedContent(new Dictionary<string, string>
             {
@@ -465,7 +472,7 @@ namespace IronPigeon
                 { "channel_content", pushContent ?? string.Empty },
                 { "expiration", channelExpiration.ToString(CultureInfo.InvariantCulture) },
             });
-            var response = await this.HttpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
+            HttpResponseMessage? response = await this.HttpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
         }
 
@@ -475,11 +482,11 @@ namespace IronPigeon
         /// <param name="inboxItem">The inbox item that referenced the <see cref="PayloadReference"/>.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>The task representing the asynchronous operation.</returns>
-        protected virtual async Task<PayloadReference> DownloadPayloadReferenceAsync(IncomingList.IncomingItem inboxItem, CancellationToken cancellationToken)
+        protected virtual async Task<PayloadReference?> DownloadPayloadReferenceAsync(IncomingList.IncomingItem inboxItem, CancellationToken cancellationToken)
         {
-            Requires.NotNull(inboxItem, "inboxItem");
+            Requires.NotNull(inboxItem, nameof(inboxItem));
 
-            var responseMessage = await this.HttpClient.GetAsync(inboxItem.Location, cancellationToken).ConfigureAwait(false);
+            HttpResponseMessage? responseMessage = await this.HttpClient.GetAsync(inboxItem.Location, cancellationToken).ConfigureAwait(false);
             if (responseMessage.StatusCode == HttpStatusCode.NotFound)
             {
                 // delete inbox item and move on.
@@ -489,15 +496,15 @@ namespace IronPigeon
             }
 
             responseMessage.EnsureSuccessStatusCode();
-            var responseStream = await responseMessage.Content.ReadAsStreamAsync().ConfigureAwait(false);
-            var responseStreamCopy = new MemoryStream();
+            Stream? responseStream = await responseMessage.Content.ReadAsStreamAsync().ConfigureAwait(false);
+            using var responseStreamCopy = new MemoryStream();
             await responseStream.CopyToAsync(responseStreamCopy, 4096, cancellationToken).ConfigureAwait(false);
             responseStreamCopy.Position = 0;
 
             var encryptedKey = await responseStreamCopy.ReadSizeAndBufferAsync(cancellationToken).ConfigureAwait(false);
             var key = WinRTCrypto.CryptographicEngine.Decrypt(this.Endpoint.EncryptionKey, encryptedKey);
             var iv = await responseStreamCopy.ReadSizeAndBufferAsync(cancellationToken).ConfigureAwait(false);
-            var ciphertextStream = await responseStreamCopy.ReadSizeAndStreamAsync(cancellationToken).ConfigureAwait(false);
+            Stream? ciphertextStream = await responseStreamCopy.ReadSizeAndStreamAsync(cancellationToken).ConfigureAwait(false);
             var encryptedVariables = new SymmetricEncryptionVariables(key, iv);
 
             var plainTextPayloadStream = new MemoryStream();
@@ -510,13 +517,13 @@ namespace IronPigeon
             var signedBytes = new byte[plainTextPayloadStream.Length - plainTextPayloadStream.Position];
             await plainTextPayloadStream.ReadAsync(signedBytes, 0, signedBytes.Length).ConfigureAwait(false);
             plainTextPayloadStream.Position = payloadStartPosition;
-            var plainTextPayloadReader = new BinaryReader(plainTextPayloadStream);
+            using var plainTextPayloadReader = new BinaryReader(plainTextPayloadStream);
 
             var recipientPublicSigningKeyBuffer = plainTextPayloadReader.ReadSizeAndBuffer();
 
             var creationDateUtc = DateTime.FromBinary(plainTextPayloadReader.ReadInt64());
-            var notificationAuthor = Utilities.DeserializeDataContract<Endpoint>(plainTextPayloadReader);
-            var messageReference = Utilities.DeserializeDataContract<PayloadReference>(plainTextPayloadReader);
+            Endpoint? notificationAuthor = Utilities.DeserializeDataContract<Endpoint>(plainTextPayloadReader);
+            PayloadReference? messageReference = Utilities.DeserializeDataContract<PayloadReference>(plainTextPayloadReader);
             messageReference.ReferenceLocation = inboxItem.Location;
             if (messageReference.HashAlgorithmName == null)
             {
@@ -545,8 +552,8 @@ namespace IronPigeon
         /// <returns>The task representing the asynchronous operation.</returns>
         protected virtual async Task<IReadOnlyCollection<NotificationPostedReceipt>> PostPayloadReferenceAsync(PayloadReference messageReference, IReadOnlyCollection<Endpoint> recipients, CancellationToken cancellationToken = default(CancellationToken))
         {
-            Requires.NotNull(messageReference, "messageReference");
-            Requires.NotNullOrEmpty(recipients, "recipients");
+            Requires.NotNull(messageReference, nameof(messageReference));
+            Requires.NotNullOrEmpty(recipients, nameof(recipients));
 
             // Kick off individual tasks concurrently for each recipient.
             // Each recipient requires cryptography (CPU intensive) to be performed, so don't block the calling thread.
@@ -563,14 +570,14 @@ namespace IronPigeon
         /// <returns>The task representing the asynchronous operation.</returns>
         protected virtual async Task<NotificationPostedReceipt> PostPayloadReferenceAsync(PayloadReference messageReference, Endpoint recipient, CancellationToken cancellationToken)
         {
-            Requires.NotNull(recipient, "recipient");
-            Requires.NotNull(messageReference, "messageReference");
+            Requires.NotNull(recipient, nameof(recipient));
+            Requires.NotNull(messageReference, nameof(messageReference));
 
             cancellationToken.ThrowIfCancellationRequested();
 
             // Prepare the payload.
-            var plainTextPayloadStream = new MemoryStream();
-            var plainTextPayloadWriter = new BinaryWriter(plainTextPayloadStream);
+            using var plainTextPayloadStream = new MemoryStream();
+            using var plainTextPayloadWriter = new BinaryWriter(plainTextPayloadStream);
 
             // Include the intended recipient's signing certificate so the recipient knows that
             // the message author intended the recipient to receive it (defeats fowarding and re-encrypting
@@ -588,14 +595,14 @@ namespace IronPigeon
             this.Log("Message invite plaintext", plainTextPayloadStream.ToArray());
 
             byte[] notificationSignature = WinRTCrypto.CryptographicEngine.Sign(this.Endpoint.SigningKey, plainTextPayloadStream.ToArray());
-            var signedPlainTextPayloadStream = new MemoryStream((int)plainTextPayloadStream.Length + notificationSignature.Length + 4);
+            using var signedPlainTextPayloadStream = new MemoryStream((int)plainTextPayloadStream.Length + notificationSignature.Length + 4);
             ////await signedPlainTextPayloadStream.WriteSizeAndBufferAsync(Encoding.UTF8.GetBytes(this.CryptoServices.HashAlgorithmName), cancellationToken);
             await signedPlainTextPayloadStream.WriteSizeAndBufferAsync(notificationSignature, cancellationToken).ConfigureAwait(false);
             plainTextPayloadStream.Position = 0;
             await plainTextPayloadStream.CopyToAsync(signedPlainTextPayloadStream, 4096, cancellationToken).ConfigureAwait(false);
             signedPlainTextPayloadStream.Position = 0;
             var cipherTextStream = new MemoryStream();
-            var encryptedVariables = await this.CryptoServices.EncryptAsync(signedPlainTextPayloadStream, cipherTextStream, cancellationToken: cancellationToken).ConfigureAwait(false);
+            SymmetricEncryptionVariables? encryptedVariables = await this.CryptoServices.EncryptAsync(signedPlainTextPayloadStream, cipherTextStream, cancellationToken: cancellationToken).ConfigureAwait(false);
             this.Log("Message invite ciphertext", cipherTextStream.ToArray());
             this.Log("Message invite key", encryptedVariables.Key);
             this.Log("Message invite IV", encryptedVariables.IV);
@@ -605,7 +612,7 @@ namespace IronPigeon
             builder.Query += "&lifetime=" + lifetimeInMinutes.ToString(CultureInfo.InvariantCulture);
 
             var postContent = new MemoryStream();
-            var encryptionKey = CryptoSettings.EncryptionAlgorithm.ImportPublicKey(
+            ICryptographicKey? encryptionKey = CryptoSettings.EncryptionAlgorithm.ImportPublicKey(
                 recipient.EncryptionKeyPublicMaterial,
                 CryptoSettings.PublicKeyFormat);
             var encryptedKey = WinRTCrypto.CryptographicEngine.Encrypt(encryptionKey, encryptedVariables.Key);
@@ -617,7 +624,7 @@ namespace IronPigeon
             await postContent.FlushAsync().ConfigureAwait(false);
             postContent.Position = 0;
 
-            using (var response = await this.HttpClient.PostAsync(builder.Uri, new StreamContent(postContent), cancellationToken).ConfigureAwait(false))
+            using (HttpResponseMessage? response = await this.HttpClient.PostAsync(builder.Uri, new StreamContent(postContent), cancellationToken).ConfigureAwait(false))
             {
                 if (response.Content != null)
                 {
@@ -640,8 +647,8 @@ namespace IronPigeon
         /// <returns>A task whose result is <c>true</c> if the identifier verified correctly; otherwise <c>false</c>.</returns>
         private async Task<bool> IsVerifiableIdentifierAsync(Endpoint claimingEndpoint, string claimedIdentifier, CancellationToken cancellationToken = default(CancellationToken))
         {
-            Requires.NotNull(claimingEndpoint, "claimingEndpoint");
-            Requires.NotNullOrEmpty(claimedIdentifier, "claimedIdentifier");
+            Requires.NotNull(claimingEndpoint, nameof(claimingEndpoint));
+            Requires.NotNullOrEmpty(claimedIdentifier, nameof(claimedIdentifier));
 
             Endpoint cachedEndpoint;
             lock (this.resolvedIdentifiersCache)
@@ -652,7 +659,7 @@ namespace IronPigeon
                 }
             }
 
-            var matchingEndpoint = await Utilities.FastestQualifyingResultAsync(
+            Endpoint? matchingEndpoint = await Utilities.FastestQualifyingResultAsync(
                 this.AddressBooks,
                 (ct, addressBook) => addressBook.LookupAsync(claimedIdentifier, ct),
                 resolvedEndpoint => claimingEndpoint.Equals(resolvedEndpoint),
@@ -680,11 +687,11 @@ namespace IronPigeon
         /// <returns>The task representing the asynchronous operation.</returns>
         private async Task DeletePayloadReferenceAsync(Uri payloadReferenceLocation, CancellationToken cancellationToken)
         {
-            Requires.NotNull(payloadReferenceLocation, "payloadReferenceLocation");
+            Requires.NotNull(payloadReferenceLocation, nameof(payloadReferenceLocation));
 
             var deleteEndpoint = new UriBuilder(this.Endpoint.PublicEndpoint.MessageReceivingEndpoint);
             deleteEndpoint.Query = "notification=" + Uri.EscapeDataString(payloadReferenceLocation.AbsoluteUri);
-            using (var response = await this.HttpClient.DeleteAsync(deleteEndpoint.Uri, this.Endpoint.InboxOwnerCode, cancellationToken).ConfigureAwait(false))
+            using (HttpResponseMessage? response = await this.HttpClient.DeleteAsync(deleteEndpoint.Uri, this.Endpoint.InboxOwnerCode, cancellationToken).ConfigureAwait(false))
             {
                 if (response.StatusCode == HttpStatusCode.NotFound)
                 {
@@ -702,20 +709,20 @@ namespace IronPigeon
         /// <param name="longPoll"><c>true</c> to asynchronously wait for messages if there are none immediately available for download.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>The task whose result is the list of downloaded inbox items.</returns>
-        private async Task<IReadOnlyList<IncomingList.IncomingItem>> DownloadIncomingItemsAsync(bool longPoll, CancellationToken cancellationToken)
+        private async Task<IReadOnlyList<IncomingList.IncomingItem>?> DownloadIncomingItemsAsync(bool longPoll, CancellationToken cancellationToken)
         {
             var deserializer = new DataContractJsonSerializer(typeof(IncomingList));
-            var requestUri = this.Endpoint.PublicEndpoint.MessageReceivingEndpoint;
-            var httpClient = this.HttpClient;
+            Uri? requestUri = this.Endpoint.PublicEndpoint.MessageReceivingEndpoint;
+            HttpClient? httpClient = this.HttpClient;
             if (longPoll)
             {
                 requestUri = new Uri(requestUri.AbsoluteUri + "?longPoll=true");
                 httpClient = this.httpClientLongPoll;
             }
 
-            var responseMessage = await httpClient.GetAsync(requestUri, this.Endpoint.InboxOwnerCode, cancellationToken).ConfigureAwait(false);
+            HttpResponseMessage? responseMessage = await httpClient.GetAsync(requestUri, this.Endpoint.InboxOwnerCode, cancellationToken).ConfigureAwait(false);
             responseMessage.EnsureSuccessStatusCode();
-            var responseStream = await responseMessage.Content.ReadAsStreamAsync().ConfigureAwait(false);
+            Stream? responseStream = await responseMessage.Content.ReadAsStreamAsync().ConfigureAwait(false);
             var inboxResults = (IncomingList)deserializer.ReadObject(responseStream);
 
             return inboxResults.Items;
@@ -724,9 +731,9 @@ namespace IronPigeon
         /// <summary>Logs a message.</summary>
         /// <param name="caption">A description of what the contents of the <paramref name="buffer"/> are.</param>
         /// <param name="buffer">The buffer.</param>
-        private void Log(string caption, byte[] buffer)
+        private void Log([Localizable(false)] string caption, byte[]? buffer)
         {
-            var logger = this.Logger;
+            ILogger? logger = this.Logger;
             if (logger != null)
             {
                 logger.WriteLine(caption, buffer);
@@ -745,7 +752,7 @@ namespace IronPigeon
             /// <param name="dateNotificationPosted">The date the cloud inbox received notification of the payload.</param>
             public PayloadReceipt(Payload payload, DateTimeOffset dateNotificationPosted)
             {
-                Requires.NotNull(payload, "payload");
+                Requires.NotNull(payload, nameof(payload));
                 this.Payload = payload;
                 this.DateNotificationPosted = dateNotificationPosted;
             }
@@ -773,7 +780,7 @@ namespace IronPigeon
             /// <param name="cloudInboxReceiptTimestamp">The timestamp included in the HTTP response from the server.</param>
             public NotificationPostedReceipt(Endpoint recipient, DateTimeOffset? cloudInboxReceiptTimestamp)
             {
-                Requires.NotNull(recipient, "recipient");
+                Requires.NotNull(recipient, nameof(recipient));
 
                 this.Recipient = recipient;
                 this.CloudInboxReceiptTimestamp = cloudInboxReceiptTimestamp;

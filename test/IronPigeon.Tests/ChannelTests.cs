@@ -5,13 +5,11 @@ namespace IronPigeon.Tests
 {
     using System;
     using System.Collections.Generic;
-    using System.Diagnostics;
     using System.Linq;
     using System.Net.Http;
-    using System.Text;
     using System.Threading.Tasks;
+    using Microsoft;
     using Moq;
-    using Validation;
     using Xunit;
     using Xunit.Abstractions;
 
@@ -64,8 +62,8 @@ namespace IronPigeon.Tests
         public void PostAsyncBadArgs()
         {
             var channel = new Channel();
-            Assert.Throws<ArgumentNullException>(() => channel.PostAsync(null, Valid.OneEndpoint, Valid.ExpirationUtc).GetAwaiter().GetResult());
-            Assert.Throws<ArgumentNullException>(() => channel.PostAsync(Valid.Message, null, Valid.ExpirationUtc).GetAwaiter().GetResult());
+            Assert.Throws<ArgumentNullException>(() => channel.PostAsync(null!, Valid.OneEndpoint, Valid.ExpirationUtc).GetAwaiter().GetResult());
+            Assert.Throws<ArgumentNullException>(() => channel.PostAsync(Valid.Message, null!, Valid.ExpirationUtc).GetAwaiter().GetResult());
             Assert.Throws<ArgumentException>(() => channel.PostAsync(Valid.Message, Valid.EmptyEndpoints, Valid.ExpirationUtc).GetAwaiter().GetResult());
             Assert.Throws<ArgumentException>(() => channel.PostAsync(Valid.Message, Valid.OneEndpoint, Invalid.ExpirationUtc).GetAwaiter().GetResult());
         }
@@ -75,19 +73,19 @@ namespace IronPigeon.Tests
         {
             Task.Run(async delegate
             {
-                var sender = Valid.GenerateOwnEndpoint();
-                var receiver = Valid.GenerateOwnEndpoint();
+                OwnEndpoint? sender = Valid.GenerateOwnEndpoint();
+                OwnEndpoint? receiver = Valid.GenerateOwnEndpoint();
 
                 var cloudStorage = new Mocks.CloudBlobStorageProviderMock();
                 var inboxMock = new Mocks.InboxHttpHandlerMock(new[] { receiver.PublicEndpoint });
                 var cryptoProvider = new CryptoSettings(SecurityLevel.Minimum);
 
-                var sentMessage = Valid.Message;
+                Payload? sentMessage = Valid.Message;
                 await this.SendMessageAsync(cloudStorage, inboxMock, cryptoProvider, sender, receiver.PublicEndpoint, sentMessage);
-                var messages = await this.ReceiveMessageAsync(cloudStorage, inboxMock, new CryptoSettings(SecurityLevel.Minimum), receiver);
+                IReadOnlyCollection<Channel.PayloadReceipt>? messages = await this.ReceiveMessageAsync(cloudStorage, inboxMock, new CryptoSettings(SecurityLevel.Minimum), receiver);
 
                 Assert.Equal(1, messages.Count);
-                var receivedMessage = messages.Single();
+                Channel.PayloadReceipt? receivedMessage = messages.Single();
                 Assert.Equal(receivedMessage.Payload.ContentType, sentMessage.ContentType);
                 Assert.Equal(receivedMessage.Payload.Content, sentMessage.Content);
             }).GetAwaiter().GetResult();
@@ -98,21 +96,21 @@ namespace IronPigeon.Tests
         {
             Task.Run(async delegate
             {
-                var sender = Valid.GenerateOwnEndpoint(this.desktopCryptoProvider);
-                var receiver = Valid.GenerateOwnEndpoint(this.desktopCryptoProvider);
+                OwnEndpoint? sender = Valid.GenerateOwnEndpoint(this.desktopCryptoProvider);
+                OwnEndpoint? receiver = Valid.GenerateOwnEndpoint(this.desktopCryptoProvider);
 
                 for (int i = 0; i < 100; i++)
                 {
                     var cloudStorage = new Mocks.CloudBlobStorageProviderMock();
                     var inboxMock = new Mocks.InboxHttpHandlerMock(new[] { receiver.PublicEndpoint });
 
-                    var sentMessage = Valid.Message;
+                    Payload? sentMessage = Valid.Message;
                     await this.SendMessageAsync(cloudStorage, inboxMock, this.desktopCryptoProvider, sender, receiver.PublicEndpoint, sentMessage);
 
                     // Tamper with the payload reference.
                     TestUtilities.ApplyFuzzing(inboxMock.Inboxes[receiver.PublicEndpoint][0].Item2, 1);
 
-                    var receivedMessages =
+                    IReadOnlyCollection<Channel.PayloadReceipt>? receivedMessages =
                         await this.ReceiveMessageAsync(cloudStorage, inboxMock, this.desktopCryptoProvider, receiver, expectMessage: false);
                     Assert.Equal(0, receivedMessages.Count);
                 }
@@ -124,21 +122,21 @@ namespace IronPigeon.Tests
         {
             Task.Run(async delegate
             {
-                var sender = Valid.GenerateOwnEndpoint(this.desktopCryptoProvider);
-                var receiver = Valid.GenerateOwnEndpoint(this.desktopCryptoProvider);
+                OwnEndpoint? sender = Valid.GenerateOwnEndpoint(this.desktopCryptoProvider);
+                OwnEndpoint? receiver = Valid.GenerateOwnEndpoint(this.desktopCryptoProvider);
 
                 for (int i = 0; i < 100; i++)
                 {
                     var cloudStorage = new Mocks.CloudBlobStorageProviderMock();
                     var inboxMock = new Mocks.InboxHttpHandlerMock(new[] { receiver.PublicEndpoint });
 
-                    var sentMessage = Valid.Message;
+                    Payload? sentMessage = Valid.Message;
                     await this.SendMessageAsync(cloudStorage, inboxMock, this.desktopCryptoProvider, sender, receiver.PublicEndpoint, sentMessage);
 
                     // Tamper with the payload itself.
                     TestUtilities.ApplyFuzzing(cloudStorage.Blobs.Single().Value, 1);
 
-                    var receivedMessages =
+                    IReadOnlyCollection<Channel.PayloadReceipt>? receivedMessages =
                         await this.ReceiveMessageAsync(cloudStorage, inboxMock, this.desktopCryptoProvider, receiver, expectMessage: false);
                     Assert.Equal(0, receivedMessages.Count);
                 }
@@ -147,11 +145,11 @@ namespace IronPigeon.Tests
 
         private async Task SendMessageAsync(Mocks.CloudBlobStorageProviderMock cloudBlobStorage, Mocks.InboxHttpHandlerMock inboxMock, CryptoSettings cryptoProvider, OwnEndpoint sender, Endpoint receiver, Payload message)
         {
-            Requires.NotNull(cloudBlobStorage, "cloudBlobStorage");
-            Requires.NotNull(sender, "sender");
-            Requires.NotNull(message, "message");
+            Requires.NotNull(cloudBlobStorage, nameof(cloudBlobStorage));
+            Requires.NotNull(sender, nameof(sender));
+            Requires.NotNull(message, nameof(message));
 
-            var httpHandler = new Mocks.HttpMessageHandlerMock();
+            using var httpHandler = new Mocks.HttpMessageHandlerMock();
 
             cloudBlobStorage.AddHttpHandler(httpHandler);
             inboxMock.Register(httpHandler);
@@ -170,10 +168,10 @@ namespace IronPigeon.Tests
 
         private async Task<IReadOnlyCollection<Channel.PayloadReceipt>> ReceiveMessageAsync(Mocks.CloudBlobStorageProviderMock cloudBlobStorage, Mocks.InboxHttpHandlerMock inboxMock, CryptoSettings cryptoProvider, OwnEndpoint receiver, bool expectMessage = true)
         {
-            Requires.NotNull(cloudBlobStorage, "cloudBlobStorage");
-            Requires.NotNull(receiver, "receiver");
+            Requires.NotNull(cloudBlobStorage, nameof(cloudBlobStorage));
+            Requires.NotNull(receiver, nameof(receiver));
 
-            var httpHandler = new Mocks.HttpMessageHandlerMock();
+            using var httpHandler = new Mocks.HttpMessageHandlerMock();
 
             cloudBlobStorage.AddHttpHandler(httpHandler);
             inboxMock.Register(httpHandler);
@@ -191,7 +189,7 @@ namespace IronPigeon.Tests
             var progressMessage = new TaskCompletionSource<Payload>();
             var progress = new Progress<Channel.PayloadReceipt>(m => progressMessage.SetResult(m.Payload));
 
-            var messages = await channel.ReceiveAsync(progress: progress);
+            IReadOnlyList<Channel.PayloadReceipt>? messages = await channel.ReceiveAsync(progress: progress);
             if (expectMessage)
             {
                 Assert.Equal(1, messages.Count);

@@ -4,14 +4,11 @@
 namespace IronPigeon
 {
     using System;
-    using System.Collections.Generic;
     using System.IO;
-    using System.Linq;
-    using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
+    using Microsoft;
     using PCLCrypto;
-    using Validation;
 
     /// <summary>
     /// Extension methods to the <see cref="CryptoSettings"/> interface.
@@ -26,10 +23,10 @@ namespace IronPigeon
         /// <returns>A string representation of a hash of the <paramref name="buffer"/>.</returns>
         public static string CreateWebSafeBase64Thumbprint(this CryptoSettings cryptoProvider, byte[] buffer)
         {
-            Requires.NotNull(cryptoProvider, "cryptoProvider");
-            Requires.NotNull(buffer, "buffer");
+            Requires.NotNull(cryptoProvider, nameof(cryptoProvider));
+            Requires.NotNull(buffer, nameof(buffer));
 
-            var hasher = WinRTCrypto.HashAlgorithmProvider.OpenAlgorithm(cryptoProvider.SymmetricHashAlgorithm);
+            IHashAlgorithmProvider? hasher = WinRTCrypto.HashAlgorithmProvider.OpenAlgorithm(cryptoProvider.SymmetricHashAlgorithm);
             var hash = hasher.HashData(buffer);
             return Utilities.ToBase64WebSafe(hash);
         }
@@ -43,13 +40,13 @@ namespace IronPigeon
         /// <exception cref="System.NotSupportedException">If the length of the thumbprint is not consistent with any supported hash algorithm.</exception>
         public static bool IsThumbprintMatch(byte[] buffer, string allegedHashWebSafeBase64Thumbprint)
         {
-            Requires.NotNull(buffer, "buffer");
-            Requires.NotNullOrEmpty(allegedHashWebSafeBase64Thumbprint, "allegedHashWebSafeBase64Thumbprint");
+            Requires.NotNull(buffer, nameof(buffer));
+            Requires.NotNullOrEmpty(allegedHashWebSafeBase64Thumbprint, nameof(allegedHashWebSafeBase64Thumbprint));
 
             byte[] allegedThumbprint = Convert.FromBase64String(Utilities.FromBase64WebSafe(allegedHashWebSafeBase64Thumbprint));
-            var hashAlgorithm = Utilities.GuessHashAlgorithmFromLength(allegedThumbprint.Length);
+            HashAlgorithm hashAlgorithm = Utilities.GuessHashAlgorithmFromLength(allegedThumbprint.Length);
 
-            var hasher = WinRTCrypto.HashAlgorithmProvider.OpenAlgorithm(hashAlgorithm);
+            IHashAlgorithmProvider? hasher = WinRTCrypto.HashAlgorithmProvider.OpenAlgorithm(hashAlgorithm);
             var actualThumbprint = hasher.HashData(buffer);
             return Utilities.AreEquivalent(actualThumbprint, allegedThumbprint);
         }
@@ -63,12 +60,12 @@ namespace IronPigeon
         /// <returns>
         /// The result of the encryption.
         /// </returns>
-        public static SymmetricEncryptionResult Encrypt(this CryptoSettings cryptoProvider, byte[] data, SymmetricEncryptionVariables encryptionVariables = null)
+        public static SymmetricEncryptionResult Encrypt(this CryptoSettings cryptoProvider, byte[] data, SymmetricEncryptionVariables? encryptionVariables = null)
         {
-            Requires.NotNull(data, "data");
+            Requires.NotNull(data, nameof(data));
 
             encryptionVariables = ThisOrNewEncryptionVariables(cryptoProvider, encryptionVariables);
-            var symmetricKey = CryptoSettings.SymmetricAlgorithm.CreateSymmetricKey(encryptionVariables.Key);
+            ICryptographicKey? symmetricKey = CryptoSettings.SymmetricAlgorithm.CreateSymmetricKey(encryptionVariables.Key);
             var cipherTextBuffer = WinRTCrypto.CryptographicEngine.Encrypt(symmetricKey, data, encryptionVariables.IV);
             return new SymmetricEncryptionResult(encryptionVariables, cipherTextBuffer);
         }
@@ -84,14 +81,14 @@ namespace IronPigeon
         /// <returns>
         /// A task that completes when encryption has completed, whose result is the key and IV to use to decrypt the ciphertext.
         /// </returns>
-        public static async Task<SymmetricEncryptionVariables> EncryptAsync(this CryptoSettings cryptoProvider, Stream plaintext, Stream ciphertext, SymmetricEncryptionVariables encryptionVariables = null, CancellationToken cancellationToken = default(CancellationToken))
+        public static async Task<SymmetricEncryptionVariables> EncryptAsync(this CryptoSettings cryptoProvider, Stream plaintext, Stream ciphertext, SymmetricEncryptionVariables? encryptionVariables = null, CancellationToken cancellationToken = default(CancellationToken))
         {
-            Requires.NotNull(plaintext, "plaintext");
-            Requires.NotNull(ciphertext, "ciphertext");
+            Requires.NotNull(plaintext, nameof(plaintext));
+            Requires.NotNull(ciphertext, nameof(ciphertext));
 
             encryptionVariables = ThisOrNewEncryptionVariables(cryptoProvider, encryptionVariables);
-            var key = CryptoSettings.SymmetricAlgorithm.CreateSymmetricKey(encryptionVariables.Key);
-            using (var encryptor = WinRTCrypto.CryptographicEngine.CreateEncryptor(key, encryptionVariables.IV))
+            ICryptographicKey? key = CryptoSettings.SymmetricAlgorithm.CreateSymmetricKey(encryptionVariables.Key);
+            using (ICryptoTransform? encryptor = WinRTCrypto.CryptographicEngine.CreateEncryptor(key, encryptionVariables.IV))
             {
                 var cryptoStream = new CryptoStream(ciphertext, encryptor, CryptoStreamMode.Write);
                 await plaintext.CopyToAsync(cryptoStream, 4096, cancellationToken).ConfigureAwait(false);
@@ -114,14 +111,14 @@ namespace IronPigeon
         /// </returns>
         public static async Task DecryptAsync(this CryptoSettings cryptoProvider, Stream ciphertext, Stream plaintext, SymmetricEncryptionVariables encryptionVariables, CancellationToken cancellationToken = default(CancellationToken))
         {
-            Requires.NotNull(ciphertext, "ciphertext");
-            Requires.NotNull(plaintext, "plaintext");
-            Requires.NotNull(encryptionVariables, "encryptionVariables");
+            Requires.NotNull(ciphertext, nameof(ciphertext));
+            Requires.NotNull(plaintext, nameof(plaintext));
+            Requires.NotNull(encryptionVariables, nameof(encryptionVariables));
 
-            var key = CryptoSettings.SymmetricAlgorithm.CreateSymmetricKey(encryptionVariables.Key);
-            using (var decryptor = WinRTCrypto.CryptographicEngine.CreateDecryptor(key, encryptionVariables.IV))
+            ICryptographicKey? key = CryptoSettings.SymmetricAlgorithm.CreateSymmetricKey(encryptionVariables.Key);
+            using (ICryptoTransform? decryptor = WinRTCrypto.CryptographicEngine.CreateDecryptor(key, encryptionVariables.IV))
             {
-                var cryptoStream = new CryptoStream(plaintext, decryptor, CryptoStreamMode.Write);
+                using var cryptoStream = new CryptoStream(plaintext, decryptor, CryptoStreamMode.Write);
                 await ciphertext.CopyToAsync(cryptoStream, 4096, cancellationToken).ConfigureAwait(false);
                 cryptoStream.FlushFinalBlock();
             }
@@ -137,7 +134,7 @@ namespace IronPigeon
         /// </returns>
         public static byte[] Decrypt(this CryptoSettings cryptoProvider, SymmetricEncryptionResult data)
         {
-            var symmetricKey = CryptoSettings.SymmetricAlgorithm.CreateSymmetricKey(data.Key);
+            ICryptographicKey? symmetricKey = CryptoSettings.SymmetricAlgorithm.CreateSymmetricKey(data.Key);
             return WinRTCrypto.CryptographicEngine.Decrypt(symmetricKey, data.Ciphertext, data.IV);
         }
 
@@ -178,16 +175,16 @@ namespace IronPigeon
         /// </returns>
         internal static bool IsHashMatchWithTolerantHashAlgorithm(this CryptoSettings cryptoProvider, byte[] data, byte[] expectedHash, HashAlgorithm? hashAlgorithm)
         {
-            Requires.NotNull(cryptoProvider, "cryptoProvider");
-            Requires.NotNull(data, "data");
-            Requires.NotNull(expectedHash, "expectedHash");
+            Requires.NotNull(cryptoProvider, nameof(cryptoProvider));
+            Requires.NotNull(data, nameof(data));
+            Requires.NotNull(expectedHash, nameof(expectedHash));
 
             if (!hashAlgorithm.HasValue)
             {
                 hashAlgorithm = Utilities.GuessHashAlgorithmFromLength(expectedHash.Length);
             }
 
-            var hasher = WinRTCrypto.HashAlgorithmProvider.OpenAlgorithm(hashAlgorithm.Value);
+            IHashAlgorithmProvider? hasher = WinRTCrypto.HashAlgorithmProvider.OpenAlgorithm(hashAlgorithm.Value);
             byte[] actualHash = hasher.HashData(data);
             return Utilities.AreEquivalent(expectedHash, actualHash);
         }
@@ -206,14 +203,14 @@ namespace IronPigeon
         {
             if (signingAlgorithm.HasValue)
             {
-                var key = WinRTCrypto.AsymmetricKeyAlgorithmProvider.OpenAlgorithm(signingAlgorithm.Value)
+                ICryptographicKey? key = WinRTCrypto.AsymmetricKeyAlgorithmProvider.OpenAlgorithm(signingAlgorithm.Value)
                     .ImportPublicKey(signingPublicKey, CryptoSettings.PublicKeyFormat);
                 return WinRTCrypto.CryptographicEngine.VerifySignature(key, data, signature);
             }
 
-            var key1 = WinRTCrypto.AsymmetricKeyAlgorithmProvider.OpenAlgorithm(AsymmetricAlgorithm.RsaSignPkcs1Sha1)
+            ICryptographicKey? key1 = WinRTCrypto.AsymmetricKeyAlgorithmProvider.OpenAlgorithm(AsymmetricAlgorithm.RsaSignPkcs1Sha1)
                 .ImportPublicKey(signingPublicKey, CryptoSettings.PublicKeyFormat);
-            var key2 = WinRTCrypto.AsymmetricKeyAlgorithmProvider.OpenAlgorithm(AsymmetricAlgorithm.RsaSignPkcs1Sha256)
+            ICryptographicKey? key2 = WinRTCrypto.AsymmetricKeyAlgorithmProvider.OpenAlgorithm(AsymmetricAlgorithm.RsaSignPkcs1Sha256)
                 .ImportPublicKey(signingPublicKey, CryptoSettings.PublicKeyFormat);
             return WinRTCrypto.CryptographicEngine.VerifySignature(key1, data, signature)
                 || WinRTCrypto.CryptographicEngine.VerifySignature(key2, data, signature);
@@ -272,8 +269,8 @@ namespace IronPigeon
             }
             else
             {
-                Requires.Argument(encryptionVariables.Key.Length == cryptoProvider.SymmetricKeySize / 8, "key", "Incorrect length.");
-                Requires.Argument(encryptionVariables.IV.Length == CryptoSettings.SymmetricAlgorithm.BlockLength, "iv", "Incorrect length.");
+                Requires.Argument(encryptionVariables.Key.Length == cryptoProvider.SymmetricKeySize / 8, "key", Strings.IncorrectLength);
+                Requires.Argument(encryptionVariables.IV.Length == CryptoSettings.SymmetricAlgorithm.BlockLength, "iv", Strings.IncorrectLength);
                 return encryptionVariables;
             }
         }

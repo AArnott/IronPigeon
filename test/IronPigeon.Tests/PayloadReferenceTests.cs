@@ -15,12 +15,12 @@ namespace IronPigeon.Tests
         [Fact]
         public void CtorInvalidInputs()
         {
-            Assert.Throws<ArgumentNullException>(() => new PayloadReference(null, Valid.Hash, Valid.HashAlgorithmName, Valid.Key, Valid.IV, Valid.ExpirationUtc));
-            Assert.Throws<ArgumentNullException>(() => new PayloadReference(Valid.Location, null, Valid.HashAlgorithmName, Valid.Key, Valid.IV, Valid.ExpirationUtc));
-            Assert.Throws<ArgumentNullException>(() => new PayloadReference(Valid.Location, Valid.Hash, null, Valid.Key, Valid.IV, Valid.ExpirationUtc));
+            Assert.Throws<ArgumentNullException>(() => new PayloadReference(null!, Valid.Hash, Valid.HashAlgorithmName, Valid.Key, Valid.IV, Valid.ExpirationUtc));
+            Assert.Throws<ArgumentNullException>(() => new PayloadReference(Valid.Location, null!, Valid.HashAlgorithmName, Valid.Key, Valid.IV, Valid.ExpirationUtc));
+            Assert.Throws<ArgumentNullException>(() => new PayloadReference(Valid.Location, Valid.Hash, null!, Valid.Key, Valid.IV, Valid.ExpirationUtc));
             Assert.Throws<ArgumentException>(() => new PayloadReference(Valid.Location, Valid.Hash, string.Empty, Valid.Key, Valid.IV, Valid.ExpirationUtc));
-            Assert.Throws<ArgumentNullException>(() => new PayloadReference(Valid.Location, Valid.Hash, Valid.HashAlgorithmName, null, Valid.Key, Valid.ExpirationUtc));
-            Assert.Throws<ArgumentNullException>(() => new PayloadReference(Valid.Location, Valid.Hash, Valid.HashAlgorithmName, Valid.Key, null, Valid.ExpirationUtc));
+            Assert.Throws<ArgumentNullException>(() => new PayloadReference(Valid.Location, Valid.Hash, Valid.HashAlgorithmName, null!, Valid.Key, Valid.ExpirationUtc));
+            Assert.Throws<ArgumentNullException>(() => new PayloadReference(Valid.Location, Valid.Hash, Valid.HashAlgorithmName, Valid.Key, null!, Valid.ExpirationUtc));
             Assert.Throws<ArgumentException>(() => new PayloadReference(Valid.Location, Valid.Hash, Valid.HashAlgorithmName, Valid.Key, Valid.IV, Invalid.ExpirationUtc));
             Assert.Throws<ArgumentException>(() => new PayloadReference(Valid.Location, Invalid.Hash, Valid.HashAlgorithmName, Valid.Key, Valid.IV, Valid.ExpirationUtc));
             Assert.Throws<ArgumentException>(() => new PayloadReference(Valid.Location, Valid.Hash, Valid.HashAlgorithmName, Invalid.Key, Valid.IV, Valid.ExpirationUtc));

@@ -3,14 +3,8 @@
 
 namespace IronPigeon
 {
-    using System;
-    using System.Collections.Generic;
-    using System.IO;
-    using System.Net.Http;
-    using System.Runtime.Serialization;
     using System.Threading;
     using System.Threading.Tasks;
-    using Validation;
 
     /// <summary>
     /// Retrieves contacts from some public store.
@@ -31,6 +25,6 @@ namespace IronPigeon
         /// A task whose result is the contact, or null if no match is found.
         /// </returns>
         /// <exception cref="BadAddressBookEntryException">Thrown when a validation error occurs while reading the address book entry.</exception>
-        public abstract Task<Endpoint> LookupAsync(string identifier, CancellationToken cancellationToken = default(CancellationToken));
+        public abstract Task<Endpoint?> LookupAsync(string identifier, CancellationToken cancellationToken = default);
     }
 }

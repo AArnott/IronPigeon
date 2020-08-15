@@ -4,15 +4,7 @@
 namespace IronPigeon
 {
     using System;
-    using System.Collections.Generic;
-    using System.Diagnostics;
-    using System.IO;
-    using System.Linq;
-    using System.Text;
-    using System.Threading;
-    using System.Threading.Tasks;
     using PCLCrypto;
-    using Validation;
 
     /// <summary>
     /// Configuration for common crypto operations.
@@ -82,7 +74,7 @@ namespace IronPigeon
                     this.SymmetricHashAlgorithm = HashAlgorithm.Sha256;
                     break;
                 default:
-                    throw new ArgumentException();
+                    throw new ArgumentOutOfRangeException(nameof(securityLevel));
             }
         }
     }

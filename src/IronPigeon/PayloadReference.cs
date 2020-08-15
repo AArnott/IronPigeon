@@ -4,13 +4,8 @@
 namespace IronPigeon
 {
     using System;
-    using System.Collections.Generic;
-    using System.IO;
-    using System.Linq;
     using System.Runtime.Serialization;
-    using System.Text;
-    using System.Threading.Tasks;
-    using Validation;
+    using Microsoft;
 
     /// <summary>
     /// Describes where some encrypted payload is found and how to decrypt it.
@@ -29,12 +24,12 @@ namespace IronPigeon
         /// <param name="expiresUtc">The time beyond which the payload is expected to be deleted.</param>
         public PayloadReference(Uri location, byte[] hash, string hashAlgorithmName, byte[] key, byte[] iv, DateTime expiresUtc)
         {
-            Requires.NotNull(location, "location");
-            Requires.NotNullOrEmpty(hash, "hash");
-            Requires.NotNullOrEmpty(hashAlgorithmName, "hashAlgorithmName");
-            Requires.NotNullOrEmpty(key, "key");
-            Requires.NotNullOrEmpty(iv, "iv");
-            Requires.That(expiresUtc.Kind == DateTimeKind.Utc, "expiresUtc", Strings.UTCTimeRequired);
+            Requires.NotNull(location, nameof(location));
+            Requires.NotNullOrEmpty(hash, nameof(hash));
+            Requires.NotNullOrEmpty(hashAlgorithmName, nameof(hashAlgorithmName));
+            Requires.NotNullOrEmpty(key, nameof(key));
+            Requires.NotNullOrEmpty(iv, nameof(iv));
+            Requires.Argument(expiresUtc.Kind == DateTimeKind.Utc, nameof(expiresUtc), Strings.UTCTimeRequired);
 
             this.Location = location;
             this.Hash = hash;
@@ -97,6 +92,6 @@ namespace IronPigeon
         /// <summary>
         /// Gets or sets the URI from which this instance was downloaded.
         /// </summary>
-        internal Uri ReferenceLocation { get; set; }
+        internal Uri? ReferenceLocation { get; set; }
     }
 }

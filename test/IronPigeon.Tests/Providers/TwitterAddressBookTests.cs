@@ -5,8 +5,7 @@ namespace IronPigeon.Tests.Providers
 {
     using System.Net.Http;
     using IronPigeon.Providers;
-    using IronPigeon.Tests;
-    using Mocks;
+    using IronPigeon.Tests.Mocks;
     using Xunit;
 
     public class TwitterAddressBookTests
@@ -25,7 +24,7 @@ namespace IronPigeon.Tests.Providers
         public void LookupEntryAsyncNonExistentUser()
         {
             this.messageRecorder.SetTestName();
-            var endpoint = this.twitter.LookupAsync("@NonExistentUser2394872352").Result;
+            Endpoint? endpoint = this.twitter.LookupAsync("@NonExistentUser2394872352").Result;
             Assert.Null(endpoint);
         }
 
@@ -33,7 +32,7 @@ namespace IronPigeon.Tests.Providers
         public void LookupEntryAsyncValidUserWithNoEntry()
         {
             this.messageRecorder.SetTestName();
-            var endpoint = this.twitter.LookupAsync("@shanselman").Result;
+            Endpoint? endpoint = this.twitter.LookupAsync("@shanselman").Result;
             Assert.Null(endpoint);
         }
 
@@ -41,7 +40,7 @@ namespace IronPigeon.Tests.Providers
         public void LookupEntryAsyncExistingUser()
         {
             this.messageRecorder.SetTestName();
-            var endpoint = this.twitter.LookupAsync("@PrivacyNotFound").Result;
+            Endpoint? endpoint = this.twitter.LookupAsync("@PrivacyNotFound").Result;
             Assert.NotNull(endpoint);
         }
 

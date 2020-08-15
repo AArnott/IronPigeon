@@ -4,13 +4,9 @@
 namespace IronPigeon.Tests.Providers
 {
     using System;
-    using System.Collections.Generic;
-    using System.Linq;
     using System.Net.Http;
-    using System.Text;
-    using System.Threading.Tasks;
     using IronPigeon.Providers;
-    using Mocks;
+    using IronPigeon.Tests.Mocks;
     using Xunit;
 
     public class GoogleUrlShortenerTests
@@ -29,7 +25,7 @@ namespace IronPigeon.Tests.Providers
         [Fact]
         public void ShortenAsyncNull()
         {
-            Assert.Throws<ArgumentNullException>(() => this.shortener.ShortenAsync(null).GetAwaiter().GetResult());
+            Assert.Throws<ArgumentNullException>(() => this.shortener.ShortenAsync(null!).GetAwaiter().GetResult());
         }
 
         [Fact]
@@ -44,7 +40,7 @@ namespace IronPigeon.Tests.Providers
         public void ShortenExcludeFragmentAsync()
         {
             this.messageRecorder.SetTestName();
-            var shortUrl =
+            Uri? shortUrl =
                 this.shortener.ShortenExcludeFragmentAsync(new Uri("http://www.google.com/#hashtest")).GetAwaiter().GetResult();
             Assert.Equal("http://goo.gl/fbsS#hashtest", shortUrl.AbsoluteUri);
         }
@@ -53,7 +49,7 @@ namespace IronPigeon.Tests.Providers
         public void ShortenExcludeFragmentAsyncNoFragment()
         {
             this.messageRecorder.SetTestName();
-            var shortUrl =
+            Uri? shortUrl =
                 this.shortener.ShortenExcludeFragmentAsync(new Uri("http://www.google.com/")).GetAwaiter().GetResult();
             Assert.Equal("http://goo.gl/fbsS", shortUrl.AbsoluteUri);
         }

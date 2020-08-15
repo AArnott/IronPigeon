@@ -20,9 +20,10 @@ namespace WpfChatroom
     using IronPigeon;
     using IronPigeon.Dart;
     using IronPigeon.Providers;
+    using Microsoft.VisualStudio.Threading;
 
     /// <summary>
-    /// Interaction logic for ChatroomWindow.xaml
+    /// Interaction logic for ChatroomWindow.xaml.
     /// </summary>
     public partial class ChatroomWindow : Window
     {
@@ -39,7 +40,7 @@ namespace WpfChatroom
         /// <summary>
         /// Gets or sets the channel.
         /// </summary>
-        public PostalService PostalService { get; set; }
+        public PostalService? PostalService { get; set; }
 
         internal void AddMember(string friendlyName, Endpoint endpoint)
         {
@@ -55,7 +56,7 @@ namespace WpfChatroom
         internal async Task InvitingMemberAsync(InviteMember inviteWindow)
         {
             var addressBook = new DirectEntryAddressBook(new HttpClient());
-            var endpoint = await addressBook.LookupAsync(inviteWindow.PublicEndpointUrlBox.Text);
+            Endpoint? endpoint = await addressBook.LookupAsync(inviteWindow.PublicEndpointUrlBox.Text);
             if (endpoint != null)
             {
                 try
@@ -72,9 +73,9 @@ namespace WpfChatroom
         }
 
         /// <summary>
-        /// Raises the <see cref="E:System.Windows.FrameworkElement.Initialized" /> event. This method is invoked whenever <see cref="P:System.Windows.FrameworkElement.IsInitialized" /> is set to true internally.
+        /// Raises the <see cref="System.Windows.FrameworkElement.Initialized" /> event. This method is invoked whenever <see cref="System.Windows.FrameworkElement.IsInitialized" /> is set to true internally.
         /// </summary>
-        /// <param name="e">The <see cref="T:System.Windows.RoutedEventArgs" /> that contains the event data.</param>
+        /// <param name="e">The <see cref="System.Windows.RoutedEventArgs" /> that contains the event data.</param>
         protected override async void OnInitialized(EventArgs e)
         {
             base.OnInitialized(e);

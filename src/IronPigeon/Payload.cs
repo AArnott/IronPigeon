@@ -9,7 +9,7 @@ namespace IronPigeon
     using System.Linq;
     using System.Runtime.Serialization;
     using System.Text;
-    using Validation;
+    using Microsoft;
 
     /// <summary>
     /// The payload in a securely transmitted message, before encryptions and signatures are applied
@@ -25,8 +25,8 @@ namespace IronPigeon
         /// <param name="contentType">Type of the content.</param>
         public Payload(byte[] content, string contentType)
         {
-            Requires.NotNull(content, "content");
-            Requires.NotNullOrEmpty(contentType, "contentType");
+            Requires.NotNull(content, nameof(content));
+            Requires.NotNullOrEmpty(contentType, nameof(contentType));
 
             this.Content = content;
             this.ContentType = contentType;
@@ -48,7 +48,7 @@ namespace IronPigeon
         /// <summary>
         /// Gets or sets the location of the payload reference that led to the discovery of this payload.
         /// </summary>
-        internal Uri PayloadReferenceUri { get; set; }
+        internal Uri? PayloadReferenceUri { get; set; }
 
         /// <summary>
         /// Indicates whether the current object is equal to another object of the same type.

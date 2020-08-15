@@ -12,15 +12,15 @@ namespace IronPigeon.Tests
 
     public class SymmetricEncryptionResultTests
     {
-        private static readonly byte[] EmptyBuffer = new byte[0];
+        private static readonly byte[] EmptyBuffer = Array.Empty<byte>();
         private static readonly byte[] NonEmptyBuffer = new byte[1];
 
         [Fact]
         public void CtorThrowsOnNullBuffer()
         {
-            Assert.Throws<ArgumentNullException>(() => new SymmetricEncryptionResult(null, NonEmptyBuffer, NonEmptyBuffer));
-            Assert.Throws<ArgumentNullException>(() => new SymmetricEncryptionResult(NonEmptyBuffer, null, NonEmptyBuffer));
-            Assert.Throws<ArgumentNullException>(() => new SymmetricEncryptionResult(NonEmptyBuffer, NonEmptyBuffer, null));
+            Assert.Throws<ArgumentNullException>(() => new SymmetricEncryptionResult(null!, NonEmptyBuffer, NonEmptyBuffer));
+            Assert.Throws<ArgumentNullException>(() => new SymmetricEncryptionResult(NonEmptyBuffer, null!, NonEmptyBuffer));
+            Assert.Throws<ArgumentNullException>(() => new SymmetricEncryptionResult(NonEmptyBuffer, NonEmptyBuffer, null!));
         }
 
         [Fact]

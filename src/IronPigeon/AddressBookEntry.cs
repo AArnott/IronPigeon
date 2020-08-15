@@ -4,14 +4,9 @@
 namespace IronPigeon
 {
     using System;
-    using System.Collections.Generic;
     using System.IO;
-    using System.Linq;
     using System.Runtime.Serialization;
-    using System.Text;
-    using System.Threading.Tasks;
     using PCLCrypto;
-    using Validation;
 
     /// <summary>
     /// A self-signed description of an endpoint including public signing and encryption keys.
@@ -28,13 +23,13 @@ namespace IronPigeon
         /// Gets or sets the serialized <see cref="Endpoint"/>.
         /// </summary>
         [DataMember]
-        public byte[] SerializedEndpoint { get; set; }
+        public byte[]? SerializedEndpoint { get; set; }
 
         /// <summary>
         /// Gets or sets the hash algorithm used to sign the serialized endpoint.
         /// </summary>
         [DataMember]
-        public string HashAlgorithmName { get; set; }
+        public string? HashAlgorithmName { get; set; }
 
         /// <summary>
         /// Gets or sets the signature of the <see cref="SerializedEndpoint"/> bytes,
@@ -49,7 +44,7 @@ namespace IronPigeon
         /// encryption key that the attacker controls the private key to.
         /// </remarks>
         [DataMember]
-        public byte[] Signature { get; set; }
+        public byte[]? Signature { get; set; }
 
         /// <summary>
         /// Deserializes an endpoint from an address book entry and validates that the signatures are correct.
@@ -58,7 +53,7 @@ namespace IronPigeon
         /// <exception cref="BadAddressBookEntryException">Thrown if the signatures are invalid.</exception>
         public Endpoint ExtractEndpoint()
         {
-            var reader = new BinaryReader(new MemoryStream(this.SerializedEndpoint));
+            using var reader = new BinaryReader(new MemoryStream(this.SerializedEndpoint));
             Endpoint endpoint;
             try
             {

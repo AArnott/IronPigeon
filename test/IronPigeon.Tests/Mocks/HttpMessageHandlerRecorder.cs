@@ -16,7 +16,7 @@ namespace IronPigeon.Tests.Mocks
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
-    using Validation;
+    using Microsoft;
 
     internal class HttpMessageHandlerRecorder : HttpClientHandler
     {
@@ -26,7 +26,7 @@ namespace IronPigeon.Tests.Mocks
 
         private HttpMessageHandlerRecorder(string recordingPath, Mode mode)
         {
-            Requires.NotNullOrEmpty(recordingPath, "recordingPath");
+            Requires.NotNullOrEmpty(recordingPath, nameof(recordingPath));
             this.recordingPath = recordingPath;
             this.mode = mode;
         }
@@ -54,7 +54,7 @@ namespace IronPigeon.Tests.Mocks
 
             var stack = new StackTrace(1, true);
             string testClassDirectory = null;
-            foreach (var frame in stack.GetFrames())
+            foreach (StackFrame? frame in stack.GetFrames())
             {
                 if (frame.GetMethod().DeclaringType.IsEquivalentTo(testClass))
                 {
@@ -99,7 +99,7 @@ namespace IronPigeon.Tests.Mocks
 
         private void GetRecordedFileNames(HttpRequestMessage request, out string headerFile, out string bodyFile)
         {
-            Requires.NotNull(request, "request");
+            Requires.NotNull(request, nameof(request));
 
             string persistedUri = request.Method + " " + request.RequestUri.GetComponents(UriComponents.AbsoluteUri & ~UriComponents.Fragment, UriFormat.Unescaped);
 
@@ -117,18 +117,18 @@ namespace IronPigeon.Tests.Mocks
 
         private async Task<HttpResponseMessage> RecordSendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            var response = await base.SendAsync(request, cancellationToken);
+            HttpResponseMessage? response = await base.SendAsync(request, cancellationToken);
 
             // Record the request and response.
             string headerFile, bodyFile;
             this.GetRecordedFileNames(request, out headerFile, out bodyFile);
             Directory.CreateDirectory(Path.GetDirectoryName(headerFile));
-            using (var file = File.Open(headerFile, FileMode.Create, FileAccess.Write))
+            using (FileStream? file = File.Open(headerFile, FileMode.Create, FileAccess.Write))
             {
                 using (var writer = new StreamWriter(file))
                 {
                     await writer.WriteLineAsync(response.StatusCode.ToString());
-                    foreach (var header in response.Headers)
+                    foreach (KeyValuePair<string, IEnumerable<string>> header in response.Headers)
                     {
                         await writer.WriteLineAsync(string.Format(CultureInfo.InvariantCulture, "{0}:{1}", header.Key, string.Join("\t", header.Value)));
                     }
@@ -137,7 +137,7 @@ namespace IronPigeon.Tests.Mocks
 
             if (response.Content != null)
             {
-                using (var file = File.Open(bodyFile, FileMode.Create, FileAccess.Write))
+                using (FileStream? file = File.Open(bodyFile, FileMode.Create, FileAccess.Write))
                 {
                     var contentCopy = new MemoryStream();
                     await response.Content.CopyToAsync(contentCopy);
@@ -159,12 +159,12 @@ namespace IronPigeon.Tests.Mocks
 
             // Record the request and response.
             var response = new HttpResponseMessage();
-            using (var file = Assembly.GetExecutingAssembly().GetManifestResourceStream(headerFile))
+            using (Stream? file = Assembly.GetExecutingAssembly().GetManifestResourceStream(headerFile))
             {
                 Assumes.NotNull(file);
-                var reader = new StreamReader(file);
+                using var reader = new StreamReader(file);
                 response.StatusCode = (HttpStatusCode)Enum.Parse(typeof(HttpStatusCode), await reader.ReadLineAsync());
-                string line;
+                string? line;
                 while ((line = await reader.ReadLineAsync()) != null)
                 {
                     var parts = line.Split(new[] { ':' }, 2);
@@ -172,7 +172,7 @@ namespace IronPigeon.Tests.Mocks
                 }
             }
 
-            using (var file = Assembly.GetExecutingAssembly().GetManifestResourceStream(bodyFile))
+            using (Stream? file = Assembly.GetExecutingAssembly().GetManifestResourceStream(bodyFile))
             {
                 if (file != null)
                 {

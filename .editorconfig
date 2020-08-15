@@ -165,5 +165,8 @@ csharp_prefer_braces = true:silent
 # SA1130: Use lambda syntax
 dotnet_diagnostic.SA1130.severity = silent
 
+# CS8602: Dereference of a possibly null reference.
+dotnet_diagnostic.CS8602.severity = suggestion
+
 [*.sln]
 indent_style = tab

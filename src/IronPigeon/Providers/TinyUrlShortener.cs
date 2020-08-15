@@ -12,10 +12,10 @@ namespace IronPigeon.Providers
     using System.Threading;
     using System.Threading.Tasks;
 
-    using Validation;
+    using Microsoft;
 
     /// <summary>
-    /// A URL shortener that uses tinyurl.com
+    /// A URL shortener that uses tinyurl.com.
     /// </summary>
     public class TinyUrlShortener : IUrlShortener
     {
@@ -43,7 +43,7 @@ namespace IronPigeon.Providers
         /// <summary>
         /// Gets or sets the HTTP client to use for outbound HTTP requests.
         /// </summary>
-        public HttpClient HttpClient { get; set; }
+        public HttpClient? HttpClient { get; set; }
 
         /// <summary>
         /// Shortens the asynchronous.
@@ -53,7 +53,8 @@ namespace IronPigeon.Providers
         /// <returns>A task whose result is the shortened URL.</returns>
         public async Task<Uri> ShortenAsync(Uri longUrl, CancellationToken cancellationToken)
         {
-            Requires.NotNull(longUrl, "longUrl");
+            Requires.NotNull(longUrl, nameof(longUrl));
+            Verify.Operation(this.HttpClient is object, Strings.PropertyMustBeSetFirst, nameof(this.HttpClient));
 
             if (longUrl.Host == "tinyurl.com")
             {
@@ -63,7 +64,7 @@ namespace IronPigeon.Providers
 
             string shorteningRequestUrl = string.Format(
                 CultureInfo.InvariantCulture, ShorteningService, Uri.EscapeDataString(longUrl.AbsoluteUri));
-            var response = await this.HttpClient.GetAsync(shorteningRequestUrl, cancellationToken).ConfigureAwait(false);
+            HttpResponseMessage? response = await this.HttpClient.GetAsync(shorteningRequestUrl, cancellationToken).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
             string responseAsString = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
             return new Uri(responseAsString, UriKind.Absolute);

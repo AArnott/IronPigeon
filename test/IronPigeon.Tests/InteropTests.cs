@@ -3,16 +3,10 @@
 
 namespace IronPigeon.Tests
 {
-    using System;
     using System.Collections.Generic;
-    using System.Linq;
     using System.Net.Http;
-    using System.Text;
     using System.Threading.Tasks;
-
-    using IronPigeon.Providers;
-    using PCLCrypto;
-    using Validation;
+    using Microsoft;
     using Xunit;
     using Xunit.Abstractions;
 
@@ -29,10 +23,10 @@ namespace IronPigeon.Tests
         public async Task CrossSecurityLevelAddressBookExchange()
         {
             var lowLevelCrypto = new CryptoSettings(SecurityLevel.Minimum);
-            var lowLevelEndpoint = Valid.GenerateOwnEndpoint(lowLevelCrypto);
+            OwnEndpoint? lowLevelEndpoint = Valid.GenerateOwnEndpoint(lowLevelCrypto);
 
             var highLevelCrypto = new CryptoSettings(SecurityLevel.Minimum) { AsymmetricKeySize = 2048 };
-            var highLevelEndpoint = Valid.GenerateOwnEndpoint(highLevelCrypto);
+            OwnEndpoint? highLevelEndpoint = Valid.GenerateOwnEndpoint(highLevelCrypto);
 
             await this.TestSendAndReceiveAsync(lowLevelCrypto, lowLevelEndpoint, highLevelCrypto, highLevelEndpoint);
             await this.TestSendAndReceiveAsync(highLevelCrypto, highLevelEndpoint, lowLevelCrypto, lowLevelEndpoint);
@@ -50,18 +44,18 @@ namespace IronPigeon.Tests
 
         private async Task SendMessageAsync(Mocks.CloudBlobStorageProviderMock cloudStorage, Mocks.InboxHttpHandlerMock inboxMock, CryptoSettings senderCrypto, OwnEndpoint senderEndpoint, Endpoint receiverEndpoint)
         {
-            Requires.NotNull(cloudStorage, "cloudStorage");
-            Requires.NotNull(senderCrypto, "senderCrypto");
-            Requires.NotNull(senderEndpoint, "senderEndpoint");
-            Requires.NotNull(receiverEndpoint, "receiverEndpoint");
+            Requires.NotNull(cloudStorage, nameof(cloudStorage));
+            Requires.NotNull(senderCrypto, nameof(senderCrypto));
+            Requires.NotNull(senderEndpoint, nameof(senderEndpoint));
+            Requires.NotNull(receiverEndpoint, nameof(receiverEndpoint));
 
-            var httpHandler = new Mocks.HttpMessageHandlerMock();
+            using var httpHandler = new Mocks.HttpMessageHandlerMock();
 
             cloudStorage.AddHttpHandler(httpHandler);
 
             inboxMock.Register(httpHandler);
 
-            var sentMessage = Valid.Message;
+            Payload? sentMessage = Valid.Message;
 
             var channel = new Channel()
             {
@@ -77,11 +71,11 @@ namespace IronPigeon.Tests
 
         private async Task ReceiveMessageAsync(Mocks.CloudBlobStorageProviderMock cloudStorage, Mocks.InboxHttpHandlerMock inboxMock, CryptoSettings receiverCrypto, OwnEndpoint receiverEndpoint)
         {
-            Requires.NotNull(cloudStorage, "cloudStorage");
-            Requires.NotNull(receiverCrypto, "receiverCrypto");
-            Requires.NotNull(receiverEndpoint, "receiverEndpoint");
+            Requires.NotNull(cloudStorage, nameof(cloudStorage));
+            Requires.NotNull(receiverCrypto, nameof(receiverCrypto));
+            Requires.NotNull(receiverEndpoint, nameof(receiverEndpoint));
 
-            var httpHandler = new Mocks.HttpMessageHandlerMock();
+            using var httpHandler = new Mocks.HttpMessageHandlerMock();
 
             cloudStorage.AddHttpHandler(httpHandler);
             inboxMock.Register(httpHandler);
@@ -96,7 +90,7 @@ namespace IronPigeon.Tests
                 Logger = this.logger,
             };
 
-            var messages = await channel.ReceiveAsync();
+            IReadOnlyList<Channel.PayloadReceipt>? messages = await channel.ReceiveAsync();
             Assert.Equal(1, messages.Count);
             Assert.Equal(Valid.Message, messages[0].Payload);
         }

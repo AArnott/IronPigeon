@@ -29,7 +29,7 @@ namespace WpfChatroom
     using Microsoft.Win32;
 
     /// <summary>
-    /// Interaction logic for MainWindow.xaml
+    /// Interaction logic for MainWindow.xaml.
     /// </summary>
     public partial class MainWindow : Window
     {
@@ -90,7 +90,7 @@ namespace WpfChatroom
         /// <summary>
         /// Gets or sets the channel.
         /// </summary>
-        public Channel Channel { get; set; }
+        public Channel? Channel { get; set; }
 
         /// <summary>
         /// Gets or sets the postal service.
@@ -103,17 +103,17 @@ namespace WpfChatroom
             this.CreateNewEndpoint.Cursor = Cursors.AppStarting;
             try
             {
-                var cts = new CancellationTokenSource();
-                var endpointTask = this.OwnEndpointServices.CreateAsync(cts.Token);
+                using var cts = new CancellationTokenSource();
+                Task<OwnEndpoint>? endpointTask = this.OwnEndpointServices.CreateAsync(cts.Token);
                 var dialog = new SaveFileDialog();
                 bool? result = dialog.ShowDialog(this);
                 if (result.HasValue && result.Value)
                 {
                     Uri addressBookEntry = await this.OwnEndpointServices.PublishAddressBookEntryAsync(await endpointTask, cts.Token);
                     await this.SetEndpointAsync(await endpointTask, addressBookEntry, cts.Token);
-                    using (var stream = dialog.OpenFile())
+                    using (Stream? stream = dialog.OpenFile())
                     {
-                        var writer = new BinaryWriter(stream, Encoding.UTF8);
+                        using var writer = new BinaryWriter(stream, Encoding.UTF8);
                         writer.SerializeDataContract(addressBookEntry);
                         writer.Flush();
                         await this.Channel.Endpoint.SaveAsync(stream, cts.Token);
@@ -141,10 +141,10 @@ namespace WpfChatroom
                 bool? result = dialog.ShowDialog(this);
                 if (result.HasValue && result.Value)
                 {
-                    using (var fileStream = dialog.OpenFile())
+                    using (Stream? fileStream = dialog.OpenFile())
                     {
-                        var reader = new BinaryReader(fileStream, Encoding.UTF8);
-                        var addressBookEntry = reader.DeserializeDataContract<Uri>();
+                        using var reader = new BinaryReader(fileStream, Encoding.UTF8);
+                        Uri? addressBookEntry = reader.DeserializeDataContract<Uri>();
                         await this.SetEndpointAsync(await OwnEndpoint.OpenAsync(fileStream), addressBookEntry);
                     }
                 }
@@ -158,17 +158,17 @@ namespace WpfChatroom
 
         private void OpenChatroom_OnClick(object sender, RoutedEventArgs e)
         {
-            var chatroomWindow = this.container.Resolve<ChatroomWindow>();
+            ChatroomWindow? chatroomWindow = this.container.Resolve<ChatroomWindow>();
             chatroomWindow.Show();
         }
 
         private async void ChatWithAuthor_OnClick(object sender, RoutedEventArgs e)
         {
-            var chatroomWindow = this.container.Resolve<ChatroomWindow>();
+            ChatroomWindow? chatroomWindow = this.container.Resolve<ChatroomWindow>();
             chatroomWindow.Show();
 
             var addressBook = new DirectEntryAddressBook(new HttpClient());
-            var endpoint = await addressBook.LookupAsync("http://tinyurl.com/omhxu6l#-Rrs7LRrCE3bV8x58j1l4JUzAT3P2obKia73k3IFG9k");
+            Endpoint? endpoint = await addressBook.LookupAsync("http://tinyurl.com/omhxu6l#-Rrs7LRrCE3bV8x58j1l4JUzAT3P2obKia73k3IFG9k");
             chatroomWindow.AddMember("App author", endpoint);
         }
 
@@ -178,7 +178,7 @@ namespace WpfChatroom
             this.PublicEndpointUrlTextBlock.Text = addressBookEntry.AbsoluteUri;
             this.OpenChatroom.IsEnabled = true;
             this.ChatWithAuthor.IsEnabled = true;
-            return Task.FromResult<object>(null);
+            return Task.CompletedTask;
         }
 
         private void PublicEndpointUrlTextBlock_OnMouseLeftButtonDown(object sender, MouseButtonEventArgs e)

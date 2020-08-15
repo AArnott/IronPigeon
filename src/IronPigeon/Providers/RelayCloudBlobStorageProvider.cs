@@ -14,7 +14,7 @@ namespace IronPigeon.Providers
     using System.Threading;
     using System.Threading.Tasks;
     using IronPigeon.Relay;
-    using Validation;
+    using Microsoft;
 
     /// <summary>
     /// A blob storage provider that stores blobs to the message relay service via its well-known blob API.
@@ -43,32 +43,32 @@ namespace IronPigeon.Providers
         /// <param name="postUrl">The URL to post blobs to.</param>
         public RelayCloudBlobStorageProvider(Uri postUrl)
         {
-            Requires.NotNull(postUrl, "postUrl");
+            Requires.NotNull(postUrl, nameof(postUrl));
             this.BlobPostUrl = postUrl;
         }
 
         /// <summary>
         /// Gets or sets the URL to post blobs to.
         /// </summary>
-        public Uri BlobPostUrl { get; set; }
+        public Uri? BlobPostUrl { get; set; }
 
         /// <summary>
         /// Gets or sets the base URL (without the trailing /create) of the inbox service.
         /// </summary>
-        public Uri InboxServiceUrl { get; set; }
+        public Uri? InboxServiceUrl { get; set; }
 
         /// <summary>
         /// Gets or sets the HTTP client to use for outbound HTTP requests.
         /// </summary>
-        public HttpClient HttpClient { get; set; }
+        public HttpClient? HttpClient { get; set; }
 
         /// <inheritdoc/>
-        public async Task<Uri> UploadMessageAsync(Stream content, DateTime expirationUtc, string contentType = null, string contentEncoding = null, IProgress<int> bytesCopiedProgress = null, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<Uri> UploadMessageAsync(Stream content, DateTime expirationUtc, string? contentType = null, string? contentEncoding = null, IProgress<int>? bytesCopiedProgress = null, CancellationToken cancellationToken = default(CancellationToken))
         {
             Requires.NotNull(content, nameof(content));
-            Verify.Operation(this.HttpClient != null, $"{nameof(this.HttpClient)} must be set first.");
+            Verify.Operation(this.HttpClient != null, "{0} must be set first.", nameof(this.HttpClient));
 
-            var httpContent = new StreamContent(content.ReadStreamWithProgress(bytesCopiedProgress));
+            using var httpContent = new StreamContent(content.ReadStreamWithProgress(bytesCopiedProgress));
             if (content.CanSeek)
             {
                 httpContent.Headers.ContentLength = content.Length;
@@ -85,7 +85,7 @@ namespace IronPigeon.Providers
             }
 
             int lifetime = expirationUtc == DateTime.MaxValue ? int.MaxValue : (int)(expirationUtc - DateTime.UtcNow).TotalMinutes;
-            var response = await this.HttpClient.PostAsync(this.BlobPostUrl.AbsoluteUri + "?lifetimeInMinutes=" + lifetime, httpContent).ConfigureAwait(false);
+            HttpResponseMessage? response = await this.HttpClient.PostAsync(this.BlobPostUrl.AbsoluteUri + "?lifetimeInMinutes=" + lifetime, httpContent).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
 
             var serializer = new DataContractJsonSerializer(typeof(string));
@@ -107,10 +107,10 @@ namespace IronPigeon.Providers
 
             var registerUrl = new Uri(this.InboxServiceUrl, "create");
 
-            var responseMessage =
+            HttpResponseMessage? responseMessage =
                 await this.HttpClient.PostAsync(registerUrl, null, cancellationToken).ConfigureAwait(false);
             responseMessage.EnsureSuccessStatusCode();
-            using (var responseStream = await responseMessage.Content.ReadAsStreamAsync().ConfigureAwait(false))
+            using (Stream? responseStream = await responseMessage.Content.ReadAsStreamAsync().ConfigureAwait(false))
             {
                 var deserializer = new DataContractJsonSerializer(typeof(InboxCreationResponse));
                 var creationResponse = (InboxCreationResponse)deserializer.ReadObject(responseStream);

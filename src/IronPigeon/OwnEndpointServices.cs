@@ -4,17 +4,14 @@
 namespace IronPigeon
 {
     using System;
-    using System.Collections.Generic;
     using System.IO;
-    using System.Linq;
     using System.Net.Http;
-    using System.Runtime.Serialization.Json;
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
     using IronPigeon.Relay;
+    using Microsoft;
     using PCLCrypto;
-    using Validation;
     using TaskEx = System.Threading.Tasks.Task;
 
     /// <summary>
@@ -55,22 +52,22 @@ namespace IronPigeon
         /// <summary>
         /// Gets or sets the channel.
         /// </summary>
-        public Channel Channel { get; set; }
+        public Channel? Channel { get; set; }
 
         /// <summary>
         /// Gets or sets the cloud blob storage provider.
         /// </summary>
-        public ICloudBlobStorageProvider CloudBlobStorage { get; set; }
+        public ICloudBlobStorageProvider? CloudBlobStorage { get; set; }
 
         /// <summary>
         /// Gets or sets the HTTP client.
         /// </summary>
-        public HttpClient HttpClient { get; set; }
+        public HttpClient? HttpClient { get; set; }
 
         /// <summary>
         /// Gets or sets the service that creates new inboxes on a message relay.
         /// </summary>
-        public IEndpointInboxFactory EndpointInboxFactory { get; set; }
+        public IEndpointInboxFactory? EndpointInboxFactory { get; set; }
 
         /// <summary>
         /// Generates a new receiving endpoint.
@@ -85,10 +82,10 @@ namespace IronPigeon
         public async Task<OwnEndpoint> CreateAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
             // Create new key pairs.
-            var endpoint = await TaskEx.Run(() => this.CreateEndpointWithKeys(cancellationToken), cancellationToken).ConfigureAwait(false);
+            OwnEndpoint? endpoint = await TaskEx.Run(() => this.CreateEndpointWithKeys(cancellationToken), cancellationToken).ConfigureAwait(false);
 
             // Set up the inbox on a message relay.
-            var inboxResponse = await this.EndpointInboxFactory.CreateInboxAsync(cancellationToken).ConfigureAwait(false);
+            InboxCreationResponse? inboxResponse = await this.EndpointInboxFactory.CreateInboxAsync(cancellationToken).ConfigureAwait(false);
             endpoint.PublicEndpoint.MessageReceivingEndpoint = new Uri(inboxResponse.MessageReceivingEndpoint, UriKind.Absolute);
             endpoint.InboxOwnerCode = inboxResponse.InboxOwnerCode;
 
@@ -104,13 +101,13 @@ namespace IronPigeon
         /// <returns>A task whose result is the absolute URI to the address book entry.</returns>
         public async Task<Uri> PublishAddressBookEntryAsync(OwnEndpoint endpoint, CancellationToken cancellationToken = default(CancellationToken))
         {
-            Requires.NotNull(endpoint, "endpoint");
+            Requires.NotNull(endpoint, nameof(endpoint));
 
-            var abe = endpoint.CreateAddressBookEntry(this.CryptoProvider);
-            var abeWriter = new StringWriter();
+            AddressBookEntry? abe = endpoint.CreateAddressBookEntry(this.CryptoProvider);
+            using var abeWriter = new StringWriter();
             await Utilities.SerializeDataContractAsBase64Async(abeWriter, abe).ConfigureAwait(false);
-            var ms = new MemoryStream(Encoding.UTF8.GetBytes(abeWriter.ToString()));
-            var location = await this.CloudBlobStorage.UploadMessageAsync(ms, DateTime.MaxValue, AddressBookEntry.ContentType, cancellationToken: cancellationToken).ConfigureAwait(false);
+            using var ms = new MemoryStream(Encoding.UTF8.GetBytes(abeWriter.ToString()));
+            Uri? location = await this.CloudBlobStorage.UploadMessageAsync(ms, DateTime.MaxValue, AddressBookEntry.ContentType, cancellationToken: cancellationToken).ConfigureAwait(false);
 
             var fullLocationWithFragment = new Uri(
                 location,
@@ -132,9 +129,9 @@ namespace IronPigeon
         private OwnEndpoint CreateEndpointWithKeys(CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            var encryptionKey = CryptoSettings.EncryptionAlgorithm.CreateKeyPair(this.CryptoProvider.AsymmetricKeySize);
+            ICryptographicKey? encryptionKey = CryptoSettings.EncryptionAlgorithm.CreateKeyPair(this.CryptoProvider.AsymmetricKeySize);
             cancellationToken.ThrowIfCancellationRequested();
-            var signingKey = CryptoSettings.SigningAlgorithm.CreateKeyPair(this.CryptoProvider.AsymmetricKeySize);
+            ICryptographicKey? signingKey = CryptoSettings.SigningAlgorithm.CreateKeyPair(this.CryptoProvider.AsymmetricKeySize);
 
             var ownContact = new OwnEndpoint(signingKey, encryptionKey);
             return ownContact;

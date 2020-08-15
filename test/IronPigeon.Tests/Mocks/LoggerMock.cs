@@ -26,7 +26,7 @@ namespace IronPigeon.Tests.Mocks
 
         internal IReadOnlyList<string> Messages => this.messages;
 
-        public void WriteLine(string unformattedMessage, byte[] buffer)
+        public void WriteLine(string unformattedMessage, byte[]? buffer)
         {
             string message = string.Format(CultureInfo.CurrentCulture, "{0}: {1}", unformattedMessage, BitConverter.ToString(buffer).Replace("-", string.Empty).ToLowerInvariant());
 

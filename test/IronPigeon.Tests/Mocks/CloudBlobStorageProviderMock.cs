@@ -11,7 +11,7 @@ namespace IronPigeon.Tests.Mocks
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
-    using Validation;
+    using Microsoft;
     using Xunit;
 
     internal class CloudBlobStorageProviderMock : ICloudBlobStorageProvider
@@ -29,7 +29,7 @@ namespace IronPigeon.Tests.Mocks
             get { return this.blobs; }
         }
 
-        public async Task<Uri> UploadMessageAsync(Stream encryptedMessageContent, DateTime expiration, string contentType, string contentEncoding, IProgress<int> bytesCopiedProgress, CancellationToken cancellationToken)
+        public async Task<Uri> UploadMessageAsync(Stream encryptedMessageContent, DateTime expiration, string? contentType, string? contentEncoding, IProgress<int>? bytesCopiedProgress, CancellationToken cancellationToken)
         {
             Assert.NotEqual(0, encryptedMessageContent.Length);
             Assert.Equal(0, encryptedMessageContent.Position);
@@ -46,19 +46,18 @@ namespace IronPigeon.Tests.Mocks
 
         internal void AddHttpHandler(HttpMessageHandlerMock httpMock)
         {
-            Requires.NotNull(httpMock, "httpMock");
+            Requires.NotNull(httpMock, nameof(httpMock));
             httpMock.RegisterHandler(this.HandleRequest);
         }
 
-        private Task<HttpResponseMessage> HandleRequest(HttpRequestMessage request)
+        private Task<HttpResponseMessage?> HandleRequest(HttpRequestMessage request)
         {
-            byte[] buffer;
-            if (this.blobs.TryGetValue(request.RequestUri, out buffer))
+            if (this.blobs.TryGetValue(request.RequestUri, out byte[]? buffer))
             {
-                return Task.FromResult(new HttpResponseMessage() { Content = new StreamContent(new MemoryStream(buffer)) });
+                return Task.FromResult<HttpResponseMessage?>(new HttpResponseMessage() { Content = new StreamContent(new MemoryStream(buffer)) });
             }
 
-            return Task.FromResult<HttpResponseMessage>(null);
+            return Task.FromResult<HttpResponseMessage?>(null);
         }
     }
 }

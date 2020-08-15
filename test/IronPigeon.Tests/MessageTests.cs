@@ -15,8 +15,8 @@ namespace IronPigeon.Tests
         [Fact]
         public void CtorInvalidArgs()
         {
-            Assert.Throws<ArgumentNullException>(() => new Payload(null, Valid.ContentType));
-            Assert.Throws<ArgumentNullException>(() => new Payload(Valid.MessageContent, null));
+            Assert.Throws<ArgumentNullException>(() => new Payload(null!, Valid.ContentType));
+            Assert.Throws<ArgumentNullException>(() => new Payload(Valid.MessageContent, null!));
             Assert.Throws<ArgumentException>(() => new Payload(Valid.MessageContent, string.Empty));
         }
 

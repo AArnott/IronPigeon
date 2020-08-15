@@ -8,18 +8,16 @@ namespace ConsoleChat
     using System.Configuration;
     using System.IO;
     using System.Linq;
-    using System.Net.Http;
     using System.Text;
     using System.Threading.Tasks;
     using System.Windows.Forms;
     using Autofac;
     using IronPigeon;
     using IronPigeon.Providers;
-    using Microsoft.WindowsAzure;
+    using Microsoft;
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Blob;
     using Microsoft.WindowsAzure.StorageClient;
-    using Validation;
 
     /// <summary>
     /// Simple console app that demonstrates the IronPigeon protocol in a live chat program.
@@ -39,12 +37,12 @@ namespace ConsoleChat
         /// <summary>
         /// Gets or sets the channel.
         /// </summary>
-        public Channel Channel { get; set; }
+        public Channel? Channel { get; set; }
 
         /// <summary>
         /// Gets or sets the message relay service.
         /// </summary>
-        public RelayCloudBlobStorageProvider MessageRelayService { get; set; }
+        public RelayCloudBlobStorageProvider? MessageRelayService { get; set; }
 
         /// <summary>
         /// Gets the crypto provider.
@@ -57,14 +55,14 @@ namespace ConsoleChat
         /// <summary>
         /// Gets or sets the own endpoint services.
         /// </summary>
-        public OwnEndpointServices OwnEndpointServices { get; set; }
+        public OwnEndpointServices? OwnEndpointServices { get; set; }
 
         /// <summary>
-        /// Entrypoint to the console application
+        /// Entrypoint to the console application.
         /// </summary>
         /// <param name="args">The arguments passed into the console app.</param>
         [STAThread]
-        private static void Main(string[] args)
+        private static async Task Main(string[] args)
         {
             var builder = new ContainerBuilder();
             builder.RegisterTypes(
@@ -79,9 +77,9 @@ namespace ConsoleChat
                 .SingleInstance()
                 .PropertiesAutowired();
             builder.Register(ctxt => ctxt.Resolve<HttpClientWrapper>().Client);
-            var container = builder.Build();
-            var program = container.Resolve<Program>();
-            program.DoAsync().GetAwaiter().GetResult();
+            IContainer? container = builder.Build();
+            Program? program = container.Resolve<Program>();
+            await program.DoAsync();
         }
 
         /// <summary>
@@ -91,28 +89,28 @@ namespace ConsoleChat
         /// <returns>A task representing the asynchronous operation.</returns>
         private static async Task PurgeAllAsync(CloudStorageAccount azureAccount)
         {
-            Requires.NotNull(azureAccount, "azureAccount");
+            Requires.NotNull(azureAccount, nameof(azureAccount));
 
-            var blobClient = azureAccount.CreateCloudBlobClient();
-            foreach (var container in blobClient.ListContainers())
+            CloudBlobClient? blobClient = azureAccount.CreateCloudBlobClient();
+            foreach (CloudBlobContainer? container in blobClient.ListContainers())
             {
                 if (container.Name != "wad-control-container")
                 {
                     Console.WriteLine("\nContainer: {0}", container.Name);
                     if (container.Name.StartsWith("unittests"))
                     {
-                        container.Delete();
+                        await container.DeleteAsync();
                     }
                     else
                     {
-                        var blobs = await container.ListBlobsSegmentedAsync(
+                        System.Collections.ObjectModel.ReadOnlyCollection<IListBlobItem>? blobs = await container.ListBlobsSegmentedAsync(
                             container.Name,
                             useFlatBlobListing: true,
                             pageSize: 50,
                             details: BlobListingDetails.Metadata,
                             options: new BlobRequestOptions(),
                             operationContext: null);
-                        foreach (var blob in blobs.Cast<ICloudBlob>())
+                        foreach (ICloudBlob? blob in blobs.Cast<ICloudBlob>())
                         {
                             Console.WriteLine("\tBlob: {0} {1}", blob.Uri, blob.Metadata["DeleteAfter"]);
                         }
@@ -127,11 +125,11 @@ namespace ConsoleChat
         /// Ensures that the Azure blob container and table are created in the Azure account.
         /// </summary>
         /// <param name="azureAccount">The Azure account in use.</param>
-        /// <param name="blobStorage">The blob storage </param>
+        /// <param name="blobStorage">The blob storage.</param>
         /// <returns>A task representing the asynchronous operation.</returns>
         private static async Task InitializeLocalCloudAsync(CloudStorageAccount azureAccount, AzureBlobStorage blobStorage)
         {
-            var tableStorage = azureAccount.CreateCloudTableClient();
+            Microsoft.WindowsAzure.Storage.Table.CloudTableClient? tableStorage = azureAccount.CreateCloudTableClient();
             await Task.WhenAll(
                 tableStorage.GetTableReference(AzureTableStorageName).CreateIfNotExistsAsync(),
                 blobStorage.CreateContainerIfNotExistAsync());
@@ -153,7 +151,7 @@ namespace ConsoleChat
                 return;
             }
 
-            var shareableAddress = await this.OwnEndpointServices.PublishAddressBookEntryAsync(this.Channel.Endpoint);
+            Uri? shareableAddress = await this.OwnEndpointServices.PublishAddressBookEntryAsync(this.Channel.Endpoint);
             Console.WriteLine("Public receiving endpoint: {0}", shareableAddress.AbsoluteUri);
 
             Endpoint friend = await this.GetFriendEndpointAsync(this.Channel.Endpoint.PublicEndpoint);
@@ -178,7 +176,7 @@ namespace ConsoleChat
                 }
 
                 var addressBook = new DirectEntryAddressBook(new System.Net.Http.HttpClient());
-                var endpoint = await addressBook.LookupAsync(url);
+                Endpoint? endpoint = await addressBook.LookupAsync(url);
                 if (endpoint != null)
                 {
                     return endpoint;
@@ -196,29 +194,31 @@ namespace ConsoleChat
         /// Creates a new local endpoint to identify the user, or opens a previously created one.
         /// </summary>
         /// <returns>A task whose result is the local user's own endpoint.</returns>
-        private async Task<OwnEndpoint> CreateOrOpenEndpointAsync()
+        private async Task<OwnEndpoint?> CreateOrOpenEndpointAsync()
         {
-            OwnEndpoint result;
+            OwnEndpoint? result;
             switch (MessageBox.Show("Do you have an existing endpoint you want to open?", "Endpoint selection", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question))
             {
                 case DialogResult.Yes:
-                    var openFile = new OpenFileDialog();
-                    if (openFile.ShowDialog() == DialogResult.Cancel)
+                    using (var openFile = new OpenFileDialog())
                     {
-                        result = null;
-                        break;
-                    }
+                        if (openFile.ShowDialog() == DialogResult.Cancel)
+                        {
+                            result = null;
+                            break;
+                        }
 
-                    using (var fileStream = openFile.OpenFile())
-                    {
-                        result = await OwnEndpoint.OpenAsync(fileStream);
+                        using (Stream? fileStream = openFile.OpenFile())
+                        {
+                            result = await OwnEndpoint.OpenAsync(fileStream);
+                        }
                     }
 
                     break;
                 case DialogResult.No:
                     result = await this.OwnEndpointServices.CreateAsync();
                     string privateFilePath = Path.GetTempFileName();
-                    using (var stream = File.OpenWrite(privateFilePath))
+                    using (FileStream? stream = File.OpenWrite(privateFilePath))
                     {
                         await result.SaveAsync(stream);
                     }
@@ -256,8 +256,8 @@ namespace ConsoleChat
                 }
 
                 Console.WriteLine("Awaiting friend's reply...");
-                var incoming = await this.Channel.ReceiveAsync(longPoll: true);
-                foreach (var payloadReceipt in incoming)
+                IReadOnlyList<Channel.PayloadReceipt>? incoming = await this.Channel.ReceiveAsync(longPoll: true);
+                foreach (Channel.PayloadReceipt? payloadReceipt in incoming)
                 {
                     var message = Encoding.UTF8.GetString(payloadReceipt.Payload.Content);
                     Console.WriteLine("< {0}", message);

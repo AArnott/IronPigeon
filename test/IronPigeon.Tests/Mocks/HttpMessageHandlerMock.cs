@@ -9,7 +9,7 @@ namespace IronPigeon.Tests.Mocks
     using System.Net.Http;
     using System.Text;
     using System.Threading.Tasks;
-    using Validation;
+    using Microsoft;
 
     internal class HttpMessageHandlerMock : HttpMessageHandler
     {
@@ -26,15 +26,15 @@ namespace IronPigeon.Tests.Mocks
 
         internal void RegisterHandler(Func<HttpRequestMessage, Task<HttpResponseMessage>> handler)
         {
-            Requires.NotNull(handler, "handler");
+            Requires.NotNull(handler, nameof(handler));
             this.handlers.Add(handler);
         }
 
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, System.Threading.CancellationToken cancellationToken)
         {
-            foreach (var handler in this.handlers)
+            foreach (Func<HttpRequestMessage, Task<HttpResponseMessage>>? handler in this.handlers)
             {
-                var result = await handler(request);
+                HttpResponseMessage? result = await handler(request);
                 if (result != null)
                 {
                     return result;

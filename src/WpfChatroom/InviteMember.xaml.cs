@@ -17,10 +17,10 @@ namespace WpfChatroom
     using System.Windows.Media.Imaging;
     using System.Windows.Shapes;
 
-    using Validation;
+    using Microsoft;
 
     /// <summary>
-    /// Interaction logic for InviteMember.xaml
+    /// Interaction logic for InviteMember.xaml.
     /// </summary>
     public partial class InviteMember : Window
     {
@@ -32,7 +32,7 @@ namespace WpfChatroom
         /// <param name="chatroom">The chatroom.</param>
         public InviteMember(ChatroomWindow chatroom)
         {
-            Requires.NotNull(chatroom, "chatroom");
+            Requires.NotNull(chatroom, nameof(chatroom));
 
             this.chatroom = chatroom;
             this.InitializeComponent();

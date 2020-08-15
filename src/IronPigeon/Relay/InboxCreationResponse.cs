@@ -23,12 +23,12 @@ namespace IronPigeon.Relay
         /// The message receiving endpoint.
         /// </value>
         [DataMember]
-        public string MessageReceivingEndpoint { get; set; }
+        public string? MessageReceivingEndpoint { get; set; }
 
         /// <summary>
         /// Gets or sets the base64 representation of a secret meant only for the owner of the inbox.
         /// </summary>
         [DataMember]
-        public string InboxOwnerCode { get; set; }
+        public string? InboxOwnerCode { get; set; }
     }
 }

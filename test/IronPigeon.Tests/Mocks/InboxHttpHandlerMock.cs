@@ -5,6 +5,7 @@ namespace IronPigeon.Tests.Mocks
 {
     using System;
     using System.Collections.Generic;
+    using System.Globalization;
     using System.IO;
     using System.Linq;
     using System.Net.Http;
@@ -33,14 +34,14 @@ namespace IronPigeon.Tests.Mocks
             httpMock.RegisterHandler(this.HttpHandler);
         }
 
-        private async Task<HttpResponseMessage> HttpHandler(HttpRequestMessage request)
+        private async Task<HttpResponseMessage?> HttpHandler(HttpRequestMessage request)
         {
             if (request.Method == HttpMethod.Post)
             {
-                var recipient = this.recipients.Keys.FirstOrDefault(r => r.MessageReceivingEndpoint.AbsolutePath == request.RequestUri.AbsolutePath);
+                Endpoint? recipient = this.recipients.Keys.FirstOrDefault(r => r.MessageReceivingEndpoint.AbsolutePath == request.RequestUri.AbsolutePath);
                 if (recipient != null)
                 {
-                    var inbox = this.recipients[recipient];
+                    List<Tuple<DateTime, byte[]>>? inbox = this.recipients[recipient];
                     var buffer = await request.Content.ReadAsByteArrayAsync();
                     inbox.Add(Tuple.Create(DateTime.UtcNow, buffer));
                     return new HttpResponseMessage();
@@ -48,10 +49,10 @@ namespace IronPigeon.Tests.Mocks
             }
             else if (request.Method == HttpMethod.Get)
             {
-                var recipient = this.recipients.Keys.FirstOrDefault(r => r.MessageReceivingEndpoint == request.RequestUri);
+                Endpoint? recipient = this.recipients.Keys.FirstOrDefault(r => r.MessageReceivingEndpoint == request.RequestUri);
                 if (recipient != null)
                 {
-                    var inbox = this.recipients[recipient];
+                    List<Tuple<DateTime, byte[]>>? inbox = this.recipients[recipient];
                     var list = new IncomingList();
                     string locationBase = recipient.MessageReceivingEndpoint.AbsoluteUri + "/";
                     list.Items = new List<IncomingList.IncomingItem>();
@@ -67,11 +68,11 @@ namespace IronPigeon.Tests.Mocks
                     return new HttpResponseMessage { Content = new StreamContent(contentStream) };
                 }
 
-                recipient = this.recipients.Keys.FirstOrDefault(r => request.RequestUri.AbsolutePath.StartsWith(r.MessageReceivingEndpoint.AbsolutePath + "/"));
+                recipient = this.recipients.Keys.FirstOrDefault(r => request.RequestUri.AbsolutePath.StartsWith(r.MessageReceivingEndpoint.AbsolutePath + "/", StringComparison.Ordinal));
                 if (recipient != null)
                 {
-                    var messageIndex = int.Parse(request.RequestUri.Segments[request.RequestUri.Segments.Length - 1]);
-                    var message = this.recipients[recipient][messageIndex];
+                    var messageIndex = int.Parse(request.RequestUri.Segments[request.RequestUri.Segments.Length - 1], CultureInfo.InvariantCulture);
+                    Tuple<DateTime, byte[]>? message = this.recipients[recipient][messageIndex];
                     byte[] messageBuffer = message.Item2;
                     return new HttpResponseMessage { Content = new StreamContent(new MemoryStream(messageBuffer)) };
                 }

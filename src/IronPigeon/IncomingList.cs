@@ -8,7 +8,7 @@ namespace IronPigeon
     using System.Linq;
     using System.Runtime.Serialization;
     using System.Text;
-    using Validation;
+    using Microsoft;
 
     /// <summary>
     /// The response from a message relay service to the query for new incoming messages.
@@ -20,7 +20,7 @@ namespace IronPigeon
         /// Gets or sets the list of incoming items.
         /// </summary>
         [DataMember]
-        public List<IncomingItem> Items { get; set; }
+        public List<IncomingItem>? Items { get; set; }
 
         /// <summary>
         /// Describes an individual incoming message.
@@ -38,7 +38,7 @@ namespace IronPigeon
             /// Gets or sets the location from which the incoming <see cref="PayloadReference"/> may be downloaded.
             /// </summary>
             [DataMember]
-            public Uri Location { get; set; }
+            public Uri? Location { get; set; }
 
             /// <summary>
             /// Gets or sets the date that this item was posted to this inbox.
@@ -56,7 +56,7 @@ namespace IronPigeon
 
                 set
                 {
-                    Requires.That(value.Kind != DateTimeKind.Local, "value", "UTC required.");
+                    Requires.Argument(value.Kind != DateTimeKind.Local, nameof(value), Strings.UTCTimeRequired);
 
                     // Convert Unspecified to UTC.
                     // For some reason this isn't required on Microsoft platforms but it is on Mono.

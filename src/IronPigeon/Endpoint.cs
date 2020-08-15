@@ -4,17 +4,8 @@
 namespace IronPigeon
 {
     using System;
-    using System.Collections.Generic;
-    using System.ComponentModel;
     using System.Diagnostics;
-    using System.Diagnostics.Contracts;
-    using System.IO;
-    using System.Linq;
     using System.Runtime.Serialization;
-    using System.Text;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using Validation;
 
     /// <summary>
     /// An entity that is capable of receiving messages via the IronPigeon protocol.
@@ -35,19 +26,19 @@ namespace IronPigeon
         /// Gets or sets the URL where notification messages to this recipient may be posted.
         /// </summary>
         [DataMember]
-        public Uri MessageReceivingEndpoint { get; set; }
+        public Uri? MessageReceivingEndpoint { get; set; }
 
         /// <summary>
         /// Gets or sets the key material for the public key this contact uses for signing messages.
         /// </summary>
         [DataMember]
-        public byte[] SigningKeyPublicMaterial { get; set; }
+        public byte[]? SigningKeyPublicMaterial { get; set; }
 
         /// <summary>
         /// Gets or sets the key material for the public key used to encrypt messages for this contact.
         /// </summary>
         [DataMember]
-        public byte[] EncryptionKeyPublicMaterial { get; set; }
+        public byte[]? EncryptionKeyPublicMaterial { get; set; }
 
         /// <summary>
         /// Gets or sets the date this endpoint was created.
@@ -70,7 +61,7 @@ namespace IronPigeon
         /// recognizable and verified idea of who sent the message.
         /// </remarks>
         [DataMember]
-        public string[] AuthorizedIdentifiers { get; set; }
+        public string[]? AuthorizedIdentifiers { get; set; }
 
         /// <summary>
         /// Checks equality between this and another instance.
@@ -102,7 +93,7 @@ namespace IronPigeon
         /// <returns>
         /// true if the current object is equal to the <paramref name="other" /> parameter; otherwise, false.
         /// </returns>
-        public bool Equals(Endpoint other)
+        public bool Equals(Endpoint? other)
         {
             if (other == null)
             {

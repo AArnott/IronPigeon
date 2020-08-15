@@ -9,7 +9,7 @@ namespace IronPigeon.Tests
     using System.Linq;
     using System.Text;
     using System.Threading.Tasks;
-    using Validation;
+    using Microsoft;
     using Xunit;
 
     public class UtilitiesTests
@@ -35,11 +35,11 @@ namespace IronPigeon.Tests
         public async Task ReadStreamWithProgress()
         {
             var updates = new List<int>();
-            var largeStream = new MemoryStream(new byte[1024 * 1024]);
+            using var largeStream = new MemoryStream(new byte[1024 * 1024]);
             var progress = new MockProgress<int>(u => updates.Add(u));
-            var progressStream = largeStream.ReadStreamWithProgress(progress);
+            Stream? progressStream = largeStream.ReadStreamWithProgress(progress);
             await progressStream.CopyToAsync(Stream.Null);
-            Assert.NotEqual(0, updates.Count);
+            Assert.NotEmpty(updates);
             for (int i = 1; i < updates.Count; i++)
             {
                 Assert.True(updates[i] >= updates[i - 1]);
@@ -54,7 +54,7 @@ namespace IronPigeon.Tests
 
             internal MockProgress(Action<T> report)
             {
-                Requires.NotNull(report, "report");
+                Requires.NotNull(report, nameof(report));
 
                 this.report = report;
             }
