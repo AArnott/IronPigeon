@@ -20,6 +20,6 @@ namespace IronPigeon
         /// <returns>
         /// A task whose result is the shortened URL.
         /// </returns>
-        Task<Uri> ShortenAsync(Uri longUrl, CancellationToken cancellationToken = default(CancellationToken));
+        Task<Uri> ShortenAsync(Uri longUrl, CancellationToken cancellationToken = default);
     }
 }

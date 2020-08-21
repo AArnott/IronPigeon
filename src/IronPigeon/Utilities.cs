@@ -247,7 +247,7 @@ namespace IronPigeon
             }
             catch (FormatException ex)
             {
-                throw new SerializationException("Failed to decode base64 string.", ex);
+                throw new SerializationException(Strings.Base64DecodingFailure, ex);
             }
 
             var ms = new MemoryStream(buffer);
@@ -341,7 +341,7 @@ namespace IronPigeon
 
             if (size < 0)
             {
-                throw new InvalidMessageException("Message corrupted.");
+                throw new InvalidMessageException(Strings.InvalidMessage);
             }
 
             byte[] buffer = new byte[size];
@@ -359,6 +359,8 @@ namespace IronPigeon
         /// <exception cref="InvalidMessageException">Thrown if the buffer length read from the stream exceeds the maximum allowable size.</exception>
         public static async Task<Stream> ReadSizeAndStreamAsync(this Stream stream, CancellationToken cancellationToken, int maxSize = 10 * 1024)
         {
+            Requires.NotNull(stream, nameof(stream));
+
             byte[] lengthBuffer = new byte[sizeof(int)];
             await stream.ReadAsync(lengthBuffer, 0, lengthBuffer.Length, cancellationToken).ConfigureAwait(false);
             int size = BitConverter.ToInt32(lengthBuffer, 0);
@@ -380,6 +382,7 @@ namespace IronPigeon
         public static async Task<Uri> ShortenExcludeFragmentAsync(this IUrlShortener shortener, Uri longUrl, CancellationToken cancellationToken = default(CancellationToken))
         {
             Requires.NotNull(shortener, nameof(shortener));
+            Requires.NotNull(longUrl, nameof(longUrl));
 
             Uri longUriWithoutFragment;
             if (longUrl.Fragment.Length == 0)
@@ -432,7 +435,9 @@ namespace IronPigeon
         /// </summary>
         /// <param name="data">The key-value pairs to concatenate and escape.</param>
         /// <returns>The URL-encoded string.</returns>
+#pragma warning disable CA1055 // Uri return values should not be strings
         public static string UrlEncode(this IEnumerable<KeyValuePair<string, string>> data)
+#pragma warning restore CA1055 // Uri return values should not be strings
         {
             Requires.NotNull(data, nameof(data));
 
@@ -463,8 +468,8 @@ namespace IronPigeon
         /// <param name="qualifyingTest">The function that tests whether a received result qualifies.  This function will not be executed concurrently and need not be thread-safe.</param>
         /// <param name="cancellationToken">The overall cancellation token.</param>
         /// <returns>A task whose result is the qualifying result, or <c>default(TOutput)</c> if no result qualified.</returns>
-        public static async Task<TOutput> FastestQualifyingResultAsync<TInput, TOutput>(IEnumerable<TInput> inputs, Func<CancellationToken, TInput, Task<TOutput>> asyncOperation, Func<TOutput, bool> qualifyingTest, CancellationToken cancellationToken = default(CancellationToken))
-            where TOutput : class?
+        public static async Task<TOutput?> FastestQualifyingResultAsync<TInput, TOutput>(IEnumerable<TInput> inputs, Func<CancellationToken, TInput, Task<TOutput>> asyncOperation, Func<TOutput, bool> qualifyingTest, CancellationToken cancellationToken = default(CancellationToken))
+            where TOutput : class
         {
             using CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             List<Task<TOutput>> tasks = inputs.Select(i => asyncOperation(cts.Token, i)).ToList();
@@ -551,7 +556,7 @@ namespace IronPigeon
             }
 
             // Rule #2: all dashes must be preceded and followed by a letter or number.
-            if (containerName.StartsWith("-") || containerName.EndsWith("-") || containerName.Contains("--"))
+            if (containerName.StartsWith("-", StringComparison.Ordinal) || containerName.EndsWith("-", StringComparison.Ordinal) || containerName.Contains("--"))
             {
                 return false;
             }

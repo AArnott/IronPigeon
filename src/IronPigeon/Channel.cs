@@ -688,6 +688,8 @@ namespace IronPigeon
         private async Task DeletePayloadReferenceAsync(Uri payloadReferenceLocation, CancellationToken cancellationToken)
         {
             Requires.NotNull(payloadReferenceLocation, nameof(payloadReferenceLocation));
+            Verify.Operation(this.HttpClient is object, Strings.PropertyMustBeSetFirst, nameof(this.HttpClient));
+            Verify.Operation(this.Endpoint?.InboxOwnerCode is object, Strings.PropertyMustBeSetFirst, nameof(this.Endpoint));
 
             var deleteEndpoint = new UriBuilder(this.Endpoint.PublicEndpoint.MessageReceivingEndpoint);
             deleteEndpoint.Query = "notification=" + Uri.EscapeDataString(payloadReferenceLocation.AbsoluteUri);

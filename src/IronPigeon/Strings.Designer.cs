@@ -70,6 +70,15 @@ namespace IronPigeon {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Failed to decode base64 string..
+        /// </summary>
+        internal static string Base64DecodingFailure {
+            get {
+                return ResourceManager.GetString("Base64DecodingFailure", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to An instance of ICryptoServices must be supplied first..
         /// </summary>
         internal static string CryptoServicesRequired {
@@ -120,6 +129,15 @@ namespace IronPigeon {
         internal static string PropertyMustBeSetFirst {
             get {
                 return ResourceManager.GetString("PropertyMustBeSetFirst", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The stream must be readable..
+        /// </summary>
+        internal static string ReadableStreamRequired {
+            get {
+                return ResourceManager.GetString("ReadableStreamRequired", resourceCulture);
             }
         }
         

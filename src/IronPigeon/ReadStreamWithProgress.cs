@@ -46,7 +46,7 @@ namespace IronPigeon
         {
             Requires.NotNull(inner, nameof(inner));
             Requires.NotNull(bytesReadProgress, nameof(bytesReadProgress));
-            Requires.Argument(inner.CanRead, "inner", "Readable stream required.");
+            Requires.Argument(inner.CanRead, "inner", Strings.ReadableStreamRequired);
 
             this.inner = inner;
             this.bytesReadProgress = bytesReadProgress;

@@ -11,7 +11,7 @@ namespace IronPigeon
     /// An entity that is capable of receiving messages via the IronPigeon protocol.
     /// </summary>
     [DataContract]
-    [DebuggerDisplay("{MessageReceivingEndpoint}")]
+    [DebuggerDisplay("{" + nameof(MessageReceivingEndpoint) + "}")]
     public class Endpoint : IEquatable<Endpoint>
     {
         /// <summary>

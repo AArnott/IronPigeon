@@ -13,9 +13,9 @@ jobs:
     displayName: Set build number
 
   - template: dotnet.yml
-  - template: expand-template.yml
 
 - job: Linux
+  condition: false
   pool:
     vmImage: Ubuntu 18.04
   steps:
@@ -23,9 +23,9 @@ jobs:
     clean: true
   - template: install-dependencies.yml
   - template: dotnet.yml
-  - template: expand-template.yml
 
 - job: macOS
+  condition: false
   pool:
     vmImage: macOS-10.15
   steps:
@@ -33,13 +33,12 @@ jobs:
     clean: true
   - template: install-dependencies.yml
   - template: dotnet.yml
-  - template: expand-template.yml
 
 - job: WrapUp
   dependsOn:
   - Windows
-  - Linux
-  - macOS
+#  - Linux
+#  - macOS
   pool:
     vmImage: Ubuntu 18.04
   condition: succeededOrFailed()

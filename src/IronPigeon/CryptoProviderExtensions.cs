@@ -62,6 +62,7 @@ namespace IronPigeon
         /// </returns>
         public static SymmetricEncryptionResult Encrypt(this CryptoSettings cryptoProvider, byte[] data, SymmetricEncryptionVariables? encryptionVariables = null)
         {
+            Requires.NotNull(cryptoProvider, nameof(cryptoProvider));
             Requires.NotNull(data, nameof(data));
 
             encryptionVariables = ThisOrNewEncryptionVariables(cryptoProvider, encryptionVariables);
@@ -83,6 +84,7 @@ namespace IronPigeon
         /// </returns>
         public static async Task<SymmetricEncryptionVariables> EncryptAsync(this CryptoSettings cryptoProvider, Stream plaintext, Stream ciphertext, SymmetricEncryptionVariables? encryptionVariables = null, CancellationToken cancellationToken = default(CancellationToken))
         {
+            Requires.NotNull(cryptoProvider, nameof(cryptoProvider));
             Requires.NotNull(plaintext, nameof(plaintext));
             Requires.NotNull(ciphertext, nameof(ciphertext));
 
@@ -90,7 +92,7 @@ namespace IronPigeon
             ICryptographicKey? key = CryptoSettings.SymmetricAlgorithm.CreateSymmetricKey(encryptionVariables.Key);
             using (ICryptoTransform? encryptor = WinRTCrypto.CryptographicEngine.CreateEncryptor(key, encryptionVariables.IV))
             {
-                var cryptoStream = new CryptoStream(ciphertext, encryptor, CryptoStreamMode.Write);
+                using var cryptoStream = new CryptoStream(ciphertext, encryptor, CryptoStreamMode.Write, leaveOpen: true);
                 await plaintext.CopyToAsync(cryptoStream, 4096, cancellationToken).ConfigureAwait(false);
                 cryptoStream.FlushFinalBlock();
             }
@@ -118,7 +120,7 @@ namespace IronPigeon
             ICryptographicKey? key = CryptoSettings.SymmetricAlgorithm.CreateSymmetricKey(encryptionVariables.Key);
             using (ICryptoTransform? decryptor = WinRTCrypto.CryptographicEngine.CreateDecryptor(key, encryptionVariables.IV))
             {
-                using var cryptoStream = new CryptoStream(plaintext, decryptor, CryptoStreamMode.Write);
+                using var cryptoStream = new CryptoStream(plaintext, decryptor, CryptoStreamMode.Write, leaveOpen: true);
                 await ciphertext.CopyToAsync(cryptoStream, 4096, cancellationToken).ConfigureAwait(false);
                 cryptoStream.FlushFinalBlock();
             }
@@ -261,7 +263,7 @@ namespace IronPigeon
         /// <returns>
         /// A valid set of encryption variables.
         /// </returns>
-        private static SymmetricEncryptionVariables ThisOrNewEncryptionVariables(CryptoSettings cryptoProvider, SymmetricEncryptionVariables encryptionVariables)
+        private static SymmetricEncryptionVariables ThisOrNewEncryptionVariables(CryptoSettings cryptoProvider, SymmetricEncryptionVariables? encryptionVariables)
         {
             if (encryptionVariables == null)
             {

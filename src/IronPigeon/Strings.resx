@@ -120,6 +120,9 @@
   <data name="AddressBookEntrySignatureDoesNotMatch" xml:space="preserve">
     <value>The signature on the address book entry is invalid.</value>
   </data>
+  <data name="Base64DecodingFailure" xml:space="preserve">
+    <value>Failed to decode base64 string.</value>
+  </data>
   <data name="CryptoServicesRequired" xml:space="preserve">
     <value>An instance of ICryptoServices must be supplied first.</value>
   </data>
@@ -137,6 +140,9 @@
   </data>
   <data name="PropertyMustBeSetFirst" xml:space="preserve">
     <value>The property {0} must be set first.</value>
+  </data>
+  <data name="ReadableStreamRequired" xml:space="preserve">
+    <value>The stream must be readable.</value>
   </data>
   <data name="UTCTimeRequired" xml:space="preserve">
     <value>The time must be given in UTC.</value>

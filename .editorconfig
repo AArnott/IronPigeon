@@ -168,5 +168,8 @@ dotnet_diagnostic.SA1130.severity = silent
 # CS8602: Dereference of a possibly null reference.
 dotnet_diagnostic.CS8602.severity = suggestion
 
+# CA1819: Properties should not return arrays
+dotnet_diagnostic.CA1819.severity = suggestion
+
 [*.sln]
 indent_style = tab
