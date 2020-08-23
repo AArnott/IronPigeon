@@ -3,6 +3,7 @@
 
 namespace IronPigeon
 {
+    using System;
     using System.IO;
     using System.Runtime.Serialization;
     using System.Threading;
@@ -19,7 +20,7 @@ namespace IronPigeon
         /// <summary>
         /// The signing key material.
         /// </summary>
-        private byte[]? signingKeyMaterial;
+        private byte[] signingKeyMaterial;
 
         /// <summary>
         /// The signing key.
@@ -29,7 +30,7 @@ namespace IronPigeon
         /// <summary>
         /// The encryption key material.
         /// </summary>
-        private byte[]? encryptionKeyMaterial;
+        private byte[] encryptionKeyMaterial;
 
         /// <summary>
         /// The encryption key.
@@ -37,12 +38,27 @@ namespace IronPigeon
         private ICryptographicKey? encryptionKey;
 
         /// <summary>
+        /// Backing field for the <see cref="PublicEndpoint"/> property.
+        /// </summary>
+        private Endpoint publicEndpoint;
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="OwnEndpoint"/> class.
         /// </summary>
-        public OwnEndpoint()
+        /// <param name="privateKeyFormat">The private key format used.</param>
+        /// <param name="signingKeyPrivateMaterial">The key material for the private key this personality uses for signing messages.</param>
+        /// <param name="encryptionKeyPrivateMaterial">The key material for the private key used to decrypt messages.</param>
+        /// <param name="publicEndpoint">The public information associated with this endpoint.</param>
+        /// <param name="inboxOwnerCode">The secret that proves ownership of the inbox at the <see cref="Endpoint.MessageReceivingEndpoint"/>.</param>
+        public OwnEndpoint(CryptographicPrivateKeyBlobType privateKeyFormat, byte[] signingKeyPrivateMaterial, byte[] encryptionKeyPrivateMaterial, Endpoint publicEndpoint, string? inboxOwnerCode)
         {
-            // This default is required for backward compat.
-            this.PrivateKeyFormat = CryptographicPrivateKeyBlobType.Capi1PrivateKey;
+            Requires.NotNullOrEmpty(inboxOwnerCode, nameof(inboxOwnerCode));
+
+            this.PrivateKeyFormat = privateKeyFormat;
+            this.signingKeyMaterial = signingKeyPrivateMaterial ?? throw new ArgumentNullException(nameof(signingKeyPrivateMaterial));
+            this.encryptionKeyMaterial = encryptionKeyPrivateMaterial ?? throw new ArgumentNullException(nameof(encryptionKeyPrivateMaterial));
+            this.publicEndpoint = publicEndpoint ?? throw new ArgumentNullException(nameof(publicEndpoint));
+            this.InboxOwnerCode = inboxOwnerCode;
         }
 
         /// <summary>
@@ -52,12 +68,11 @@ namespace IronPigeon
         /// <param name="encryptionKey">The encryption key.</param>
         /// <param name="inboxOwnerCode">The secret that proves ownership of the inbox at the <see cref="Endpoint.MessageReceivingEndpoint" />.</param>
         public OwnEndpoint(ICryptographicKey signingKey, ICryptographicKey encryptionKey, string? inboxOwnerCode = null)
-            : this()
         {
             Requires.NotNull(signingKey, nameof(signingKey));
             Requires.NotNull(encryptionKey, nameof(encryptionKey));
 
-            this.PublicEndpoint = new Endpoint
+            this.publicEndpoint = new Endpoint
             {
                 SigningKeyPublicMaterial = signingKey.ExportPublicKey(CryptoSettings.PublicKeyFormat),
                 EncryptionKeyPublicMaterial = encryptionKey.ExportPublicKey(CryptoSettings.PublicKeyFormat),
@@ -71,56 +86,50 @@ namespace IronPigeon
 
             // Since this is a new endpoint we can choose a more modern format for the private keys.
             this.PrivateKeyFormat = CryptographicPrivateKeyBlobType.Pkcs8RawPrivateKeyInfo;
-            this.SigningKeyPrivateMaterial = signingKey.Export(this.PrivateKeyFormat);
-            this.EncryptionKeyPrivateMaterial = encryptionKey.Export(this.PrivateKeyFormat);
+            this.signingKeyMaterial = signingKey.Export(this.PrivateKeyFormat);
+            this.encryptionKeyMaterial = encryptionKey.Export(this.PrivateKeyFormat);
             this.InboxOwnerCode = inboxOwnerCode;
         }
 
         /// <summary>
-        /// Gets or sets the public information associated with this endpoint.
+        /// Gets the public information associated with this endpoint.
         /// </summary>
         [DataMember]
-        public Endpoint? PublicEndpoint { get; set; }
+        public Endpoint PublicEndpoint
+        {
+            get => this.publicEndpoint;
+        }
 
         /// <summary>
-        /// Gets or sets the private key format used.
+        /// Gets the private key format used.
         /// </summary>
+        /// <remarks>
+        /// The default is required for backward compat.
+        /// </remarks>
         [DataMember]
-        public CryptographicPrivateKeyBlobType PrivateKeyFormat { get; set; }
+        public CryptographicPrivateKeyBlobType PrivateKeyFormat { get; } = CryptographicPrivateKeyBlobType.Capi1PrivateKey;
 
         /// <summary>
-        /// Gets or sets the key material for the private key this personality uses for signing messages.
+        /// Gets the key material for the private key this personality uses for signing messages.
         /// </summary>
         [DataMember]
-        public byte[]? SigningKeyPrivateMaterial
+        public byte[] SigningKeyPrivateMaterial
         {
             get
             {
                 return this.signingKeyMaterial;
             }
-
-            set
-            {
-                this.signingKeyMaterial = value;
-                this.signingKey = null;
-            }
         }
 
         /// <summary>
-        /// Gets or sets the key material for the private key used to decrypt messages.
+        /// Gets the key material for the private key used to decrypt messages.
         /// </summary>
         [DataMember]
-        public byte[]? EncryptionKeyPrivateMaterial
+        public byte[] EncryptionKeyPrivateMaterial
         {
             get
             {
                 return this.encryptionKeyMaterial;
-            }
-
-            set
-            {
-                this.encryptionKeyMaterial = value;
-                this.encryptionKey = null;
             }
         }
 

@@ -144,8 +144,8 @@ namespace IronPigeon.Dart
             Requires.NotNull(other, nameof(other));
 
             return this.Author.Equals(other.Author)
-                && EqualityComparer<string>.Default.Equals(this.Subject, other.Subject)
-                && EqualityComparer<string>.Default.Equals(this.Body, other.Body)
+                && EqualityComparer<string?>.Default.Equals(this.Subject, other.Subject)
+                && EqualityComparer<string?>.Default.Equals(this.Body, other.Body)
                 && this.CreationDateUtc == other.CreationDateUtc;
         }
     }

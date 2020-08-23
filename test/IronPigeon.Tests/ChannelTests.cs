@@ -39,14 +39,14 @@ namespace IronPigeon.Tests
         public void CtorParameters()
         {
             var blobProvider = new Mock<ICloudBlobStorageProvider>();
-            var endpoint = new Mock<OwnEndpoint>();
+            var endpoint = Valid.ReceivingEndpoint;
             var channel = new Channel()
             {
                 CloudBlobStorage = blobProvider.Object,
-                Endpoint = endpoint.Object,
+                Endpoint = endpoint,
             };
             Assert.Same(channel.CloudBlobStorage, blobProvider.Object);
-            Assert.Same(channel.Endpoint, endpoint.Object);
+            Assert.Same(channel.Endpoint, endpoint);
         }
 
         [Fact]
