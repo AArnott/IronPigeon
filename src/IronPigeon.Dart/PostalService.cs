@@ -81,7 +81,7 @@ namespace IronPigeon.Dart
         public virtual async Task<IReadOnlyList<MessageReceipt>> ReceiveAsync(bool longPoll = false, bool purgeUnsupportedMessages = false, IProgress<MessageReceipt>? progress = null, CancellationToken cancellationToken = default(CancellationToken))
         {
             var messages = new List<MessageReceipt>();
-            IReadOnlyList<Channel.PayloadReceipt> payloads = null;
+            IReadOnlyList<Channel.PayloadReceipt>? payloads = null;
             var payloadProgress = new ProgressWithCompletion<Channel.PayloadReceipt>(
                 async payload =>
                 {

@@ -713,6 +713,8 @@ namespace IronPigeon
         /// <returns>The task whose result is the list of downloaded inbox items.</returns>
         private async Task<IReadOnlyList<IncomingList.IncomingItem>?> DownloadIncomingItemsAsync(bool longPoll, CancellationToken cancellationToken)
         {
+            Verify.Operation(this.HttpClient is object, Strings.PropertyMustBeSetFirst, nameof(this.HttpClient));
+
             var deserializer = new DataContractJsonSerializer(typeof(IncomingList));
             Uri? requestUri = this.Endpoint.PublicEndpoint.MessageReceivingEndpoint;
             HttpClient? httpClient = this.HttpClient;

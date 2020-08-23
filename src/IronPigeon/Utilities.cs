@@ -663,7 +663,7 @@ namespace IronPigeon
         /// <param name="bearerToken">The bearer token to add to the Authorization header.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>The asynchronous HTTP response.</returns>
-        internal static Task<HttpResponseMessage> GetAsync(this HttpClient httpClient, Uri location, string bearerToken, CancellationToken cancellationToken)
+        internal static async Task<HttpResponseMessage> GetAsync(this HttpClient httpClient, Uri location, string bearerToken, CancellationToken cancellationToken)
         {
             Requires.NotNull(httpClient, nameof(httpClient));
             Requires.NotNull(location, nameof(location));
@@ -680,7 +680,7 @@ namespace IronPigeon
             // the same result back.
             ApplyNoCachePolicy(request);
 
-            return httpClient.SendAsync(request, cancellationToken);
+            return await httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
@@ -691,7 +691,7 @@ namespace IronPigeon
         /// <param name="bearerToken">The bearer token to add to the Authorization header.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>The asynchronous HTTP response.</returns>
-        internal static Task<HttpResponseMessage> DeleteAsync(this HttpClient httpClient, Uri location, string bearerToken, CancellationToken cancellationToken)
+        internal static async Task<HttpResponseMessage> DeleteAsync(this HttpClient httpClient, Uri location, string bearerToken, CancellationToken cancellationToken)
         {
             Requires.NotNull(httpClient, nameof(httpClient));
             Requires.NotNull(location, nameof(location));
@@ -699,7 +699,7 @@ namespace IronPigeon
 
             using var request = new HttpRequestMessage(HttpMethod.Delete, location);
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", bearerToken);
-            return httpClient.SendAsync(request, cancellationToken);
+            return await httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>
