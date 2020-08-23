@@ -10,13 +10,11 @@ namespace IronPigeon.Tests
     using Xunit;
     using Xunit.Abstractions;
 
-    public class InteropTests
+    public class InteropTests : TestBase
     {
-        private Mocks.LoggerMock logger;
-
         public InteropTests(ITestOutputHelper logger)
+            : base(logger)
         {
-            this.logger = new Mocks.LoggerMock(logger);
         }
 
         [Fact]
@@ -63,7 +61,7 @@ namespace IronPigeon.Tests
                 CloudBlobStorage = cloudStorage,
                 CryptoServices = senderCrypto,
                 Endpoint = senderEndpoint,
-                Logger = this.logger,
+                TraceSource = this.TraceSource,
             };
 
             await channel.PostAsync(sentMessage, new[] { receiverEndpoint }, Valid.ExpirationUtc);
@@ -87,7 +85,7 @@ namespace IronPigeon.Tests
                 CloudBlobStorage = cloudStorage,
                 CryptoServices = receiverCrypto,
                 Endpoint = receiverEndpoint,
-                Logger = this.logger,
+                TraceSource = this.TraceSource,
             };
 
             IReadOnlyList<Channel.PayloadReceipt>? messages = await channel.ReceiveAsync();

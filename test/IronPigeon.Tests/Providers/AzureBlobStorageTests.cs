@@ -16,13 +16,15 @@ namespace IronPigeon.Tests.Providers
     using Azure.Storage.Blobs.Models;
     using IronPigeon.Providers;
     using Xunit;
+    using Xunit.Abstractions;
 
     public class AzureBlobStorageTests : CloudBlobStorageProviderTestBase, IAsyncLifetime
     {
         private BlobContainerClient container;
         private AzureBlobStorage provider;
 
-        public AzureBlobStorageTests()
+        public AzureBlobStorageTests(ITestOutputHelper logger)
+            : base(logger)
         {
             string testContainerName = "unittests" + Guid.NewGuid().ToString();
             this.container = new BlobContainerClient("UseDevelopmentStorage=true", testContainerName);

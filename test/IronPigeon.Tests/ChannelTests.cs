@@ -5,6 +5,7 @@ namespace IronPigeon.Tests
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.Linq;
     using System.Net.Http;
     using System.Threading.Tasks;
@@ -13,15 +14,15 @@ namespace IronPigeon.Tests
     using Xunit;
     using Xunit.Abstractions;
 
-    public class ChannelTests
+    public class ChannelTests : TestBase
     {
-        private Mocks.LoggerMock logger;
+        private TraceSource traceSource;
 
         private CryptoSettings desktopCryptoProvider;
 
         public ChannelTests(ITestOutputHelper logger)
+            : base(logger)
         {
-            this.logger = new Mocks.LoggerMock(logger);
             this.desktopCryptoProvider = TestUtilities.CreateAuthenticCryptoProvider();
         }
 
@@ -160,7 +161,7 @@ namespace IronPigeon.Tests
                 CloudBlobStorage = cloudBlobStorage,
                 CryptoServices = cryptoProvider,
                 Endpoint = sender,
-                Logger = this.logger,
+                TraceSource = this.traceSource,
             };
 
             await channel.PostAsync(Valid.Message, new[] { receiver }, Valid.ExpirationUtc);
@@ -183,7 +184,7 @@ namespace IronPigeon.Tests
                 CloudBlobStorage = cloudBlobStorage,
                 CryptoServices = cryptoProvider,
                 Endpoint = receiver,
-                Logger = this.logger,
+                TraceSource = this.traceSource,
             };
 
             var progressMessage = new TaskCompletionSource<Payload>();

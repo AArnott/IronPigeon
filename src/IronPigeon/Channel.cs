@@ -85,9 +85,9 @@ namespace IronPigeon
         public OwnEndpoint? Endpoint { get; set; }
 
         /// <summary>
-        /// Gets or sets the logger.
+        /// Gets or sets the trace source to which messages are logged.
         /// </summary>
-        public ILogger? Logger { get; set; }
+        public TraceSource? TraceSource { get; set; }
 
         /// <summary>
         /// Gets or sets the HTTP client used for outbound HTTP requests.
@@ -735,10 +735,16 @@ namespace IronPigeon
         /// <param name="buffer">The buffer.</param>
         private void Log([Localizable(false)] string caption, byte[]? buffer)
         {
-            ILogger? logger = this.Logger;
-            if (logger != null)
+            if (this.TraceSource is TraceSource traceSource)
             {
-                logger.WriteLine(caption, buffer);
+                if (buffer is object)
+                {
+                    traceSource.TraceEvent(TraceEventType.Verbose, 0, caption + ": {0}", Convert.ToBase64String(buffer));
+                }
+                else
+                {
+                    traceSource.TraceEvent(TraceEventType.Verbose, 0, caption);
+                }
             }
         }
 

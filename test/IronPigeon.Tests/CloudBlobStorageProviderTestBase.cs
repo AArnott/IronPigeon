@@ -11,9 +11,15 @@ namespace IronPigeon.Tests
     using System.Text;
     using System.Threading.Tasks;
     using Xunit;
+    using Xunit.Abstractions;
 
     public abstract class CloudBlobStorageProviderTestBase : TestBase
     {
+        protected CloudBlobStorageProviderTestBase(ITestOutputHelper logger)
+            : base(logger)
+        {
+        }
+
         protected ICloudBlobStorageProvider? Provider { get; set; }
 
         [Fact]

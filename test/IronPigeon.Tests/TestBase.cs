@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Xunit.Abstractions;
 
 namespace IronPigeon.Tests
 {
@@ -24,6 +25,20 @@ namespace IronPigeon.Tests
         /// </summary>
         protected static readonly TimeSpan ExpectedTimeout = TimeSpan.FromSeconds(2);
 
+        public TestBase(ITestOutputHelper logger)
+        {
+            this.TraceSource = new TraceSource(this.GetType().Name)
+            {
+                Listeners =
+                {
+                    new XunitTraceListener(logger),
+                },
+            };
+            this.Logger = logger;
+        }
+
+        public ITestOutputHelper Logger { get; }
+
         /// <summary>
         /// Gets or sets the source of <see cref="TimeoutToken"/> that influences
         /// when tests consider themselves to be timed out.
@@ -35,5 +50,7 @@ namespace IronPigeon.Tests
         /// per the policy set by <see cref="TimeoutTokenSource"/>.
         /// </summary>
         protected CancellationToken TimeoutToken => this.TimeoutTokenSource.Token;
+
+        protected TraceSource TraceSource { get; }
     }
 }
