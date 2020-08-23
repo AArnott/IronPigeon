@@ -25,24 +25,24 @@ namespace IronPigeon
         /// <summary>
         /// The callback for reporting number of bytes read.
         /// </summary>
-        private readonly IProgress<int> bytesReadProgress;
+        private readonly IProgress<long> bytesReadProgress;
 
         /// <summary>
         /// The number of bytes read so far.
         /// </summary>
-        private int totalBytesRead;
+        private long totalBytesRead;
 
         /// <summary>
         /// The bytes read in the last read operation.
         /// </summary>
-        private int lastBytesRead;
+        private long lastBytesRead;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ReadStreamWithProgress"/> class.
         /// </summary>
         /// <param name="inner">The stream to read from when this new stream is read from.</param>
         /// <param name="bytesReadProgress">The receiver of progress updates.</param>
-        internal ReadStreamWithProgress(Stream inner, IProgress<int> bytesReadProgress)
+        internal ReadStreamWithProgress(Stream inner, IProgress<long> bytesReadProgress)
         {
             Requires.NotNull(inner, nameof(inner));
             Requires.NotNull(bytesReadProgress, nameof(bytesReadProgress));

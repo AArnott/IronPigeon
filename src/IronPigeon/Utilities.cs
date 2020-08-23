@@ -16,8 +16,6 @@ namespace IronPigeon
     using System.Threading;
     using System.Threading.Tasks;
     using Microsoft;
-    using Microsoft.WindowsAzure.Storage.Blob;
-    using Microsoft.WindowsAzure.StorageClient;
     using Nerdbank.Streams;
     using PCLCrypto;
 
@@ -511,7 +509,7 @@ namespace IronPigeon
         /// <param name="stream">The stream to read.</param>
         /// <param name="bytesReadProgress">The progress receiver. May be <c>null</c>.</param>
         /// <returns>The progress-reporting stream.</returns>
-        public static Stream ReadStreamWithProgress(this Stream stream, IProgress<int>? bytesReadProgress)
+        public static Stream ReadStreamWithProgress(this Stream stream, IProgress<long>? bytesReadProgress)
         {
             Requires.NotNull(stream, nameof(stream));
 
@@ -576,33 +574,6 @@ namespace IronPigeon
             }
 
             return true;
-        }
-
-        /// <summary>
-        /// Creates a blob container and sets its permission to public blobs, if the container does not already exist.
-        /// </summary>
-        /// <param name="container">The container to create.</param>
-        /// <returns>
-        /// A task whose result is <c>true</c> if the container did not exist before this method;
-        ///  <c>false</c> otherwise.
-        /// </returns>
-        public static async Task<bool> CreateContainerWithPublicBlobsIfNotExistAsync(this CloudBlobContainer container)
-        {
-            Requires.NotNull(container, nameof(container));
-
-            if (await container.CreateIfNotExistAsync().ConfigureAwait(false))
-            {
-                var permissions = new BlobContainerPermissions
-                {
-                    PublicAccess = BlobContainerPublicAccessType.Blob,
-                };
-                await container.SetPermissionsAsync(permissions).ConfigureAwait(false);
-                return true;
-            }
-            else
-            {
-                return false;
-            }
         }
 
         /// <summary>

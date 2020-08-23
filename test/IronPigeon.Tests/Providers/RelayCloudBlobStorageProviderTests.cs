@@ -36,7 +36,7 @@ namespace IronPigeon.Tests.Providers
                 Assert.Equal("http://127.0.0.1:10000/devstoreaccount1/blobs/2012.08.26/22A0FLkPHlM-T5q", location.AbsoluteUri);
             }
 
-            var progress = new Progress<int>(p => { });
+            var progress = new Progress<long>(p => { });
             using (var content = new MemoryStream(Encoding.UTF8.GetBytes("Hello, World!")))
             {
                 Uri? location = this.provider.UploadMessageAsync(

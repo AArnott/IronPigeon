@@ -200,7 +200,7 @@ namespace IronPigeon
         /// <param name="bytesCopiedProgress">Progress in terms of bytes copied.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>The task representing the asynchronous operation.</returns>
-        public async Task<IReadOnlyCollection<NotificationPostedReceipt>> PostAsync(Payload message, IReadOnlyCollection<Endpoint> recipients, DateTime expiresUtc, IProgress<int>? bytesCopiedProgress = null, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<IReadOnlyCollection<NotificationPostedReceipt>> PostAsync(Payload message, IReadOnlyCollection<Endpoint> recipients, DateTime expiresUtc, IProgress<long>? bytesCopiedProgress = null, CancellationToken cancellationToken = default(CancellationToken))
         {
             Requires.NotNull(message, nameof(message));
             Requires.Argument(expiresUtc.Kind == DateTimeKind.Utc, nameof(expiresUtc), Strings.UTCTimeRequired);
@@ -265,7 +265,7 @@ namespace IronPigeon
         /// <param name="bytesCopiedProgress">Receives progress in terms of number of bytes uploaded.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>The task whose result is a reference to the uploaded payload including decryption key.</returns>
-        public virtual async Task<PayloadReference> PostPayloadAsync(Payload message, DateTime expiresUtc, IProgress<int>? bytesCopiedProgress = null, CancellationToken cancellationToken = default(CancellationToken))
+        public virtual async Task<PayloadReference> PostPayloadAsync(Payload message, DateTime expiresUtc, IProgress<long>? bytesCopiedProgress = null, CancellationToken cancellationToken = default(CancellationToken))
         {
             Requires.NotNull(message, nameof(message));
             Requires.Argument(expiresUtc.Kind == DateTimeKind.Utc, nameof(expiresUtc), Strings.UTCTimeRequired);

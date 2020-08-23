@@ -122,9 +122,9 @@ namespace IronPigeon.Tests
         [Fact]
         public void ParameterizedAlgorithms()
         {
-            using var aa = (ECDiffieHellmanCng)AsymmetricAlgorithm.Create("ECDiffieHellman");
-            string priv = aa.PublicKey.ToXmlString();
-            string pub = aa.ToXmlString(ECKeyXmlFormat.Rfc4050);
+            using var aa = ECDiffieHellman.Create();
+            var pub = aa.ExportParameters(includePrivateParameters: false);
+            var priv = aa.ExportParameters(includePrivateParameters: true);
             Console.WriteLine(priv);
             Console.WriteLine(pub);
         }

@@ -34,9 +34,9 @@ namespace IronPigeon.Tests
         [Fact]
         public async Task ReadStreamWithProgress()
         {
-            var updates = new List<int>();
+            var updates = new List<long>();
             using var largeStream = new MemoryStream(new byte[1024 * 1024]);
-            var progress = new MockProgress<int>(u => updates.Add(u));
+            var progress = new MockProgress<long>(u => updates.Add(u));
             Stream? progressStream = largeStream.ReadStreamWithProgress(progress);
             await progressStream.CopyToAsync(Stream.Null);
             Assert.NotEmpty(updates);

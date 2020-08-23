@@ -63,7 +63,7 @@ namespace IronPigeon.Providers
         public HttpClient? HttpClient { get; set; }
 
         /// <inheritdoc/>
-        public async Task<Uri> UploadMessageAsync(Stream content, DateTime expirationUtc, string? contentType = null, string? contentEncoding = null, IProgress<int>? bytesCopiedProgress = null, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<Uri> UploadMessageAsync(Stream content, DateTime expirationUtc, string? contentType = null, string? contentEncoding = null, IProgress<long>? bytesCopiedProgress = null, CancellationToken cancellationToken = default(CancellationToken))
         {
             Requires.NotNull(content, nameof(content));
             Verify.Operation(this.HttpClient != null, "{0} must be set first.", nameof(this.HttpClient));
@@ -85,7 +85,7 @@ namespace IronPigeon.Providers
             }
 
             int lifetime = expirationUtc == DateTime.MaxValue ? int.MaxValue : (int)(expirationUtc - DateTime.UtcNow).TotalMinutes;
-            HttpResponseMessage? response = await this.HttpClient.PostAsync(this.BlobPostUrl.AbsoluteUri + "?lifetimeInMinutes=" + lifetime, httpContent).ConfigureAwait(false);
+            HttpResponseMessage? response = await this.HttpClient.PostAsync(this.BlobPostUrl.AbsoluteUri + "?lifetimeInMinutes=" + lifetime, httpContent, cancellationToken).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
 
             var serializer = new DataContractJsonSerializer(typeof(string));

@@ -12,23 +12,23 @@ namespace IronPigeon.Tests
     using System.Threading.Tasks;
     using Xunit;
 
-    public abstract class CloudBlobStorageProviderTestBase
+    public abstract class CloudBlobStorageProviderTestBase : TestBase
     {
         protected ICloudBlobStorageProvider? Provider { get; set; }
 
-        [Fact(Skip = "Ignored")]
-        public void UploadMessageAsync()
+        [Fact]
+        public async Task UploadMessageAsync()
         {
-            Uri? uri = this.UploadMessageHelperAsync().Result;
+            Uri uri = await this.UploadMessageHelperAsync();
             using var client = new HttpClient();
-            var downloadedBody = client.GetByteArrayAsync(uri).Result;
+            var downloadedBody = await client.GetByteArrayAsync(uri);
             Assert.Equal(Valid.MessageContent, downloadedBody);
         }
 
         protected async Task<Uri> UploadMessageHelperAsync()
         {
             using var body = new MemoryStream(Valid.MessageContent);
-            Uri? uri = await this.Provider.UploadMessageAsync(body, Valid.ExpirationUtc);
+            Uri uri = await this.Provider.UploadMessageAsync(body, Valid.ExpirationUtc);
             return uri;
         }
     }

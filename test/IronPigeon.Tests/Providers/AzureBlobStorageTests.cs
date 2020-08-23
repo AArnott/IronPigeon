@@ -12,50 +12,50 @@ namespace IronPigeon.Tests.Providers
     using System.Net.Http;
     using System.Text;
     using System.Threading.Tasks;
+    using Azure.Storage.Blobs;
+    using Azure.Storage.Blobs.Models;
     using IronPigeon.Providers;
-    using Microsoft.WindowsAzure;
-    using Microsoft.WindowsAzure.Storage;
-    using Microsoft.WindowsAzure.Storage.Blob;
     using Xunit;
 
-    public class AzureBlobStorageTests : CloudBlobStorageProviderTestBase, IDisposable
+    public class AzureBlobStorageTests : CloudBlobStorageProviderTestBase, IAsyncLifetime
     {
-        private string testContainerName;
-        private CloudBlobContainer container;
+        private BlobContainerClient container;
         private AzureBlobStorage provider;
 
         public AzureBlobStorageTests()
         {
-            this.testContainerName = "unittests" + Guid.NewGuid().ToString();
-            CloudStorageAccount? account = CloudStorageAccount.DevelopmentStorageAccount;
-            CloudBlobClient? blobClient = account.CreateCloudBlobClient();
-            this.Provider = this.provider = new AzureBlobStorage(account, this.testContainerName);
-            this.provider.CreateContainerIfNotExistAsync().GetAwaiter().GetResult();
-            this.container = blobClient.GetContainerReference(this.testContainerName);
+            string testContainerName = "unittests" + Guid.NewGuid().ToString();
+            this.container = new BlobContainerClient("UseDevelopmentStorage=true", testContainerName);
+            this.Provider = this.provider = new AzureBlobStorage(this.container);
         }
 
-        public void Dispose()
+        public async Task InitializeAsync()
         {
-            if (this.container != null)
+            await this.provider.CreateContainerIfNotExistAsync(this.TimeoutToken);
+        }
+
+        public async Task DisposeAsync()
+        {
+            await this.container.DeleteAsync(cancellationToken: this.TimeoutToken);
+        }
+
+        [Fact]
+        public async Task CreateContainerIfNotExistAsync_SetsPublicAccessPolicy()
+        {
+            // InitializeAsync has already created the container.
+            Azure.Response<BlobContainerAccessPolicy>? accessPolicy = await this.container.GetAccessPolicyAsync(cancellationToken: this.TimeoutToken);
+            Assert.Equal(PublicAccessType.Blob, accessPolicy.Value.BlobPublicAccess);
+        }
+
+        [Fact]
+        public async Task PurgeBlobsExpiringBeforeAsync()
+        {
+            await this.UploadMessageHelperAsync();
+            await this.provider.PurgeBlobsExpiringBeforeAsync(DateTime.UtcNow.AddDays(7));
+            await foreach (BlobItem? blob in this.container.GetBlobsAsync(cancellationToken: this.TimeoutToken))
             {
-                this.container.Delete();
+                Assert.False(true, "Container not empty.");
             }
-        }
-
-        [Fact(Skip = "Ignored")]
-        public void CreateWithContainerAsync()
-        {
-            // The SetUp method already called the method, so this tests the results of it.
-            BlobContainerPermissions? permissions = this.container.GetPermissions();
-            Assert.Equal(BlobContainerPublicAccessType.Blob, permissions.PublicAccess);
-        }
-
-        [Fact(Skip = "Ignored")]
-        public void PurgeBlobsExpiringBeforeAsync()
-        {
-            this.UploadMessageHelperAsync().GetAwaiter().GetResult();
-            this.provider.PurgeBlobsExpiringBeforeAsync(DateTime.UtcNow.AddDays(7)).GetAwaiter().GetResult();
-            Assert.Empty(this.container.ListBlobs());
         }
     }
 }

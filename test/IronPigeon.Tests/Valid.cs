@@ -8,10 +8,12 @@ namespace IronPigeon.Tests
     using System.Threading;
     using System.Threading.Tasks;
     using IronPigeon.Relay;
+    using IronPigeon.Tests.Mocks;
     using Moq;
 
     internal static class Valid
     {
+        internal const string ContactIdentifier = "some identifier";
         internal const string ContentType = "some type";
         internal const string HashAlgorithmName = "SHA1";
         internal static readonly byte[] Hash = new byte[1];
@@ -23,7 +25,6 @@ namespace IronPigeon.Tests
         internal static readonly byte[] MessageContent = new byte[] { 0x11, 0x22, 0x33 };
         internal static readonly Payload Message = new Payload(MessageContent, ContentType);
 
-        internal static readonly string ContactIdentifier = "some identifier";
         internal static readonly Uri MessageReceivingEndpoint = new Uri("http://localhost/inbox/someone");
         internal static readonly OwnEndpoint ReceivingEndpoint = GenerateOwnEndpoint();
         internal static readonly Endpoint PublicEndpoint = GenerateOwnEndpoint().PublicEndpoint!;
@@ -34,15 +35,12 @@ namespace IronPigeon.Tests
         {
             cryptoProvider = cryptoProvider ?? new CryptoSettings(SecurityLevel.Minimum);
 
-            var inboxFactory = new Mock<IEndpointInboxFactory>();
-            inboxFactory.Setup(f => f.CreateInboxAsync(CancellationToken.None)).Returns(
-                Task.FromResult(
-                    new InboxCreationResponse
-                    { InboxOwnerCode = "some owner code", MessageReceivingEndpoint = MessageReceivingEndpoint.AbsoluteUri }));
+            var inboxFactory = new EndpointInboxFactoryMock(
+                new InboxCreationResponse { InboxOwnerCode = "some owner code", MessageReceivingEndpoint = MessageReceivingEndpoint.AbsoluteUri });
             var endpointServices = new OwnEndpointServices
             {
                 Channel = new Channel { CryptoServices = cryptoProvider },
-                EndpointInboxFactory = inboxFactory.Object,
+                EndpointInboxFactory = inboxFactory,
             };
 
             OwnEndpoint? ownContact = endpointServices.CreateAsync().Result;

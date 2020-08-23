@@ -9,15 +9,16 @@ namespace ConsoleChat
     using System.IO;
     using System.Linq;
     using System.Text;
+    using System.Threading;
     using System.Threading.Tasks;
     using System.Windows.Forms;
     using Autofac;
+    using Azure.Storage.Blobs;
+    using Azure.Storage.Blobs.Models;
     using IronPigeon;
     using IronPigeon.Providers;
     using Microsoft;
-    using Microsoft.WindowsAzure.Storage;
-    using Microsoft.WindowsAzure.Storage.Blob;
-    using Microsoft.WindowsAzure.StorageClient;
+    using Microsoft.Azure.Cosmos.Table;
 
     /// <summary>
     /// Simple console app that demonstrates the IronPigeon protocol in a live chat program.
@@ -85,37 +86,30 @@ namespace ConsoleChat
         /// <summary>
         /// A helper method that purges all of blob storage.
         /// </summary>
-        /// <param name="azureAccount">The Azure account to clear out.</param>
+        /// <param name="blobService">The blob account to purge.</param>
+        /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>A task representing the asynchronous operation.</returns>
-        private static async Task PurgeAllAsync(CloudStorageAccount azureAccount)
+        private static async Task PurgeAllAsync(BlobServiceClient blobService, CancellationToken cancellationToken)
         {
-            Requires.NotNull(azureAccount, nameof(azureAccount));
+            Requires.NotNull(blobService, nameof(blobService));
 
-            CloudBlobClient? blobClient = azureAccount.CreateCloudBlobClient();
-            foreach (CloudBlobContainer? container in blobClient.ListContainers())
+            await foreach (BlobContainerItem containerItem in blobService.GetBlobContainersAsync(cancellationToken: cancellationToken))
             {
-                if (container.Name != "wad-control-container")
+                if (containerItem.Name != "wad-control-container")
                 {
-                    Console.WriteLine("\nContainer: {0}", container.Name);
-                    if (container.Name.StartsWith("unittests"))
+                    Console.WriteLine("\nContainer: {0}", containerItem.Name);
+                    if (containerItem.Name.StartsWith("unittests", StringComparison.Ordinal))
                     {
-                        await container.DeleteAsync();
+                        await blobService.DeleteBlobContainerAsync(containerItem.Name, cancellationToken: cancellationToken);
                     }
                     else
                     {
-                        System.Collections.ObjectModel.ReadOnlyCollection<IListBlobItem>? blobs = await container.ListBlobsSegmentedAsync(
-                            container.Name,
-                            useFlatBlobListing: true,
-                            pageSize: 50,
-                            details: BlobListingDetails.Metadata,
-                            options: new BlobRequestOptions(),
-                            operationContext: null);
-                        foreach (ICloudBlob? blob in blobs.Cast<ICloudBlob>())
+                        BlobContainerClient container = blobService.GetBlobContainerClient(containerItem.Name);
+                        await foreach (BlobItem? blob in container.GetBlobsAsync(traits: BlobTraits.Metadata, cancellationToken: cancellationToken))
                         {
-                            Console.WriteLine("\tBlob: {0} {1}", blob.Uri, blob.Metadata["DeleteAfter"]);
+                            Console.WriteLine("\tBlob: {0} {1}", blob.Name, blob.Metadata["DeleteAfter"]);
+                            await container.DeleteBlobAsync(blob.Name, cancellationToken: cancellationToken).ConfigureAwait(false);
                         }
-
-                        await Task.WhenAll(blobs.Cast<ICloudBlob>().Select(b => b.DeleteAsync()));
                     }
                 }
             }
@@ -127,12 +121,12 @@ namespace ConsoleChat
         /// <param name="azureAccount">The Azure account in use.</param>
         /// <param name="blobStorage">The blob storage.</param>
         /// <returns>A task representing the asynchronous operation.</returns>
-        private static async Task InitializeLocalCloudAsync(CloudStorageAccount azureAccount, AzureBlobStorage blobStorage)
+        private static async Task InitializeLocalCloudAsync(CloudStorageAccount azureAccount, AzureBlobStorage blobStorage, CancellationToken cancellationToken)
         {
-            Microsoft.WindowsAzure.Storage.Table.CloudTableClient? tableStorage = azureAccount.CreateCloudTableClient();
+            CloudTableClient? tableStorage = azureAccount.CreateCloudTableClient();
             await Task.WhenAll(
-                tableStorage.GetTableReference(AzureTableStorageName).CreateIfNotExistsAsync(),
-                blobStorage.CreateContainerIfNotExistAsync());
+                tableStorage.GetTableReference(AzureTableStorageName).CreateIfNotExistsAsync(cancellationToken),
+                blobStorage.CreateContainerIfNotExistAsync(cancellationToken));
         }
 
         /// <summary>

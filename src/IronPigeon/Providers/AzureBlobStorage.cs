@@ -4,55 +4,43 @@
 namespace IronPigeon.Providers
 {
     using System;
+    using System.Collections.Generic;
     using System.Globalization;
     using System.IO;
     using System.Linq;
     using System.Threading;
+    using System.Threading.Channels;
     using System.Threading.Tasks;
     using System.Threading.Tasks.Dataflow;
+    using Azure.Storage.Blobs;
+    using Azure.Storage.Blobs.Models;
     using Microsoft;
-    using Microsoft.WindowsAzure.Storage;
-    using Microsoft.WindowsAzure.Storage.Blob;
-    using Microsoft.WindowsAzure.StorageClient;
 
     /// <summary>
     /// A cloud blob storage provider that uses Azure blob storage directly.
     /// </summary>
     public class AzureBlobStorage : ICloudBlobStorageProvider
     {
-        /// <summary>
-        /// The Azure storage account.
-        /// </summary>
-        private readonly CloudStorageAccount account;
+        private const string PathDelimiter = "/";
 
         /// <summary>
-        /// The blob client.
+        /// The blob container.
         /// </summary>
-        private readonly CloudBlobClient client;
-
-        /// <summary>
-        /// The container in which to store blobs.
-        /// </summary>
-        private readonly CloudBlobContainer container;
+        private readonly BlobContainerClient container;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AzureBlobStorage" /> class.
         /// </summary>
-        /// <param name="account">The Azure account to use.</param>
-        /// <param name="containerAddress">The name of the Azure blob container to use for uploaded blobs.</param>
-        public AzureBlobStorage(CloudStorageAccount account, string containerAddress)
+        /// <param name="container">The blob container client.</param>
+        public AzureBlobStorage(BlobContainerClient container)
         {
-            Requires.NotNull(account, nameof(account));
-            Requires.NotNullOrEmpty(containerAddress, nameof(containerAddress));
-            Requires.Argument(Utilities.IsValidBlobContainerName(containerAddress), "containerAddress", "Invalid container name.");
+            Requires.NotNull(container, nameof(container));
 
-            this.account = account;
-            this.client = this.account.CreateCloudBlobClient();
-            this.container = this.client.GetContainerReference(containerAddress);
+            this.container = container;
         }
 
         /// <inheritdoc/>
-        public async Task<Uri> UploadMessageAsync(Stream content, DateTime expirationUtc, string? contentType, string? contentEncoding, IProgress<int>? bytesCopiedProgress, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<Uri> UploadMessageAsync(Stream content, DateTime expirationUtc, string? contentType, string? contentEncoding, IProgress<long>? bytesCopiedProgress, CancellationToken cancellationToken = default(CancellationToken))
         {
             Requires.NotNull(content, nameof(content));
             Requires.Range(expirationUtc > DateTime.UtcNow, "expirationUtc");
@@ -61,33 +49,43 @@ namespace IronPigeon.Providers
             if (expirationUtc < DateTime.MaxValue)
             {
                 DateTime roundedUp = expirationUtc - expirationUtc.TimeOfDay + TimeSpan.FromDays(1);
-                blobName = roundedUp.ToString("yyyy.MM.dd") + "/" + blobName;
+                blobName = roundedUp.ToString("yyyy.MM.dd", CultureInfo.InvariantCulture) + "/" + blobName;
             }
 
-            CloudBlockBlob? blob = this.container.GetBlockBlobReference(blobName);
+            BlobClient blobClient = this.container.GetBlobClient(blobName);
 
             // Set metadata with the precise expiration time, although for efficiency we also put the blob into a directory
             // for efficient deletion based on approximate expiration date.
+            var metadata = new Dictionary<string, string>();
             if (expirationUtc < DateTime.MaxValue)
             {
-                blob.Metadata["DeleteAfter"] = expirationUtc.ToString(CultureInfo.InvariantCulture);
+                metadata["DeleteAfter"] = expirationUtc.ToString(CultureInfo.InvariantCulture);
             }
 
-            blob.Properties.ContentType = contentType;
-            blob.Properties.ContentEncoding = contentEncoding;
+            var uploadOptions = new BlobUploadOptions
+            {
+                Metadata = metadata,
+                HttpHeaders = new BlobHttpHeaders
+                {
+                    ContentType = contentType,
+                    ContentEncoding = contentEncoding,
+                },
+                ProgressHandler = bytesCopiedProgress,
+            };
 
-            await blob.UploadFromStreamAsync(content.ReadStreamWithProgress(bytesCopiedProgress), cancellationToken).ConfigureAwait(false);
-            return blob.Uri;
+            await blobClient.UploadAsync(content, uploadOptions, cancellationToken).ConfigureAwait(false);
+            return blobClient.Uri;
         }
 
         /// <summary>
         /// Creates the blob container if it does not exist, and sets its public access permission to allow
         /// downloading of blobs by their URIs.
         /// </summary>
+        /// <param name="cancellationToken">A cancellation token.</param>
         /// <returns>The task representing the asynchronous operation.</returns>
-        public Task CreateContainerIfNotExistAsync()
+        public Task CreateContainerIfNotExistAsync(CancellationToken cancellationToken)
         {
-            return this.container.CreateContainerWithPublicBlobsIfNotExistAsync();
+            return this.container.CreateIfNotExistsAsync(PublicAccessType.Blob, cancellationToken: cancellationToken);
         }
 
         /// <summary>
@@ -97,53 +95,61 @@ namespace IronPigeon.Providers
         /// All blobs scheduled to expire prior to this date will be purged.  The default value
         /// is interpreted as <see cref="DateTime.UtcNow"/>.
         /// </param>
+        /// <param name="cancellationToken">A cancellation token.</param>
         /// <returns>The task representing the asynchronous operation.</returns>
-        public async Task PurgeBlobsExpiringBeforeAsync(DateTime deleteBlobsExpiringBefore = default(DateTime))
+        public async Task PurgeBlobsExpiringBeforeAsync(DateTime? deleteBlobsExpiringBefore, CancellationToken cancellationToken = default)
         {
-            if (deleteBlobsExpiringBefore == default(DateTime))
+            if (!deleteBlobsExpiringBefore.HasValue)
             {
                 deleteBlobsExpiringBefore = DateTime.UtcNow;
             }
 
-            Requires.Argument(deleteBlobsExpiringBefore.Kind == DateTimeKind.Utc, "expirationUtc", "UTC required.");
+            Requires.Argument(deleteBlobsExpiringBefore.Value.Kind == DateTimeKind.Utc, "expirationUtc", "UTC required.");
 
-            var searchExpiredDirectoriesBlock = new TransformManyBlock<CloudBlobContainer, CloudBlobDirectory>(
-                async c =>
-                {
-                    System.Collections.ObjectModel.ReadOnlyCollection<IListBlobItem>? results = await c.ListBlobsSegmentedAsync().ConfigureAwait(false);
-                    return from directory in results.OfType<CloudBlobDirectory>()
-                           let expires = DateTime.Parse(directory.Uri.Segments[directory.Uri.Segments.Length - 1].TrimEnd('/'), CultureInfo.InvariantCulture)
-                           where expires < deleteBlobsExpiringBefore
-                           select directory;
-                },
+            var deleteBlobBlock = new ActionBlock<BlobItem>(
+                blob => this.container.DeleteBlobAsync(blob.Name, cancellationToken: cancellationToken),
                 new ExecutionDataflowBlockOptions
                 {
-                    BoundedCapacity = 4,
+                    MaxDegreeOfParallelism = 4,
+                    BoundedCapacity = 100,
+                    MaxMessagesPerTask = 50,
+                    CancellationToken = cancellationToken,
                 });
-            var deleteDirectoryBlock = new TransformManyBlock<CloudBlobDirectory, CloudBlockBlob>(
+
+            var directoryToBlobs = new ActionBlock<BlobHierarchyItem>(
                 async directory =>
                 {
-                    System.Collections.ObjectModel.ReadOnlyCollection<IListBlobItem>? results = await directory.ListBlobsSegmentedAsync().ConfigureAwait(false);
-                    return results.OfType<CloudBlockBlob>();
+                    await foreach (BlobHierarchyItem? blob in this.container.GetBlobsByHierarchyAsync(prefix: directory.Prefix))
+                    {
+                        await deleteBlobBlock.SendAsync(blob.Blob, cancellationToken).ConfigureAwait(false);
+                    }
                 },
                 new ExecutionDataflowBlockOptions
                 {
                     MaxDegreeOfParallelism = 2,
                     BoundedCapacity = 4,
+                    CancellationToken = cancellationToken,
                 });
-            var deleteBlobBlock = new ActionBlock<CloudBlockBlob>(
-                blob => blob.DeleteAsync(),
-                new ExecutionDataflowBlockOptions
+
+            await foreach (BlobHierarchyItem? hierarchyItem in this.container.GetBlobsByHierarchyAsync(delimiter: PathDelimiter, cancellationToken: cancellationToken))
+            {
+                if (hierarchyItem.IsPrefix)
                 {
-                    MaxDegreeOfParallelism = 4,
-                    BoundedCapacity = 100,
-                });
+                    DateTime expires = DateTime.Parse(hierarchyItem.Prefix.TrimEnd(PathDelimiter[0]), CultureInfo.InvariantCulture);
 
-            searchExpiredDirectoriesBlock.LinkTo(deleteDirectoryBlock, new DataflowLinkOptions { PropagateCompletion = true });
-            deleteDirectoryBlock.LinkTo(deleteBlobBlock, new DataflowLinkOptions { PropagateCompletion = true });
+                    // As soon as we see the first 'directory' with a greater date, stop enumerating.
+                    if (expires >= deleteBlobsExpiringBefore)
+                    {
+                        break;
+                    }
 
-            searchExpiredDirectoriesBlock.Post(this.container);
-            searchExpiredDirectoriesBlock.Complete();
+                    await directoryToBlobs.SendAsync(hierarchyItem, cancellationToken).ConfigureAwait(false);
+                }
+            }
+
+            directoryToBlobs.Complete();
+            await directoryToBlobs.Completion.ConfigureAwait(false);
+            deleteBlobBlock.Complete();
             await deleteBlobBlock.Completion.ConfigureAwait(false);
         }
     }
