@@ -15,15 +15,17 @@ namespace IronPigeon.Tests
         [Fact]
         public void CtorInvalidArgs()
         {
-            Assert.Throws<ArgumentNullException>(() => new OwnEndpoint(null!, Valid.ReceivingEndpoint.EncryptionKey!));
-            Assert.Throws<ArgumentNullException>(() => new OwnEndpoint(Valid.ReceivingEndpoint.SigningKey, null!));
+            Assert.Throws<ArgumentNullException>("signingKey", () => new OwnEndpoint(null!, Valid.ReceivingEndpoint.EncryptionKey, DateTime.UtcNow, Valid.MessageReceivingEndpoint));
+            Assert.Throws<ArgumentNullException>("encryptionKey", () => new OwnEndpoint(Valid.ReceivingEndpoint.SigningKey, null!, DateTime.UtcNow, Valid.MessageReceivingEndpoint));
+            Assert.Throws<ArgumentNullException>("signingKeyPrivateMaterial", () => new OwnEndpoint(PCLCrypto.CryptographicPrivateKeyBlobType.BCryptFullPrivateKey, null!, Valid.Key, Valid.PublicEndpoint, null));
+            Assert.Throws<ArgumentNullException>("encryptionKeyPrivateMaterial", () => new OwnEndpoint(PCLCrypto.CryptographicPrivateKeyBlobType.BCryptFullPrivateKey, Valid.Key, null!, Valid.PublicEndpoint, null));
+            Assert.Throws<ArgumentNullException>("messageReceivingEndpoint", () => new OwnEndpoint(Valid.ReceivingEndpoint.SigningKey, Valid.ReceivingEndpoint.EncryptionKey, DateTime.UtcNow, null!));
         }
 
         [Fact]
         public void Ctor()
         {
-            var ownContact = new OwnEndpoint(Valid.ReceivingEndpoint.SigningKey, Valid.ReceivingEndpoint.EncryptionKey!);
-            ownContact.PublicEndpoint.MessageReceivingEndpoint = Valid.ReceivingEndpoint.PublicEndpoint.MessageReceivingEndpoint;
+            var ownContact = new OwnEndpoint(Valid.ReceivingEndpoint.SigningKey, Valid.ReceivingEndpoint.EncryptionKey, DateTime.UtcNow, Valid.ReceivingEndpoint.PublicEndpoint.MessageReceivingEndpoint);
             Assert.Equal(Valid.ReceivingEndpoint.PublicEndpoint, ownContact.PublicEndpoint);
             Assert.Equal(Valid.ReceivingEndpoint.EncryptionKeyPrivateMaterial, ownContact.EncryptionKeyPrivateMaterial);
             Assert.Equal(Valid.ReceivingEndpoint.SigningKeyPrivateMaterial, ownContact.SigningKeyPrivateMaterial);
@@ -32,7 +34,7 @@ namespace IronPigeon.Tests
         [Fact]
         public void CreateAddressBookEntryNullInput()
         {
-            var ownContact = new OwnEndpoint(Valid.ReceivingEndpoint.SigningKey, Valid.ReceivingEndpoint.EncryptionKey!);
+            var ownContact = new OwnEndpoint(Valid.ReceivingEndpoint.SigningKey, Valid.ReceivingEndpoint.EncryptionKey, DateTime.UtcNow, Valid.MessageReceivingEndpoint);
             Assert.Throws<ArgumentNullException>(() => ownContact.CreateAddressBookEntry(null!));
         }
 

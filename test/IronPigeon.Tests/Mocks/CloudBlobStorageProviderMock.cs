@@ -35,7 +35,7 @@ namespace IronPigeon.Tests.Mocks
             Assert.Equal(0, encryptedMessageContent.Position);
 
             var buffer = new byte[encryptedMessageContent.Length - encryptedMessageContent.Position];
-            await encryptedMessageContent.ReadAsync(buffer, 0, buffer.Length);
+            await encryptedMessageContent.ReadAsync(buffer, 0, buffer.Length, cancellationToken);
             lock (this.blobs)
             {
                 var contentUri = new Uri(BaseUploadUri + (this.blobs.Count + 1));

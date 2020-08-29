@@ -63,6 +63,10 @@ namespace IronPigeon
             {
                 throw new BadAddressBookEntryException(ex.Message, ex);
             }
+            catch (InvalidCastException ex)
+            {
+                throw new BadAddressBookEntryException(ex.Message, ex);
+            }
 
             try
             {

@@ -52,8 +52,6 @@ namespace IronPigeon
         /// <param name="inboxOwnerCode">The secret that proves ownership of the inbox at the <see cref="Endpoint.MessageReceivingEndpoint"/>.</param>
         public OwnEndpoint(CryptographicPrivateKeyBlobType privateKeyFormat, byte[] signingKeyPrivateMaterial, byte[] encryptionKeyPrivateMaterial, Endpoint publicEndpoint, string? inboxOwnerCode)
         {
-            Requires.NotNullOrEmpty(inboxOwnerCode, nameof(inboxOwnerCode));
-
             this.PrivateKeyFormat = privateKeyFormat;
             this.signingKeyMaterial = signingKeyPrivateMaterial ?? throw new ArgumentNullException(nameof(signingKeyPrivateMaterial));
             this.encryptionKeyMaterial = encryptionKeyPrivateMaterial ?? throw new ArgumentNullException(nameof(encryptionKeyPrivateMaterial));
@@ -66,17 +64,20 @@ namespace IronPigeon
         /// </summary>
         /// <param name="signingKey">The signing key.</param>
         /// <param name="encryptionKey">The encryption key.</param>
+        /// <param name="creationDateUtc">The date this endpoint was originally created in UTC time.</param>
+        /// <param name="messageReceivingEndpoint">The location where messages can be delivered to this endpoint.</param>
         /// <param name="inboxOwnerCode">The secret that proves ownership of the inbox at the <see cref="Endpoint.MessageReceivingEndpoint" />.</param>
-        public OwnEndpoint(ICryptographicKey signingKey, ICryptographicKey encryptionKey, string? inboxOwnerCode = null)
+        public OwnEndpoint(ICryptographicKey signingKey, ICryptographicKey encryptionKey, DateTime creationDateUtc, Uri messageReceivingEndpoint, string? inboxOwnerCode = null)
         {
             Requires.NotNull(signingKey, nameof(signingKey));
             Requires.NotNull(encryptionKey, nameof(encryptionKey));
 
-            this.publicEndpoint = new Endpoint
-            {
-                SigningKeyPublicMaterial = signingKey.ExportPublicKey(CryptoSettings.PublicKeyFormat),
-                EncryptionKeyPublicMaterial = encryptionKey.ExportPublicKey(CryptoSettings.PublicKeyFormat),
-            };
+            this.publicEndpoint = new Endpoint(
+                creationDateUtc,
+                messageReceivingEndpoint,
+                signingKey.ExportPublicKey(CryptoSettings.PublicKeyFormat),
+                encryptionKey.ExportPublicKey(CryptoSettings.PublicKeyFormat),
+                Array.Empty<string>());
 
             // We could preserve the key instances, but that could make
             // our behavior a little less repeatable if we had problems
@@ -136,11 +137,11 @@ namespace IronPigeon
         /// <summary>
         /// Gets the encryption key.
         /// </summary>
-        public ICryptographicKey? EncryptionKey
+        public ICryptographicKey EncryptionKey
         {
             get
             {
-                if (this.encryptionKey == null && this.EncryptionKeyPrivateMaterial != null)
+                if (this.encryptionKey is null)
                 {
                     this.encryptionKey = CryptoSettings.EncryptionAlgorithm.ImportKeyPair(
                         this.EncryptionKeyPrivateMaterial,
@@ -154,11 +155,11 @@ namespace IronPigeon
         /// <summary>
         /// Gets the signing key.
         /// </summary>
-        public ICryptographicKey? SigningKey
+        public ICryptographicKey SigningKey
         {
             get
             {
-                if (this.signingKey == null && this.SigningKeyPrivateMaterial != null)
+                if (this.signingKey is null)
                 {
                     this.signingKey = CryptoSettings.SigningAlgorithm.ImportKeyPair(
                         this.SigningKeyPrivateMaterial,

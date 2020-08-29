@@ -93,7 +93,7 @@ namespace IronPigeon.Dart
                         // Sterilize the message of its claimed endpoint's claimed identifiers,
                         // so that only verifiable identifiers are passed onto our application.
                         IReadOnlyCollection<string>? verifiedIdentifiers = await this.Channel.GetVerifiableIdentifiersAsync(message.Author, cancellationToken).ConfigureAwait(false);
-                        message.Author.AuthorizedIdentifiers = verifiedIdentifiers.ToArray();
+                        message.Author = message.Author.WithAuthorizedIdentifiers(verifiedIdentifiers);
 
                         lock (messages)
                         {

@@ -12,7 +12,6 @@ namespace IronPigeon
     using IronPigeon.Relay;
     using Microsoft;
     using PCLCrypto;
-    using TaskEx = System.Threading.Tasks.Task;
 
     /// <summary>
     /// Creates and services <see cref="OwnEndpoint"/> instances.
@@ -81,13 +80,13 @@ namespace IronPigeon
         /// </remarks>
         public async Task<OwnEndpoint> CreateAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
-            // Create new key pairs.
-            OwnEndpoint? endpoint = await TaskEx.Run(() => this.CreateEndpointWithKeys(cancellationToken), cancellationToken).ConfigureAwait(false);
-
             // Set up the inbox on a message relay.
             InboxCreationResponse? inboxResponse = await this.EndpointInboxFactory.CreateInboxAsync(cancellationToken).ConfigureAwait(false);
-            endpoint.PublicEndpoint.MessageReceivingEndpoint = new Uri(inboxResponse.MessageReceivingEndpoint, UriKind.Absolute);
-            endpoint.InboxOwnerCode = inboxResponse.InboxOwnerCode;
+
+            // Create new key pairs.
+            OwnEndpoint? endpoint = await Task.Run(
+                () => this.CreateEndpointWithKeys(new Uri(inboxResponse.MessageReceivingEndpoint, UriKind.Absolute), inboxResponse.InboxOwnerCode, cancellationToken),
+                cancellationToken).ConfigureAwait(false);
 
             return endpoint;
         }
@@ -118,6 +117,8 @@ namespace IronPigeon
         /// <summary>
         /// Generates a new receiving endpoint.
         /// </summary>
+        /// <param name="messageReceivingEndpoint"><inheritdoc cref="Endpoint(DateTime, Uri, byte[], byte[], string[])" path="/param[@name='messageReceivingEndpoint']"/></param>
+        /// <param name="inboxOwnerCode"><inheritdoc cref="OwnEndpoint(ICryptographicKey, ICryptographicKey, DateTime, Uri, string)" path="/param[@name='inboxOwnerCode']"/></param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>
         /// The newly generated endpoint.
@@ -126,14 +127,14 @@ namespace IronPigeon
         /// Depending on the length of the keys set in the provider and the amount of buffered entropy in the operating system,
         /// this method can take an extended period (several seconds) to complete.
         /// </remarks>
-        private OwnEndpoint CreateEndpointWithKeys(CancellationToken cancellationToken)
+        private OwnEndpoint CreateEndpointWithKeys(Uri messageReceivingEndpoint, string inboxOwnerCode, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
             ICryptographicKey? encryptionKey = CryptoSettings.EncryptionAlgorithm.CreateKeyPair(this.CryptoProvider.AsymmetricKeySize);
             cancellationToken.ThrowIfCancellationRequested();
             ICryptographicKey? signingKey = CryptoSettings.SigningAlgorithm.CreateKeyPair(this.CryptoProvider.AsymmetricKeySize);
 
-            var ownContact = new OwnEndpoint(signingKey, encryptionKey);
+            var ownContact = new OwnEndpoint(signingKey, encryptionKey, DateTime.UtcNow, messageReceivingEndpoint, inboxOwnerCode);
             return ownContact;
         }
     }

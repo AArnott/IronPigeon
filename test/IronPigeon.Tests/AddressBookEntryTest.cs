@@ -72,7 +72,7 @@ namespace IronPigeon.Tests
         [Fact]
         public void ExtractEndpoint()
         {
-            var ownContact = new OwnEndpoint(Valid.ReceivingEndpoint.SigningKey, Valid.ReceivingEndpoint.EncryptionKey);
+            var ownContact = new OwnEndpoint(Valid.ReceivingEndpoint.SigningKey, Valid.ReceivingEndpoint.EncryptionKey, DateTime.UtcNow, Valid.MessageReceivingEndpoint);
             var cryptoServices = new CryptoSettings(SecurityLevel.Minimum);
             AddressBookEntry? entry = ownContact.CreateAddressBookEntry(cryptoServices);
 

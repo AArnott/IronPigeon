@@ -36,7 +36,7 @@ namespace IronPigeon.Tests
             cryptoProvider = cryptoProvider ?? new CryptoSettings(SecurityLevel.Minimum);
 
             var inboxFactory = new EndpointInboxFactoryMock(
-                new InboxCreationResponse { InboxOwnerCode = "some owner code", MessageReceivingEndpoint = MessageReceivingEndpoint.AbsoluteUri });
+                new InboxCreationResponse(MessageReceivingEndpoint.AbsoluteUri, "some owner code"));
             var endpointServices = new OwnEndpointServices
             {
                 Channel = new Channel { CryptoServices = cryptoProvider },

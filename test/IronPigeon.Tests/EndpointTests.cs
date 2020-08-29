@@ -4,49 +4,29 @@
 namespace IronPigeon.Tests
 {
     using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Text;
-    using System.Threading.Tasks;
     using Xunit;
 
     public class EndpointTests
     {
         [Fact]
-        public void DefaultContactCtor()
+        public void CtorTests()
         {
-            var contact = new Endpoint();
-            Assert.Null(contact.MessageReceivingEndpoint);
-            Assert.Null(contact.EncryptionKeyPublicMaterial);
-            Assert.Null(contact.SigningKeyPublicMaterial);
-            var skew = TimeSpan.FromMinutes(1);
-            Assert.InRange(contact.CreatedOnUtc, DateTime.UtcNow - skew, DateTime.UtcNow + skew);
+            Assert.Throws<ArgumentNullException>("messageReceivingEndpoint", () => new Endpoint(DateTime.UtcNow, null!, Valid.PublicEndpoint.SigningKeyPublicMaterial, Valid.PublicEndpoint.EncryptionKeyPublicMaterial, Array.Empty<string>()));
+            Assert.Throws<ArgumentNullException>("signingKeyPublicMaterial", () => new Endpoint(DateTime.UtcNow, Valid.PublicEndpoint.MessageReceivingEndpoint, null!, Valid.PublicEndpoint.EncryptionKeyPublicMaterial, Array.Empty<string>()));
+            Assert.Throws<ArgumentNullException>("encryptionKeyPublicMaterial", () => new Endpoint(DateTime.UtcNow, Valid.PublicEndpoint.MessageReceivingEndpoint, Valid.PublicEndpoint.SigningKeyPublicMaterial, null!, Array.Empty<string>()));
+
         }
 
         [Fact]
         public void Equals_Tests()
         {
-            var contact1 = new Endpoint();
+            var contact1 = new Endpoint(DateTime.UtcNow, Valid.MessageReceivingEndpoint, new byte[1], new byte[1], Array.Empty<string>());
             Assert.False(contact1.Equals(null));
             Assert.True(contact1.Equals(contact1));
             Assert.False(contact1.Equals(Valid.PublicEndpoint));
 
-            contact1.MessageReceivingEndpoint = Valid.PublicEndpoint.MessageReceivingEndpoint;
-            contact1.SigningKeyPublicMaterial = Valid.PublicEndpoint.SigningKeyPublicMaterial;
-            contact1.EncryptionKeyPublicMaterial = Valid.PublicEndpoint.EncryptionKeyPublicMaterial;
+            contact1 = new Endpoint(DateTime.UtcNow, Valid.PublicEndpoint.MessageReceivingEndpoint, Valid.PublicEndpoint.SigningKeyPublicMaterial, Valid.PublicEndpoint.EncryptionKeyPublicMaterial, Array.Empty<string>());
             Assert.Equal(Valid.PublicEndpoint, contact1);
-
-            contact1.MessageReceivingEndpoint = null;
-            Assert.NotEqual(Valid.PublicEndpoint, contact1);
-            contact1.MessageReceivingEndpoint = Valid.PublicEndpoint.MessageReceivingEndpoint;
-
-            contact1.SigningKeyPublicMaterial = null;
-            Assert.NotEqual(Valid.PublicEndpoint, contact1);
-            contact1.SigningKeyPublicMaterial = Valid.PublicEndpoint.SigningKeyPublicMaterial;
-
-            contact1.EncryptionKeyPublicMaterial = null;
-            Assert.NotEqual(Valid.PublicEndpoint, contact1);
-            contact1.EncryptionKeyPublicMaterial = Valid.PublicEndpoint.EncryptionKeyPublicMaterial;
         }
     }
 }
