@@ -237,7 +237,7 @@ namespace IronPigeon
                 case "SHA512":
                     return AsymmetricAlgorithm.RsaSignPkcs1Sha512;
                 default:
-                    throw new NotSupportedException();
+                    throw new NotSupportedException($"The hash algorithm \"{hashAlgorithm}\" is not supported.");
             }
         }
 

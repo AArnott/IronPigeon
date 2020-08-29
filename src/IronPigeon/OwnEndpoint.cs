@@ -205,11 +205,11 @@ namespace IronPigeon
 
             using var ms = new MemoryStream();
             using var writer = new BinaryWriter(ms);
-            var entry = new AddressBookEntry();
             writer.SerializeDataContract(this.PublicEndpoint);
             writer.Flush();
-            entry.SerializedEndpoint = ms.ToArray();
-            entry.Signature = WinRTCrypto.CryptographicEngine.Sign(this.SigningKey, entry.SerializedEndpoint);
+            var serializedEndpoint = ms.ToArray();
+            var signature = WinRTCrypto.CryptographicEngine.Sign(this.SigningKey, serializedEndpoint);
+            var entry = new AddressBookEntry(serializedEndpoint, CryptoSettings.SigningAlgorithm.Algorithm.GetHashAlgorithm().ToString().ToUpperInvariant(), signature);
             return entry;
         }
 

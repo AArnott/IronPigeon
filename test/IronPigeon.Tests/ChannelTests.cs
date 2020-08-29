@@ -16,8 +16,6 @@ namespace IronPigeon.Tests
 
     public class ChannelTests : TestBase
     {
-        private TraceSource traceSource;
-
         private CryptoSettings desktopCryptoProvider;
 
         public ChannelTests(ITestOutputHelper logger)
@@ -161,7 +159,7 @@ namespace IronPigeon.Tests
                 CloudBlobStorage = cloudBlobStorage,
                 CryptoServices = cryptoProvider,
                 Endpoint = sender,
-                TraceSource = this.traceSource,
+                TraceSource = this.TraceSource,
             };
 
             await channel.PostAsync(Valid.Message, new[] { receiver }, Valid.ExpirationUtc);
@@ -184,7 +182,7 @@ namespace IronPigeon.Tests
                 CloudBlobStorage = cloudBlobStorage,
                 CryptoServices = cryptoProvider,
                 Endpoint = receiver,
-                TraceSource = this.traceSource,
+                TraceSource = this.TraceSource,
             };
 
             var progressMessage = new TaskCompletionSource<Payload>();

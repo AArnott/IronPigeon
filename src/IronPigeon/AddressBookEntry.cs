@@ -20,19 +20,32 @@ namespace IronPigeon
         public const string ContentType = "ironpigeon/addressbookentry";
 
         /// <summary>
-        /// Gets or sets the serialized <see cref="Endpoint"/>.
+        /// Initializes a new instance of the <see cref="AddressBookEntry"/> class.
         /// </summary>
-        [DataMember]
-        public byte[]? SerializedEndpoint { get; set; }
+        /// <param name="serializedEndpoint">The serialized <see cref="Endpoint"/>.</param>
+        /// <param name="hashAlgorithmName">The hash algorithm used to sign the serialized endpoint.</param>
+        /// <param name="signature">The signature of the <paramref name="serializedEndpoint"/>, as signed by the private counterpart to the public key stored in <see cref="Endpoint.SigningKeyPublicMaterial"/>.</param>
+        public AddressBookEntry(byte[] serializedEndpoint, string hashAlgorithmName, byte[] signature)
+        {
+            this.SerializedEndpoint = serializedEndpoint ?? throw new ArgumentNullException(nameof(serializedEndpoint));
+            this.HashAlgorithmName = hashAlgorithmName ?? throw new ArgumentNullException(nameof(hashAlgorithmName));
+            this.Signature = signature ?? throw new ArgumentNullException(nameof(signature));
+        }
 
         /// <summary>
-        /// Gets or sets the hash algorithm used to sign the serialized endpoint.
+        /// Gets the serialized <see cref="Endpoint"/>.
         /// </summary>
         [DataMember]
-        public string? HashAlgorithmName { get; set; }
+        public byte[] SerializedEndpoint { get; private set; }
 
         /// <summary>
-        /// Gets or sets the signature of the <see cref="SerializedEndpoint"/> bytes,
+        /// Gets the hash algorithm used to sign the serialized endpoint.
+        /// </summary>
+        [DataMember]
+        public string HashAlgorithmName { get; private set; }
+
+        /// <summary>
+        /// Gets the signature of the <see cref="SerializedEndpoint"/> bytes,
         /// as signed by the private counterpart to the
         /// public key stored in <see cref="Endpoint.SigningKeyPublicMaterial"/>.
         /// </summary>
@@ -44,7 +57,7 @@ namespace IronPigeon
         /// encryption key that the attacker controls the private key to.
         /// </remarks>
         [DataMember]
-        public byte[]? Signature { get; set; }
+        public byte[] Signature { get; private set; }
 
         /// <summary>
         /// Deserializes an endpoint from an address book entry and validates that the signatures are correct.
@@ -76,7 +89,8 @@ namespace IronPigeon
                 }
             }
             catch (Exception ex)
-            { // all those platform-specific exceptions that aren't available to portable libraries.
+            {
+                // all those platform-specific exceptions that aren't available to portable libraries.
                 throw new BadAddressBookEntryException(Strings.AddressBookEntrySignatureDoesNotMatch, ex);
             }
 

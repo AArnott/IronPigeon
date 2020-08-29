@@ -14,6 +14,9 @@ namespace IronPigeon.Tests
 
     public class AddressBookEntryTest
     {
+        private const string HashAlgorithm = "SHA1";
+        private static readonly byte[] SerializedEndpoint = new byte[] { 0x1, 0x2 };
+        private static readonly byte[] Signature = new byte[] { 0x3, 0x4 };
         private CryptoSettings desktopCryptoProvider;
 
         public AddressBookEntryTest()
@@ -22,35 +25,22 @@ namespace IronPigeon.Tests
         }
 
         [Fact]
-        public void Ctor()
+        public void Ctor_PropertyGetters()
         {
-            var entry = new AddressBookEntry();
-            Assert.Null(entry.SerializedEndpoint);
-            Assert.Null(entry.Signature);
-        }
+            Assert.Throws<ArgumentNullException>("serializedEndpoint", () => new AddressBookEntry(null!, HashAlgorithm, Signature));
+            Assert.Throws<ArgumentNullException>("hashAlgorithmName", () => new AddressBookEntry(SerializedEndpoint, null!, Signature));
+            Assert.Throws<ArgumentNullException>("signature", () => new AddressBookEntry(SerializedEndpoint, HashAlgorithm, null!));
 
-        [Fact]
-        public void PropertySetGet()
-        {
-            var serializedEndpoint = new byte[] { 0x1, 0x2 };
-            var signature = new byte[] { 0x3, 0x4 };
-            var entry = new AddressBookEntry()
-            {
-                SerializedEndpoint = serializedEndpoint,
-                Signature = signature,
-            };
-            Assert.Equal(serializedEndpoint, entry.SerializedEndpoint);
-            Assert.Equal(signature, entry.Signature);
+            var abe = new AddressBookEntry(SerializedEndpoint, HashAlgorithm, Signature);
+            Assert.Same(SerializedEndpoint, abe.SerializedEndpoint);
+            Assert.Equal(HashAlgorithm, abe.HashAlgorithmName);
+            Assert.Same(Signature, abe.Signature);
         }
 
         [Fact]
         public void Serializability()
         {
-            var entry = new AddressBookEntry()
-            {
-                SerializedEndpoint = new byte[] { 0x1, 0x2 },
-                Signature = new byte[] { 0x3, 0x4 },
-            };
+            var entry = new AddressBookEntry(SerializedEndpoint, HashAlgorithm, Signature);
 
             using var ms = new MemoryStream();
             var serializer = new DataContractSerializer(typeof(AddressBookEntry));
@@ -60,13 +50,6 @@ namespace IronPigeon.Tests
 
             Assert.Equal(entry.SerializedEndpoint, deserializedEntry.SerializedEndpoint);
             Assert.Equal(entry.Signature, deserializedEntry.Signature);
-        }
-
-        [Fact]
-        public void ExtractEndpointWithoutCrypto()
-        {
-            var entry = new AddressBookEntry();
-            Assert.Throws<ArgumentNullException>(() => entry.ExtractEndpoint());
         }
 
         [Fact]
