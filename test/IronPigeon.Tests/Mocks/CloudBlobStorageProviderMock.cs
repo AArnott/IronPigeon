@@ -16,7 +16,7 @@ namespace IronPigeon.Tests.Mocks
 
     internal class CloudBlobStorageProviderMock : ICloudBlobStorageProvider
     {
-        internal static readonly string BaseUploadUri = "http://localhost/blob/";
+        internal const string BaseUploadUri = "http://localhost/blob/";
 
         private readonly Dictionary<Uri, byte[]> blobs = new Dictionary<Uri, byte[]>();
 

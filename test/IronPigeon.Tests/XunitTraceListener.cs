@@ -1,9 +1,10 @@
 ﻿// Copyright (c) Andrew Arnott. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+// Licensed under the Microsoft Reciprocal License (Ms-RL) license. See LICENSE file in the project root for full license information.
 
 using System;
 using System.Buffers;
 using System.Diagnostics;
+using System.Globalization;
 using System.Text;
 using Xunit.Abstractions;
 
@@ -41,14 +42,14 @@ internal class XunitTraceListener : TraceListener
             }
 
             var sb = new StringBuilder(2 + ((int)sequence.Length * 2));
-            var decoder = this.DataEncoding?.GetDecoder();
+            Decoder? decoder = this.DataEncoding?.GetDecoder();
             sb.Append(decoder != null ? "\"" : "0x");
-            foreach (var segment in sequence)
+            foreach (ReadOnlyMemory<byte> segment in sequence)
             {
                 if (decoder != null)
                 {
                     // Write out decoded characters.
-                    using (var segmentPointer = segment.Pin())
+                    using (MemoryHandle segmentPointer = segment.Pin())
                     {
                         int charCount = decoder.GetCharCount((byte*)segmentPointer.Pointer, segment.Length, false);
                         char[] chars = ArrayPool<char>.Shared.Rent(charCount);
@@ -71,7 +72,7 @@ internal class XunitTraceListener : TraceListener
                     // Write out data blob as hex
                     for (int i = 0; i < segment.Length; i++)
                     {
-                        sb.AppendFormat("{0:X2}", segment.Span[i]);
+                        sb.AppendFormat(CultureInfo.InvariantCulture, "{0:X2}", segment.Span[i]);
                     }
                 }
             }

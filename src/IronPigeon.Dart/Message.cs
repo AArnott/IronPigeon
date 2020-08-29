@@ -25,21 +25,12 @@ namespace IronPigeon.Dart
         /// <summary>
         /// Initializes a new instance of the <see cref="Message" /> class.
         /// </summary>
-        public Message()
-        {
-            this.CreationDateUtc = DateTime.UtcNow;
-            this.ExpirationUtc = DateTime.UtcNow + TimeSpan.FromDays(7);
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Message" /> class.
-        /// </summary>
         /// <param name="author">The author.</param>
         /// <param name="recipients">The recipients.</param>
         /// <param name="subject">The subject.</param>
         /// <param name="body">The body.</param>
         public Message(OwnEndpoint author, ReadOnlyListOfEndpoint recipients, string subject, string body)
-            : this(author.PublicEndpoint, recipients, subject, body)
+            : this(Requires.NotNull(author, nameof(author)).PublicEndpoint, recipients, subject, body)
         {
         }
 
@@ -51,13 +42,14 @@ namespace IronPigeon.Dart
         /// <param name="subject">The subject.</param>
         /// <param name="body">The body.</param>
         internal Message(Endpoint author, ReadOnlyListOfEndpoint recipients, string subject, string body)
-            : this()
         {
             Requires.NotNull(author, nameof(author));
             Requires.NotNull(recipients, nameof(recipients));
             Requires.NotNullOrEmpty(subject, nameof(subject));
             Requires.NotNull(body, nameof(body));
 
+            this.CreationDateUtc = DateTime.UtcNow;
+            this.ExpirationUtc = DateTime.UtcNow + TimeSpan.FromDays(7);
             this.Author = author;
             this.Recipients = recipients.ToArray();
             this.Subject = subject;
@@ -139,14 +131,20 @@ namespace IronPigeon.Dart
         /// <returns>
         /// true if the current object is equal to the <paramref name="other" /> parameter; otherwise, false.
         /// </returns>
-        public bool Equals(Message other)
+        public bool Equals(Message? other)
         {
-            Requires.NotNull(other, nameof(other));
+            if (other is null)
+            {
+                return false;
+            }
 
             return this.Author.Equals(other.Author)
                 && EqualityComparer<string?>.Default.Equals(this.Subject, other.Subject)
                 && EqualityComparer<string?>.Default.Equals(this.Body, other.Body)
                 && this.CreationDateUtc == other.CreationDateUtc;
         }
+
+        /// <inheritdoc />
+        public override bool Equals(object obj) => this.Equals(obj as Message);
     }
 }

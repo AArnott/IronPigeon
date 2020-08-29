@@ -24,6 +24,9 @@ dotnet_diagnostic.VSTHRD200.severity = silent
 # CA1303: Do not pass literals as localized parameters
 dotnet_diagnostic.CA1303.severity = none
 
+# CA1307: Pass in StringComparison
+dotnet_diagnostic.CA1307.severity = none
+
 # CS1591: Missing XML comment for publicly visible type or member
 dotnet_diagnostic.CS1591.severity = silent
 

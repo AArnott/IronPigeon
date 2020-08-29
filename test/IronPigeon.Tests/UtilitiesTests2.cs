@@ -18,9 +18,9 @@ namespace IronPigeon.Tests
 
             System.Collections.Specialized.NameValueCollection? decoded = HttpUtility.ParseQueryString(urlEncoded);
             Assert.Equal(data.Count, decoded.Count);
-            foreach (string key in decoded)
+            foreach (string? key in decoded)
             {
-                Assert.Equal(decoded[key], data[key]);
+                Assert.Equal(decoded[key], data[key!]);
             }
         }
     }

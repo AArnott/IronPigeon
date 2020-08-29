@@ -444,11 +444,11 @@ namespace IronPigeon
             {
                 if (builder.Length > 0)
                 {
-                    builder.Append("&");
+                    builder.Append('&');
                 }
 
                 builder.Append(Uri.EscapeDataString(pair.Key));
-                builder.Append("=");
+                builder.Append('=');
                 builder.Append(Uri.EscapeDataString(pair.Value));
             }
 

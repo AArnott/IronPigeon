@@ -53,7 +53,7 @@ namespace IronPigeon.Tests.Mocks
             string scenario = $"{testClass.Name}.{TestNameMacro}";
 
             var stack = new StackTrace(1, true);
-            string testClassDirectory = null;
+            string? testClassDirectory = null;
             foreach (StackFrame? frame in stack.GetFrames())
             {
                 if (frame.GetMethod().DeclaringType.IsEquivalentTo(testClass))
@@ -142,7 +142,7 @@ namespace IronPigeon.Tests.Mocks
                     var contentCopy = new MemoryStream();
                     await response.Content.CopyToAsync(contentCopy);
                     contentCopy.Position = 0;
-                    await contentCopy.CopyToAsync(file);
+                    await contentCopy.CopyToAsync(file, 4096, cancellationToken);
                     contentCopy.Position = 0;
 
                     response.Content = new StreamContent(contentCopy);
@@ -167,6 +167,7 @@ namespace IronPigeon.Tests.Mocks
                 string? line;
                 while ((line = await reader.ReadLineAsync()) != null)
                 {
+                    cancellationToken.ThrowIfCancellationRequested();
                     var parts = line.Split(new[] { ':' }, 2);
                     response.Headers.Add(parts[0], parts[1].Split('\t'));
                 }
@@ -177,7 +178,7 @@ namespace IronPigeon.Tests.Mocks
                 if (file != null)
                 {
                     var contentCopy = new MemoryStream();
-                    await file.CopyToAsync(contentCopy);
+                    await file.CopyToAsync(contentCopy, 4096, cancellationToken);
                     contentCopy.Position = 0;
                     response.Content = new StreamContent(contentCopy);
                 }

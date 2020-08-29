@@ -11,7 +11,7 @@ namespace IronPigeon.Tests.Mocks
     {
         private readonly InboxCreationResponse response;
 
-        internal EndpointInboxFactoryMock( InboxCreationResponse response)
+        internal EndpointInboxFactoryMock(InboxCreationResponse response)
         {
             this.response = response;
         }

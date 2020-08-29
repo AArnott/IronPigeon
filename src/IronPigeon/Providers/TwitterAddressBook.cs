@@ -32,7 +32,6 @@ namespace IronPigeon.Providers
         /// A regular expression pattern that matches on URLs that are likely to point to an address book entry
         /// and includes as a URL #fragment the thumbprint of the public signing key.
         /// </summary>
-        [SuppressMessage("Microsoft.StyleCop.CSharp.DocumentationRules", "SA1650:ElementDocumentationMustBeSpelledCorrectly", Justification = "StyleCop sees #fragment as a mispelled word 'ragment'")]
         private static readonly Regex AddressBookEntryWithThumbprintFragmentRegex = new Regex(@"\b(http|https|ftp)\://[a-zA-Z0-9\-\.]+(:[a-zA-Z0-9]*)?/?([a-zA-Z0-9\-\._\?\,\'/\\\+&amp;%\$\=~])*#([a-zA-Z0-9\-_]{27,43})(\b|$)", RegexOptions.IgnoreCase);
 
         /// <summary>

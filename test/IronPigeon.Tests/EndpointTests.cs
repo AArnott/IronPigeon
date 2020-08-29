@@ -14,7 +14,6 @@ namespace IronPigeon.Tests
             Assert.Throws<ArgumentNullException>("messageReceivingEndpoint", () => new Endpoint(DateTime.UtcNow, null!, Valid.PublicEndpoint.SigningKeyPublicMaterial, Valid.PublicEndpoint.EncryptionKeyPublicMaterial, Array.Empty<string>()));
             Assert.Throws<ArgumentNullException>("signingKeyPublicMaterial", () => new Endpoint(DateTime.UtcNow, Valid.PublicEndpoint.MessageReceivingEndpoint, null!, Valid.PublicEndpoint.EncryptionKeyPublicMaterial, Array.Empty<string>()));
             Assert.Throws<ArgumentNullException>("encryptionKeyPublicMaterial", () => new Endpoint(DateTime.UtcNow, Valid.PublicEndpoint.MessageReceivingEndpoint, Valid.PublicEndpoint.SigningKeyPublicMaterial, null!, Array.Empty<string>()));
-
         }
 
         [Fact]

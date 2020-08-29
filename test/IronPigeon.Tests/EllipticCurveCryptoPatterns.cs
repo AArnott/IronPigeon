@@ -123,8 +123,8 @@ namespace IronPigeon.Tests
         public void ParameterizedAlgorithms()
         {
             using var aa = ECDiffieHellman.Create();
-            var pub = aa.ExportParameters(includePrivateParameters: false);
-            var priv = aa.ExportParameters(includePrivateParameters: true);
+            ECParameters pub = aa.ExportParameters(includePrivateParameters: false);
+            ECParameters priv = aa.ExportParameters(includePrivateParameters: true);
             Console.WriteLine(priv);
             Console.WriteLine(pub);
         }

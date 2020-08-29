@@ -89,6 +89,11 @@ namespace IronPigeon.Dart
                     if (messageReceipt != null)
                     {
                         Message? message = messageReceipt.Message;
+                        if (message.Author is null)
+                        {
+                            // invalid message.
+                            return;
+                        }
 
                         // Sterilize the message of its claimed endpoint's claimed identifiers,
                         // so that only verifiable identifiers are passed onto our application.
@@ -115,7 +120,7 @@ namespace IronPigeon.Dart
 
             // Ensure that we've receives the asynchronous progress notifications for all the payloads
             // so we don't return a partial result.
-            await payloadProgress.WaitAsync().ConfigureAwait(false);
+            await payloadProgress.WaitAsync(cancellationToken).ConfigureAwait(false);
 
             return messages;
         }

@@ -37,7 +37,7 @@ namespace IronPigeon.Tests
         public void CtorParameters()
         {
             var blobProvider = new Mock<ICloudBlobStorageProvider>();
-            var endpoint = Valid.ReceivingEndpoint;
+            OwnEndpoint endpoint = Valid.ReceivingEndpoint;
             var channel = new Channel()
             {
                 CloudBlobStorage = blobProvider.Object,

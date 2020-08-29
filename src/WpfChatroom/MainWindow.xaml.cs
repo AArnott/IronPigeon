@@ -26,6 +26,7 @@ namespace WpfChatroom
     using IronPigeon;
     using IronPigeon.Dart;
     using IronPigeon.Providers;
+    using Microsoft;
     using Microsoft.Win32;
 
     /// <summary>
@@ -72,7 +73,7 @@ namespace WpfChatroom
         /// <summary>
         /// Gets or sets the own endpoint services.
         /// </summary>
-        public OwnEndpointServices OwnEndpointServices { get; set; }
+        public OwnEndpointServices? OwnEndpointServices { get; set; }
 
         /// <summary>
         /// Gets or sets the message relay service.
@@ -95,7 +96,7 @@ namespace WpfChatroom
         /// <summary>
         /// Gets or sets the postal service.
         /// </summary>
-        public PostalService PostalService { get; set; }
+        public PostalService? PostalService { get; set; }
 
         private async void CreateNewEndpoint_OnClick(object sender, RoutedEventArgs e)
         {
@@ -110,7 +111,7 @@ namespace WpfChatroom
                 if (result.HasValue && result.Value)
                 {
                     Uri addressBookEntry = await this.OwnEndpointServices.PublishAddressBookEntryAsync(await endpointTask, cts.Token);
-                    await this.SetEndpointAsync(await endpointTask, addressBookEntry, cts.Token);
+                    await this.SetEndpointAsync(await endpointTask, addressBookEntry);
                     using (Stream? stream = dialog.OpenFile())
                     {
                         using var writer = new BinaryWriter(stream, Encoding.UTF8);
@@ -169,10 +170,11 @@ namespace WpfChatroom
 
             var addressBook = new DirectEntryAddressBook(new HttpClient());
             Endpoint? endpoint = await addressBook.LookupAsync("http://tinyurl.com/omhxu6l#-Rrs7LRrCE3bV8x58j1l4JUzAT3P2obKia73k3IFG9k");
+            Assumes.NotNull(endpoint);
             chatroomWindow.AddMember("App author", endpoint);
         }
 
-        private Task SetEndpointAsync(OwnEndpoint endpoint, Uri addressBookEntry, CancellationToken cancellationToken = default(CancellationToken))
+        private Task SetEndpointAsync(OwnEndpoint endpoint, Uri addressBookEntry)
         {
             this.Channel.Endpoint = endpoint;
             this.PublicEndpointUrlTextBlock.Text = addressBookEntry.AbsoluteUri;
