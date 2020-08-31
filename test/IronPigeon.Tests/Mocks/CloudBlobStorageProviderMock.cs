@@ -29,7 +29,7 @@ namespace IronPigeon.Tests.Mocks
             get { return this.blobs; }
         }
 
-        public async Task<Uri> UploadMessageAsync(Stream encryptedMessageContent, DateTime expiration, string? contentType, string? contentEncoding, IProgress<long>? bytesCopiedProgress, CancellationToken cancellationToken)
+        public async Task<Uri> UploadMessageAsync(Stream encryptedMessageContent, DateTime expiration, IProgress<long>? bytesCopiedProgress, CancellationToken cancellationToken)
         {
             Assert.NotEqual(0, encryptedMessageContent.Length);
             Assert.Equal(0, encryptedMessageContent.Position);

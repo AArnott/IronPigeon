@@ -3,6 +3,7 @@
 
 namespace IronPigeon.Tests.Providers
 {
+    using System;
     using System.Net.Http;
     using IronPigeon.Providers;
     using IronPigeon.Tests.Mocks;
@@ -15,9 +16,10 @@ namespace IronPigeon.Tests.Providers
 
         public TwitterAddressBookTests()
         {
-            this.twitter = new TwitterAddressBook();
             this.messageRecorder = Mocks.HttpMessageHandlerRecorder.CreatePlayback(typeof(TwitterAddressBookTests));
-            this.twitter.HttpClient = new HttpClient(this.messageRecorder);
+#pragma warning disable CA2000 // Dispose objects before losing scope
+            this.twitter = new TwitterAddressBook(new HttpClient(this.messageRecorder));
+#pragma warning restore CA2000 // Dispose objects before losing scope
         }
 
         [Fact]

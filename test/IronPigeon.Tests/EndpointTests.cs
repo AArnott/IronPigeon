@@ -5,26 +5,32 @@ namespace IronPigeon.Tests
 {
     using System;
     using Xunit;
+    using Xunit.Abstractions;
 
-    public class EndpointTests
+    public class EndpointTests : TestBase
     {
+        public EndpointTests(ITestOutputHelper logger)
+            : base(logger)
+        {
+        }
+
         [Fact]
         public void CtorTests()
         {
-            Assert.Throws<ArgumentNullException>("messageReceivingEndpoint", () => new Endpoint(DateTime.UtcNow, null!, Valid.PublicEndpoint.SigningKeyPublicMaterial, Valid.PublicEndpoint.EncryptionKeyPublicMaterial, Array.Empty<string>()));
-            Assert.Throws<ArgumentNullException>("signingKeyPublicMaterial", () => new Endpoint(DateTime.UtcNow, Valid.PublicEndpoint.MessageReceivingEndpoint, null!, Valid.PublicEndpoint.EncryptionKeyPublicMaterial, Array.Empty<string>()));
-            Assert.Throws<ArgumentNullException>("encryptionKeyPublicMaterial", () => new Endpoint(DateTime.UtcNow, Valid.PublicEndpoint.MessageReceivingEndpoint, Valid.PublicEndpoint.SigningKeyPublicMaterial, null!, Array.Empty<string>()));
+            Assert.Throws<ArgumentNullException>("messageReceivingEndpoint", () => new Endpoint(null!, Valid.PublicEndpoint.AuthenticatingKeyInputs, Valid.PublicEndpoint.EncryptionKeyInputs));
+            Assert.Throws<ArgumentNullException>("signingKeyInputs", () => new Endpoint(Valid.PublicEndpoint.MessageReceivingEndpoint, null!, Valid.PublicEndpoint.EncryptionKeyInputs));
+            Assert.Throws<ArgumentNullException>("encryptionKeyInputs", () => new Endpoint(Valid.PublicEndpoint.MessageReceivingEndpoint, Valid.PublicEndpoint.AuthenticatingKeyInputs, null!));
         }
 
         [Fact]
         public void Equals_Tests()
         {
-            var contact1 = new Endpoint(DateTime.UtcNow, Valid.MessageReceivingEndpoint, new byte[1], new byte[1], Array.Empty<string>());
+            var contact1 = new Endpoint(Valid.MessageReceivingEndpoint, Valid.SigningKeyInputs, Valid.DecryptionKeyInputs);
             Assert.False(contact1.Equals(null));
             Assert.True(contact1.Equals(contact1));
             Assert.False(contact1.Equals(Valid.PublicEndpoint));
 
-            contact1 = new Endpoint(DateTime.UtcNow, Valid.PublicEndpoint.MessageReceivingEndpoint, Valid.PublicEndpoint.SigningKeyPublicMaterial, Valid.PublicEndpoint.EncryptionKeyPublicMaterial, Array.Empty<string>());
+            contact1 = new Endpoint(Valid.PublicEndpoint.MessageReceivingEndpoint, Valid.PublicEndpoint.AuthenticatingKeyInputs, Valid.PublicEndpoint.EncryptionKeyInputs);
             Assert.Equal(Valid.PublicEndpoint, contact1);
         }
     }

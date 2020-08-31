@@ -4,13 +4,9 @@
 namespace IronPigeon.Providers
 {
     using System;
-    using System.Collections.Generic;
-    using System.Linq;
     using System.Net.Http;
-    using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
-
     using Microsoft;
 
     /// <summary>
@@ -18,13 +14,6 @@ namespace IronPigeon.Providers
     /// </summary>
     public class DirectEntryAddressBook : OnlineAddressBook
     {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="DirectEntryAddressBook" /> class.
-        /// </summary>
-        public DirectEntryAddressBook()
-        {
-        }
-
         /// <summary>
         /// Initializes a new instance of the <see cref="DirectEntryAddressBook" /> class.
         /// </summary>
@@ -42,10 +31,11 @@ namespace IronPigeon.Providers
         /// <returns>
         /// A task whose result is the contact, or null if no match is found.
         /// </returns>
-        public override async Task<Endpoint?> LookupAsync(string identifier, CancellationToken cancellationToken = default(CancellationToken))
+        public override async Task<Endpoint?> LookupAsync(string identifier, CancellationToken cancellationToken = default)
         {
-            Uri entryLocation;
-            if (!Uri.TryCreate(identifier, UriKind.Absolute, out entryLocation))
+            Requires.NotNull(identifier, nameof(identifier));
+
+            if (!Uri.TryCreate(identifier, UriKind.Absolute, out Uri entryLocation))
             {
                 return null;
             }

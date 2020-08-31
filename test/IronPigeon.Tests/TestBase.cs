@@ -4,15 +4,20 @@
 namespace IronPigeon.Tests
 {
     using System;
+    using System.Buffers;
     using System.Collections.Generic;
     using System.Diagnostics;
+    using System.IO;
+    using System.IO.Pipelines;
     using System.Linq;
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
+    using MessagePack;
+    using Nerdbank.Streams;
     using Xunit.Abstractions;
 
-    public abstract class TestBase
+    public abstract class TestBase : IDisposable
     {
         protected const int TestTimeout = 5000;
 
@@ -55,5 +60,43 @@ namespace IronPigeon.Tests
         protected CancellationToken TimeoutToken => this.TimeoutTokenSource.Token;
 
         protected TraceSource TraceSource { get; }
+
+        public void Dispose()
+        {
+            this.Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected static T SerializeRoundTrip<T>(T value) => MessagePackSerializer.Deserialize<T>(MessagePackSerializer.Serialize(value, MessagePackSerializerOptions.Standard), MessagePackSerializerOptions.Standard);
+
+        protected virtual void Dispose(bool disposing)
+        {
+        }
+
+        protected async Task WriteChunkAsync(Stream target, byte[] buffer)
+        {
+            using (Substream substream = target.WriteSubstream())
+            {
+                await substream.WriteAsync(buffer, 0, buffer.Length, this.TimeoutToken);
+            }
+        }
+
+        protected async Task<byte[]> ReadChunkAsync(Stream source)
+        {
+            using var sequence = new Sequence<byte>(ArrayPool<byte>.Shared);
+            byte[] buffer = new byte[4096];
+            using (Stream substream = source.ReadSubstream())
+            {
+                int bytesRead;
+                do
+                {
+                    bytesRead = await substream.ReadAsync(buffer, 0, buffer.Length, this.TimeoutToken);
+                    sequence.Write(buffer.AsSpan(0, bytesRead));
+                }
+                while (bytesRead > 0);
+            }
+
+            return sequence.AsReadOnlySequence.ToArray();
+        }
     }
 }

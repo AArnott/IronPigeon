@@ -4,11 +4,17 @@
 namespace IronPigeon
 {
     using System;
+    using System.IO;
+    using System.Net.Http;
+    using System.Net.Mime;
     using System.Runtime.Serialization;
+    using System.Threading;
+    using System.Threading.Tasks;
     using Microsoft;
+    using PCLCrypto;
 
     /// <summary>
-    /// Describes where some encrypted payload is found and how to decrypt it.
+    /// Describes where some encrypted payload is found and how to authenticate and decrypt it.
     /// </summary>
     [DataContract]
     public class PayloadReference
@@ -17,53 +23,62 @@ namespace IronPigeon
         /// Initializes a new instance of the <see cref="PayloadReference" /> class.
         /// </summary>
         /// <param name="location">The URL where the payload of the message may be downloaded.</param>
+        /// <param name="contentType">The Content-Type of the payload.</param>
         /// <param name="hash">The hash of the encrypted bytes of the payload.</param>
         /// <param name="hashAlgorithmName">Name of the hash algorithm.</param>
-        /// <param name="key">The symmetric key used to encrypt the payload.</param>
-        /// <param name="iv">The initialization vector used to encrypt the payload.</param>
+        /// <param name="decryptionInputs">The material to reconstruct the symmetric key to decrypt the referenced message.</param>
         /// <param name="expiresUtc">The time beyond which the payload is expected to be deleted.</param>
-        public PayloadReference(Uri location, byte[] hash, string hashAlgorithmName, byte[] key, byte[] iv, DateTime expiresUtc)
+        /// <param name="origin">The location from which this instance was downloaded.</param>
+        public PayloadReference(Uri location, ContentType contentType, ReadOnlyMemory<byte> hash, string hashAlgorithmName, SymmetricEncryptionInputs decryptionInputs, DateTime? expiresUtc, Uri? origin = null)
         {
-            Requires.NotNull(location, nameof(location));
-            Requires.NotNullOrEmpty(hash, nameof(hash));
             Requires.NotNullOrEmpty(hashAlgorithmName, nameof(hashAlgorithmName));
-            Requires.NotNullOrEmpty(key, nameof(key));
-            Requires.NotNullOrEmpty(iv, nameof(iv));
-            Requires.Argument(expiresUtc.Kind == DateTimeKind.Utc, nameof(expiresUtc), Strings.UTCTimeRequired);
+            Requires.Argument(expiresUtc is null || expiresUtc.Value.Kind == DateTimeKind.Utc, nameof(expiresUtc), Strings.UTCTimeRequired);
 
-            this.Location = location;
+            this.Location = location ?? throw new ArgumentNullException(nameof(location));
+            this.ContentType = contentType ?? throw new ArgumentNullException(nameof(contentType));
             this.Hash = hash;
             this.HashAlgorithmName = hashAlgorithmName;
-            this.Key = key;
-            this.IV = iv;
+            this.DecryptionInputs = decryptionInputs ?? throw new ArgumentNullException(nameof(decryptionInputs));
             this.ExpiresUtc = expiresUtc;
+            this.Origin = origin;
         }
 
         /// <summary>
-        /// Gets or sets the Internet location from which the payload can be downloaded.
+        /// Gets the location from which the payload can be downloaded.
         /// </summary>
         [DataMember]
-        public Uri Location { get; set; }
+        public Uri Location { get; }
 
         /// <summary>
-        /// Gets or sets the hash of the message's encrypted bytes.
+        /// Gets the content-type of the payload.
+        /// </summary>
+        [DataMember]
+        public ContentType ContentType { get; }
+
+        /// <summary>
+        /// Gets the hash of the message's encrypted bytes.
         /// </summary>
         /// <remarks>
         /// This value can be used by the recipient to verify that the actual message, when downloaded,
         /// has not be altered from the author's original version.
         /// </remarks>
         [DataMember]
-        public byte[] Hash { get; set; }
+        public ReadOnlyMemory<byte> Hash { get; }
 
         /// <summary>
-        /// Gets or sets the name of the hash algorithm used to sign the message's encrypted bytes.
+        /// Gets the name of the hash algorithm used to compute <see cref="Hash"/> from the raw content downloaded from <see cref="Location"/>.
         /// </summary>
-        /// <value>May be <c>null</c> for older remote parties.</value>
         [DataMember]
-        public string HashAlgorithmName { get; set; }
+        public string HashAlgorithmName { get; }
 
         /// <summary>
-        /// Gets or sets the material to reconstruct the symmetric key to decrypt the referenced message.
+        /// Gets the hash algorithm to use for the payload.
+        /// </summary>
+        [IgnoreDataMember]
+        public HashAlgorithm HashAlgorithm => ParseAlgorithmName(this.HashAlgorithmName);
+
+        /// <summary>
+        /// Gets the material to reconstruct the symmetric key to decrypt the referenced message.
         /// </summary>
         /// <value>The symmetric key data, or <c>null</c> if this information is not disclosed.</value>
         /// <remarks>
@@ -72,26 +87,68 @@ namespace IronPigeon
         /// permission for that message had not been granted to the other user.
         /// </remarks>
         [DataMember]
-        public byte[] Key { get; set; }
+        public SymmetricEncryptionInputs? DecryptionInputs { get; }
 
         /// <summary>
-        /// Gets or sets the initialization vector used to encrypt the payload.
-        /// </summary>
-        [DataMember]
-        public byte[] IV { get; set; }
-
-        /// <summary>
-        /// Gets or sets the time when the message referred to is expected to be deleted.
+        /// Gets the time when the payload referred to is expected to be deleted.
         /// </summary>
         /// <value>
         /// The expiration date, in UTC.
         /// </value>
         [DataMember]
-        public DateTime ExpiresUtc { get; set; }
+        public DateTime? ExpiresUtc { get; }
 
         /// <summary>
-        /// Gets or sets the URI from which this instance was downloaded.
+        /// Gets the location from which this instance was downloaded.
         /// </summary>
-        internal Uri? ReferenceLocation { get; set; }
+        [IgnoreDataMember]
+        internal Uri? Origin { get; }
+
+        /// <summary>
+        /// Downloads the message payload referred to by the specified <see cref="PayloadReference"/>.
+        /// </summary>
+        /// <param name="httpClient">The HTTP client to use to download the payload.</param>
+        /// <param name="receivingStream">The stream to write the payload to.</param>
+        /// <param name="progress">Receives progress updates on how much of the stream has been downloaded.</param>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns>The task representing the asynchronous operation.</returns>
+        /// <exception cref="InvalidMessageException">Thrown if the payload content has been changed since this reference was created.</exception>
+        /// <exception cref="EndOfStreamException">Thrown if the download stream ended before it was expected to. When thrown, the hash of the content thus far was not verified.</exception>
+        /// <remarks>
+        /// The stream is decrypted as it is downloaded.
+        /// At the conclusion of the download the hash of the stream's content is compared to the hash predicted by this reference
+        /// and an <see cref="InvalidMessageException"/> is thrown if the hash does not match.
+        /// </remarks>
+        public async Task DownloadPayloadAsync(HttpClient httpClient, Stream receivingStream, IProgress<(long BytesTransferred, long? ExpectedLength)>? progress = null, CancellationToken cancellationToken = default)
+        {
+            Requires.NotNull(httpClient, nameof(httpClient));
+            Requires.NotNull(receivingStream, nameof(receivingStream));
+            Verify.Operation(this.DecryptionInputs is object, Strings.PayloadDecryptionKeyMissing);
+
+            using HttpResponseMessage responseMessage = await httpClient.GetAsync(this.Location, cancellationToken).ConfigureAwait(false);
+            using Stream downloadingStream = await responseMessage.Content.ReadAsStreamAsync().ConfigureAwait(false);
+
+            using ICryptographicKey decryptingKey = this.DecryptionInputs.CreateKey();
+            using CryptographicHash hasher = WinRTCrypto.HashAlgorithmProvider.OpenAlgorithm(this.HashAlgorithm).CreateHash();
+            using ICryptoTransform decryptor = WinRTCrypto.CryptographicEngine.CreateDecryptor(this.DecryptionInputs.CreateKey());
+            using CryptoStream hashingDecryptingStream = CryptoStream.ReadFrom(downloadingStream, hasher, decryptor);
+
+            long bytesCopied = await hashingDecryptingStream.ConcurrentCopyToAsync(receivingStream, progress, responseMessage.Content.Headers.ContentLength, cancellationToken).ConfigureAwait(false);
+
+            // Now that the content has been entirely downloaded, verify that the hash is what was expected.
+            byte[] actualContentHash = hasher.GetValueAndReset();
+            if (!Utilities.AreEquivalent(actualContentHash, this.Hash.Span))
+            {
+                if (responseMessage.Content.Headers.ContentLength is long expectedContentLength && expectedContentLength > bytesCopied)
+                {
+                    // Only report a truncated stream if the content hash did not match *and* the stream was shorter than expected.
+                    throw new EndOfStreamException($"Expected {expectedContentLength} bytes but only received {bytesCopied} bytes. The truncation may explain why the content hash did not match.");
+                }
+
+                throw new InvalidMessageException("The content hash for the payload does not match the expected value. Corruption or tampering has occurred.");
+            }
+        }
+
+        private static HashAlgorithm ParseAlgorithmName(string name) => (HashAlgorithm)Enum.Parse(typeof(HashAlgorithm), name, ignoreCase: true);
     }
 }

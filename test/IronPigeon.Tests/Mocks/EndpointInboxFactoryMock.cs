@@ -9,13 +9,12 @@ namespace IronPigeon.Tests.Mocks
 
     internal class EndpointInboxFactoryMock : IEndpointInboxFactory
     {
-        private readonly InboxCreationResponse response;
+        private int counter;
 
-        internal EndpointInboxFactoryMock(InboxCreationResponse response)
+        public Task<InboxCreationResponse> CreateInboxAsync(CancellationToken cancellationToken = default)
         {
-            this.response = response;
+            int counter = Interlocked.Increment(ref this.counter);
+            return Task.FromResult(new InboxCreationResponse(new System.Uri($"http://localhost/inbox/some{counter}"), $"code{counter}"));
         }
-
-        public Task<InboxCreationResponse> CreateInboxAsync(CancellationToken cancellationToken = default) => Task.FromResult(this.response);
     }
 }

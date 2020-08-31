@@ -10,6 +10,7 @@ namespace WpfChatroom
     using System.Linq;
     using System.Net.Http;
     using System.Reflection;
+    using System.Runtime.Serialization;
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
@@ -22,10 +23,10 @@ namespace WpfChatroom
     using System.Windows.Media.Imaging;
     using System.Windows.Navigation;
     using System.Windows.Shapes;
-    using Autofac;
     using IronPigeon;
     using IronPigeon.Dart;
     using IronPigeon.Providers;
+    using MessagePack;
     using Microsoft;
     using Microsoft.Win32;
 
@@ -34,8 +35,6 @@ namespace WpfChatroom
     /// </summary>
     public partial class MainWindow : Window
     {
-        private IContainer container;
-
         /// <summary>
         /// Initializes a new instance of the <see cref="MainWindow"/> class.
         /// </summary>
@@ -43,55 +42,33 @@ namespace WpfChatroom
         {
             this.InitializeComponent();
 
-            var builder = new ContainerBuilder();
-            builder.RegisterTypes(
-                    typeof(RelayCloudBlobStorageProvider),
-                    typeof(Channel),
-                    typeof(PostalService),
-                    typeof(OwnEndpointServices),
-                    typeof(DirectEntryAddressBook),
-                    typeof(HttpClientWrapper))
-                .AsSelf()
-                .AsImplementedInterfaces()
-                .SingleInstance()
-                .PropertiesAutowired();
-            builder.RegisterType(
-                typeof(ChatroomWindow))
-                .AsSelf()
-                .PropertiesAutowired();
-            builder.Register(ctxt => ctxt.Resolve<HttpClientWrapper>().Client);
-            builder.RegisterInstance(this)
-                .AsSelf()
-                .PropertiesAutowired();
-            this.container = builder.Build();
-            this.container.Resolve<MainWindow>();  // get properties satisfied
-
-            this.MessageRelayService.BlobPostUrl = new Uri(ConfigurationManager.ConnectionStrings["RelayBlobService"].ConnectionString);
-            this.MessageRelayService.InboxServiceUrl = new Uri(ConfigurationManager.ConnectionStrings["RelayInboxService"].ConnectionString);
+            this.HttpClient = new HttpClient();
+            this.MessageRelayService = new RelayCloudBlobStorageProvider(this.HttpClient)
+            {
+                BlobPostUrl = new Uri(ConfigurationManager.ConnectionStrings["RelayBlobService"].ConnectionString),
+                InboxServiceUrl = new Uri(ConfigurationManager.ConnectionStrings["RelayInboxService"].ConnectionString),
+            };
         }
 
         /// <summary>
-        /// Gets or sets the own endpoint services.
+        /// Gets the HTTP client to use.
         /// </summary>
-        public OwnEndpointServices? OwnEndpointServices { get; set; }
+        public HttpClient HttpClient { get; }
 
         /// <summary>
-        /// Gets or sets the message relay service.
+        /// Gets the message relay service.
         /// </summary>
-        public RelayCloudBlobStorageProvider MessageRelayService { get; set; }
+        public RelayCloudBlobStorageProvider MessageRelayService { get; }
 
         /// <summary>
-        /// Gets the cryptographic services provider.
+        /// Gets the crypto settings to use.
         /// </summary>
-        public CryptoSettings CryptoServices
-        {
-            get { return this.Channel.CryptoServices; }
-        }
+        public CryptoSettings CryptoSettings { get; } = CryptoSettings.Recommended;
 
         /// <summary>
-        /// Gets or sets the channel.
+        /// Gets the channel.
         /// </summary>
-        public Channel? Channel { get; set; }
+        public Channel? Channel => this.PostalService?.Channel;
 
         /// <summary>
         /// Gets or sets the postal service.
@@ -104,25 +81,18 @@ namespace WpfChatroom
             this.CreateNewEndpoint.Cursor = Cursors.AppStarting;
             try
             {
-                using var cts = new CancellationTokenSource();
-                Task<OwnEndpoint>? endpointTask = this.OwnEndpointServices.CreateAsync(cts.Token);
+                Task<OwnEndpoint> endpointTask = OwnEndpoint.CreateAsync(this.CryptoSettings, this.MessageRelayService);
                 var dialog = new SaveFileDialog();
                 bool? result = dialog.ShowDialog(this);
                 if (result.HasValue && result.Value)
                 {
-                    Uri addressBookEntry = await this.OwnEndpointServices.PublishAddressBookEntryAsync(await endpointTask, cts.Token);
+                    OwnEndpoint endpoint = await endpointTask;
+                    Uri addressBookEntry = await endpoint.PublishAddressBookEntryAsync(this.MessageRelayService);
+                    var fileFormat = new EndpointAndAddressBookUri(addressBookEntry, endpoint);
+                    using Stream? stream = dialog.OpenFile();
+                    await MessagePackSerializer.SerializeAsync(stream, fileFormat, MessagePackSerializerOptions.Standard);
+
                     await this.SetEndpointAsync(await endpointTask, addressBookEntry);
-                    using (Stream? stream = dialog.OpenFile())
-                    {
-                        using var writer = new BinaryWriter(stream, Encoding.UTF8);
-                        writer.SerializeDataContract(addressBookEntry);
-                        writer.Flush();
-                        await this.Channel.Endpoint.SaveAsync(stream, cts.Token);
-                    }
-                }
-                else
-                {
-                    cts.Cancel();
                 }
             }
             finally
@@ -142,12 +112,9 @@ namespace WpfChatroom
                 bool? result = dialog.ShowDialog(this);
                 if (result.HasValue && result.Value)
                 {
-                    using (Stream? fileStream = dialog.OpenFile())
-                    {
-                        using var reader = new BinaryReader(fileStream, Encoding.UTF8);
-                        Uri? addressBookEntry = reader.DeserializeDataContract<Uri>();
-                        await this.SetEndpointAsync(await OwnEndpoint.OpenAsync(fileStream), addressBookEntry);
-                    }
+                    using Stream? fileStream = dialog.OpenFile();
+                    EndpointAndAddressBookUri fileFormat = await MessagePackSerializer.DeserializeAsync<EndpointAndAddressBookUri>(fileStream, MessagePackSerializerOptions.Standard);
+                    await this.SetEndpointAsync(fileFormat.Endpoint, fileFormat.AddressBookUri);
                 }
             }
             finally
@@ -159,16 +126,18 @@ namespace WpfChatroom
 
         private void OpenChatroom_OnClick(object sender, RoutedEventArgs e)
         {
-            ChatroomWindow? chatroomWindow = this.container.Resolve<ChatroomWindow>();
+            Verify.Operation(this.PostalService is object, "Endpoint not initialized yet.");
+            var chatroomWindow = new ChatroomWindow(this.PostalService);
             chatroomWindow.Show();
         }
 
         private async void ChatWithAuthor_OnClick(object sender, RoutedEventArgs e)
         {
-            ChatroomWindow? chatroomWindow = this.container.Resolve<ChatroomWindow>();
+            Verify.Operation(this.PostalService is object, "Endpoint not initialized yet.");
+            var chatroomWindow = new ChatroomWindow(this.PostalService);
             chatroomWindow.Show();
 
-            var addressBook = new DirectEntryAddressBook(new HttpClient());
+            var addressBook = new DirectEntryAddressBook(this.Channel.HttpClient);
             Endpoint? endpoint = await addressBook.LookupAsync("http://tinyurl.com/omhxu6l#-Rrs7LRrCE3bV8x58j1l4JUzAT3P2obKia73k3IFG9k");
             Assumes.NotNull(endpoint);
             chatroomWindow.AddMember("App author", endpoint);
@@ -176,7 +145,7 @@ namespace WpfChatroom
 
         private Task SetEndpointAsync(OwnEndpoint endpoint, Uri addressBookEntry)
         {
-            this.Channel.Endpoint = endpoint;
+            this.PostalService = new PostalService(new Channel(this.HttpClient, endpoint, this.MessageRelayService, this.CryptoSettings));
             this.PublicEndpointUrlTextBlock.Text = addressBookEntry.AbsoluteUri;
             this.OpenChatroom.IsEnabled = true;
             this.ChatWithAuthor.IsEnabled = true;
@@ -189,6 +158,22 @@ namespace WpfChatroom
             {
                 Clipboard.SetText(this.PublicEndpointUrlTextBlock.Text);
             }
+        }
+
+        [DataContract]
+        private class EndpointAndAddressBookUri
+        {
+            public EndpointAndAddressBookUri(Uri addressBookUri, OwnEndpoint endpoint)
+            {
+                this.AddressBookUri = addressBookUri;
+                this.Endpoint = endpoint;
+            }
+
+            [DataMember]
+            public Uri AddressBookUri { get; }
+
+            [DataMember]
+            public OwnEndpoint Endpoint { get; }
         }
     }
 }

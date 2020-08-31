@@ -9,6 +9,7 @@ namespace IronPigeon.Tests
     using System.Linq;
     using System.Text;
     using System.Threading.Tasks;
+    using System.Web;
     using Microsoft;
     using Xunit;
 
@@ -46,6 +47,21 @@ namespace IronPigeon.Tests
             }
 
             Assert.Equal(largeStream.Length, updates[updates.Count - 1]);
+        }
+
+        [Fact]
+        public void UrlEncode()
+        {
+            var data = new Dictionary<string, string> { { "a", "b" }, { "a=b&c", "e=f&g" }, };
+            string urlEncoded = data.UrlEncode();
+            Assert.Equal("a=b&a%3Db%26c=e%3Df%26g", urlEncoded);
+
+            System.Collections.Specialized.NameValueCollection? decoded = HttpUtility.ParseQueryString(urlEncoded);
+            Assert.Equal(data.Count, decoded.Count);
+            foreach (string? key in decoded)
+            {
+                Assert.Equal(decoded[key], data[key!]);
+            }
         }
 
         private class MockProgress<T> : IProgress<T>

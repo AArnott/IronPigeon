@@ -16,6 +16,6 @@ namespace IronPigeon.Relay
         /// </summary>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>The result of the inbox creation request from the server.</returns>
-        Task<InboxCreationResponse> CreateInboxAsync(CancellationToken cancellationToken = default(CancellationToken));
+        Task<InboxCreationResponse> CreateInboxAsync(CancellationToken cancellationToken = default);
     }
 }

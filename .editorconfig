@@ -171,5 +171,9 @@ dotnet_diagnostic.CS8602.severity = suggestion
 # CA1819: Properties should not return arrays
 dotnet_diagnostic.CA1819.severity = suggestion
 
+# Avoid mutable static fields
+dotnet_diagnostic.MsgPack001.severity = error
+dotnet_diagnostic.MsgPack002.severity = error
+
 [*.sln]
 indent_style = tab

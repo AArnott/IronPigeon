@@ -3,6 +3,7 @@
 
 namespace IronPigeon.Relay
 {
+    using System;
     using System.Runtime.Serialization;
     using Microsoft;
 
@@ -17,12 +18,11 @@ namespace IronPigeon.Relay
         /// </summary>
         /// <param name="messageReceivingEndpoint">The message receiving endpoint assigned to the newly created inbox.</param>
         /// <param name="inboxOwnerCode">The base64 representation of a secret meant only for the owner of the inbox.</param>
-        public InboxCreationResponse(string messageReceivingEndpoint, string inboxOwnerCode)
+        public InboxCreationResponse(Uri messageReceivingEndpoint, string inboxOwnerCode)
         {
-            Requires.NotNullOrEmpty(messageReceivingEndpoint, nameof(messageReceivingEndpoint));
             Requires.NotNullOrEmpty(inboxOwnerCode, nameof(inboxOwnerCode));
 
-            this.MessageReceivingEndpoint = messageReceivingEndpoint;
+            this.MessageReceivingEndpoint = messageReceivingEndpoint ?? throw new ArgumentNullException(nameof(messageReceivingEndpoint));
             this.InboxOwnerCode = inboxOwnerCode;
         }
 
@@ -33,10 +33,10 @@ namespace IronPigeon.Relay
         /// The message receiving endpoint.
         /// </value>
         [DataMember]
-        public string MessageReceivingEndpoint { get; }
+        public Uri MessageReceivingEndpoint { get; }
 
         /// <summary>
-        /// Gets the base64 representation of a secret meant only for the owner of the inbox.
+        /// Gets a secret that can be used to pick up messages from the <see cref="MessageReceivingEndpoint"/>.
         /// </summary>
         [DataMember]
         public string InboxOwnerCode { get; }

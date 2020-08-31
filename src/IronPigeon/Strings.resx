@@ -132,11 +132,17 @@
   <data name="InvalidMessage" xml:space="preserve">
     <value>Error when reading incoming message.</value>
   </data>
-  <data name="MaxAllowableMessagePartSizeExceeded" xml:space="preserve">
-    <value>The message contained a value that claimed to exceed a maximum allowable value.</value>
-  </data>
   <data name="MisdirectedMessage" xml:space="preserve">
     <value>Message notification not intended for this recipient.</value>
+  </data>
+  <data name="PayloadDecryptionKeyMissing" xml:space="preserve">
+    <value>This payload reference is missing a decryption key.</value>
+  </data>
+  <data name="PrivateKeyDataNotAllowed" xml:space="preserve">
+    <value>Private key data is not allowed.</value>
+  </data>
+  <data name="PrivateKeyDataRequired" xml:space="preserve">
+    <value>Private key data is required.</value>
   </data>
   <data name="PropertyMustBeSetFirst" xml:space="preserve">
     <value>The property {0} must be set first.</value>

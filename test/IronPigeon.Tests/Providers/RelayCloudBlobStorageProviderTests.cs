@@ -7,40 +7,46 @@ namespace IronPigeon.Tests.Providers
     using System.IO;
     using System.Net.Http;
     using System.Text;
+    using System.Threading.Tasks;
     using IronPigeon.Providers;
     using IronPigeon.Tests.Mocks;
     using Xunit;
+    using Xunit.Abstractions;
 
-    public class RelayCloudBlobStorageProviderTests
+    public class RelayCloudBlobStorageProviderTests : TestBase
     {
         private readonly HttpMessageHandlerRecorder messageRecorder;
         private ICloudBlobStorageProvider provider;
 
-        public RelayCloudBlobStorageProviderTests()
+        public RelayCloudBlobStorageProviderTests(ITestOutputHelper logger)
+            : base(logger)
         {
-            var provider = new RelayCloudBlobStorageProvider(new Uri("http://localhost:39472/api/blob"));
             this.messageRecorder = HttpMessageHandlerRecorder.CreatePlayback(typeof(RelayCloudBlobStorageProviderTests));
+#pragma warning disable CA2000 // Dispose objects before losing scope
             var messageHandler = new ContentLengthVerifyingMockHandler(this.messageRecorder);
-            provider.HttpClient = new HttpClient(messageHandler);
-            this.provider = provider;
+            this.provider = new RelayCloudBlobStorageProvider(new HttpClient(messageHandler))
+            {
+                BlobPostUrl = new Uri("http://localhost:39472/api/blob"),
+            };
+#pragma warning restore CA2000 // Dispose objects before losing scope
         }
 
         [Fact]
-        public void UploadTest()
+        public async Task UploadTest()
         {
             this.messageRecorder.SetTestName();
             using (var content = new MemoryStream(Encoding.UTF8.GetBytes("Hello, World!")))
             {
-                Uri? location = this.provider.UploadMessageAsync(
-                    content, DateTime.UtcNow + TimeSpan.FromMinutes(5.5), "application/testcontent", "testencoding").Result;
+                Uri location = await this.provider.UploadMessageAsync(
+                    content, DateTime.UtcNow + TimeSpan.FromMinutes(5.5), cancellationToken: this.TimeoutToken);
                 Assert.Equal("http://127.0.0.1:10000/devstoreaccount1/blobs/2012.08.26/22A0FLkPHlM-T5q", location.AbsoluteUri);
             }
 
             var progress = new Progress<long>(p => { });
             using (var content = new MemoryStream(Encoding.UTF8.GetBytes("Hello, World!")))
             {
-                Uri? location = this.provider.UploadMessageAsync(
-                    content, DateTime.UtcNow + TimeSpan.FromMinutes(5.5), "application/testcontent", "testencoding", progress).Result;
+                Uri location = await this.provider.UploadMessageAsync(
+                    content, DateTime.UtcNow + TimeSpan.FromMinutes(5.5), progress, this.TimeoutToken);
                 Assert.Equal("http://127.0.0.1:10000/devstoreaccount1/blobs/2012.08.26/22A0FLkPHlM-T5q", location.AbsoluteUri);
             }
         }

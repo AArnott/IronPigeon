@@ -4,12 +4,15 @@
 namespace IronPigeon
 {
     using System;
+    using System.Buffers;
     using System.Collections.Generic;
     using System.Diagnostics.CodeAnalysis;
     using System.IO;
+    using System.IO.Pipelines;
     using System.Linq;
     using System.Net.Http;
     using System.Net.Http.Headers;
+    using System.Runtime.InteropServices;
     using System.Runtime.Serialization;
     using System.Text;
     using System.Text.RegularExpressions;
@@ -28,11 +31,6 @@ namespace IronPigeon
         /// The recommended length of a randomly generated string used to name uploaded blobs.
         /// </summary>
         internal const int BlobNameLength = 15;
-
-        /// <summary>
-        /// The encoding to use when writing out POST entity strings.
-        /// </summary>
-        private static readonly Encoding PostEntityEncoding = new UTF8Encoding(false);
 
         /// <summary>
         /// The set of unsafe characters that may be found in a base64-encoded string.
@@ -59,27 +57,16 @@ namespace IronPigeon
         /// <summary>
         /// A simple salt for instantiating non-crypto RNGs.
         /// </summary>
-        private static int randSeedSalt = 0;
+        private static int randSeedSalt;
 
         /// <summary>
         /// Tests whether two arrays are equal in contents and ordering.
         /// </summary>
-        /// <typeparam name="T">The type of elements in the arrays.</typeparam>
         /// <param name="first">The first array in the comparison.  May not be null.</param>
         /// <param name="second">The second array in the comparison. May not be null.</param>
         /// <returns>True if the arrays equal; false otherwise.</returns>
-        public static bool AreEquivalent<T>(T[] first, T[] second)
+        public static bool AreEquivalent(ReadOnlySpan<byte> first, ReadOnlySpan<byte> second)
         {
-            if ((first == null) ^ (second == null))
-            {
-                return false;
-            }
-
-            if (first == null)
-            {
-                return true;
-            }
-
             if (first.Length != second.Length)
             {
                 return false;
@@ -87,7 +74,7 @@ namespace IronPigeon
 
             for (int i = 0; i < first.Length; i++)
             {
-                if (!first[i].Equals(second[i]))
+                if (first[i] != second[i])
                 {
                     return false;
                 }
@@ -153,231 +140,13 @@ namespace IronPigeon
         }
 
         /// <summary>
-        /// Serializes a data contract.
-        /// </summary>
-        /// <typeparam name="T">The type of object to serialize.</typeparam>
-        /// <param name="writer">The stream writer to use for serialization.</param>
-        /// <param name="graph">The object to serialize.</param>
-        /// <remarks>
-        /// Useful when a data contract is serialized to a stream but is not the only member of that stream.
-        /// </remarks>
-        public static void SerializeDataContract<T>(this BinaryWriter writer, T graph)
-        {
-            Requires.NotNull(writer, nameof(writer));
-            Requires.NotNullAllowStructs(graph, "graph");
-
-            var serializer = new DataContractSerializer(typeof(T));
-            using var ms = new MemoryStream();
-            serializer.WriteObject(ms, graph);
-            writer.Write((int)ms.Length);
-            writer.Write(ms.ToArray(), 0, (int)ms.Length);
-        }
-
-        /// <summary>
-        /// Deserializes a data contract from a given stream.
-        /// </summary>
-        /// <typeparam name="T">The type of object to deserialize.</typeparam>
-        /// <param name="binaryReader">The stream reader to use for deserialization.</param>
-        /// <returns>The deserialized object.</returns>
-        /// <remarks>
-        /// Useful when a data contract is serialized to a stream but is not the only member of that stream.
-        /// </remarks>
-        public static T DeserializeDataContract<T>(this BinaryReader binaryReader)
-        {
-            Requires.NotNull(binaryReader, nameof(binaryReader));
-
-            var serializer = new DataContractSerializer(typeof(T));
-            int length = binaryReader.ReadInt32();
-            using var ms = new MemoryStream(binaryReader.ReadBytes(length));
-            return (T)serializer.ReadObject(ms);
-        }
-
-        /// <summary>
-        /// Writes out the serialized form of the specified object as Base64-encoded text,
-        /// with line breaks such that no line exceeds 79 characters in length.
-        /// </summary>
-        /// <typeparam name="T">The type of the object to serialize.</typeparam>
-        /// <param name="writer">The writer to use for emitting base64 encoded text.</param>
-        /// <param name="graph">The object to serialize.</param>
-        /// <returns>A task that is completed when serialization has completed.</returns>
-        public static async Task SerializeDataContractAsBase64Async<T>(TextWriter writer, T graph)
-            where T : class
-        {
-            Requires.NotNull(writer, nameof(writer));
-            Requires.NotNull(graph, nameof(graph));
-
-            var ms = new MemoryStream();
-            using var binaryWriter = new BinaryWriter(ms);
-            SerializeDataContract(binaryWriter, graph);
-            binaryWriter.Flush();
-            ms.Position = 0;
-
-            const int MaxLineLength = 79;
-            string entireBase64 = Convert.ToBase64String(ms.ToArray());
-            for (int i = 0; i < entireBase64.Length; i += MaxLineLength)
-            {
-                await writer.WriteLineAsync(entireBase64.Substring(i, Math.Min(MaxLineLength, entireBase64.Length - i))).ConfigureAwait(false);
-            }
-        }
-
-        /// <summary>
-        /// Deserializes an object previously stored as base64-encoded text, possibly with line breaks.
-        /// </summary>
-        /// <typeparam name="T">The type of object to deserialize.</typeparam>
-        /// <param name="reader">The reader from which to draw base64-encoded text.</param>
-        /// <returns>A task whose result is the deserialized object.</returns>
-        public static async Task<T> DeserializeDataContractFromBase64Async<T>(TextReader reader)
-            where T : class
-        {
-            Requires.NotNull(reader, nameof(reader));
-
-            var builder = new StringBuilder();
-            string line;
-            while ((line = await reader.ReadLineAsync().ConfigureAwait(false)) != null)
-            {
-                builder.Append(line);
-            }
-
-            byte[] buffer;
-            try
-            {
-                buffer = Convert.FromBase64String(builder.ToString());
-            }
-            catch (FormatException ex)
-            {
-                throw new SerializationException(Strings.Base64DecodingFailure, ex);
-            }
-
-            var ms = new MemoryStream(buffer);
-            using var binaryReader = new BinaryReader(ms);
-            T? value = DeserializeDataContract<T>(binaryReader);
-            return value;
-        }
-
-        /// <summary>
-        /// Reads the size of a buffer, and then the buffer itself, from a binary reader.
-        /// </summary>
-        /// <param name="reader">The reader.</param>
-        /// <returns>The buffer.</returns>
-        public static byte[] ReadSizeAndBuffer(this BinaryReader reader)
-        {
-            Requires.NotNull(reader, nameof(reader));
-
-            int size = reader.ReadInt32();
-            var buffer = new byte[size];
-            reader.BaseStream.Read(buffer, 0, size);
-            return buffer;
-        }
-
-        /// <summary>
-        /// Writes out the size of the buffer and its contents.
-        /// </summary>
-        /// <param name="writer">The receiver of the written bytes.</param>
-        /// <param name="buffer">The buffer.</param>
-        public static void WriteSizeAndBuffer(this BinaryWriter writer, byte[] buffer)
-        {
-            Requires.NotNull(writer, nameof(writer));
-            Requires.NotNull(buffer, nameof(buffer));
-
-            writer.Write(buffer.Length);
-            writer.Write(buffer);
-        }
-
-        /// <summary>
-        /// Writes out the size of the buffer and its contents.
-        /// </summary>
-        /// <param name="stream">The stream to write the buffer's length and contents to.</param>
-        /// <param name="buffer">The buffer.</param>
-        /// <param name="cancellationToken">The cancellation token.  Cancellation may leave the stream in a partially written state.</param>
-        /// <returns>A task whose completion indicates the async operation has completed.</returns>
-        public static async Task WriteSizeAndBufferAsync(this Stream stream, byte[] buffer, CancellationToken cancellationToken)
-        {
-            Requires.NotNull(stream, nameof(stream));
-            Requires.NotNull(buffer, nameof(buffer));
-
-            byte[] lengthBuffer = BitConverter.GetBytes(buffer.Length);
-            await stream.WriteAsync(lengthBuffer, 0, lengthBuffer.Length, cancellationToken).ConfigureAwait(false);
-            await stream.WriteAsync(buffer, 0, buffer.Length, cancellationToken).ConfigureAwait(false);
-        }
-
-        /// <summary>
-        /// Writes out the size of the buffer and its contents.
-        /// </summary>
-        /// <param name="stream">The stream to write the buffer's length and contents to.</param>
-        /// <param name="sourceStream">The source stream to write out.</param>
-        /// <param name="cancellationToken">The cancellation token.  Cancellation may leave the stream in a partially written state.</param>
-        /// <returns>A task whose completion indicates the async operation has completed.</returns>
-        public static async Task WriteSizeAndStreamAsync(this Stream stream, Stream sourceStream, CancellationToken cancellationToken)
-        {
-            Requires.NotNull(stream, nameof(stream));
-            Requires.NotNull(sourceStream, nameof(sourceStream));
-
-            byte[] streamLength = BitConverter.GetBytes((int)(sourceStream.Length - sourceStream.Position));
-            await stream.WriteAsync(streamLength, 0, streamLength.Length, cancellationToken).ConfigureAwait(false);
-            await sourceStream.CopyToAsync(stream, 4096, cancellationToken).ConfigureAwait(false);
-        }
-
-        /// <summary>
-        /// Reads the size of a buffer, and then the buffer itself, from a binary reader.
-        /// </summary>
-        /// <param name="stream">The stream from which to read the buffer's size and contents.</param>
-        /// <param name="cancellationToken">A cancellation token.</param>
-        /// <param name="maxSize">The maximum value to accept as the length of the buffer.</param>
-        /// <returns>The buffer.</returns>
-        /// <exception cref="InvalidMessageException">Thrown if the buffer length read from the stream exceeds the maximum allowable size.</exception>
-        public static async Task<byte[]> ReadSizeAndBufferAsync(this Stream stream, CancellationToken cancellationToken, int maxSize = 10 * 1024)
-        {
-            Requires.NotNull(stream, nameof(stream));
-
-            byte[] lengthBuffer = new byte[sizeof(int)];
-            await stream.ReadAsync(lengthBuffer, 0, lengthBuffer.Length, cancellationToken).ConfigureAwait(false);
-            int size = BitConverter.ToInt32(lengthBuffer, 0);
-            if (size > maxSize)
-            {
-                throw new InvalidMessageException(Strings.MaxAllowableMessagePartSizeExceeded);
-            }
-
-            if (size < 0)
-            {
-                throw new InvalidMessageException(Strings.InvalidMessage);
-            }
-
-            byte[] buffer = new byte[size];
-            await stream.ReadAsync(buffer, 0, size, cancellationToken).ConfigureAwait(false);
-            return buffer;
-        }
-
-        /// <summary>
-        /// Reads the size of a buffer, and then the buffer itself, from a binary reader.
-        /// </summary>
-        /// <param name="stream">The stream from which to read the buffer's size and contents.</param>
-        /// <param name="cancellationToken">A cancellation token.</param>
-        /// <param name="maxSize">The maximum value to accept as the length of the buffer.</param>
-        /// <returns>The substream of the specified stream that will read just the length of the next object.</returns>
-        /// <exception cref="InvalidMessageException">Thrown if the buffer length read from the stream exceeds the maximum allowable size.</exception>
-        public static async Task<Stream> ReadSizeAndStreamAsync(this Stream stream, CancellationToken cancellationToken, int maxSize = 10 * 1024)
-        {
-            Requires.NotNull(stream, nameof(stream));
-
-            byte[] lengthBuffer = new byte[sizeof(int)];
-            await stream.ReadAsync(lengthBuffer, 0, lengthBuffer.Length, cancellationToken).ConfigureAwait(false);
-            int size = BitConverter.ToInt32(lengthBuffer, 0);
-            if (size > maxSize)
-            {
-                throw new InvalidMessageException(Strings.MaxAllowableMessagePartSizeExceeded);
-            }
-
-            return stream.ReadSlice(size);
-        }
-
-        /// <summary>
         /// Shortens the specified long URL, but leaves the fragment part (if present) visibly applied to the shortened URL.
         /// </summary>
         /// <param name="shortener">The URL shortening service to use.</param>
         /// <param name="longUrl">The long URL.</param>
         /// <param name="cancellationToken">A cancellation token.</param>
         /// <returns>The short URL.</returns>
-        public static async Task<Uri> ShortenExcludeFragmentAsync(this IUrlShortener shortener, Uri longUrl, CancellationToken cancellationToken = default(CancellationToken))
+        public static async Task<Uri> ShortenExcludeFragmentAsync(this IUrlShortener shortener, Uri longUrl, CancellationToken cancellationToken = default)
         {
             Requires.NotNull(shortener, nameof(shortener));
             Requires.NotNull(longUrl, nameof(longUrl));
@@ -416,7 +185,7 @@ namespace IronPigeon
         /// A task whose result is the contact, or null if no match is found.
         /// </returns>
         /// <exception cref="BadAddressBookEntryException">Thrown when a validation error occurs while reading the address book entry.</exception>
-        public static async Task<Endpoint?> LookupAsync(this IEnumerable<AddressBook> addressBooks, string identifier, CancellationToken cancellationToken = default(CancellationToken))
+        public static async Task<Endpoint?> LookupAsync(this IEnumerable<AddressBook> addressBooks, string identifier, CancellationToken cancellationToken = default)
         {
             Requires.NotNull(addressBooks, nameof(addressBooks));
             Requires.NotNullOrEmpty(identifier, nameof(identifier));
@@ -466,16 +235,21 @@ namespace IronPigeon
         /// <param name="qualifyingTest">The function that tests whether a received result qualifies.  This function will not be executed concurrently and need not be thread-safe.</param>
         /// <param name="cancellationToken">The overall cancellation token.</param>
         /// <returns>A task whose result is the qualifying result, or <c>default(TOutput)</c> if no result qualified.</returns>
-        public static async Task<TOutput?> FastestQualifyingResultAsync<TInput, TOutput>(IEnumerable<TInput> inputs, Func<CancellationToken, TInput, Task<TOutput>> asyncOperation, Func<TOutput, bool> qualifyingTest, CancellationToken cancellationToken = default(CancellationToken))
+        public static async Task<TOutput?> FastestQualifyingResultAsync<TInput, TOutput>(IEnumerable<TInput> inputs, Func<CancellationToken, TInput, Task<TOutput?>> asyncOperation, Func<TOutput, bool> qualifyingTest, CancellationToken cancellationToken = default)
             where TOutput : class
         {
+            Requires.NotNull(inputs, nameof(inputs));
+            Requires.NotNull(asyncOperation, nameof(asyncOperation));
+            Requires.NotNull(qualifyingTest, nameof(qualifyingTest));
+
             using CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-            List<Task<TOutput>> tasks = inputs.Select(i => asyncOperation(cts.Token, i)).ToList();
+            List<Task<TOutput?>> tasks = inputs.Select(i => asyncOperation(cts.Token, i)).ToList();
 
             while (tasks.Count > 0)
             {
-                Task<TOutput>? completingTask = await Task.WhenAny(tasks).ConfigureAwait(false);
-                if (qualifyingTest(await completingTask.ConfigureAwait(false)))
+                Task<TOutput?>? completingTask = await Task.WhenAny(tasks).ConfigureAwait(false);
+                TOutput? result = await completingTask.ConfigureAwait(false);
+                if (result is object && qualifyingTest(result))
                 {
                     cts.Cancel();
                     return await completingTask.ConfigureAwait(false);
@@ -513,7 +287,7 @@ namespace IronPigeon
         {
             Requires.NotNull(stream, nameof(stream));
 
-            return bytesReadProgress != null ? new ReadStreamWithProgress(stream, bytesReadProgress) : stream;
+            return bytesReadProgress != null ? new StreamWithProgress(stream, bytesReadProgress) : stream;
         }
 
         /// <summary>
@@ -703,17 +477,75 @@ namespace IronPigeon
         }
 
         /// <summary>
-        /// Gets the string form of the specified buffer.
+        /// Gets the underlying array of a <see cref="ReadOnlyMemory{T}"/> or creates a new one with the same content.
         /// </summary>
-        /// <param name="encoding">The encoding.</param>
-        /// <param name="buffer">The buffer.</param>
-        /// <returns>A string.</returns>
-        internal static string GetString(this Encoding encoding, byte[] buffer)
+        /// <typeparam name="T">The type of element stored in memory.</typeparam>
+        /// <param name="memory">The memory.</param>
+        /// <returns>An array, either the same array or a copy.</returns>
+        internal static T[] AsOrCreateArray<T>(this ReadOnlyMemory<T> memory)
         {
-            Requires.NotNull(encoding, nameof(encoding));
-            Requires.NotNull(buffer, nameof(buffer));
+            return MemoryMarshal.TryGetArray<T>(memory, out ArraySegment<T> arraySegment) && arraySegment.Offset == 0 && arraySegment.Count == arraySegment.Array.Length
+                ? arraySegment.Array
+                : memory.ToArray();
+        }
 
-            return encoding.GetString(buffer, 0, buffer.Length);
+        /// <summary>
+        /// Gets a hash of a byte buffer.
+        /// </summary>
+        /// <param name="buffer">The buffer.</param>
+        /// <returns>The hash code.</returns>
+        internal static int GetHashCode(ReadOnlySpan<byte> buffer)
+        {
+            int hash = 0;
+            for (int i = 0; i < buffer.Length; i++)
+            {
+                unchecked
+                {
+                    hash ^= buffer[i];
+                }
+            }
+
+            return hash;
+        }
+
+        /// <summary>
+        /// Copies the (remaining) content of one stream to another.
+        /// Reading from the source stream can happen concurrently with writing to the target stream to maximize throughput.
+        /// </summary>
+        /// <param name="from">The stream to read.</param>
+        /// <param name="to">The stream tow rite.</param>
+        /// <param name="progress">An optional progress indicator.</param>
+        /// <param name="expectedContentLength">The anticipated length of the stream for use with reporting <paramref name="progress"/>.</param>
+        /// <param name="cancellationToken">A cancellation token.</param>
+        /// <returns>The total number of bytes copied.</returns>
+        internal static async Task<long> ConcurrentCopyToAsync(this Stream from, Stream to, IProgress<(long BytesCopied, long? Total)>? progress, long? expectedContentLength, CancellationToken cancellationToken)
+        {
+            if (expectedContentLength is null && from.CanSeek)
+            {
+                expectedContentLength = from.Length;
+            }
+
+            using var receivingStreamWithProgress = new StreamWithProgress(to, progress.Adapt(expectedContentLength), leaveOpen: true);
+
+            var pipe = new Pipe();
+            await Task.WhenAll(
+                from.CopyToAsync(pipe.Writer, cancellationToken),
+                pipe.Reader.CopyToAsync(receivingStreamWithProgress, cancellationToken)).ConfigureAwait(false);
+
+            return receivingStreamWithProgress.BytesTransferred;
+        }
+
+        /// <summary>
+        /// Creates an <see cref="IProgress{T}"/> that just takes a current value
+        /// that forwards the report to an <see cref="IProgress{T}"/> that takes a tuple of current and expected total progress.
+        /// </summary>
+        /// <param name="progress">The progress object to forward to.</param>
+        /// <param name="expectedTotal">The total to mix into each report.</param>
+        /// <returns>The progress adapter, or null if <paramref name="progress"/> was null.</returns>
+        [return: NotNullIfNotNull("progress")]
+        internal static IProgress<long>? Adapt(this IProgress<(long Current, long? Total)>? progress, long? expectedTotal)
+        {
+            return progress is object ? new Progress<long>(current => progress.Report((current, expectedTotal))) : null;
         }
     }
 }

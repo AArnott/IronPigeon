@@ -4,6 +4,7 @@
 namespace IronPigeon.Tests
 {
     using System.Collections.Generic;
+    using System.IO;
     using System.Net.Http;
     using System.Threading.Tasks;
     using Microsoft;
@@ -12,19 +13,33 @@ namespace IronPigeon.Tests
 
     public class InteropTests : TestBase
     {
+        private readonly Mocks.HttpMessageHandlerMock httpHandler;
+        private readonly HttpClient httpClient;
+        private readonly Mocks.CloudBlobStorageProviderMock cloudStorage;
+        private readonly Mocks.InboxHttpHandlerMock inboxMock;
+
         public InteropTests(ITestOutputHelper logger)
             : base(logger)
         {
+            this.httpHandler = new Mocks.HttpMessageHandlerMock();
+
+            this.cloudStorage = new Mocks.CloudBlobStorageProviderMock();
+            this.cloudStorage.AddHttpHandler(this.httpHandler);
+
+            this.inboxMock = new Mocks.InboxHttpHandlerMock(new[] { Valid.ReceivingEndpoint1.PublicEndpoint });
+            this.inboxMock.Register(this.httpHandler);
+
+            this.httpClient = new HttpClient(this.httpHandler);
         }
 
         [Fact]
         public async Task CrossSecurityLevelAddressBookExchange()
         {
-            var lowLevelCrypto = new CryptoSettings(SecurityLevel.Minimum);
-            OwnEndpoint? lowLevelEndpoint = Valid.GenerateOwnEndpoint(lowLevelCrypto);
+            CryptoSettings lowLevelCrypto = CryptoSettings.Testing;
+            OwnEndpoint lowLevelEndpoint = Valid.GenerateOwnEndpoint(lowLevelCrypto);
 
-            var highLevelCrypto = new CryptoSettings(SecurityLevel.Minimum) { AsymmetricKeySize = 2048 };
-            OwnEndpoint? highLevelEndpoint = Valid.GenerateOwnEndpoint(highLevelCrypto);
+            CryptoSettings highLevelCrypto = CryptoSettings.Testing.WithAsymmetricKeySize(2048);
+            OwnEndpoint highLevelEndpoint = Valid.GenerateOwnEndpoint(highLevelCrypto);
 
             await this.TestSendAndReceiveAsync(lowLevelCrypto, lowLevelEndpoint, highLevelCrypto, highLevelEndpoint);
             await this.TestSendAndReceiveAsync(highLevelCrypto, highLevelEndpoint, lowLevelCrypto, lowLevelEndpoint);
@@ -33,64 +48,40 @@ namespace IronPigeon.Tests
         private async Task TestSendAndReceiveAsync(
             CryptoSettings senderCrypto, OwnEndpoint senderEndpoint, CryptoSettings receiverCrypto, OwnEndpoint receiverEndpoint)
         {
-            var inboxMock = new Mocks.InboxHttpHandlerMock(new[] { receiverEndpoint.PublicEndpoint });
-            var cloudStorage = new Mocks.CloudBlobStorageProviderMock();
-
-            await this.SendMessageAsync(cloudStorage, inboxMock, senderCrypto, senderEndpoint, receiverEndpoint.PublicEndpoint);
-            await this.ReceiveMessageAsync(cloudStorage, inboxMock, receiverCrypto, receiverEndpoint);
+            await this.SendMessageAsync(senderCrypto, senderEndpoint, receiverEndpoint.PublicEndpoint);
+            await this.ReceiveMessageAsync(receiverCrypto, receiverEndpoint);
         }
 
-        private async Task SendMessageAsync(Mocks.CloudBlobStorageProviderMock cloudStorage, Mocks.InboxHttpHandlerMock inboxMock, CryptoSettings senderCrypto, OwnEndpoint senderEndpoint, Endpoint receiverEndpoint)
+        private async Task SendMessageAsync(CryptoSettings senderCrypto, OwnEndpoint senderEndpoint, Endpoint receiverEndpoint)
         {
-            Requires.NotNull(cloudStorage, nameof(cloudStorage));
             Requires.NotNull(senderCrypto, nameof(senderCrypto));
             Requires.NotNull(senderEndpoint, nameof(senderEndpoint));
             Requires.NotNull(receiverEndpoint, nameof(receiverEndpoint));
 
-            using var httpHandler = new Mocks.HttpMessageHandlerMock();
-
-            cloudStorage.AddHttpHandler(httpHandler);
-
-            inboxMock.Register(httpHandler);
-
-            Payload? sentMessage = Valid.Message;
-
-            var channel = new Channel()
+            var channel = new Channel(this.httpClient, Valid.ReceivingEndpoint1, this.cloudStorage, senderCrypto)
             {
-                HttpClient = new HttpClient(httpHandler),
-                CloudBlobStorage = cloudStorage,
-                CryptoServices = senderCrypto,
-                Endpoint = senderEndpoint,
                 TraceSource = this.TraceSource,
             };
 
-            await channel.PostAsync(sentMessage, new[] { receiverEndpoint }, Valid.ExpirationUtc);
+            using var payload = new MemoryStream(Valid.MessageContent);
+            await channel.PostAsync(payload, Valid.ContentType, new[] { receiverEndpoint }, Valid.ExpirationUtc);
         }
 
-        private async Task ReceiveMessageAsync(Mocks.CloudBlobStorageProviderMock cloudStorage, Mocks.InboxHttpHandlerMock inboxMock, CryptoSettings receiverCrypto, OwnEndpoint receiverEndpoint)
+        private async Task ReceiveMessageAsync(CryptoSettings receiverCrypto, OwnEndpoint receiverEndpoint)
         {
-            Requires.NotNull(cloudStorage, nameof(cloudStorage));
             Requires.NotNull(receiverCrypto, nameof(receiverCrypto));
             Requires.NotNull(receiverEndpoint, nameof(receiverEndpoint));
 
-            using var httpHandler = new Mocks.HttpMessageHandlerMock();
-
-            cloudStorage.AddHttpHandler(httpHandler);
-            inboxMock.Register(httpHandler);
-
-            var channel = new Channel
+            var channel = new Channel(this.httpClient, Valid.ReceivingEndpoint1, this.cloudStorage, receiverCrypto)
             {
-                HttpClient = new HttpClient(httpHandler),
-                HttpClientLongPoll = new HttpClient(httpHandler),
-                CloudBlobStorage = cloudStorage,
-                CryptoServices = receiverCrypto,
-                Endpoint = receiverEndpoint,
                 TraceSource = this.TraceSource,
             };
 
-            IReadOnlyList<Channel.PayloadReceipt>? messages = await channel.ReceiveAsync();
-            Assert.Equal(1, messages.Count);
-            Assert.Equal(Valid.Message, messages[0].Payload);
+            List<Relay.InboxItem> receivedMessages = await channel.ReceiveInboxItemsAsync(cancellationToken: this.TimeoutToken).ToListAsync(this.TimeoutToken);
+            Assert.Single(receivedMessages);
+            using var actualPayload = new MemoryStream();
+            await receivedMessages[0].PayloadReference.DownloadPayloadAsync(this.httpClient, actualPayload, cancellationToken: this.TimeoutToken);
+            Assert.Equal<byte>(Valid.MessageContent, actualPayload.ToArray());
         }
     }
 }

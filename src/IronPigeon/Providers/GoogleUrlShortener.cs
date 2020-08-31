@@ -94,7 +94,9 @@ namespace IronPigeon.Providers
         /// The response message received from Google.
         /// </summary>
         [DataContract]
+#pragma warning disable CA1812 // Uninstantiated class is created via a deserializer
         private class ShortenResponse
+#pragma warning restore CA1812
         {
             /// <summary>
             /// Gets or sets the kind.

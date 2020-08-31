@@ -4,15 +4,11 @@
 namespace IronPigeon.Providers
 {
     using System;
-    using System.Collections.Generic;
-    using System.Diagnostics.CodeAnalysis;
     using System.Globalization;
     using System.IO;
-    using System.Linq;
     using System.Net.Http;
     using System.Runtime.Serialization;
     using System.Runtime.Serialization.Json;
-    using System.Text;
     using System.Text.RegularExpressions;
     using System.Threading;
     using System.Threading.Tasks;
@@ -37,7 +33,9 @@ namespace IronPigeon.Providers
         /// <summary>
         /// Initializes a new instance of the <see cref="TwitterAddressBook" /> class.
         /// </summary>
-        public TwitterAddressBook()
+        /// <param name="httpClient">The HTTP client.</param>
+        public TwitterAddressBook(HttpClient httpClient)
+            : base(httpClient)
         {
         }
 
@@ -50,7 +48,7 @@ namespace IronPigeon.Providers
         /// A task whose result is the contact, or null if no match is found.
         /// </returns>
         /// <exception cref="IronPigeon.BadAddressBookEntryException">Thrown when a validation error occurs while reading the address book entry.</exception>
-        public override async Task<Endpoint?> LookupAsync(string identifier, CancellationToken cancellationToken = default(CancellationToken))
+        public override async Task<Endpoint?> LookupAsync(string identifier, CancellationToken cancellationToken = default)
         {
             Requires.NotNullOrEmpty(identifier, nameof(identifier));
             if (!identifier.StartsWith("@", StringComparison.Ordinal))
@@ -61,7 +59,7 @@ namespace IronPigeon.Providers
             try
             {
                 Uri? entryLocation = await this.DiscoverAddressBookEntryUrlAsync(identifier.Substring(1), cancellationToken).ConfigureAwait(false);
-                if (entryLocation == null)
+                if (entryLocation is null)
                 {
                     return null;
                 }
@@ -107,7 +105,9 @@ namespace IronPigeon.Providers
         /// The structure of some of the data returned from a Twitter account query.
         /// </summary>
         [DataContract(Name = "user")]
+#pragma warning disable CA1812 // Uninstantiated class is created via a deserializer
         private class TwitterUserInfo
+#pragma warning restore CA1812
         {
             /// <summary>
             /// Gets or sets the Twitter account's Bio field.

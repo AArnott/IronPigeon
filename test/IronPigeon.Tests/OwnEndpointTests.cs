@@ -4,10 +4,6 @@
 namespace IronPigeon.Tests
 {
     using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Text;
-    using System.Threading.Tasks;
     using Xunit;
 
     public class OwnEndpointTests
@@ -15,37 +11,28 @@ namespace IronPigeon.Tests
         [Fact]
         public void CtorInvalidArgs()
         {
-            Assert.Throws<ArgumentNullException>("signingKey", () => new OwnEndpoint(null!, Valid.ReceivingEndpoint.EncryptionKey, DateTime.UtcNow, Valid.MessageReceivingEndpoint));
-            Assert.Throws<ArgumentNullException>("encryptionKey", () => new OwnEndpoint(Valid.ReceivingEndpoint.SigningKey, null!, DateTime.UtcNow, Valid.MessageReceivingEndpoint));
-            Assert.Throws<ArgumentNullException>("signingKeyPrivateMaterial", () => new OwnEndpoint(PCLCrypto.CryptographicPrivateKeyBlobType.BCryptFullPrivateKey, null!, Valid.Key, Valid.PublicEndpoint, null));
-            Assert.Throws<ArgumentNullException>("encryptionKeyPrivateMaterial", () => new OwnEndpoint(PCLCrypto.CryptographicPrivateKeyBlobType.BCryptFullPrivateKey, Valid.Key, null!, Valid.PublicEndpoint, null));
-            Assert.Throws<ArgumentNullException>("messageReceivingEndpoint", () => new OwnEndpoint(Valid.ReceivingEndpoint.SigningKey, Valid.ReceivingEndpoint.EncryptionKey, DateTime.UtcNow, null!));
+            Assert.Throws<ArgumentNullException>("messageReceivingEndpoint", () => new OwnEndpoint(null!, Valid.ReceivingEndpoint.SigningKeyInputs, Valid.ReceivingEndpoint.DecryptionKeyInputs));
+            Assert.Throws<ArgumentNullException>("signingKeyInputs", () => new OwnEndpoint(Valid.MessageReceivingEndpoint, null!, Valid.ReceivingEndpoint.DecryptionKeyInputs));
+            Assert.Throws<ArgumentNullException>("decryptionKeyInputs", () => new OwnEndpoint(Valid.MessageReceivingEndpoint, Valid.ReceivingEndpoint.SigningKeyInputs, null!));
         }
 
         [Fact]
         public void Ctor()
         {
-            var ownContact = new OwnEndpoint(Valid.ReceivingEndpoint.SigningKey, Valid.ReceivingEndpoint.EncryptionKey, DateTime.UtcNow, Valid.ReceivingEndpoint.PublicEndpoint.MessageReceivingEndpoint);
+            var ownContact = new OwnEndpoint(Valid.ReceivingEndpoint.MessageReceivingEndpoint, Valid.ReceivingEndpoint.SigningKeyInputs, Valid.ReceivingEndpoint.DecryptionKeyInputs, Valid.ReceivingEndpoint.InboxOwnerCode);
             Assert.Equal(Valid.ReceivingEndpoint.PublicEndpoint, ownContact.PublicEndpoint);
-            Assert.Equal(Valid.ReceivingEndpoint.EncryptionKeyPrivateMaterial, ownContact.EncryptionKeyPrivateMaterial);
-            Assert.Equal(Valid.ReceivingEndpoint.SigningKeyPrivateMaterial, ownContact.SigningKeyPrivateMaterial);
-        }
-
-        [Fact]
-        public void CreateAddressBookEntryNullInput()
-        {
-            var ownContact = new OwnEndpoint(Valid.ReceivingEndpoint.SigningKey, Valid.ReceivingEndpoint.EncryptionKey, DateTime.UtcNow, Valid.MessageReceivingEndpoint);
-            Assert.Throws<ArgumentNullException>(() => ownContact.CreateAddressBookEntry(null!));
+            Assert.Equal(Valid.ReceivingEndpoint.DecryptionKeyInputs, ownContact.DecryptionKeyInputs);
+            Assert.Equal(Valid.ReceivingEndpoint.SigningKeyInputs, ownContact.SigningKeyInputs);
+            Assert.Equal(Valid.ReceivingEndpoint.InboxOwnerCode, ownContact.InboxOwnerCode);
         }
 
         [Fact]
         public void CreateAddressBookEntry()
         {
             OwnEndpoint? ownContact = Valid.ReceivingEndpoint;
-            CryptoSettings cryptoServices = new CryptoSettings(SecurityLevel.Minimum);
-            AddressBookEntry? entry = ownContact.CreateAddressBookEntry(cryptoServices);
-            Assert.NotEqual(0, entry.Signature?.Length);
-            Assert.NotEqual(0, entry.SerializedEndpoint?.Length);
+            AddressBookEntry? entry = new AddressBookEntry(ownContact);
+            Assert.NotEqual(0, entry.Signature.Length);
+            Assert.NotEqual(0, entry.SerializedEndpoint.Length);
         }
     }
 }

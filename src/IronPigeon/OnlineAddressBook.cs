@@ -4,15 +4,13 @@
 namespace IronPigeon
 {
     using System;
-    using System.Collections.Generic;
     using System.IO;
-    using System.Linq;
     using System.Net.Http;
     using System.Net.Http.Headers;
     using System.Runtime.Serialization;
-    using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
+    using MessagePack;
     using Microsoft;
 
     /// <summary>
@@ -26,25 +24,18 @@ namespace IronPigeon
     public abstract class OnlineAddressBook : AddressBook
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="OnlineAddressBook"/> class.
-        /// </summary>
-        protected OnlineAddressBook()
-        {
-        }
-
-        /// <summary>
         /// Initializes a new instance of the <see cref="OnlineAddressBook" /> class.
         /// </summary>
         /// <param name="httpClient">The HTTP client.</param>
         protected OnlineAddressBook(HttpClient httpClient)
         {
-            this.HttpClient = httpClient;
+            this.HttpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         }
 
         /// <summary>
-        /// Gets or sets the HTTP client to use for outbound HTTP requests.
+        /// Gets the HTTP client to use for outbound HTTP requests.
         /// </summary>
-        public HttpClient? HttpClient { get; set; }
+        public HttpClient HttpClient { get; }
 
         /// <summary>
         /// Downloads an address book entry from the specified URL.  No signature validation is performed.
@@ -56,7 +47,6 @@ namespace IronPigeon
         protected async Task<AddressBookEntry?> DownloadAddressBookEntryAsync(Uri entryLocation, CancellationToken cancellationToken)
         {
             Requires.NotNull(entryLocation, nameof(entryLocation));
-            Verify.Operation(this.HttpClient is object, Strings.PropertyMustBeSetFirst, nameof(this.HttpClient));
 
             using var request = new HttpRequestMessage(HttpMethod.Get, entryLocation);
             request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(AddressBookEntry.ContentType));
@@ -66,12 +56,11 @@ namespace IronPigeon
                 return null;
             }
 
-            using (Stream? stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false))
+            using (Stream stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false))
             {
-                using var reader = new StreamReader(stream);
                 try
                 {
-                    AddressBookEntry? entry = await Utilities.DeserializeDataContractFromBase64Async<AddressBookEntry>(reader).ConfigureAwait(false);
+                    AddressBookEntry entry = await MessagePackSerializer.DeserializeAsync<AddressBookEntry>(stream, MessagePackSerializerOptions.Standard, cancellationToken).ConfigureAwait(false);
                     return entry;
                 }
                 catch (SerializationException ex)
@@ -93,21 +82,21 @@ namespace IronPigeon
             Requires.NotNull(entryLocation, nameof(entryLocation));
 
             AddressBookEntry? entry = await this.DownloadAddressBookEntryAsync(entryLocation, cancellationToken).ConfigureAwait(false);
-            if (entry == null)
+            if (entry is null)
             {
                 return null;
             }
 
-            Endpoint? endpoint = entry.ExtractEndpoint();
-
             if (!string.IsNullOrEmpty(entryLocation.Fragment))
             {
-                if (!CryptoProviderExtensions.IsThumbprintMatch(endpoint.SigningKeyPublicMaterial, entryLocation.Fragment.Substring(1)))
+                var expectedThumbprint = entryLocation.Fragment.Substring(1);
+                if (entry.Thumbprint != expectedThumbprint)
                 {
                     throw new BadAddressBookEntryException("Fragment thumbprint mismatch.");
                 }
             }
 
+            Endpoint endpoint = entry.ExtractEndpoint();
             return endpoint;
         }
     }

@@ -5,15 +5,13 @@ namespace IronPigeon.Tests.Mocks
 {
     using System;
     using System.Collections.Generic;
-    using System.Linq;
     using System.Net.Http;
-    using System.Text;
     using System.Threading.Tasks;
     using Microsoft;
 
     internal class HttpMessageHandlerMock : HttpMessageHandler
     {
-        private readonly List<Func<HttpRequestMessage, Task<HttpResponseMessage>>> handlers = new List<Func<HttpRequestMessage, Task<HttpResponseMessage>>>();
+        private readonly List<Func<HttpRequestMessage, Task<HttpResponseMessage?>>> handlers = new List<Func<HttpRequestMessage, Task<HttpResponseMessage?>>>();
 
         internal HttpMessageHandlerMock()
         {
@@ -24,7 +22,7 @@ namespace IronPigeon.Tests.Mocks
             this.handlers.Clear();
         }
 
-        internal void RegisterHandler(Func<HttpRequestMessage, Task<HttpResponseMessage>> handler)
+        internal void RegisterHandler(Func<HttpRequestMessage, Task<HttpResponseMessage?>> handler)
         {
             Requires.NotNull(handler, nameof(handler));
             this.handlers.Add(handler);
@@ -32,7 +30,7 @@ namespace IronPigeon.Tests.Mocks
 
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, System.Threading.CancellationToken cancellationToken)
         {
-            foreach (Func<HttpRequestMessage, Task<HttpResponseMessage>>? handler in this.handlers)
+            foreach (Func<HttpRequestMessage, Task<HttpResponseMessage?>>? handler in this.handlers)
             {
                 HttpResponseMessage? result = await handler(request);
                 if (result != null)

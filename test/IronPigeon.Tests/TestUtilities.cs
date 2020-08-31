@@ -5,15 +5,23 @@ namespace IronPigeon.Tests
 {
     using System;
     using System.Collections.Generic;
-    using System.IO;
-    using System.Linq;
-    using System.Text;
+    using System.Threading;
     using System.Threading.Tasks;
-    using IronPigeon.Providers;
-    using Microsoft;
 
     internal static class TestUtilities
     {
+        internal static async Task<List<T>> ToListAsync<T>(this IAsyncEnumerable<T> asyncEnumerable, CancellationToken cancellationToken)
+        {
+            var list = new List<T>();
+            await foreach (T item in asyncEnumerable.WithCancellation(cancellationToken))
+            {
+                list.Add(item);
+                cancellationToken.ThrowIfCancellationRequested();
+            }
+
+            return list;
+        }
+
         internal static void ApplyFuzzing(byte[] buffer, int bytesToChange)
         {
             var random = new Random();
@@ -22,29 +30,6 @@ namespace IronPigeon.Tests
                 int index = random.Next(buffer.Length);
                 buffer[index] = (byte)unchecked(buffer[index] + 0x1);
             }
-        }
-
-        internal static byte[] CopyBuffer(this byte[] buffer)
-        {
-            Requires.NotNull(buffer, nameof(buffer));
-
-            var copy = new byte[buffer.Length];
-            Array.Copy(buffer, copy, buffer.Length);
-            return copy;
-        }
-
-        internal static void CopyBuffer(this byte[] buffer, byte[] to)
-        {
-            Requires.NotNull(buffer, nameof(buffer));
-            Requires.NotNull(to, nameof(to));
-            Requires.Argument(buffer.Length == to.Length, "to", "Lengths do not match");
-
-            Array.Copy(buffer, to, buffer.Length);
-        }
-
-        internal static CryptoSettings CreateAuthenticCryptoProvider()
-        {
-            return new CryptoSettings(SecurityLevel.Minimum);
         }
     }
 }

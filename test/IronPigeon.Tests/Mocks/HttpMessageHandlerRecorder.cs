@@ -63,6 +63,7 @@ namespace IronPigeon.Tests.Mocks
                 }
             }
 
+            Assumes.NotNull(testClassDirectory);
             return new HttpMessageHandlerRecorder(Path.Combine(testClassDirectory, scenario), Mode.Recording);
         }
 
@@ -163,9 +164,10 @@ namespace IronPigeon.Tests.Mocks
             {
                 Assumes.NotNull(file);
                 using var reader = new StreamReader(file);
-                response.StatusCode = (HttpStatusCode)Enum.Parse(typeof(HttpStatusCode), await reader.ReadLineAsync());
-                string? line;
-                while ((line = await reader.ReadLineAsync()) != null)
+                string? line = await reader.ReadLineAsync();
+                Assumes.NotNull(line);
+                response.StatusCode = (HttpStatusCode)Enum.Parse(typeof(HttpStatusCode), line);
+                while ((line = await reader.ReadLineAsync()) is object)
                 {
                     cancellationToken.ThrowIfCancellationRequested();
                     var parts = line.Split(new[] { ':' }, 2);

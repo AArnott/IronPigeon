@@ -5,9 +5,7 @@ namespace IronPigeon.Providers
 {
     using System;
     using System.Collections.Generic;
-    using System.Linq;
     using System.Net.Http;
-    using System.Text;
     using System.Text.RegularExpressions;
     using System.Threading;
     using System.Threading.Tasks;
@@ -30,6 +28,15 @@ namespace IronPigeon.Providers
         private static readonly Regex EmailRegEx = new Regex(@"^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+(?:[A-Z]{2}|com|org|net|edu|gov|mil|biz|info|mobi|name|aero|asia|jobs|museum)$");
 
         /// <summary>
+        /// Initializes a new instance of the <see cref="RelayServiceAddressBook"/> class.
+        /// </summary>
+        /// <param name="httpClient">The HTTP client.</param>
+        public RelayServiceAddressBook(HttpClient httpClient)
+            : base(httpClient)
+        {
+        }
+
+        /// <summary>
         /// Gets or sets the URL that can be used to look up certificates for Dart users.
         /// </summary>
         public Uri? AddressBookLookupUrl { get; set; }
@@ -42,7 +49,7 @@ namespace IronPigeon.Providers
         /// <returns>
         /// A task whose result is the contact, or null if no match is found.
         /// </returns>
-        public override async Task<Endpoint?> LookupAsync(string identifier, CancellationToken cancellationToken = default(CancellationToken))
+        public override async Task<Endpoint?> LookupAsync(string identifier, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrEmpty(identifier))
             {

@@ -6,10 +6,10 @@ namespace IronPigeon.Dart
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Net.Mime;
     using System.Runtime.Serialization;
-
+    using IronPigeon.Relay;
     using Microsoft;
-    using ReadOnlyListOfEndpoint = System.Collections.Generic.IReadOnlyList<IronPigeon.Endpoint>;
 
     /// <summary>
     /// A "Dart", or secure email message.
@@ -20,17 +20,18 @@ namespace IronPigeon.Dart
         /// <summary>
         /// The content-type that identifies darts as the payload to an IronPigeon message.
         /// </summary>
-        public const string ContentType = "application/dart";
+        public static readonly ContentType ContentType = new ContentType("application/dart");
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Message" /> class.
         /// </summary>
         /// <param name="author">The author.</param>
+        /// <param name="authorName">The author's name.</param>
         /// <param name="recipients">The recipients.</param>
         /// <param name="subject">The subject.</param>
         /// <param name="body">The body.</param>
-        public Message(OwnEndpoint author, ReadOnlyListOfEndpoint recipients, string subject, string body)
-            : this(Requires.NotNull(author, nameof(author)).PublicEndpoint, recipients, subject, body)
+        public Message(OwnEndpoint author, string authorName, IReadOnlyList<Endpoint> recipients, string subject, string body)
+            : this(Requires.NotNull(author, nameof(author)).PublicEndpoint, authorName, recipients, subject, body)
         {
         }
 
@@ -38,12 +39,14 @@ namespace IronPigeon.Dart
         /// Initializes a new instance of the <see cref="Message" /> class.
         /// </summary>
         /// <param name="author">The author.</param>
+        /// <param name="authorName">The author's name.</param>
         /// <param name="recipients">The recipients.</param>
         /// <param name="subject">The subject.</param>
         /// <param name="body">The body.</param>
-        internal Message(Endpoint author, ReadOnlyListOfEndpoint recipients, string subject, string body)
+        internal Message(Endpoint author, string authorName, IReadOnlyList<Endpoint> recipients, string subject, string body)
         {
             Requires.NotNull(author, nameof(author));
+            Requires.NotNull(authorName, nameof(authorName));
             Requires.NotNull(recipients, nameof(recipients));
             Requires.NotNullOrEmpty(subject, nameof(subject));
             Requires.NotNull(body, nameof(body));
@@ -51,7 +54,8 @@ namespace IronPigeon.Dart
             this.CreationDateUtc = DateTime.UtcNow;
             this.ExpirationUtc = DateTime.UtcNow + TimeSpan.FromDays(7);
             this.Author = author;
-            this.Recipients = recipients.ToArray();
+            this.AuthorName = authorName;
+            this.Recipients.AddRange(recipients);
             this.Subject = subject;
             this.Body = body;
         }
@@ -64,28 +68,34 @@ namespace IronPigeon.Dart
         public DateTime CreationDateUtc { get; set; }
 
         /// <summary>
-        /// Gets or sets the author of this message.
+        /// Gets or sets the date after which the sender no longer wishes to recommend receipt of this message.
         /// </summary>
         [DataMember]
-        public Endpoint? Author { get; set; }
+        public DateTime ExpirationUtc { get; set; }
+
+        /// <summary>
+        /// Gets the author of this message.
+        /// </summary>
+        [DataMember]
+        public Endpoint Author { get; }
 
         /// <summary>
         /// Gets or sets the author's self-proclaimed name.
         /// </summary>
         [DataMember]
-        public string? AuthorName { get; set; }
+        public string AuthorName { get; set; }
 
         /// <summary>
-        /// Gets or sets the set of recipients this message claims to have received this message.
+        /// Gets the list of recipients this message claims to have received this message.
         /// </summary>
         [DataMember]
-        public Endpoint[]? Recipients { get; set; }
+        public List<Endpoint> Recipients { get; } = new List<Endpoint>();
 
         /// <summary>
-        /// Gets or sets the set of CC recipients the sender claims to be sending the message to.
+        /// Gets the list of CC recipients the sender claims to be sending the message to.
         /// </summary>
         [DataMember]
-        public Endpoint[]? CarbonCopyRecipients { get; set; }
+        public List<Endpoint> CarbonCopyRecipients { get; } = new List<Endpoint>();
 
         /// <summary>
         /// Gets or sets the subject of this message.
@@ -107,22 +117,15 @@ namespace IronPigeon.Dart
         public string? Body { get; set; }
 
         /// <summary>
-        /// Gets or sets the attachments.
-        /// </summary>
-        /// <value>The attachments.</value>
-        [DataMember]
-        public PayloadReference[]? Attachments { get; set; }
-
-        /// <summary>
-        /// Gets or sets the date after which the sender no longer wishes to recommend receipt of this message.
+        /// Gets a collection of attachments.
         /// </summary>
         [DataMember]
-        public DateTime ExpirationUtc { get; set; }
+        public List<PayloadReference> Attachments { get; } = new List<PayloadReference>();
 
         /// <summary>
-        /// Gets or sets the originating payload.
+        /// Gets or sets the inbox item that pointed to this message.
         /// </summary>
-        internal Payload? OriginatingPayload { get; set; }
+        internal InboxItem? OriginatingInboxItem { get; set; }
 
         /// <summary>
         /// Indicates whether the current object is equal to another object of the same type.
@@ -133,18 +136,17 @@ namespace IronPigeon.Dart
         /// </returns>
         public bool Equals(Message? other)
         {
-            if (other is null)
-            {
-                return false;
-            }
-
-            return this.Author.Equals(other.Author)
-                && EqualityComparer<string?>.Default.Equals(this.Subject, other.Subject)
-                && EqualityComparer<string?>.Default.Equals(this.Body, other.Body)
+            return other is object
+                && this.Author.Equals(other.Author)
+                && this.Subject == other.Subject
+                && this.Body == other.Body
                 && this.CreationDateUtc == other.CreationDateUtc;
         }
 
         /// <inheritdoc />
         public override bool Equals(object obj) => this.Equals(obj as Message);
+
+        /// <inheritdoc/>
+        public override int GetHashCode() => unchecked(this.Author.GetHashCode() + this.Subject.GetHashCode() + this.Body.GetHashCode());
     }
 }

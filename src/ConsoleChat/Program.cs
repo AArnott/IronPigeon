@@ -4,19 +4,19 @@
 namespace ConsoleChat
 {
     using System;
-    using System.Collections.Generic;
     using System.Configuration;
     using System.IO;
-    using System.Linq;
+    using System.Net.Http;
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
     using System.Windows.Forms;
-    using Autofac;
     using Azure.Storage.Blobs;
     using Azure.Storage.Blobs.Models;
     using IronPigeon;
     using IronPigeon.Providers;
+    using IronPigeon.Relay;
+    using MessagePack;
     using Microsoft;
     using Microsoft.Azure.Cosmos.Table;
 
@@ -31,56 +31,68 @@ namespace ConsoleChat
         private const string AzureTableStorageName = "inbox";
 
         /// <summary>
-        /// The name of the container in Azure blob storage to use for message payloads.
+        /// Initializes a new instance of the <see cref="Program"/> class.
         /// </summary>
-        private const string AzureBlobStorageContainerName = "consoleapptest";
-
-        /// <summary>
-        /// Gets or sets the channel.
-        /// </summary>
-        public Channel? Channel { get; set; }
-
-        /// <summary>
-        /// Gets or sets the message relay service.
-        /// </summary>
-        public RelayCloudBlobStorageProvider? MessageRelayService { get; set; }
-
-        /// <summary>
-        /// Gets the crypto provider.
-        /// </summary>
-        public CryptoSettings CryptoProvider
+        /// <param name="channel">The channel to use for communication.</param>
+        internal Program(Channel channel)
         {
-            get { return this.Channel.CryptoServices; }
+            this.Channel = channel;
+            this.RelayServer = new RelayServer(channel.HttpClient, channel.Endpoint);
         }
 
         /// <summary>
-        /// Gets or sets the own endpoint services.
+        /// Gets the channel.
         /// </summary>
-        public OwnEndpointServices? OwnEndpointServices { get; set; }
+        public Channel Channel { get; }
+
+        /// <summary>
+        /// Gets the relay server.
+        /// </summary>
+        public RelayServer RelayServer { get; }
 
         /// <summary>
         /// Entrypoint to the console application.
         /// </summary>
-        /// <param name="args">The arguments passed into the console app.</param>
-        [STAThread]
-        private static async Task Main(string[] args)
+        private static Task Main()
         {
-            var builder = new ContainerBuilder();
-            builder.RegisterTypes(
-                    typeof(Program),
-                    typeof(RelayCloudBlobStorageProvider),
-                    typeof(Channel),
-                    typeof(OwnEndpointServices),
-                    typeof(DirectEntryAddressBook),
-                    typeof(HttpClientWrapper))
-                .AsSelf()
-                .AsImplementedInterfaces()
-                .SingleInstance()
-                .PropertiesAutowired();
-            builder.Register(ctxt => ctxt.Resolve<HttpClientWrapper>().Client);
-            IContainer? container = builder.Build();
-            Program? program = container.Resolve<Program>();
-            await program.DoAsync();
+            using var cts = new CancellationTokenSource();
+            Console.CancelKeyPress += (s, e) =>
+            {
+                Console.WriteLine("Canceling...");
+                cts.Cancel();
+                e.Cancel = true;
+            };
+
+            return StartAsync(cts.Token);
+        }
+
+        private static async Task StartAsync(CancellationToken cancellationToken)
+        {
+            using var httpClient = new HttpClient();
+
+            var relayService = new RelayCloudBlobStorageProvider(httpClient)
+            {
+                BlobPostUrl = new Uri(ConfigurationManager.ConnectionStrings["RelayBlobService"].ConnectionString),
+                InboxServiceUrl = new Uri(ConfigurationManager.ConnectionStrings["RelayInboxService"].ConnectionString),
+            };
+
+            CryptoSettings cryptoSettings = CryptoSettings.Recommended;
+            OwnEndpoint? endpoint = await CreateOrOpenEndpointAsync(cryptoSettings, relayService, cancellationToken);
+            if (endpoint is null)
+            {
+                return;
+            }
+
+            var channel = new Channel(httpClient, endpoint, relayService, cryptoSettings);
+
+            Uri shareableAddress = await endpoint.PublishAddressBookEntryAsync(relayService, cancellationToken);
+            Console.WriteLine("Public receiving endpoint: {0}", shareableAddress.AbsoluteUri);
+
+            Endpoint friend = await GetFriendEndpointAsync(httpClient, endpoint.PublicEndpoint);
+
+            var program = new Program(channel);
+
+            await program.ChatLoopAsync(friend, cancellationToken);
         }
 
         /// <summary>
@@ -120,6 +132,7 @@ namespace ConsoleChat
         /// </summary>
         /// <param name="azureAccount">The Azure account in use.</param>
         /// <param name="blobStorage">The blob storage.</param>
+        /// <param name="cancellationToken">A cancellation token.</param>
         /// <returns>A task representing the asynchronous operation.</returns>
         private static async Task InitializeLocalCloudAsync(CloudStorageAccount azureAccount, AzureBlobStorage blobStorage, CancellationToken cancellationToken)
         {
@@ -130,35 +143,12 @@ namespace ConsoleChat
         }
 
         /// <summary>
-        /// The asynchronous entrypoint into the app.
-        /// </summary>
-        /// <returns>The asynchronous operation.</returns>
-        private async Task DoAsync()
-        {
-            this.MessageRelayService.BlobPostUrl = new Uri(ConfigurationManager.ConnectionStrings["RelayBlobService"].ConnectionString);
-            this.MessageRelayService.InboxServiceUrl = new Uri(ConfigurationManager.ConnectionStrings["RelayInboxService"].ConnectionString);
-            this.CryptoProvider.ApplySecurityLevel(SecurityLevel.Minimum);
-
-            this.Channel.Endpoint = await this.CreateOrOpenEndpointAsync();
-            if (this.Channel.Endpoint == null)
-            {
-                return;
-            }
-
-            Uri? shareableAddress = await this.OwnEndpointServices.PublishAddressBookEntryAsync(this.Channel.Endpoint);
-            Console.WriteLine("Public receiving endpoint: {0}", shareableAddress.AbsoluteUri);
-
-            Endpoint friend = await this.GetFriendEndpointAsync(this.Channel.Endpoint.PublicEndpoint);
-
-            await this.ChatLoopAsync(friend);
-        }
-
-        /// <summary>
         /// Queries the user for the remote endpoint to send messages to.
         /// </summary>
+        /// <param name="httpClient">The HTTP client to use.</param>
         /// <param name="defaultEndpoint">The user's own endpoint, to use for loopback demos in the event the user has no friend to talk to.</param>
         /// <returns>A task whose result is the remote endpoint to use.</returns>
-        private async Task<Endpoint> GetFriendEndpointAsync(Endpoint defaultEndpoint)
+        private static async Task<Endpoint> GetFriendEndpointAsync(HttpClient httpClient, Endpoint defaultEndpoint)
         {
             do
             {
@@ -169,7 +159,7 @@ namespace ConsoleChat
                     return defaultEndpoint;
                 }
 
-                var addressBook = new DirectEntryAddressBook(new System.Net.Http.HttpClient());
+                var addressBook = new DirectEntryAddressBook(httpClient);
                 Endpoint? endpoint = await addressBook.LookupAsync(url);
                 if (endpoint != null)
                 {
@@ -188,52 +178,48 @@ namespace ConsoleChat
         /// Creates a new local endpoint to identify the user, or opens a previously created one.
         /// </summary>
         /// <returns>A task whose result is the local user's own endpoint.</returns>
-        private async Task<OwnEndpoint?> CreateOrOpenEndpointAsync()
+        private static async Task<OwnEndpoint?> CreateOrOpenEndpointAsync(CryptoSettings cryptoSettings, IEndpointInboxFactory inboxFactory, CancellationToken cancellationToken)
         {
-            OwnEndpoint? result;
             switch (MessageBox.Show("Do you have an existing endpoint you want to open?", "Endpoint selection", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question))
             {
                 case DialogResult.Yes:
-                    using (var openFile = new OpenFileDialog())
                     {
+                        using var openFile = new OpenFileDialog();
                         if (openFile.ShowDialog() == DialogResult.Cancel)
                         {
-                            result = null;
-                            break;
+                            return null;
                         }
 
-                        using (Stream? fileStream = openFile.OpenFile())
-                        {
-                            result = await OwnEndpoint.OpenAsync(fileStream);
-                        }
+                        using Stream? fileStream = openFile.OpenFile();
+                        return await MessagePackSerializer.DeserializeAsync<OwnEndpoint>(fileStream, MessagePackSerializerOptions.Standard, cancellationToken);
                     }
 
-                    break;
                 case DialogResult.No:
-                    result = await this.OwnEndpointServices.CreateAsync();
-                    string privateFilePath = Path.GetTempFileName();
-                    using (FileStream? stream = File.OpenWrite(privateFilePath))
                     {
-                        await result.SaveAsync(stream);
+                        Console.WriteLine("Creating new endpont. This could take a minute...");
+                        OwnEndpoint? result = await OwnEndpoint.CreateAsync(cryptoSettings, inboxFactory, cancellationToken);
+                        string privateFilePath = Path.GetTempFileName();
+                        using FileStream? stream = File.OpenWrite(privateFilePath);
+                        await MessagePackSerializer.SerializeAsync(stream, result, MessagePackSerializerOptions.Standard, cancellationToken);
+                        Console.WriteLine("Private receiving endpoint: \"{0}\"", privateFilePath);
+                        return result;
                     }
 
-                    Console.WriteLine("Private receiving endpoint: \"{0}\"", privateFilePath);
-                    break;
                 default:
-                    result = null;
-                    break;
+                    return null;
             }
-
-            return result;
         }
 
         /// <summary>
         /// Executes the send/receive loop until the user exits the chat session with the "#quit" command.
         /// </summary>
         /// <param name="friend">The remote endpoint to send messages to.</param>
+        /// <param name="cancellationToken">A cancellation token.</param>
         /// <returns>A task representing the asynchronous operation.</returns>
-        private async Task ChatLoopAsync(Endpoint friend)
+        private async Task ChatLoopAsync(Endpoint friend, CancellationToken cancellationToken)
         {
+            Console.WriteLine("Use \"#quit\" to exit.");
+
             while (true)
             {
                 Console.Write("> ");
@@ -245,19 +231,23 @@ namespace ConsoleChat
 
                 if (line.Length > 0)
                 {
-                    var payload = new Payload(Encoding.UTF8.GetBytes(line), "text/plain");
-                    await this.Channel.PostAsync(payload, new[] { friend }, DateTime.UtcNow + TimeSpan.FromMinutes(5));
+                    using var payload = new MemoryStream(Encoding.UTF8.GetBytes(line));
+                    await this.Channel.PostAsync(payload, new System.Net.Mime.ContentType("text/plain"), new[] { friend }, DateTime.UtcNow + TimeSpan.FromMinutes(5), cancellationToken: cancellationToken);
                 }
 
                 Console.WriteLine("Awaiting friend's reply...");
-                IReadOnlyList<Channel.PayloadReceipt>? incoming = await this.Channel.ReceiveAsync(longPoll: true);
-                foreach (Channel.PayloadReceipt? payloadReceipt in incoming)
+                await foreach (InboxItem inboxItem in this.Channel.ReceiveInboxItemsAsync(longPoll: true, cancellationToken))
                 {
-                    var message = Encoding.UTF8.GetString(payloadReceipt.Payload.Content);
+                    using var payload = new MemoryStream();
+                    await inboxItem.PayloadReference.DownloadPayloadAsync(this.Channel.HttpClient, payload, cancellationToken: cancellationToken);
+                    string message = Encoding.UTF8.GetString(payload.ToArray());
                     Console.WriteLine("< {0}", message);
-                }
 
-                await Task.WhenAll(incoming.Select(receipt => this.Channel.DeleteInboxItemAsync(receipt.Payload)));
+                    if (inboxItem.RelayServerItem is object)
+                    {
+                        await this.RelayServer.DeleteInboxItemAsync(inboxItem.RelayServerItem, cancellationToken);
+                    }
+                }
             }
         }
     }

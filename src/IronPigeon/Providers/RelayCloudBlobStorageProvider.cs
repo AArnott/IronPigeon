@@ -4,13 +4,9 @@
 namespace IronPigeon.Providers
 {
     using System;
-    using System.Collections.Generic;
     using System.IO;
-    using System.Linq;
     using System.Net.Http;
-    using System.Net.Http.Headers;
     using System.Runtime.Serialization.Json;
-    using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
     using IronPigeon.Relay;
@@ -22,29 +18,12 @@ namespace IronPigeon.Providers
     public class RelayCloudBlobStorageProvider : ICloudBlobStorageProvider, IEndpointInboxFactory
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="RelayCloudBlobStorageProvider" /> class.
-        /// </summary>
-        public RelayCloudBlobStorageProvider()
-        {
-        }
-
-        /// <summary>
         /// Initializes a new instance of the <see cref="RelayCloudBlobStorageProvider"/> class.
         /// </summary>
         /// <param name="httpClient">The HTTP client.</param>
         public RelayCloudBlobStorageProvider(HttpClient httpClient)
         {
-            this.HttpClient = httpClient;
-        }
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="RelayCloudBlobStorageProvider" /> class.
-        /// </summary>
-        /// <param name="postUrl">The URL to post blobs to.</param>
-        public RelayCloudBlobStorageProvider(Uri postUrl)
-        {
-            Requires.NotNull(postUrl, nameof(postUrl));
-            this.BlobPostUrl = postUrl;
+            this.HttpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         }
 
         /// <summary>
@@ -58,30 +37,20 @@ namespace IronPigeon.Providers
         public Uri? InboxServiceUrl { get; set; }
 
         /// <summary>
-        /// Gets or sets the HTTP client to use for outbound HTTP requests.
+        /// Gets the HTTP client to use for outbound HTTP requests.
         /// </summary>
-        public HttpClient? HttpClient { get; set; }
+        public HttpClient HttpClient { get; }
 
         /// <inheritdoc/>
-        public async Task<Uri> UploadMessageAsync(Stream content, DateTime expirationUtc, string? contentType = null, string? contentEncoding = null, IProgress<long>? bytesCopiedProgress = null, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<Uri> UploadMessageAsync(Stream content, DateTime expirationUtc, IProgress<long>? bytesCopiedProgress = null, CancellationToken cancellationToken = default)
         {
             Requires.NotNull(content, nameof(content));
-            Verify.Operation(this.HttpClient != null, "{0} must be set first.", nameof(this.HttpClient));
+            Verify.Operation(this.BlobPostUrl is object, Strings.PropertyMustBeSetFirst, nameof(this.BlobPostUrl));
 
             using var httpContent = new StreamContent(content.ReadStreamWithProgress(bytesCopiedProgress));
             if (content.CanSeek)
             {
                 httpContent.Headers.ContentLength = content.Length;
-            }
-
-            if (contentType != null)
-            {
-                httpContent.Headers.ContentType = new MediaTypeHeaderValue(contentType);
-            }
-
-            if (contentEncoding != null)
-            {
-                httpContent.Headers.ContentEncoding.Add(contentEncoding);
             }
 
             int lifetime = expirationUtc == DateTime.MaxValue ? int.MaxValue : (int)(expirationUtc - DateTime.UtcNow).TotalMinutes;
@@ -100,10 +69,10 @@ namespace IronPigeon.Providers
         /// <returns>
         /// The result of the inbox creation request from the server.
         /// </returns>
-        public async Task<InboxCreationResponse> CreateInboxAsync(CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<InboxCreationResponse> CreateInboxAsync(CancellationToken cancellationToken = default)
         {
-            Verify.Operation(this.InboxServiceUrl != null, $"{nameof(this.InboxServiceUrl)} must be set first.");
-            Verify.Operation(this.HttpClient != null, $"{nameof(this.HttpClient)} must be set first.");
+            Verify.Operation(this.InboxServiceUrl is object, $"{nameof(this.InboxServiceUrl)} must be set first.");
+            Verify.Operation(this.InboxServiceUrl is object, Strings.PropertyMustBeSetFirst, nameof(this.InboxServiceUrl));
 
             var registerUrl = new Uri(this.InboxServiceUrl, "create");
 

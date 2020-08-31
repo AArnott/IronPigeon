@@ -4,50 +4,46 @@
 namespace IronPigeon.Tests
 {
     using System;
-    using System.Collections.Generic;
-    using System.IO;
-    using System.Linq;
-    using System.Runtime.Serialization;
-    using System.Text;
-    using System.Threading.Tasks;
     using Xunit;
+    using Xunit.Abstractions;
 
-    public class AddressBookEntryTest
+    public class AddressBookEntryTest : TestBase
     {
-        private const string HashAlgorithm = "SHA1";
         private static readonly byte[] SerializedEndpoint = new byte[] { 0x1, 0x2 };
         private static readonly byte[] Signature = new byte[] { 0x3, 0x4 };
-        private CryptoSettings desktopCryptoProvider;
 
-        public AddressBookEntryTest()
+        public AddressBookEntryTest(ITestOutputHelper logger)
+            : base(logger)
         {
-            this.desktopCryptoProvider = TestUtilities.CreateAuthenticCryptoProvider();
         }
 
         [Fact]
-        public void Ctor_PropertyGetters()
+        public void Ctor_InvalidInputs()
         {
-            Assert.Throws<ArgumentNullException>("serializedEndpoint", () => new AddressBookEntry(null!, HashAlgorithm, Signature));
-            Assert.Throws<ArgumentNullException>("hashAlgorithmName", () => new AddressBookEntry(SerializedEndpoint, null!, Signature));
-            Assert.Throws<ArgumentNullException>("signature", () => new AddressBookEntry(SerializedEndpoint, HashAlgorithm, null!));
+            Assert.Throws<ArgumentNullException>("endpoint", () => new AddressBookEntry(null!));
+        }
 
-            var abe = new AddressBookEntry(SerializedEndpoint, HashAlgorithm, Signature);
-            Assert.Same(SerializedEndpoint, abe.SerializedEndpoint);
-            Assert.Equal(HashAlgorithm, abe.HashAlgorithmName);
-            Assert.Same(Signature, abe.Signature);
+        [Fact]
+        public void Ctor_Serialized()
+        {
+            var abe = new AddressBookEntry(SerializedEndpoint, Signature);
+            Assert.True(Utilities.AreEquivalent(SerializedEndpoint, abe.SerializedEndpoint.Span));
+            Assert.True(Utilities.AreEquivalent(Signature, abe.Signature.Span));
+        }
+
+        [Fact]
+        public void Ctor_OwnEndpoint()
+        {
+            var abe = new AddressBookEntry(Valid.ReceivingEndpoint);
+            Assert.NotEqual(0, abe.SerializedEndpoint.Length);
+            Assert.NotEqual(0, abe.Signature.Length);
         }
 
         [Fact]
         public void Serializability()
         {
-            var entry = new AddressBookEntry(SerializedEndpoint, HashAlgorithm, Signature);
-
-            using var ms = new MemoryStream();
-            var serializer = new DataContractSerializer(typeof(AddressBookEntry));
-            serializer.WriteObject(ms, entry);
-            ms.Position = 0;
-            var deserializedEntry = (AddressBookEntry)serializer.ReadObject(ms);
-
+            AddressBookEntry entry = new AddressBookEntry(SerializedEndpoint, Signature);
+            AddressBookEntry deserializedEntry = SerializeRoundTrip(entry);
             Assert.Equal(entry.SerializedEndpoint, deserializedEntry.SerializedEndpoint);
             Assert.Equal(entry.Signature, deserializedEntry.Signature);
         }
@@ -55,26 +51,24 @@ namespace IronPigeon.Tests
         [Fact]
         public void ExtractEndpoint()
         {
-            var ownContact = new OwnEndpoint(Valid.ReceivingEndpoint.SigningKey, Valid.ReceivingEndpoint.EncryptionKey, DateTime.UtcNow, Valid.MessageReceivingEndpoint);
-            var cryptoServices = new CryptoSettings(SecurityLevel.Minimum);
-            AddressBookEntry? entry = ownContact.CreateAddressBookEntry(cryptoServices);
-
-            Endpoint? endpoint = entry.ExtractEndpoint();
-            Assert.Equal(ownContact.PublicEndpoint, endpoint);
+            AddressBookEntry entry = new AddressBookEntry(Valid.ReceivingEndpoint);
+            Endpoint endpoint = entry.ExtractEndpoint();
+            Assert.Equal(Valid.PublicEndpoint, endpoint);
         }
 
         [Fact]
         public void ExtractEndpointDetectsTampering()
         {
-            OwnEndpoint? ownContact = Valid.GenerateOwnEndpoint(this.desktopCryptoProvider);
-            AddressBookEntry? entry = ownContact.CreateAddressBookEntry(this.desktopCryptoProvider);
+            AddressBookEntry entry = new AddressBookEntry(Valid.ReceivingEndpoint);
 
-            var untamperedEndpoint = entry.SerializedEndpoint.CopyBuffer();
+            byte[] untamperedEndpoint = entry.SerializedEndpoint.ToArray();
+            byte[] fuzzedEndpoint = new byte[untamperedEndpoint.Length];
             for (int i = 0; i < 100; i++)
             {
-                TestUtilities.ApplyFuzzing(entry.SerializedEndpoint, 1);
-                Assert.Throws<BadAddressBookEntryException>(() => entry.ExtractEndpoint());
-                untamperedEndpoint.CopyBuffer(entry.SerializedEndpoint);
+                untamperedEndpoint.CopyTo(fuzzedEndpoint, 0);
+                TestUtilities.ApplyFuzzing(fuzzedEndpoint, 1);
+                var fuzzedEntry = new AddressBookEntry(fuzzedEndpoint, entry.Signature);
+                Assert.Throws<BadAddressBookEntryException>(() => fuzzedEntry.ExtractEndpoint());
             }
         }
     }

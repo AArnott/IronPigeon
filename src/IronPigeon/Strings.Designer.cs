@@ -106,20 +106,38 @@ namespace IronPigeon {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to The message contained a value that claimed to exceed a maximum allowable value..
-        /// </summary>
-        internal static string MaxAllowableMessagePartSizeExceeded {
-            get {
-                return ResourceManager.GetString("MaxAllowableMessagePartSizeExceeded", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   Looks up a localized string similar to Message notification not intended for this recipient..
         /// </summary>
         internal static string MisdirectedMessage {
             get {
                 return ResourceManager.GetString("MisdirectedMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to This payload reference is missing a decryption key..
+        /// </summary>
+        internal static string PayloadDecryptionKeyMissing {
+            get {
+                return ResourceManager.GetString("PayloadDecryptionKeyMissing", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Private key data is not allowed..
+        /// </summary>
+        internal static string PrivateKeyDataNotAllowed {
+            get {
+                return ResourceManager.GetString("PrivateKeyDataNotAllowed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Private key data is required..
+        /// </summary>
+        internal static string PrivateKeyDataRequired {
+            get {
+                return ResourceManager.GetString("PrivateKeyDataRequired", resourceCulture);
             }
         }
         

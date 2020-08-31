@@ -4,11 +4,18 @@
 namespace IronPigeon
 {
     using System;
+    using System.Collections.Generic;
+    using System.Globalization;
     using System.IO;
+    using System.Net.Http;
+    using System.Net.Http.Headers;
     using System.Runtime.Serialization;
     using System.Threading;
     using System.Threading.Tasks;
+    using IronPigeon.Relay;
+    using MessagePack;
     using Microsoft;
+    using Microsoft.VisualStudio.Threading;
     using PCLCrypto;
 
     /// <summary>
@@ -18,218 +25,131 @@ namespace IronPigeon
     public class OwnEndpoint
     {
         /// <summary>
-        /// The signing key material.
-        /// </summary>
-        private byte[] signingKeyMaterial;
-
-        /// <summary>
-        /// The signing key.
-        /// </summary>
-        private ICryptographicKey? signingKey;
-
-        /// <summary>
-        /// The encryption key material.
-        /// </summary>
-        private byte[] encryptionKeyMaterial;
-
-        /// <summary>
-        /// The encryption key.
-        /// </summary>
-        private ICryptographicKey? encryptionKey;
-
-        /// <summary>
         /// Backing field for the <see cref="PublicEndpoint"/> property.
         /// </summary>
-        private Endpoint publicEndpoint;
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="OwnEndpoint"/> class.
-        /// </summary>
-        /// <param name="privateKeyFormat">The private key format used.</param>
-        /// <param name="signingKeyPrivateMaterial">The key material for the private key this personality uses for signing messages.</param>
-        /// <param name="encryptionKeyPrivateMaterial">The key material for the private key used to decrypt messages.</param>
-        /// <param name="publicEndpoint">The public information associated with this endpoint.</param>
-        /// <param name="inboxOwnerCode">The secret that proves ownership of the inbox at the <see cref="Endpoint.MessageReceivingEndpoint"/>.</param>
-        public OwnEndpoint(CryptographicPrivateKeyBlobType privateKeyFormat, byte[] signingKeyPrivateMaterial, byte[] encryptionKeyPrivateMaterial, Endpoint publicEndpoint, string? inboxOwnerCode)
-        {
-            this.PrivateKeyFormat = privateKeyFormat;
-            this.signingKeyMaterial = signingKeyPrivateMaterial ?? throw new ArgumentNullException(nameof(signingKeyPrivateMaterial));
-            this.encryptionKeyMaterial = encryptionKeyPrivateMaterial ?? throw new ArgumentNullException(nameof(encryptionKeyPrivateMaterial));
-            this.publicEndpoint = publicEndpoint ?? throw new ArgumentNullException(nameof(publicEndpoint));
-            this.InboxOwnerCode = inboxOwnerCode;
-        }
+        private Endpoint? publicEndpoint;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="OwnEndpoint" /> class.
         /// </summary>
-        /// <param name="signingKey">The signing key.</param>
-        /// <param name="encryptionKey">The encryption key.</param>
-        /// <param name="creationDateUtc">The date this endpoint was originally created in UTC time.</param>
         /// <param name="messageReceivingEndpoint">The location where messages can be delivered to this endpoint.</param>
-        /// <param name="inboxOwnerCode">The secret that proves ownership of the inbox at the <see cref="Endpoint.MessageReceivingEndpoint" />.</param>
-        public OwnEndpoint(ICryptographicKey signingKey, ICryptographicKey encryptionKey, DateTime creationDateUtc, Uri messageReceivingEndpoint, string? inboxOwnerCode = null)
+        /// <param name="signingKeyInputs">Instructions for verifying signed messages directed to this endpoint.</param>
+        /// <param name="decryptionKeyInputs">Instructions for decrypting messages directed to this endpoint.</param>
+        /// <param name="inboxOwnerCode">The secret that proves ownership of the inbox at the <paramref name="messageReceivingEndpoint"/>.</param>
+        public OwnEndpoint(Uri messageReceivingEndpoint, AsymmetricKeyInputs signingKeyInputs, AsymmetricKeyInputs decryptionKeyInputs, string? inboxOwnerCode = null)
         {
-            Requires.NotNull(signingKey, nameof(signingKey));
-            Requires.NotNull(encryptionKey, nameof(encryptionKey));
-
-            this.publicEndpoint = new Endpoint(
-                creationDateUtc,
-                messageReceivingEndpoint,
-                signingKey.ExportPublicKey(CryptoSettings.PublicKeyFormat),
-                encryptionKey.ExportPublicKey(CryptoSettings.PublicKeyFormat),
-                Array.Empty<string>());
-
-            // We could preserve the key instances, but that could make
-            // our behavior a little less repeatable if we had problems
-            // with key serialization.
-            ////this.signingKey = signingKey;
-            ////this.encryptionKey = encryptionKey;
-
-            // Since this is a new endpoint we can choose a more modern format for the private keys.
-            this.PrivateKeyFormat = CryptographicPrivateKeyBlobType.Pkcs8RawPrivateKeyInfo;
-            this.signingKeyMaterial = signingKey.Export(this.PrivateKeyFormat);
-            this.encryptionKeyMaterial = encryptionKey.Export(this.PrivateKeyFormat);
+            this.MessageReceivingEndpoint = messageReceivingEndpoint ?? throw new ArgumentNullException(nameof(messageReceivingEndpoint));
+            this.SigningKeyInputs = signingKeyInputs ?? throw new ArgumentNullException(nameof(signingKeyInputs));
+            this.DecryptionKeyInputs = decryptionKeyInputs ?? throw new ArgumentNullException(nameof(decryptionKeyInputs));
             this.InboxOwnerCode = inboxOwnerCode;
+
+            Requires.Argument(signingKeyInputs.HasPrivateKey, nameof(signingKeyInputs), Strings.PrivateKeyDataRequired);
+            Requires.Argument(decryptionKeyInputs.HasPrivateKey, nameof(decryptionKeyInputs), Strings.PrivateKeyDataRequired);
         }
 
         /// <summary>
-        /// Gets the public information associated with this endpoint.
+        /// Gets the URL where notification messages to this recipient may be posted.
         /// </summary>
         [DataMember]
-        public Endpoint PublicEndpoint
-        {
-            get => this.publicEndpoint;
-        }
+        public Uri MessageReceivingEndpoint { get; }
 
         /// <summary>
-        /// Gets the private key format used.
-        /// </summary>
-        /// <remarks>
-        /// The default is required for backward compat.
-        /// </remarks>
-        [DataMember]
-        public CryptographicPrivateKeyBlobType PrivateKeyFormat { get; } = CryptographicPrivateKeyBlobType.Capi1PrivateKey;
-
-        /// <summary>
-        /// Gets the key material for the private key this personality uses for signing messages.
+        /// Gets instructions for signing messages sent from this endpoint.
         /// </summary>
         [DataMember]
-        public byte[] SigningKeyPrivateMaterial
-        {
-            get
-            {
-                return this.signingKeyMaterial;
-            }
-        }
+        public AsymmetricKeyInputs SigningKeyInputs { get; }
 
         /// <summary>
-        /// Gets the key material for the private key used to decrypt messages.
+        /// Gets instructions for decrypting messages directed to this endpoint.
         /// </summary>
         [DataMember]
-        public byte[] EncryptionKeyPrivateMaterial
-        {
-            get
-            {
-                return this.encryptionKeyMaterial;
-            }
-        }
+        public AsymmetricKeyInputs DecryptionKeyInputs { get; }
 
         /// <summary>
-        /// Gets the encryption key.
-        /// </summary>
-        public ICryptographicKey EncryptionKey
-        {
-            get
-            {
-                if (this.encryptionKey is null)
-                {
-                    this.encryptionKey = CryptoSettings.EncryptionAlgorithm.ImportKeyPair(
-                        this.EncryptionKeyPrivateMaterial,
-                        this.PrivateKeyFormat);
-                }
-
-                return this.encryptionKey;
-            }
-        }
-
-        /// <summary>
-        /// Gets the signing key.
-        /// </summary>
-        public ICryptographicKey SigningKey
-        {
-            get
-            {
-                if (this.signingKey is null)
-                {
-                    this.signingKey = CryptoSettings.SigningAlgorithm.ImportKeyPair(
-                        this.SigningKeyPrivateMaterial,
-                        this.PrivateKeyFormat);
-                }
-
-                return this.signingKey;
-            }
-        }
-
-        /// <summary>
-        /// Gets or sets the secret that proves ownership of the inbox at the <see cref="Endpoint.MessageReceivingEndpoint"/>.
+        /// Gets or sets the secret that proves ownership of the inbox at the <see cref="MessageReceivingEndpoint"/>.
         /// </summary>
         [DataMember]
         public string? InboxOwnerCode { get; set; }
 
         /// <summary>
-        /// Loads endpoint information including private data from the specified stream.
+        /// Gets a shareable public endpoint that refers to this one.
         /// </summary>
-        /// <param name="stream">A stream, previously serialized to using <see cref="SaveAsync"/>.</param>
-        /// <returns>A task whose result is the deserialized instance of <see cref="OwnEndpoint"/>.</returns>
-        public static async Task<OwnEndpoint> OpenAsync(Stream stream)
-        {
-            Requires.NotNull(stream, nameof(stream));
-
-            var ms = new MemoryStream();
-            await stream.CopyToAsync(ms).ConfigureAwait(false);   // relies on the input stream containing only the endpoint.
-            ms.Position = 0;
-            using (var reader = new BinaryReader(ms))
-            {
-                return reader.DeserializeDataContract<OwnEndpoint>();
-            }
-        }
+        [IgnoreDataMember]
+        public Endpoint PublicEndpoint => this.publicEndpoint ?? (this.publicEndpoint = new Endpoint(this.MessageReceivingEndpoint, this.SigningKeyInputs.PublicKey, this.DecryptionKeyInputs.PublicKey));
 
         /// <summary>
-        /// Creates a signed address book entry that describes the public information in this endpoint.
+        /// Creates a new <see cref="OwnEndpoint"/> with new asymmetric keys and a fresh inbox.
         /// </summary>
-        /// <param name="cryptoServices">The crypto services to use for signing the address book entry.</param>
-        /// <returns>The address book entry.</returns>
-        public AddressBookEntry CreateAddressBookEntry(CryptoSettings cryptoServices)
-        {
-            Requires.NotNull(cryptoServices, nameof(cryptoServices));
-
-            using var ms = new MemoryStream();
-            using var writer = new BinaryWriter(ms);
-            writer.SerializeDataContract(this.PublicEndpoint);
-            writer.Flush();
-            var serializedEndpoint = ms.ToArray();
-            var signature = WinRTCrypto.CryptographicEngine.Sign(this.SigningKey, serializedEndpoint);
-            var entry = new AddressBookEntry(serializedEndpoint, CryptoSettings.SigningAlgorithm.Algorithm.GetHashAlgorithm().ToString().ToUpperInvariant(), signature);
-            return entry;
-        }
-
-        /// <summary>
-        /// Saves the receiving endpoint including private data to the specified stream.
-        /// </summary>
-        /// <param name="target">The stream to write to.</param>
+        /// <param name="cryptoSettings">Crypto settings to use when deriving asymmetric keys.</param>
+        /// <param name="inboxFactory">The factory to use in creating the inbox.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
-        /// <returns>A task whose completion signals the save is complete.</returns>
-        public Task SaveAsync(Stream target, CancellationToken cancellationToken = default(CancellationToken))
+        /// <returns>A task whose result is the newly generated endpoint.</returns>
+        public static async Task<OwnEndpoint> CreateAsync(CryptoSettings cryptoSettings, IEndpointInboxFactory inboxFactory, CancellationToken cancellationToken = default)
         {
-            Requires.NotNull(target, nameof(target));
+            Requires.NotNull(cryptoSettings, nameof(cryptoSettings));
+            Requires.NotNull(inboxFactory, nameof(inboxFactory));
 
-            var ms = new MemoryStream();
-            using (var writer = new BinaryWriter(ms))
-            {
-                writer.SerializeDataContract(this);
-                ms.Position = 0;
-                return ms.CopyToAsync(target, 4096, cancellationToken);
-            }
+            // Create the online inbox and the asymmetric keys in parallel.
+            Task<InboxCreationResponse> inboxResponseTask = inboxFactory.CreateInboxAsync(cancellationToken);
+            Task<(AsymmetricKeyInputs EncryptionInputs, AsymmetricKeyInputs SigningInputs)> keyGenerator = CreateAsync(cryptoSettings, cancellationToken);
+
+            InboxCreationResponse inboxResponse = await inboxResponseTask.ConfigureAwait(false);
+            (AsymmetricKeyInputs EncryptionInputs, AsymmetricKeyInputs SigningInputs) keys = await keyGenerator.ConfigureAwait(false);
+
+            var ownContact = new OwnEndpoint(inboxResponse.MessageReceivingEndpoint, keys.SigningInputs, keys.EncryptionInputs, inboxResponse.InboxOwnerCode);
+            return ownContact;
+        }
+
+        /// <summary>
+        /// Saves the public information regarding this endpoint to a blob store,
+        /// and returns the URL to share with others so they can send messages to this endpoint.
+        /// </summary>
+        /// <param name="cloudBlobStorage">The cloud blob storage to use for uploading the address book entry.</param>
+        /// <param name="cancellationToken">A cancellation token to abort the publish.</param>
+        /// <returns>A task whose result is the absolute URI to the address book entry.</returns>
+        public async Task<Uri> PublishAddressBookEntryAsync(ICloudBlobStorageProvider cloudBlobStorage, CancellationToken cancellationToken = default)
+        {
+            Requires.NotNull(cloudBlobStorage, nameof(cloudBlobStorage));
+
+            var abe = new AddressBookEntry(this);
+            byte[] serializedAddressBookEntry = MessagePackSerializer.Serialize(abe, MessagePackSerializerOptions.Standard, cancellationToken);
+            using var serializedAbeStream = new MemoryStream(serializedAddressBookEntry);
+            Uri location = await cloudBlobStorage.UploadMessageAsync(serializedAbeStream, DateTime.MaxValue, cancellationToken: cancellationToken).ConfigureAwait(false);
+
+            // Append a thumbprint (we use the signature) as a fragment to the URI so that those we share it with can detect if the hosted endpoint changes.
+            var locationBuilder = new UriBuilder(location);
+            locationBuilder.Fragment = "#" + Utilities.ToBase64WebSafe(abe.Signature.AsOrCreateArray());
+            return locationBuilder.Uri;
+        }
+
+        /// <summary>
+        /// Creates a pair of asymmetric keys for signing and encryption.
+        /// </summary>
+        /// <param name="cryptoSettings">Crypto settings to use when deriving asymmetric keys.</param>
+        /// <param name="cancellationToken">A cancellation token.</param>
+        /// <returns>The newly created endpoint.</returns>
+        /// <remarks>
+        /// Depending on the length of the keys set in the provider and the amount of buffered entropy in the operating system,
+        /// this method can take an extended period (several seconds) to complete.
+        /// This method merely moves all the work to a threadpool thread.
+        /// </remarks>
+        private static async Task<(AsymmetricKeyInputs EncryptionInputs, AsymmetricKeyInputs SigningInputs)> CreateAsync(CryptoSettings cryptoSettings, CancellationToken cancellationToken)
+        {
+            Requires.NotNull(cryptoSettings, nameof(cryptoSettings));
+
+            await TaskScheduler.Default;
+
+            cancellationToken.ThrowIfCancellationRequested();
+            IAsymmetricKeyAlgorithmProvider asymmetricEncryption = WinRTCrypto.AsymmetricKeyAlgorithmProvider.OpenAlgorithm(cryptoSettings.AsymmetricEncryptionAlgorithm);
+            using ICryptographicKey? encryptionKey = asymmetricEncryption.CreateKeyPair(cryptoSettings.AsymmetricKeySize);
+            AsymmetricKeyInputs encryptionKeyInputs = new AsymmetricKeyInputs(cryptoSettings.AsymmetricEncryptionAlgorithm, encryptionKey, includePrivateKey: true);
+
+            cancellationToken.ThrowIfCancellationRequested();
+            IAsymmetricKeyAlgorithmProvider asymmetricSigning = WinRTCrypto.AsymmetricKeyAlgorithmProvider.OpenAlgorithm(cryptoSettings.SigningAlgorithm);
+            using ICryptographicKey signingKey = asymmetricSigning.CreateKeyPair(cryptoSettings.AsymmetricKeySize);
+            AsymmetricKeyInputs signingKeyInputs = new AsymmetricKeyInputs(cryptoSettings.SigningAlgorithm, signingKey, includePrivateKey: true);
+
+            return (encryptionKeyInputs, signingKeyInputs);
         }
     }
 }

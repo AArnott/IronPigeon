@@ -11,14 +11,21 @@ namespace IronPigeon.Tests
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
+    using Nerdbank.Streams;
     using Xunit;
+    using Xunit.Abstractions;
 
     /// <summary>
     /// This test class doesn't test IronPigeon, but rather demonstrates how EC crypto works.
     /// </summary>
     [Trait("TestCategory", "EC")]
-    public class EllipticCurveCryptoPatterns
+    public class EllipticCurveCryptoPatterns : TestBase
     {
+        public EllipticCurveCryptoPatterns(ITestOutputHelper logger)
+            : base(logger)
+        {
+        }
+
         /// <summary>
         /// Demonstrates using elliptic curve cryptography to
         /// establish an encrypted and signed channel between two parties
@@ -49,8 +56,8 @@ namespace IronPigeon.Tests
             {
                 byte[] bobPublicDH = bobDH.PublicKey.ToByteArray();
                 byte[] bobSignedDH = bob.SignData(bobPublicDH);
-                await bobRequest.WriteSizeAndBufferAsync(bobPublicDH, CancellationToken.None);
-                await bobRequest.WriteSizeAndBufferAsync(bobSignedDH, CancellationToken.None);
+                await this.WriteChunkAsync(bobRequest, bobPublicDH);
+                await this.WriteChunkAsync(bobRequest, bobSignedDH);
                 bobRequest.Position = 0;
             }
 
@@ -59,15 +66,15 @@ namespace IronPigeon.Tests
             byte[] aliceKeyMaterial;
             using var aliceDH = new ECDiffieHellmanCng();
             {
-                byte[] bobPublicDH = await bobRequest.ReadSizeAndBufferAsync(CancellationToken.None);
-                byte[] bobSignedDH = await bobRequest.ReadSizeAndBufferAsync(CancellationToken.None);
+                byte[] bobPublicDH = await this.ReadChunkAsync(bobRequest);
+                byte[] bobSignedDH = await this.ReadChunkAsync(bobRequest);
                 using var bobDsa = new ECDsaCng(bobPublic);
                 Assert.True(bobDsa.VerifyData(bobPublicDH, bobSignedDH));
                 ECDiffieHellmanPublicKey? bobDHPK = ECDiffieHellmanCngPublicKey.FromByteArray(bobPublicDH, CngKeyBlobFormat.EccPublicBlob);
                 aliceKeyMaterial = aliceDH.DeriveKeyMaterial(bobDHPK);
 
-                await aliceResponse.WriteSizeAndBufferAsync(aliceDH.PublicKey.ToByteArray(), CancellationToken.None);
-                await aliceResponse.WriteSizeAndBufferAsync(alice.SignData(aliceDH.PublicKey.ToByteArray()), CancellationToken.None);
+                await this.WriteChunkAsync(aliceResponse, aliceDH.PublicKey.ToByteArray());
+                await this.WriteChunkAsync(aliceResponse, alice.SignData(aliceDH.PublicKey.ToByteArray()));
 
                 // Alice also adds a secret message.
                 using (var aes = SymmetricAlgorithm.Create())
@@ -80,7 +87,7 @@ namespace IronPigeon.Tests
                             cryptoStream.Write(new byte[] { 0x1, 0x3, 0x2 }, 0, 3);
                             cryptoStream.FlushFinalBlock();
                             cipherText.Position = 0;
-                            await aliceResponse.WriteSizeAndStreamAsync(cipherText, CancellationToken.None);
+                            await this.WriteChunkAsync(aliceResponse, cipherText.ToArray());
                         }
                     }
                 }
@@ -91,8 +98,8 @@ namespace IronPigeon.Tests
             // Bob reads response
             byte[] bobKeyMaterial;
             {
-                byte[] alicePublicDH = await aliceResponse.ReadSizeAndBufferAsync(CancellationToken.None);
-                byte[] aliceSignedDH = await aliceResponse.ReadSizeAndBufferAsync(CancellationToken.None);
+                byte[] alicePublicDH = await this.ReadChunkAsync(aliceResponse);
+                byte[] aliceSignedDH = await this.ReadChunkAsync(aliceResponse);
                 using var aliceDsa = new ECDsaCng(alicePublic);
                 Assert.True(aliceDsa.VerifyData(alicePublicDH, aliceSignedDH));
                 ECDiffieHellmanPublicKey? aliceDHPK = ECDiffieHellmanCngPublicKey.FromByteArray(alicePublicDH, CngKeyBlobFormat.EccPublicBlob);
@@ -104,7 +111,7 @@ namespace IronPigeon.Tests
                     using (ICryptoTransform? decryptor = aes.CreateDecryptor(aliceKeyMaterial, new byte[aes.BlockSize / 8]))
                     {
                         using var plaintext = new MemoryStream();
-                        Stream? substream = await aliceResponse.ReadSizeAndStreamAsync(CancellationToken.None);
+                        Stream substream = aliceResponse.ReadSubstream();
                         using (var cryptoStream = new CryptoStream(substream, decryptor, CryptoStreamMode.Read))
                         {
                             await cryptoStream.CopyToAsync(plaintext);

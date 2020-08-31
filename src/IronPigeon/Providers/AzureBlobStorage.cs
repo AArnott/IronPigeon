@@ -40,7 +40,7 @@ namespace IronPigeon.Providers
         }
 
         /// <inheritdoc/>
-        public async Task<Uri> UploadMessageAsync(Stream content, DateTime expirationUtc, string? contentType, string? contentEncoding, IProgress<long>? bytesCopiedProgress, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task<Uri> UploadMessageAsync(Stream content, DateTime expirationUtc, IProgress<long>? bytesCopiedProgress, CancellationToken cancellationToken = default)
         {
             Requires.NotNull(content, nameof(content));
             Requires.Range(expirationUtc > DateTime.UtcNow, "expirationUtc");
@@ -65,11 +65,6 @@ namespace IronPigeon.Providers
             var uploadOptions = new BlobUploadOptions
             {
                 Metadata = metadata,
-                HttpHeaders = new BlobHttpHeaders
-                {
-                    ContentType = contentType,
-                    ContentEncoding = contentEncoding,
-                },
                 ProgressHandler = bytesCopiedProgress,
             };
 

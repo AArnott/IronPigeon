@@ -32,16 +32,23 @@ namespace WpfChatroom
         /// <summary>
         /// Initializes a new instance of the <see cref="ChatroomWindow" /> class.
         /// </summary>
-        public ChatroomWindow()
+        /// <param name="postalService">The postal service.</param>
+        public ChatroomWindow(PostalService postalService)
         {
             this.InitializeComponent();
+            this.PostalService = postalService ?? throw new ArgumentNullException(nameof(postalService));
         }
 
         /// <summary>
-        /// Gets or sets the channel.
+        /// Gets the channel.
         /// </summary>
-        public PostalService? PostalService { get; set; }
+        public PostalService PostalService { get; }
 
+        /// <summary>
+        /// Adds an endpoint to the conversation.
+        /// </summary>
+        /// <param name="friendlyName">The name to display for messages from this endpoint.</param>
+        /// <param name="endpoint">The endpoint to add.</param>
         internal void AddMember(string friendlyName, Endpoint endpoint)
         {
             if (this.members.Values.Contains(endpoint))
@@ -53,9 +60,14 @@ namespace WpfChatroom
             this.ChatroomMembersList.Items.Add(friendlyName);
         }
 
+        /// <summary>
+        /// Invites someone to the conversation.
+        /// </summary>
+        /// <param name="inviteWindow">The window that was used to invite the endpoint.</param>
+        /// <returns>A task that completes when the operation is done.</returns>
         internal async Task InvitingMemberAsync(InviteMember inviteWindow)
         {
-            var addressBook = new DirectEntryAddressBook(new HttpClient());
+            var addressBook = new DirectEntryAddressBook(this.PostalService.Channel.HttpClient);
             Endpoint? endpoint = await addressBook.LookupAsync(inviteWindow.PublicEndpointUrlBox.Text);
             if (endpoint != null)
             {
@@ -95,8 +107,13 @@ namespace WpfChatroom
                     await Task.Delay(delay);
                     bool lastTimeFailed = delay > TimeSpan.Zero;
                     delay = TimeSpan.Zero;
-                    var progress = new ProgressWithCompletion<PostalService.MessageReceipt>(m => this.ProcessReceivedMessagedAsync(m.Message));
-                    await this.PostalService.ReceiveAsync(longPoll: !lastTimeFailed, progress: progress);
+
+                    await foreach (Message message in this.PostalService.ReceiveAsync(longPoll: !lastTimeFailed))
+                    {
+                        this.History.Items.Add(message.Body);
+                        await this.PostalService.DeleteAsync(message);
+                    }
+
                     this.TopInfoBar.Visibility = Visibility.Collapsed;
                 }
                 catch (HttpRequestException)
@@ -110,12 +127,6 @@ namespace WpfChatroom
             }
         }
 
-        private async Task ProcessReceivedMessagedAsync(Message message)
-        {
-            this.History.Items.Add(message.Body);
-            await this.PostalService.DeleteAsync(message);
-        }
-
         private async void SendMessageButton_Click(object sender, RoutedEventArgs e)
         {
             this.AuthoredMessage.IsReadOnly = true;
@@ -124,7 +135,7 @@ namespace WpfChatroom
             {
                 if (this.AuthoredMessage.Text.Length > 0)
                 {
-                    var message = new Message(this.PostalService.Channel.Endpoint, this.members.Values.ToList(), "message", this.AuthoredMessage.Text)
+                    var message = new Message(this.PostalService.Channel.Endpoint, "Author", this.members.Values.ToList(), "message", this.AuthoredMessage.Text)
                     {
                         ExpirationUtc = DateTime.UtcNow + TimeSpan.FromDays(14),
                         AuthorName = "WpfChatroom user",
