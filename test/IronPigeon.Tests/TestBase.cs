@@ -67,7 +67,7 @@ namespace IronPigeon.Tests
             GC.SuppressFinalize(this);
         }
 
-        protected static T SerializeRoundTrip<T>(T value) => MessagePackSerializer.Deserialize<T>(MessagePackSerializer.Serialize(value, MessagePackSerializerOptions.Standard), MessagePackSerializerOptions.Standard);
+        protected static T SerializeRoundTrip<T>(T value) => MessagePackSerializer.Deserialize<T>(MessagePackSerializer.Serialize(value, Utilities.MessagePackSerializerOptions), Utilities.MessagePackSerializerOptions);
 
         protected virtual void Dispose(bool disposing)
         {

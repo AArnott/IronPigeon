@@ -32,6 +32,7 @@ namespace IronPigeon
         public PayloadReference(Uri location, ContentType contentType, ReadOnlyMemory<byte> hash, string hashAlgorithmName, SymmetricEncryptionInputs decryptionInputs, DateTime? expiresUtc, Uri? origin = null)
         {
             Requires.NotNullOrEmpty(hashAlgorithmName, nameof(hashAlgorithmName));
+            Requires.Argument(hash.Length > 0, nameof(hash), "Cannot be empty.");
             Requires.Argument(expiresUtc is null || expiresUtc.Value.Kind == DateTimeKind.Utc, nameof(expiresUtc), Strings.UTCTimeRequired);
 
             this.Location = location ?? throw new ArgumentNullException(nameof(location));

@@ -44,8 +44,8 @@ namespace IronPigeon.Tests
         {
             AddressBookEntry entry = new AddressBookEntry(SerializedEndpoint, Signature);
             AddressBookEntry deserializedEntry = SerializeRoundTrip(entry);
-            Assert.Equal(entry.SerializedEndpoint, deserializedEntry.SerializedEndpoint);
-            Assert.Equal(entry.Signature, deserializedEntry.Signature);
+            Assert.Equal<byte>(entry.SerializedEndpoint.ToArray(), deserializedEntry.SerializedEndpoint.ToArray());
+            Assert.Equal<byte>(entry.Signature.ToArray(), deserializedEntry.Signature.ToArray());
         }
 
         [Fact]
@@ -53,7 +53,7 @@ namespace IronPigeon.Tests
         {
             AddressBookEntry entry = new AddressBookEntry(Valid.ReceivingEndpoint);
             Endpoint endpoint = entry.ExtractEndpoint();
-            Assert.Equal(Valid.PublicEndpoint, endpoint);
+            Assert.Equal(Valid.ReceivingEndpoint.PublicEndpoint, endpoint);
         }
 
         [Fact]

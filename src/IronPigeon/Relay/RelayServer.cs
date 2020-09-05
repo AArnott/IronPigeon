@@ -184,7 +184,7 @@ namespace IronPigeon.Relay
             ReadOnlySequence<byte>? serializedIncomingInboxItem;
             while ((serializedIncomingInboxItem = await streamReader.ReadAsync(cancellationToken).ConfigureAwait(false)).HasValue)
             {
-                yield return MessagePackSerializer.Deserialize<IncomingInboxItem>(serializedIncomingInboxItem.Value, MessagePackSerializerOptions.Standard, cancellationToken);
+                yield return MessagePackSerializer.Deserialize<IncomingInboxItem>(serializedIncomingInboxItem.Value, Utilities.MessagePackSerializerOptions, cancellationToken);
             }
         }
 

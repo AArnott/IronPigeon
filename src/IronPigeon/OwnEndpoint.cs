@@ -112,7 +112,7 @@ namespace IronPigeon
             Requires.NotNull(cloudBlobStorage, nameof(cloudBlobStorage));
 
             var abe = new AddressBookEntry(this);
-            byte[] serializedAddressBookEntry = MessagePackSerializer.Serialize(abe, MessagePackSerializerOptions.Standard, cancellationToken);
+            byte[] serializedAddressBookEntry = MessagePackSerializer.Serialize(abe, Utilities.MessagePackSerializerOptions, cancellationToken);
             using var serializedAbeStream = new MemoryStream(serializedAddressBookEntry);
             Uri location = await cloudBlobStorage.UploadMessageAsync(serializedAbeStream, DateTime.MaxValue, cancellationToken: cancellationToken).ConfigureAwait(false);
 

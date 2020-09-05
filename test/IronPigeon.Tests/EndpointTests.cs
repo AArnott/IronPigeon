@@ -25,7 +25,7 @@ namespace IronPigeon.Tests
         [Fact]
         public void Equals_Tests()
         {
-            var contact1 = new Endpoint(Valid.MessageReceivingEndpoint, Valid.SigningKeyInputs, Valid.DecryptionKeyInputs);
+            var contact1 = new Endpoint(Valid.MessageReceivingEndpoint, Valid.SigningKeyInputs.PublicKey, Valid.DecryptionKeyInputs.PublicKey);
             Assert.False(contact1.Equals(null));
             Assert.True(contact1.Equals(contact1));
             Assert.False(contact1.Equals(Valid.PublicEndpoint));

@@ -11,8 +11,8 @@ namespace IronPigeon.Tests
         [Fact]
         public void CtorInvalidInputs()
         {
-            Assert.Throws<ArgumentNullException>(() => new PayloadReference(null!, Valid.ContentType, Valid.Hash, Valid.HashAlgorithmName, Valid.SymmetricEncryptionInputs, Valid.ExpirationUtc));
-            Assert.Throws<ArgumentNullException>(() => new PayloadReference(Valid.Location, Valid.ContentType, null!, Valid.HashAlgorithmName, Valid.SymmetricEncryptionInputs, Valid.ExpirationUtc));
+            Assert.Throws<ArgumentNullException>("location", () => new PayloadReference(null!, Valid.ContentType, Valid.Hash, Valid.HashAlgorithmName, Valid.SymmetricEncryptionInputs, Valid.ExpirationUtc));
+            Assert.Throws<ArgumentException>("hash", () => new PayloadReference(Valid.Location, Valid.ContentType, null!, Valid.HashAlgorithmName, Valid.SymmetricEncryptionInputs, Valid.ExpirationUtc));
             Assert.Throws<ArgumentNullException>(() => new PayloadReference(Valid.Location, Valid.ContentType, Valid.Hash, null!, Valid.SymmetricEncryptionInputs, Valid.ExpirationUtc));
             Assert.Throws<ArgumentException>(() => new PayloadReference(Valid.Location, Valid.ContentType, Valid.Hash, string.Empty, Valid.SymmetricEncryptionInputs, Valid.ExpirationUtc));
             Assert.Throws<ArgumentNullException>(() => new PayloadReference(Valid.Location, Valid.ContentType, Valid.Hash, Valid.HashAlgorithmName, null!, Valid.ExpirationUtc));

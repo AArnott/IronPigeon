@@ -50,7 +50,7 @@ namespace IronPigeon.Dart
             Requires.NotNull(message, nameof(message));
 
             using Sequence<byte> messageWriter = new Sequence<byte>(ArrayPool<byte>.Shared);
-            MessagePackSerializer.Serialize(messageWriter, message, MessagePackSerializerOptions.Standard, cancellationToken);
+            MessagePackSerializer.Serialize(messageWriter, message, Utilities.MessagePackSerializerOptions, cancellationToken);
 
             var allRecipients = new List<Endpoint>(message.Recipients);
             if (message.CarbonCopyRecipients != null)
@@ -91,7 +91,7 @@ namespace IronPigeon.Dart
                 using var messageWriter = new Sequence<byte>();
                 await item.PayloadReference.DownloadPayloadAsync(this.Channel.HttpClient, messageWriter.AsStream(), cancellationToken: httpTimeoutTokenSource.Token).ConfigureAwait(false);
 
-                Message message = MessagePackSerializer.Deserialize<Message>(messageWriter.AsReadOnlySequence, MessagePackSerializerOptions.Standard, cancellationToken);
+                Message message = MessagePackSerializer.Deserialize<Message>(messageWriter.AsReadOnlySequence, Utilities.MessagePackSerializerOptions, cancellationToken);
                 message.OriginatingInboxItem = item;
                 yield return message;
             }

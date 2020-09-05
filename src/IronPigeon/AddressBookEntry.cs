@@ -42,7 +42,7 @@ namespace IronPigeon
         {
             Requires.NotNull(endpoint, nameof(endpoint));
 
-            byte[] serializedEndpoint = MessagePackSerializer.Serialize(endpoint.PublicEndpoint, MessagePackSerializerOptions.Standard);
+            byte[] serializedEndpoint = MessagePackSerializer.Serialize(endpoint.PublicEndpoint, Utilities.MessagePackSerializerOptions);
             this.SerializedEndpoint = serializedEndpoint;
             using ICryptographicKey signingKey = endpoint.SigningKeyInputs.CreateKey();
             this.Signature = WinRTCrypto.CryptographicEngine.Sign(signingKey, serializedEndpoint);
@@ -90,7 +90,7 @@ namespace IronPigeon
             Endpoint endpoint;
             try
             {
-                endpoint = MessagePackSerializer.Deserialize<Endpoint>(this.SerializedEndpoint, MessagePackSerializerOptions.Standard);
+                endpoint = MessagePackSerializer.Deserialize<Endpoint>(this.SerializedEndpoint, Utilities.MessagePackSerializerOptions);
             }
             catch (MessagePackSerializationException ex)
             {

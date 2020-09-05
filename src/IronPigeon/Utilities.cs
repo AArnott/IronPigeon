@@ -18,6 +18,9 @@ namespace IronPigeon
     using System.Text.RegularExpressions;
     using System.Threading;
     using System.Threading.Tasks;
+    using MessagePack;
+    using MessagePack.Formatters;
+    using MessagePack.Resolvers;
     using Microsoft;
     using Nerdbank.Streams;
     using PCLCrypto;
@@ -27,6 +30,18 @@ namespace IronPigeon
     /// </summary>
     public static class Utilities
     {
+        /// <summary>
+        /// Special resolvers required for IronPigeon types.
+        /// </summary>
+        public static readonly IFormatterResolver IronPigeonTypeResolver = CompositeResolver.Create(ByteReadOnlyMemoryFormatter.Instance);
+
+        /// <summary>
+        /// The <see cref="MessagePackSerializerOptions"/> to use when serializing IronPigeon types.
+        /// </summary>
+        public static readonly MessagePackSerializerOptions MessagePackSerializerOptions = MessagePackSerializerOptions.Standard
+            .WithSecurity(MessagePackSecurity.UntrustedData)
+            .WithResolver(CompositeResolver.Create(StandardResolver.Instance, IronPigeonTypeResolver));
+
         /// <summary>
         /// The recommended length of a randomly generated string used to name uploaded blobs.
         /// </summary>
@@ -546,6 +561,33 @@ namespace IronPigeon
         internal static IProgress<long>? Adapt(this IProgress<(long Current, long? Total)>? progress, long? expectedTotal)
         {
             return progress is object ? new Progress<long>(current => progress.Report((current, expectedTotal))) : null;
+        }
+
+        /// <summary>
+        /// Formatter for the <see cref="ReadOnlyMemory{T}"/> type where T is <see cref="byte"/>.
+        /// </summary>
+        internal sealed class ByteReadOnlyMemoryFormatter : IMessagePackFormatter<ReadOnlyMemory<byte>>
+        {
+            /// <summary>
+            /// The singleton instance to use.
+            /// </summary>
+            public static readonly ByteReadOnlyMemoryFormatter Instance = new ByteReadOnlyMemoryFormatter();
+
+            private ByteReadOnlyMemoryFormatter()
+            {
+            }
+
+            /// <inheritdoc/>
+            public void Serialize(ref MessagePackWriter writer, ReadOnlyMemory<byte> value, MessagePackSerializerOptions options)
+            {
+                writer.Write(value.Span);
+            }
+
+            /// <inheritdoc/>
+            public ReadOnlyMemory<byte> Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+            {
+                return reader.ReadBytes() is ReadOnlySequence<byte> bytes ? new ReadOnlyMemory<byte>(bytes.ToArray()) : default;
+            }
         }
     }
 }

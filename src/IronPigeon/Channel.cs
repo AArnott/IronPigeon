@@ -200,13 +200,13 @@ namespace IronPigeon
 
             // Create the inbox item and serialize it.
             InboxItem? inboxItem = new InboxItem(DateTime.UtcNow, this.Endpoint.PublicEndpoint, recipient, payloadReference);
-            byte[] serializedInboxItem = MessagePackSerializer.Serialize(inboxItem, MessagePackSerializerOptions.Standard, cancellationToken);
+            byte[] serializedInboxItem = MessagePackSerializer.Serialize(inboxItem, Utilities.MessagePackSerializerOptions, cancellationToken);
 
             // Sign the serialized inbox item using the author's signing key.
             using ICryptographicKey signingKey = this.Endpoint.SigningKeyInputs.CreateKey();
             byte[] signature = WinRTCrypto.CryptographicEngine.Sign(signingKey, serializedInboxItem);
             SignedInboxItem signedInboxItem = new SignedInboxItem(serializedInboxItem, signature);
-            byte[] serializedSignedInboxItem = MessagePackSerializer.Serialize(signedInboxItem, MessagePackSerializerOptions.Standard, cancellationToken);
+            byte[] serializedSignedInboxItem = MessagePackSerializer.Serialize(signedInboxItem, Utilities.MessagePackSerializerOptions, cancellationToken);
 
             // Generate a new symmetric key and encrypt the signed, serialized inbox.
             CryptoSettings cryptoSettings = this.CryptoSettings; // snap the mutable property to a local.
@@ -223,7 +223,7 @@ namespace IronPigeon
 
             // Wrap up the encrypted, signed inbox item in an envelope that includes the decryption instructions.
             InboxItemEnvelope envelope = new InboxItemEnvelope(decryptionInstructions, encryptedSignedInboxItem);
-            byte[] serializedEnvelope = MessagePackSerializer.Serialize(envelope, MessagePackSerializerOptions.Standard, cancellationToken);
+            byte[] serializedEnvelope = MessagePackSerializer.Serialize(envelope, Utilities.MessagePackSerializerOptions, cancellationToken);
 
             NotificationPostedReceipt receipt = await this.RelayServer.PostInboxItemAsync(serializedEnvelope, expiresUtc, cancellationToken).ConfigureAwait(false);
             return receipt;
@@ -246,11 +246,11 @@ namespace IronPigeon
                 WinRTCrypto.CryptographicEngine.Decrypt(ownKey, envelope.DecryptionKey.KeyMaterial.AsOrCreateArray()));
             using ICryptographicKey signedInboxItemDecryptingKey = signedInboxItemDecryptingInstructions.CreateKey();
             byte[] serializedSignedInboxItem = WinRTCrypto.CryptographicEngine.Decrypt(signedInboxItemDecryptingKey, envelope.SerializedInboxItem.AsOrCreateArray(), signedInboxItemDecryptingInstructions.IV.AsOrCreateArray());
-            SignedInboxItem signedInboxItem = MessagePackSerializer.Deserialize<SignedInboxItem>(serializedSignedInboxItem, MessagePackSerializerOptions.Standard, cancellationToken);
+            SignedInboxItem signedInboxItem = MessagePackSerializer.Deserialize<SignedInboxItem>(serializedSignedInboxItem, Utilities.MessagePackSerializerOptions, cancellationToken);
 
             // Extract the InboxItem
             cancellationToken.ThrowIfCancellationRequested();
-            InboxItem inboxItem = MessagePackSerializer.Deserialize<InboxItem>(signedInboxItem.SerializedInboxItem, MessagePackSerializerOptions.Standard, cancellationToken);
+            InboxItem inboxItem = MessagePackSerializer.Deserialize<InboxItem>(signedInboxItem.SerializedInboxItem, Utilities.MessagePackSerializerOptions, cancellationToken);
 
             // Verify that the signature on the inbox item matches its alleged author.
             using ICryptographicKey authorSigningKey = inboxItem.Author.AuthenticatingKeyInputs.CreateKey();

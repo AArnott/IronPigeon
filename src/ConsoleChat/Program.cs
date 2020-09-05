@@ -191,7 +191,7 @@ namespace ConsoleChat
                         }
 
                         using Stream? fileStream = openFile.OpenFile();
-                        return await MessagePackSerializer.DeserializeAsync<OwnEndpoint>(fileStream, MessagePackSerializerOptions.Standard, cancellationToken);
+                        return await MessagePackSerializer.DeserializeAsync<OwnEndpoint>(fileStream, Utilities.MessagePackSerializerOptions, cancellationToken);
                     }
 
                 case DialogResult.No:
@@ -200,7 +200,7 @@ namespace ConsoleChat
                         OwnEndpoint? result = await OwnEndpoint.CreateAsync(cryptoSettings, inboxFactory, cancellationToken);
                         string privateFilePath = Path.GetTempFileName();
                         using FileStream? stream = File.OpenWrite(privateFilePath);
-                        await MessagePackSerializer.SerializeAsync(stream, result, MessagePackSerializerOptions.Standard, cancellationToken);
+                        await MessagePackSerializer.SerializeAsync(stream, result, Utilities.MessagePackSerializerOptions, cancellationToken);
                         Console.WriteLine("Private receiving endpoint: \"{0}\"", privateFilePath);
                         return result;
                     }
