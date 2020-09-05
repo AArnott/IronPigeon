@@ -12,6 +12,7 @@ namespace IronPigeon
     using System.Linq;
     using System.Net.Http;
     using System.Net.Http.Headers;
+    using System.Net.Mime;
     using System.Runtime.InteropServices;
     using System.Runtime.Serialization;
     using System.Text;
@@ -33,7 +34,9 @@ namespace IronPigeon
         /// <summary>
         /// Special resolvers required for IronPigeon types.
         /// </summary>
-        public static readonly IFormatterResolver IronPigeonTypeResolver = CompositeResolver.Create(ByteReadOnlyMemoryFormatter.Instance);
+        public static readonly IFormatterResolver IronPigeonTypeResolver = CompositeResolver.Create(
+            ByteReadOnlyMemoryFormatter.Instance,
+            ContentTypeFormatter.Instance);
 
         /// <summary>
         /// The <see cref="MessagePackSerializerOptions"/> to use when serializing IronPigeon types.
@@ -566,7 +569,7 @@ namespace IronPigeon
         /// <summary>
         /// Formatter for the <see cref="ReadOnlyMemory{T}"/> type where T is <see cref="byte"/>.
         /// </summary>
-        internal sealed class ByteReadOnlyMemoryFormatter : IMessagePackFormatter<ReadOnlyMemory<byte>>
+        internal class ByteReadOnlyMemoryFormatter : IMessagePackFormatter<ReadOnlyMemory<byte>>
         {
             /// <summary>
             /// The singleton instance to use.
@@ -587,6 +590,43 @@ namespace IronPigeon
             public ReadOnlyMemory<byte> Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
             {
                 return reader.ReadBytes() is ReadOnlySequence<byte> bytes ? new ReadOnlyMemory<byte>(bytes.ToArray()) : default;
+            }
+        }
+
+        /// <summary>
+        /// Formatter for <see cref="ContentType"/>.
+        /// </summary>
+        internal class ContentTypeFormatter : IMessagePackFormatter<ContentType?>
+        {
+            /// <summary>
+            /// The singleton instance to use.
+            /// </summary>
+            public static readonly ContentTypeFormatter Instance = new ContentTypeFormatter();
+
+            private ContentTypeFormatter()
+            {
+            }
+
+            /// <inheritdoc/>
+            public ContentType? Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+            {
+                if (reader.TryReadNil())
+                {
+                    return null;
+                }
+
+                return new ContentType(reader.ReadString());
+            }
+
+            /// <inheritdoc/>
+            public void Serialize(ref MessagePackWriter writer, ContentType? value, MessagePackSerializerOptions options)
+            {
+                if (value is null)
+                {
+                    writer.WriteNil();
+                }
+
+                writer.Write(value.ToString());
             }
         }
     }

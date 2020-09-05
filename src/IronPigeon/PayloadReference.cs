@@ -44,6 +44,13 @@ namespace IronPigeon
             this.Origin = origin;
         }
 
+        /// <inheritdoc cref="PayloadReference(Uri, ContentType, ReadOnlyMemory{byte}, string, SymmetricEncryptionInputs, DateTime?, Uri?)"/>
+        [MessagePack.SerializationConstructor]
+        private PayloadReference(Uri location, ContentType contentType, ReadOnlyMemory<byte> hash, string hashAlgorithmName, SymmetricEncryptionInputs decryptionInputs, DateTime? expiresUtc)
+            : this(location, contentType, hash, hashAlgorithmName, decryptionInputs, expiresUtc, origin: null)
+        {
+        }
+
         /// <summary>
         /// Gets the location from which the payload can be downloaded.
         /// </summary>

@@ -4,11 +4,13 @@
 namespace IronPigeon
 {
     using System;
+    using System.Runtime.Serialization;
     using PCLCrypto;
 
     /// <summary>
     /// Instructions for performing symmetric encryption/decryption.
     /// </summary>
+    [DataContract]
     public class SymmetricEncryptionInputs : SymmetricKeyInputs
     {
         /// <summary>
@@ -38,6 +40,7 @@ namespace IronPigeon
         /// <summary>
         /// Gets the initialization vector to use, when applicable given the <see cref="SymmetricKeyInputs.Algorithm"/>.
         /// </summary>
+        [DataMember]
         public ReadOnlyMemory<byte> IV { get; }
 
         /// <summary>

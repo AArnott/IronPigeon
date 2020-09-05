@@ -20,6 +20,7 @@ namespace IronPigeon.Relay
         /// <param name="author">The author of this inbox item (as opposed to the author of the referenced payload itself.</param>
         /// <param name="recipient">The intended recipient of this message.</param>
         /// <param name="payloadReference">A reference to the payload that the <see cref="Author"/> wishes the <see cref="Recipient"/> to receive.</param>
+        [MessagePack.SerializationConstructor]
         public InboxItem(DateTime creationUtc, Endpoint author, Endpoint recipient, PayloadReference payloadReference)
         {
             Requires.Argument(creationUtc.Kind == DateTimeKind.Utc, nameof(creationUtc), Strings.UTCTimeRequired);

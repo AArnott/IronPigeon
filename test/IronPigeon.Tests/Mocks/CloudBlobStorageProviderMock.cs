@@ -31,15 +31,14 @@ namespace IronPigeon.Tests.Mocks
 
         public async Task<Uri> UploadMessageAsync(Stream encryptedMessageContent, DateTime expiration, IProgress<long>? bytesCopiedProgress, CancellationToken cancellationToken)
         {
-            Assert.NotEqual(0, encryptedMessageContent.Length);
-            Assert.Equal(0, encryptedMessageContent.Position);
+            using var bufferStream = new MemoryStream();
+            await encryptedMessageContent.CopyToAsync(bufferStream, 4096, cancellationToken);
+            Assert.NotEqual(0, bufferStream.Length);
 
-            var buffer = new byte[encryptedMessageContent.Length - encryptedMessageContent.Position];
-            await encryptedMessageContent.ReadAsync(buffer, 0, buffer.Length, cancellationToken);
             lock (this.blobs)
             {
                 var contentUri = new Uri(BaseUploadUri + (this.blobs.Count + 1));
-                this.blobs[contentUri] = buffer;
+                this.blobs[contentUri] = bufferStream.ToArray();
                 return contentUri;
             }
         }

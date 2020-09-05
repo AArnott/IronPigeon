@@ -9,6 +9,7 @@ namespace IronPigeon.Relay
     /// <summary>
     /// A wrapper around a serialized <see cref="InboxItem"/> and its signature.
     /// </summary>
+    [DataContract]
     public class SignedInboxItem
     {
         /// <summary>
@@ -34,6 +35,7 @@ namespace IronPigeon.Relay
         /// <remarks>
         /// Verifying this signature should be done with the <see cref="InboxItem.Author"/>'s <see cref="Endpoint.AuthenticatingKeyInputs"/>.
         /// </remarks>
+        [DataMember]
         public ReadOnlyMemory<byte> Signature { get; }
     }
 }
