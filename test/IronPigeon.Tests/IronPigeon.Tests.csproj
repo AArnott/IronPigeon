@@ -14,7 +14,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\IronPigeon\IronPigeon.csproj" />
   </ItemGroup>
-  <ItemGroup>
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net472' ">
     <Reference Include="System.Web" />
   </ItemGroup>
 </Project>
