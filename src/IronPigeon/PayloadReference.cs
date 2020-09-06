@@ -149,6 +149,10 @@ namespace IronPigeon
             {
                 throw new InvalidMessageException("Error while decrypting the stream.", ex);
             }
+            catch (NotSupportedException ex)
+            {
+                throw new InvalidMessageException("Error while decrypting the stream.", ex);
+            }
 
             // Now that the content has been entirely downloaded, verify that the hash is what was expected.
             byte[] actualContentHash = hasher.GetValueAndReset();
