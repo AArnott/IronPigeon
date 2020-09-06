@@ -174,26 +174,34 @@ namespace IronPigeon.Relay
             Verify.Operation(this.ownEndpoint.InboxOwnerCode is object, Strings.PropertyMustBeSetFirst, nameof(this.ownEndpoint));
 
             Uri requestUri = this.ownEndpoint.PublicEndpoint.MessageReceivingEndpoint;
-            if (longPoll)
+            CancellationTokenSource? httpTimeoutTokenSource = null;
+            try
             {
-                requestUri = new Uri(requestUri.AbsoluteUri + "?longPoll=true");
-            }
-            else
-            {
-                using var httpTimeoutTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-                httpTimeoutTokenSource.CancelAfter(this.HttpTimeout);
-                cancellationToken = httpTimeoutTokenSource.Token;
-            }
+                if (longPoll)
+                {
+                    requestUri = new Uri(requestUri.AbsoluteUri + "?longPoll=true");
+                }
+                else
+                {
+                    httpTimeoutTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                    httpTimeoutTokenSource.CancelAfter(this.HttpTimeout);
+                    cancellationToken = httpTimeoutTokenSource.Token;
+                }
 
-            using HttpResponseMessage responseMessage = await this.httpClient.GetAsync(requestUri, this.ownEndpoint.InboxOwnerCode, cancellationToken).ConfigureAwait(false);
-            responseMessage.EnsureSuccessStatusCode();
-            Stream responseStream = await responseMessage.Content.ReadAsStreamAsync().ConfigureAwait(false);
-            using var streamReader = new MessagePackStreamReader(responseStream);
-            ReadOnlySequence<byte>? serializedIncomingInboxItem;
-            while ((serializedIncomingInboxItem = await streamReader.ReadAsync(cancellationToken).ConfigureAwait(false)).HasValue)
+                using HttpResponseMessage responseMessage = await this.httpClient.GetAsync(requestUri, this.ownEndpoint.InboxOwnerCode, cancellationToken).ConfigureAwait(false);
+                responseMessage.EnsureSuccessStatusCode();
+                Stream responseStream = await responseMessage.Content.ReadAsStreamAsync().ConfigureAwait(false);
+                using var streamReader = new MessagePackStreamReader(responseStream);
+                ReadOnlySequence<byte>? serializedIncomingInboxItem;
+                while ((serializedIncomingInboxItem = await streamReader.ReadAsync(cancellationToken).ConfigureAwait(false)).HasValue)
+                {
+                    IncomingInboxItem incomingInboxItem = MessagePackSerializer.Deserialize<IncomingInboxItem>(serializedIncomingInboxItem.Value, Utilities.MessagePackSerializerOptions, cancellationToken);
+                    yield return incomingInboxItem;
+                }
+            }
+            finally
             {
-                IncomingInboxItem incomingInboxItem = MessagePackSerializer.Deserialize<IncomingInboxItem>(serializedIncomingInboxItem.Value, Utilities.MessagePackSerializerOptions, cancellationToken);
-                yield return incomingInboxItem;
+                httpTimeoutTokenSource?.Dispose();
             }
         }
 
