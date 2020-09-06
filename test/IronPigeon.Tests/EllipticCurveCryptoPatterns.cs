@@ -77,7 +77,7 @@ namespace IronPigeon.Tests
                 await this.WriteChunkAsync(aliceResponse, alice.SignData(aliceDH.PublicKey.ToByteArray()));
 
                 // Alice also adds a secret message.
-                using (var aes = SymmetricAlgorithm.Create())
+                using (var aes = SymmetricAlgorithm.Create("AES"))
                 {
                     using (ICryptoTransform? encryptor = aes.CreateEncryptor(aliceKeyMaterial, new byte[aes.BlockSize / 8]))
                     {
@@ -106,7 +106,7 @@ namespace IronPigeon.Tests
                 bobKeyMaterial = bobDH.DeriveKeyMaterial(aliceDHPK);
 
                 // And Bob reads Alice's secret message.
-                using (var aes = SymmetricAlgorithm.Create())
+                using (var aes = SymmetricAlgorithm.Create("AES"))
                 {
                     using (ICryptoTransform? decryptor = aes.CreateDecryptor(aliceKeyMaterial, new byte[aes.BlockSize / 8]))
                     {
