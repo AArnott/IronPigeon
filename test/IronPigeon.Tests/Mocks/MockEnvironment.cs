@@ -37,6 +37,8 @@ namespace IronPigeon.Tests.Mocks
             this.httpHandler.Dispose();
         }
 
+        internal HttpClient CreateHttpClient() => new HttpClient(this.httpHandler);
+
         internal Task<OwnEndpoint> CreateOwnEndpointAsync(CancellationToken cancellationToken) => this.CreateOwnEndpointAsync(this.defaultCryptoSettings, cancellationToken);
 
         internal async Task<OwnEndpoint> CreateOwnEndpointAsync(CryptoSettings cryptoSettings, CancellationToken cancellationToken)
@@ -44,7 +46,9 @@ namespace IronPigeon.Tests.Mocks
             return await OwnEndpoint.CreateAsync(cryptoSettings, this.InboxServer, cancellationToken);
         }
 
-        internal Channel CreateChannel(OwnEndpoint endpoint, CryptoSettings? cryptoSettings = null) => new Channel(this.HttpClient, endpoint, this.CloudStorage, cryptoSettings ?? this.defaultCryptoSettings);
+#pragma warning disable CA2000 // Dispose objects before losing scope
+        internal Channel CreateChannel(OwnEndpoint endpoint, CryptoSettings? cryptoSettings = null) => new Channel(this.CreateHttpClient(), endpoint, this.CloudStorage, cryptoSettings ?? this.defaultCryptoSettings);
+#pragma warning restore CA2000 // Dispose objects before losing scope
 
         internal Task<Channel> CreateChannelAsync(CancellationToken cancellationToken) => this.CreateChannelAsync(this.defaultCryptoSettings, cancellationToken);
 
