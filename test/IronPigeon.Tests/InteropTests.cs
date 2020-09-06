@@ -13,33 +13,21 @@ namespace IronPigeon.Tests
 
     public class InteropTests : TestBase
     {
-        private readonly Mocks.HttpMessageHandlerMock httpHandler;
-        private readonly HttpClient httpClient;
-        private readonly Mocks.CloudBlobStorageProviderMock cloudStorage;
-        private readonly Mocks.InboxHttpHandlerMock inboxMock;
+        private readonly Mocks.MockEnvironment environment = new Mocks.MockEnvironment();
 
         public InteropTests(ITestOutputHelper logger)
             : base(logger)
         {
-            this.httpHandler = new Mocks.HttpMessageHandlerMock();
-
-            this.cloudStorage = new Mocks.CloudBlobStorageProviderMock();
-            this.cloudStorage.AddHttpHandler(this.httpHandler);
-
-            this.inboxMock = new Mocks.InboxHttpHandlerMock(new[] { Valid.ReceivingEndpoint1.PublicEndpoint });
-            this.inboxMock.Register(this.httpHandler);
-
-            this.httpClient = new HttpClient(this.httpHandler);
         }
 
         [Fact]
         public async Task CrossSecurityLevelAddressBookExchange()
         {
             CryptoSettings lowLevelCrypto = CryptoSettings.Testing;
-            OwnEndpoint lowLevelEndpoint = Valid.GenerateOwnEndpoint(lowLevelCrypto);
+            OwnEndpoint lowLevelEndpoint = await this.environment.CreateOwnEndpointAsync(lowLevelCrypto, this.TimeoutToken);
 
             CryptoSettings highLevelCrypto = CryptoSettings.Testing.WithAsymmetricKeySize(2048);
-            OwnEndpoint highLevelEndpoint = Valid.GenerateOwnEndpoint(highLevelCrypto);
+            OwnEndpoint highLevelEndpoint = await this.environment.CreateOwnEndpointAsync(highLevelCrypto, this.TimeoutToken);
 
             await this.TestSendAndReceiveAsync(lowLevelCrypto, lowLevelEndpoint, highLevelCrypto, highLevelEndpoint);
             await this.TestSendAndReceiveAsync(highLevelCrypto, highLevelEndpoint, lowLevelCrypto, lowLevelEndpoint);
@@ -58,10 +46,8 @@ namespace IronPigeon.Tests
             Requires.NotNull(senderEndpoint, nameof(senderEndpoint));
             Requires.NotNull(receiverEndpoint, nameof(receiverEndpoint));
 
-            var channel = new Channel(this.httpClient, Valid.ReceivingEndpoint1, this.cloudStorage, senderCrypto)
-            {
-                TraceSource = this.TraceSource,
-            };
+            Channel channel = this.environment.CreateChannel(senderEndpoint, senderCrypto);
+            channel.TraceSource = this.TraceSource;
 
             using var payload = new MemoryStream(Valid.MessageContent);
             await channel.PostAsync(payload, Valid.ContentType, new[] { receiverEndpoint }, Valid.ExpirationUtc);
@@ -72,15 +58,13 @@ namespace IronPigeon.Tests
             Requires.NotNull(receiverCrypto, nameof(receiverCrypto));
             Requires.NotNull(receiverEndpoint, nameof(receiverEndpoint));
 
-            var channel = new Channel(this.httpClient, Valid.ReceivingEndpoint1, this.cloudStorage, receiverCrypto)
-            {
-                TraceSource = this.TraceSource,
-            };
+            Channel channel = this.environment.CreateChannel(receiverEndpoint, receiverCrypto);
+            channel.TraceSource = this.TraceSource;
 
             List<Relay.InboxItem> receivedMessages = await channel.ReceiveInboxItemsAsync(cancellationToken: this.TimeoutToken).ToListAsync(this.TimeoutToken);
             Assert.Single(receivedMessages);
             using var actualPayload = new MemoryStream();
-            await receivedMessages[0].PayloadReference.DownloadPayloadAsync(this.httpClient, actualPayload, cancellationToken: this.TimeoutToken);
+            await receivedMessages[0].PayloadReference.DownloadPayloadAsync(this.environment.HttpClient, actualPayload, cancellationToken: this.TimeoutToken);
             Assert.Equal<byte>(Valid.MessageContent, actualPayload.ToArray());
         }
     }

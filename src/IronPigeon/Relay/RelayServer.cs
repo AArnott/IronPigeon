@@ -125,20 +125,28 @@ namespace IronPigeon.Relay
         /// <summary>
         /// Posts a <see cref="InboxItemEnvelope"/> to a <see cref="Endpoint.MessageReceivingEndpoint"/>.
         /// </summary>
+        /// <param name="receivingEndpoint">The endpoint to receive the notification.</param>
         /// <param name="inboxPayload">The serialized <see cref="InboxItemEnvelope"/>.</param>
         /// <param name="expiresUtc">An expiration after which the relay server may delete the notification.</param>
         /// <param name="cancellationToken">A cancellation token.</param>
         /// <returns>A receipt from the relay server acknowledging receipt.</returns>
-        public async Task<NotificationPostedReceipt> PostInboxItemAsync(ReadOnlyMemory<byte> inboxPayload, DateTime? expiresUtc, CancellationToken cancellationToken)
+        public async Task<NotificationPostedReceipt> PostInboxItemAsync(Endpoint receivingEndpoint, ReadOnlyMemory<byte> inboxPayload, DateTime? expiresUtc, CancellationToken cancellationToken)
         {
+            Requires.NotNull(receivingEndpoint, nameof(receivingEndpoint));
+
             using var httpTimeoutTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             httpTimeoutTokenSource.CancelAfter(this.HttpTimeout);
 
-            var builder = new UriBuilder(this.ownEndpoint.MessageReceivingEndpoint);
+            var builder = new UriBuilder(receivingEndpoint.MessageReceivingEndpoint);
             if (expiresUtc.HasValue)
             {
                 long lifetimeInMinutes = (long)(expiresUtc.Value - DateTime.UtcNow).TotalMinutes;
-                builder.Query += "&lifetime=" + lifetimeInMinutes.ToString(CultureInfo.InvariantCulture);
+                if (builder.Query.Length > 0)
+                {
+                    builder.Query += "&";
+                }
+
+                builder.Query += "lifetime=" + lifetimeInMinutes.ToString(CultureInfo.InvariantCulture);
             }
 
             using HttpContent content = new ByteArrayContent(inboxPayload.AsOrCreateArray());
@@ -150,7 +158,7 @@ namespace IronPigeon.Relay
             }
 
             response.EnsureSuccessStatusCode();
-            var receipt = new NotificationPostedReceipt(this.ownEndpoint.PublicEndpoint, response.Headers.Date);
+            var receipt = new NotificationPostedReceipt(receivingEndpoint, response.Headers.Date);
             return receipt;
         }
 
@@ -184,7 +192,8 @@ namespace IronPigeon.Relay
             ReadOnlySequence<byte>? serializedIncomingInboxItem;
             while ((serializedIncomingInboxItem = await streamReader.ReadAsync(cancellationToken).ConfigureAwait(false)).HasValue)
             {
-                yield return MessagePackSerializer.Deserialize<IncomingInboxItem>(serializedIncomingInboxItem.Value, Utilities.MessagePackSerializerOptions, cancellationToken);
+                IncomingInboxItem incomingInboxItem = MessagePackSerializer.Deserialize<IncomingInboxItem>(serializedIncomingInboxItem.Value, Utilities.MessagePackSerializerOptions, cancellationToken);
+                yield return incomingInboxItem;
             }
         }
 

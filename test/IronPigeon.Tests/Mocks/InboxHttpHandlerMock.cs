@@ -10,98 +10,141 @@ namespace IronPigeon.Tests.Mocks
     using System.IO;
     using System.Linq;
     using System.Net.Http;
+    using System.Threading;
     using System.Threading.Tasks;
     using IronPigeon.Relay;
     using MessagePack;
     using Microsoft.Extensions.Azure;
     using Nerdbank.Streams;
 
-    internal class InboxHttpHandlerMock
+    internal class InboxHttpHandlerMock : IEndpointInboxFactory
     {
         internal static readonly Uri InboxBaseUri = new Uri("http://localhost/inbox/");
 
-        internal InboxHttpHandlerMock(IReadOnlyList<Endpoint> recipients)
+        private int counter;
+
+        internal InboxHttpHandlerMock()
         {
-            this.Inboxes = recipients.ToDictionary(r => r, r => new List<(byte[], DateTime)>());
+            this.Inboxes = new Dictionary<Uri, Inbox>();
         }
 
-        internal Dictionary<Endpoint, List<(byte[] Content, DateTime ReceivedTimestamp)>> Inboxes { get; }
+        internal Dictionary<Uri, Inbox> Inboxes { get; }
+
+        public Task<InboxCreationResponse> CreateInboxAsync(CancellationToken cancellationToken = default)
+        {
+            int counter = this.counter++;
+            Inbox inbox = new Inbox(new Uri(InboxBaseUri, $"some{counter}/"), $"code{counter}");
+            this.Inboxes.Add(inbox.Url, inbox);
+            return Task.FromResult(new InboxCreationResponse(inbox.Url, inbox.OwnerCode));
+        }
 
         internal void Register(HttpMessageHandlerMock httpMock)
         {
             httpMock.RegisterHandler(this.HttpHandler);
         }
 
-        private static ReadOnlySequence<byte> WriteIncomingMessage(Endpoint recipient, int counter, (ReadOnlyMemory<byte> Content, DateTime ReceivedTimestamp) item)
+        private static ReadOnlySequence<byte> WriteIncomingMessage(Inbox inbox, int counter, (ReadOnlyMemory<byte> Content, DateTime ReceivedTimestamp) item)
         {
             var sequence = new Sequence<byte>();
             var writer = new MessagePackWriter(sequence);
-            WriteIncomingMessage(recipient, ref writer, counter, item);
+            WriteIncomingMessage(inbox, ref writer, counter, item);
             writer.Flush();
             return sequence;
         }
 
-        private static void WriteIncomingMessage(Endpoint recipient, ref MessagePackWriter writer, int counter, (ReadOnlyMemory<byte> Content, DateTime ReceivedTimestamp) item)
+        private static void WriteIncomingMessage(Inbox inbox, ref MessagePackWriter writer, int counter, (ReadOnlyMemory<byte> Content, DateTime ReceivedTimestamp) item)
         {
             writer.WriteMapHeader(3);
             writer.Write(nameof(IncomingInboxItem.Identity));
-            writer.Write(new Uri(recipient.MessageReceivingEndpoint, $"/{counter++}").AbsoluteUri);
+            writer.Write(new Uri(inbox.Url, $"{counter}").AbsoluteUri);
 
             writer.Write(nameof(IncomingInboxItem.DatePostedUtc));
             writer.Write(item.ReceivedTimestamp);
 
             writer.Write(nameof(IncomingInboxItem.Envelope));
-            writer.WriteRaw(item.Content.Span);
+            writer.Write(item.Content.Span);
+        }
+
+        private static ReadOnlySequence<byte> WriteIncomingMessages(Inbox inbox)
+        {
+            var sequence = new Sequence<byte>();
+            var writer = new MessagePackWriter(sequence);
+            int counter = 0;
+            foreach ((ReadOnlyMemory<byte> Content, DateTime ReceivedTimestamp) item in inbox.Messages)
+            {
+                WriteIncomingMessage(inbox, ref writer, counter++, item);
+            }
+
+            writer.Flush();
+
+            return sequence;
         }
 
         private async Task<HttpResponseMessage?> HttpHandler(HttpRequestMessage request)
         {
+            UriBuilder simpleUrl = new UriBuilder(request.RequestUri);
+            simpleUrl.Query = null;
+
+            // TODO: add inbox owner code check.
             if (request.Method == HttpMethod.Post)
             {
-                Endpoint? recipient = this.Inboxes.Keys.FirstOrDefault(r => r.MessageReceivingEndpoint.AbsolutePath == request.RequestUri.AbsolutePath);
-                if (recipient is object)
+                if (this.Inboxes.TryGetValue(simpleUrl.Uri, out Inbox? inbox))
                 {
-                    List<(byte[] Content, DateTime ReceivedTimestamp)>? inbox = this.Inboxes[recipient];
                     byte[] buffer = await request.Content.ReadAsByteArrayAsync();
-                    inbox.Add((buffer, DateTime.UtcNow));
-                    return new HttpResponseMessage();
+                    inbox.Messages.Add((buffer, DateTime.UtcNow));
+                    return new HttpResponseMessage { Headers = { Date = DateTime.UtcNow } };
                 }
             }
             else if (request.Method == HttpMethod.Get)
             {
-                Endpoint? recipient = this.Inboxes.Keys.FirstOrDefault(r => r.MessageReceivingEndpoint == request.RequestUri);
-                if (recipient is object)
+                if (this.Inboxes.TryGetValue(simpleUrl.Uri, out Inbox? inbox))
                 {
-                    ReadOnlySequence<byte> ros = this.WriteIncomingMessages(recipient);
+                    ReadOnlySequence<byte> ros = WriteIncomingMessages(inbox);
                     return new HttpResponseMessage { Content = new ByteArrayContent(ros.ToArray()) };
                 }
 
-                recipient = this.Inboxes.Keys.FirstOrDefault(r => request.RequestUri.AbsolutePath.StartsWith(r.MessageReceivingEndpoint.AbsolutePath + "/", StringComparison.Ordinal));
-                if (recipient is object)
+                if (request.RequestUri.Segments.Length > 0 && int.TryParse(request.RequestUri.Segments[request.RequestUri.Segments.Length - 1], out int messageIndex))
                 {
-                    var messageIndex = int.Parse(request.RequestUri.Segments[request.RequestUri.Segments.Length - 1], CultureInfo.InvariantCulture);
-                    (ReadOnlyMemory<byte> Content, DateTime ReceivedTimestamp) message = this.Inboxes[recipient][messageIndex];
-                    ReadOnlySequence<byte> messageBuffer = WriteIncomingMessage(recipient, messageIndex, message);
-                    return new HttpResponseMessage { Content = new ByteArrayContent(messageBuffer.ToArray()) };
+                    UriBuilder inboxUrlBuilder = new UriBuilder(simpleUrl.Uri);
+                    inboxUrlBuilder.Path = inboxUrlBuilder.Path.Substring(0, inboxUrlBuilder.Path.LastIndexOf('/') + 1);
+                    if (this.Inboxes.TryGetValue(inboxUrlBuilder.Uri, out inbox))
+                    {
+                        (ReadOnlyMemory<byte> Content, DateTime ReceivedTimestamp) message = inbox.Messages[messageIndex];
+                        ReadOnlySequence<byte> messageBuffer = WriteIncomingMessage(inbox, messageIndex, message);
+                        return new HttpResponseMessage { Content = new ByteArrayContent(messageBuffer.ToArray()) };
+                    }
+                }
+            }
+            else if (request.Method == HttpMethod.Delete)
+            {
+                if (request.RequestUri.Segments.Length > 0 && int.TryParse(request.RequestUri.Segments[request.RequestUri.Segments.Length - 1], out int messageIndex))
+                {
+                    UriBuilder inboxUrlBuilder = new UriBuilder(simpleUrl.Uri);
+                    inboxUrlBuilder.Path = inboxUrlBuilder.Path.Substring(0, inboxUrlBuilder.Path.LastIndexOf('/') + 1);
+                    if (this.Inboxes.TryGetValue(inboxUrlBuilder.Uri, out Inbox? inbox))
+                    {
+                        inbox.Messages.RemoveAt(messageIndex);
+                        return new HttpResponseMessage();
+                    }
                 }
             }
 
             return null;
         }
 
-        private ReadOnlySequence<byte> WriteIncomingMessages(Endpoint recipient)
+        internal class Inbox
         {
-            var sequence = new Sequence<byte>();
-            var writer = new MessagePackWriter(sequence);
-            int counter = 0;
-            foreach ((ReadOnlyMemory<byte> Content, DateTime ReceivedTimestamp) item in this.Inboxes[recipient])
+            public Inbox(Uri url, string ownerCode)
             {
-                WriteIncomingMessage(recipient, ref writer, counter++, item);
+                this.Url = url;
+                this.OwnerCode = ownerCode;
             }
 
-            writer.Flush();
+            public Uri Url { get; }
 
-            return sequence;
+            public string OwnerCode { get; }
+
+            public List<(byte[] Content, DateTime ReceivedTimestamp)> Messages { get; } = new List<(byte[] Content, DateTime ReceivedTimestamp)>();
         }
     }
 }

@@ -22,23 +22,6 @@ namespace IronPigeon.Tests
         internal static readonly DateTime ExpirationUtc = DateTime.UtcNow.AddDays(1);
         internal static readonly byte[] MessageContent = new byte[] { 0x11, 0x22, 0x33 };
 
-        internal static readonly Uri MessageReceivingEndpoint = new Uri("http://localhost/inbox/someone");
-        internal static readonly EndpointInboxFactoryMock InboxFactory = new EndpointInboxFactoryMock();
-        internal static readonly OwnEndpoint ReceivingEndpoint = GenerateOwnEndpoint();
-        internal static readonly Endpoint PublicEndpoint = GenerateOwnEndpoint().PublicEndpoint;
-        internal static readonly Endpoint[] OneEndpoint = new Endpoint[] { PublicEndpoint };
-        internal static readonly Endpoint[] EmptyEndpoints = Array.Empty<Endpoint>();
-
-        internal static readonly CryptoSettings CryptoSettings = CryptoSettings.Testing;
-
-        internal static readonly OwnEndpoint ReceivingEndpoint1 = OwnEndpoint.CreateAsync(CryptoSettings, InboxFactory).Result;
-
-        internal static readonly OwnEndpoint ReceivingEndpoint2 = OwnEndpoint.CreateAsync(CryptoSettings, InboxFactory).Result;
-
-        internal static AsymmetricKeyInputs SigningKeyInputs => ReceivingEndpoint.SigningKeyInputs;
-
-        internal static AsymmetricKeyInputs DecryptionKeyInputs => ReceivingEndpoint.DecryptionKeyInputs;
-
-        internal static OwnEndpoint GenerateOwnEndpoint(CryptoSettings? cryptoSettings = null) => OwnEndpoint.CreateAsync(cryptoSettings ?? CryptoSettings.Testing, InboxFactory).Result;
+        internal static readonly Uri SampleMessageReceivingEndpoint = new Uri("http://localhost/inbox/someone");
     }
 }

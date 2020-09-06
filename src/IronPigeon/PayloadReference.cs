@@ -46,7 +46,7 @@ namespace IronPigeon
 
         /// <inheritdoc cref="PayloadReference(Uri, ContentType, ReadOnlyMemory{byte}, string, SymmetricEncryptionInputs, DateTime?, Uri?)"/>
         [MessagePack.SerializationConstructor]
-        private PayloadReference(Uri location, ContentType contentType, ReadOnlyMemory<byte> hash, string hashAlgorithmName, SymmetricEncryptionInputs decryptionInputs, DateTime? expiresUtc)
+        public PayloadReference(Uri location, ContentType contentType, ReadOnlyMemory<byte> hash, string hashAlgorithmName, SymmetricEncryptionInputs decryptionInputs, DateTime? expiresUtc)
             : this(location, contentType, hash, hashAlgorithmName, decryptionInputs, expiresUtc, origin: null)
         {
         }
@@ -138,21 +138,22 @@ namespace IronPigeon
 
             using ICryptographicKey decryptingKey = this.DecryptionInputs.CreateKey();
             using CryptographicHash hasher = WinRTCrypto.HashAlgorithmProvider.OpenAlgorithm(this.HashAlgorithm).CreateHash();
-            using ICryptoTransform decryptor = WinRTCrypto.CryptographicEngine.CreateDecryptor(this.DecryptionInputs.CreateKey());
-            using CryptoStream hashingDecryptingStream = CryptoStream.ReadFrom(downloadingStream, hasher, decryptor);
 
-            long bytesCopied = await hashingDecryptingStream.ConcurrentCopyToAsync(receivingStream, progress, responseMessage.Content.Headers.ContentLength, cancellationToken).ConfigureAwait(false);
+            try
+            {
+                using ICryptoTransform decryptor = WinRTCrypto.CryptographicEngine.CreateDecryptor(this.DecryptionInputs.CreateKey(), this.DecryptionInputs.IV.AsOrCreateArray());
+                using CryptoStream hashingDecryptingStream = CryptoStream.ReadFrom(downloadingStream, hasher, decryptor);
+                await hashingDecryptingStream.ConcurrentCopyToAsync(receivingStream, progress, responseMessage.Content.Headers.ContentLength, cancellationToken).ConfigureAwait(false);
+            }
+            catch (System.Security.Cryptography.CryptographicException ex)
+            {
+                throw new InvalidMessageException("Error while decrypting the stream.", ex);
+            }
 
             // Now that the content has been entirely downloaded, verify that the hash is what was expected.
             byte[] actualContentHash = hasher.GetValueAndReset();
             if (!Utilities.AreEquivalent(actualContentHash, this.Hash.Span))
             {
-                if (responseMessage.Content.Headers.ContentLength is long expectedContentLength && expectedContentLength > bytesCopied)
-                {
-                    // Only report a truncated stream if the content hash did not match *and* the stream was shorter than expected.
-                    throw new EndOfStreamException($"Expected {expectedContentLength} bytes but only received {bytesCopied} bytes. The truncation may explain why the content hash did not match.");
-                }
-
                 throw new InvalidMessageException("The content hash for the payload does not match the expected value. Corruption or tampering has occurred.");
             }
         }

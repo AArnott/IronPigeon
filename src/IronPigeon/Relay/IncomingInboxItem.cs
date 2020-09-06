@@ -4,6 +4,7 @@
 namespace IronPigeon.Relay
 {
     using System;
+    using System.Buffers;
     using System.Runtime.Serialization;
     using Microsoft;
 
@@ -19,12 +20,12 @@ namespace IronPigeon.Relay
         /// <param name="identity">The URL that represents this entry.</param>
         /// <param name="envelope">The envelope left for the user.</param>
         /// <param name="datePostedUtc">The date that this item was posted to this inbox.</param>
-        public IncomingInboxItem(Uri identity, InboxItemEnvelope envelope, DateTime datePostedUtc)
+        public IncomingInboxItem(Uri identity, ReadOnlySequence<byte> envelope, DateTime datePostedUtc)
         {
             Requires.Argument(datePostedUtc.Kind == DateTimeKind.Utc, nameof(datePostedUtc), Strings.UTCTimeRequired);
 
             this.Identity = identity ?? throw new ArgumentNullException(nameof(identity));
-            this.Envelope = envelope ?? throw new ArgumentNullException(nameof(envelope));
+            this.Envelope = envelope;
             this.DatePostedUtc = datePostedUtc;
         }
 
@@ -41,7 +42,7 @@ namespace IronPigeon.Relay
         /// This buffer must be decrypted with the <see cref="OwnEndpoint.DecryptionKeyInputs"/> of the receiver.
         /// </remarks>
         [DataMember]
-        public InboxItemEnvelope Envelope { get; }
+        public ReadOnlySequence<byte> Envelope { get; }
 
         /// <summary>
         /// Gets the date that the relay claims to have received the <see cref="Envelope"/>.

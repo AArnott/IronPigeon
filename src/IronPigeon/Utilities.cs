@@ -36,6 +36,7 @@ namespace IronPigeon
         /// </summary>
         public static readonly IFormatterResolver IronPigeonTypeResolver = CompositeResolver.Create(
             ByteReadOnlyMemoryFormatter.Instance,
+            ByteReadOnlySequenceFormatter.Instance,
             ContentTypeFormatter.Instance);
 
         /// <summary>
@@ -547,7 +548,7 @@ namespace IronPigeon
 
             var pipe = new Pipe();
             await Task.WhenAll(
-                from.CopyToAsync(pipe.Writer, cancellationToken),
+                from.CopyToAsync(pipe.Writer, cancellationToken).ContinueWith(t => pipe.Writer.Complete(t.Exception?.InnerException ?? t.Exception), TaskScheduler.Default),
                 pipe.Reader.CopyToAsync(receivingStreamWithProgress, cancellationToken)).ConfigureAwait(false);
 
             return receivingStreamWithProgress.BytesTransferred;
@@ -564,6 +565,22 @@ namespace IronPigeon
         internal static IProgress<long>? Adapt(this IProgress<(long Current, long? Total)>? progress, long? expectedTotal)
         {
             return progress is object ? new Progress<long>(current => progress.Report((current, expectedTotal))) : null;
+        }
+
+        /// <summary>
+        /// Checks whether an exception is one that is likely to be due to message corruption.
+        /// </summary>
+        /// <param name="ex">The exception to test.</param>
+        /// <returns><c>true</c> if the exception is commonly thrown due to message corruption; <c>false</c> otherwise.</returns>
+        internal static bool IsCorruptionException(Exception ex)
+        {
+            return ex is ArgumentException
+                || ex is FormatException
+                || ex is InvalidOperationException // while PCLCrypto throws from X509SubjectPublicKeyInfoFormatter.ReadCore
+                || ex is EndOfStreamException
+                || ex is NotSupportedException
+                || ex is System.Security.Cryptography.CryptographicException
+                || ex is MessagePackSerializationException;
         }
 
         /// <summary>
@@ -590,6 +607,37 @@ namespace IronPigeon
             public ReadOnlyMemory<byte> Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
             {
                 return reader.ReadBytes() is ReadOnlySequence<byte> bytes ? new ReadOnlyMemory<byte>(bytes.ToArray()) : default;
+            }
+        }
+
+        /// <summary>
+        /// Formatter for the <see cref="ReadOnlySequence{T}"/> type where T is <see cref="byte"/>.
+        /// </summary>
+        internal class ByteReadOnlySequenceFormatter : IMessagePackFormatter<ReadOnlySequence<byte>>
+        {
+            /// <summary>
+            /// The singleton instance to use.
+            /// </summary>
+            public static readonly ByteReadOnlySequenceFormatter Instance = new ByteReadOnlySequenceFormatter();
+
+            private ByteReadOnlySequenceFormatter()
+            {
+            }
+
+            /// <inheritdoc/>
+            public void Serialize(ref MessagePackWriter writer, ReadOnlySequence<byte> value, MessagePackSerializerOptions options)
+            {
+                writer.WriteBinHeader(checked((int)value.Length));
+                foreach (ReadOnlyMemory<byte> segment in value)
+                {
+                    writer.WriteRaw(segment.Span);
+                }
+            }
+
+            /// <inheritdoc/>
+            public ReadOnlySequence<byte> Deserialize(ref MessagePackReader reader, MessagePackSerializerOptions options)
+            {
+                return reader.ReadBytes() is ReadOnlySequence<byte> bytes ? new ReadOnlySequence<byte>(bytes.ToArray()) : default;
             }
         }
 

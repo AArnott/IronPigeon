@@ -99,7 +99,25 @@ namespace IronPigeon
         {
             await foreach (IncomingInboxItem incomingInboxItem in this.RelayServer.DownloadIncomingItemsAsync(longPoll, cancellationToken).ConfigureAwait(false))
             {
-                InboxItem inboxItem = this.OpenEnvelope(incomingInboxItem.Envelope, cancellationToken);
+                InboxItem inboxItem;
+                try
+                {
+                    InboxItemEnvelope envelope = MessagePackSerializer.Deserialize<InboxItemEnvelope>(incomingInboxItem.Envelope, Utilities.MessagePackSerializerOptions, cancellationToken);
+                    inboxItem = this.OpenEnvelope(envelope, cancellationToken);
+                }
+                catch (MessagePackSerializationException)
+                {
+                    // Bad message. Throw it out.
+                    await this.RelayServer.DeleteInboxItemAsync(incomingInboxItem, cancellationToken).ConfigureAwait(false);
+                    continue;
+                }
+                catch (InvalidMessageException)
+                {
+                    // Bad message. Throw it out.
+                    await this.RelayServer.DeleteInboxItemAsync(incomingInboxItem, cancellationToken).ConfigureAwait(false);
+                    continue;
+                }
+
                 inboxItem.RelayServerItem = incomingInboxItem;
                 yield return inboxItem;
             }
@@ -225,7 +243,7 @@ namespace IronPigeon
             InboxItemEnvelope envelope = new InboxItemEnvelope(decryptionInstructions, encryptedSignedInboxItem);
             byte[] serializedEnvelope = MessagePackSerializer.Serialize(envelope, Utilities.MessagePackSerializerOptions, cancellationToken);
 
-            NotificationPostedReceipt receipt = await this.RelayServer.PostInboxItemAsync(serializedEnvelope, expiresUtc, cancellationToken).ConfigureAwait(false);
+            NotificationPostedReceipt receipt = await this.RelayServer.PostInboxItemAsync(recipient, serializedEnvelope, expiresUtc, cancellationToken).ConfigureAwait(false);
             return receipt;
         }
 
@@ -242,30 +260,39 @@ namespace IronPigeon
             // First we need to decrypt the SignedInboxItem using the key in the envelope.
             cancellationToken.ThrowIfCancellationRequested();
             using ICryptographicKey ownKey = this.Endpoint.DecryptionKeyInputs.CreateKey();
-            SymmetricEncryptionInputs signedInboxItemDecryptingInstructions = envelope.DecryptionKey.WithKeyMaterial(
-                WinRTCrypto.CryptographicEngine.Decrypt(ownKey, envelope.DecryptionKey.KeyMaterial.AsOrCreateArray()));
-            using ICryptographicKey signedInboxItemDecryptingKey = signedInboxItemDecryptingInstructions.CreateKey();
-            byte[] serializedSignedInboxItem = WinRTCrypto.CryptographicEngine.Decrypt(signedInboxItemDecryptingKey, envelope.SerializedInboxItem.AsOrCreateArray(), signedInboxItemDecryptingInstructions.IV.AsOrCreateArray());
-            SignedInboxItem signedInboxItem = MessagePackSerializer.Deserialize<SignedInboxItem>(serializedSignedInboxItem, Utilities.MessagePackSerializerOptions, cancellationToken);
-
-            // Extract the InboxItem
-            cancellationToken.ThrowIfCancellationRequested();
-            InboxItem inboxItem = MessagePackSerializer.Deserialize<InboxItem>(signedInboxItem.SerializedInboxItem, Utilities.MessagePackSerializerOptions, cancellationToken);
-
-            // Verify that the signature on the inbox item matches its alleged author.
-            using ICryptographicKey authorSigningKey = inboxItem.Author.AuthenticatingKeyInputs.CreateKey();
-            if (!WinRTCrypto.CryptographicEngine.VerifySignature(authorSigningKey, signedInboxItem.SerializedInboxItem.AsOrCreateArray(), signedInboxItem.Signature.AsOrCreateArray()))
+            try
             {
-                throw new InvalidMessageException("The signature of the InboxItem does not match its alleged author.");
-            }
+                SymmetricEncryptionInputs signedInboxItemDecryptingInstructions = envelope.DecryptionKey.WithKeyMaterial(
+                    WinRTCrypto.CryptographicEngine.Decrypt(ownKey, envelope.DecryptionKey.KeyMaterial.AsOrCreateArray()));
 
-            // Verify that we are the intended recipient.
-            if (!inboxItem.Recipient.Equals(this.Endpoint))
+                using ICryptographicKey signedInboxItemDecryptingKey = signedInboxItemDecryptingInstructions.CreateKey();
+                byte[] serializedSignedInboxItem = WinRTCrypto.CryptographicEngine.Decrypt(signedInboxItemDecryptingKey, envelope.SerializedInboxItem.AsOrCreateArray(), signedInboxItemDecryptingInstructions.IV.AsOrCreateArray());
+
+                SignedInboxItem signedInboxItem = MessagePackSerializer.Deserialize<SignedInboxItem>(serializedSignedInboxItem, Utilities.MessagePackSerializerOptions, cancellationToken);
+
+                // Extract the InboxItem
+                cancellationToken.ThrowIfCancellationRequested();
+                InboxItem inboxItem = MessagePackSerializer.Deserialize<InboxItem>(signedInboxItem.SerializedInboxItem, Utilities.MessagePackSerializerOptions, cancellationToken);
+
+                // Verify that the signature on the inbox item matches its alleged author.
+                using ICryptographicKey authorSigningKey = inboxItem.Author.AuthenticatingKeyInputs.CreateKey();
+                if (!WinRTCrypto.CryptographicEngine.VerifySignature(authorSigningKey, signedInboxItem.SerializedInboxItem.AsOrCreateArray(), signedInboxItem.Signature.AsOrCreateArray()))
+                {
+                    throw new InvalidMessageException("The signature of the InboxItem does not match its alleged author.");
+                }
+
+                // Verify that we are the intended recipient.
+                if (!inboxItem.Recipient.Equals(this.Endpoint.PublicEndpoint))
+                {
+                    throw new InvalidMessageException("This InboxItem was not intended for this recipient.");
+                }
+
+                return inboxItem;
+            }
+            catch (Exception ex) when (Utilities.IsCorruptionException(ex))
             {
-                throw new InvalidMessageException("This InboxItem was not intended for this recipient.");
+                throw new InvalidMessageException("The inbox item failed to deserialize, likely due to corruption or tampering.", ex);
             }
-
-            return inboxItem;
         }
     }
 }

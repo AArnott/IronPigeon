@@ -4,33 +4,53 @@
 namespace IronPigeon.Tests
 {
     using System;
+    using System.Threading.Tasks;
     using Xunit;
+    using Xunit.Abstractions;
 
-    public class OwnEndpointTests
+    public class OwnEndpointTests : TestBase, IAsyncLifetime
     {
+        private readonly Mocks.MockEnvironment environment = new Mocks.MockEnvironment();
+        private OwnEndpoint endpoint = null!; // InitializeAsync
+
+        public OwnEndpointTests(ITestOutputHelper logger)
+            : base(logger)
+        {
+        }
+
+        public async Task InitializeAsync()
+        {
+            this.endpoint = await this.environment.CreateOwnEndpointAsync(this.TimeoutToken);
+        }
+
+        public Task DisposeAsync()
+        {
+            this.environment.Dispose();
+            return Task.CompletedTask;
+        }
+
         [Fact]
         public void CtorInvalidArgs()
         {
-            Assert.Throws<ArgumentNullException>("messageReceivingEndpoint", () => new OwnEndpoint(null!, Valid.ReceivingEndpoint.SigningKeyInputs, Valid.ReceivingEndpoint.DecryptionKeyInputs));
-            Assert.Throws<ArgumentNullException>("signingKeyInputs", () => new OwnEndpoint(Valid.MessageReceivingEndpoint, null!, Valid.ReceivingEndpoint.DecryptionKeyInputs));
-            Assert.Throws<ArgumentNullException>("decryptionKeyInputs", () => new OwnEndpoint(Valid.MessageReceivingEndpoint, Valid.ReceivingEndpoint.SigningKeyInputs, null!));
+            Assert.Throws<ArgumentNullException>("messageReceivingEndpoint", () => new OwnEndpoint(null!, this.endpoint.SigningKeyInputs, this.endpoint.DecryptionKeyInputs));
+            Assert.Throws<ArgumentNullException>("signingKeyInputs", () => new OwnEndpoint(Valid.SampleMessageReceivingEndpoint, null!, this.endpoint.DecryptionKeyInputs));
+            Assert.Throws<ArgumentNullException>("decryptionKeyInputs", () => new OwnEndpoint(Valid.SampleMessageReceivingEndpoint, this.endpoint.SigningKeyInputs, null!));
         }
 
         [Fact]
         public void Ctor()
         {
-            var ownContact = new OwnEndpoint(Valid.ReceivingEndpoint.MessageReceivingEndpoint, Valid.ReceivingEndpoint.SigningKeyInputs, Valid.ReceivingEndpoint.DecryptionKeyInputs, Valid.ReceivingEndpoint.InboxOwnerCode);
-            Assert.Equal(Valid.ReceivingEndpoint.PublicEndpoint, ownContact.PublicEndpoint);
-            Assert.Equal(Valid.ReceivingEndpoint.DecryptionKeyInputs, ownContact.DecryptionKeyInputs);
-            Assert.Equal(Valid.ReceivingEndpoint.SigningKeyInputs, ownContact.SigningKeyInputs);
-            Assert.Equal(Valid.ReceivingEndpoint.InboxOwnerCode, ownContact.InboxOwnerCode);
+            var ownContact = new OwnEndpoint(this.endpoint.MessageReceivingEndpoint, this.endpoint.SigningKeyInputs, this.endpoint.DecryptionKeyInputs, this.endpoint.InboxOwnerCode);
+            Assert.Equal(this.endpoint.PublicEndpoint, ownContact.PublicEndpoint);
+            Assert.Equal(this.endpoint.DecryptionKeyInputs, ownContact.DecryptionKeyInputs);
+            Assert.Equal(this.endpoint.SigningKeyInputs, ownContact.SigningKeyInputs);
+            Assert.Equal(this.endpoint.InboxOwnerCode, ownContact.InboxOwnerCode);
         }
 
         [Fact]
         public void CreateAddressBookEntry()
         {
-            OwnEndpoint? ownContact = Valid.ReceivingEndpoint;
-            AddressBookEntry? entry = new AddressBookEntry(ownContact);
+            AddressBookEntry? entry = new AddressBookEntry(this.endpoint);
             Assert.NotEqual(0, entry.Signature.Length);
             Assert.NotEqual(0, entry.SerializedEndpoint.Length);
         }

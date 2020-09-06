@@ -15,33 +15,29 @@ namespace IronPigeon.Tests
     using Xunit;
     using Xunit.Abstractions;
 
-    public class ChannelTests : TestBase, IDisposable
+    public class ChannelTests : TestBase, IAsyncLifetime, IDisposable
     {
-        private readonly Mocks.HttpMessageHandlerMock httpHandler;
-        private readonly HttpClient httpClient;
-        private readonly Channel channel1;
-        private readonly Channel channel2;
-        private readonly Mocks.CloudBlobStorageProviderMock cloudStorage;
-        private readonly Mocks.InboxHttpHandlerMock inboxMock;
+        private readonly Mocks.MockEnvironment environment = new Mocks.MockEnvironment();
         private readonly MemoryStream validPayload;
+        private Channel channel1 = null!; // InitializeAsync
+        private Channel channel2 = null!; // InitializeAsync
 
         public ChannelTests(ITestOutputHelper logger)
             : base(logger)
         {
-            this.httpHandler = new Mocks.HttpMessageHandlerMock();
-
-            this.cloudStorage = new Mocks.CloudBlobStorageProviderMock();
-            this.cloudStorage.AddHttpHandler(this.httpHandler);
-
-            this.inboxMock = new Mocks.InboxHttpHandlerMock(new[] { Valid.ReceivingEndpoint1.PublicEndpoint });
-            this.inboxMock.Register(this.httpHandler);
-
-            this.httpClient = new HttpClient(this.httpHandler);
-
-            this.channel1 = new Channel(this.httpClient, Valid.ReceivingEndpoint1, this.cloudStorage, Valid.CryptoSettings);
-            this.channel2 = new Channel(this.httpClient, Valid.ReceivingEndpoint2, this.cloudStorage, Valid.CryptoSettings);
-
             this.validPayload = new MemoryStream(new byte[] { 1, 2, 3 });
+        }
+
+        public async Task InitializeAsync()
+        {
+            this.channel1 = await this.environment.CreateChannelAsync(this.TimeoutToken);
+            this.channel2 = await this.environment.CreateChannelAsync(this.TimeoutToken);
+        }
+
+        public Task DisposeAsync()
+        {
+            this.environment.Dispose();
+            return Task.CompletedTask;
         }
 
         [Fact]
@@ -50,9 +46,9 @@ namespace IronPigeon.Tests
             var blobProvider = new Mock<ICloudBlobStorageProvider>();
             using var httpClient = new HttpClient();
             CryptoSettings cryptoSettings = CryptoSettings.Testing;
-            var channel = new Channel(httpClient, Valid.ReceivingEndpoint, blobProvider.Object, cryptoSettings);
+            var channel = new Channel(httpClient, this.channel1.Endpoint, blobProvider.Object, cryptoSettings);
             Assert.Same(blobProvider.Object, channel.CloudBlobStorage);
-            Assert.Same(Valid.ReceivingEndpoint, channel.Endpoint);
+            Assert.Same(this.channel1.Endpoint, channel.Endpoint);
             Assert.Same(httpClient, channel.HttpClient);
             Assert.Same(cryptoSettings, channel.CryptoSettings);
             Assert.NotNull(channel.RelayServer);
@@ -61,25 +57,25 @@ namespace IronPigeon.Tests
         [Fact]
         public async Task PostAsyncBadArgs()
         {
-            await Assert.ThrowsAsync<ArgumentNullException>("payload", () => this.channel1.PostAsync(null!, Valid.ContentType, Valid.OneEndpoint, Valid.ExpirationUtc, cancellationToken: this.TimeoutToken));
-            await Assert.ThrowsAsync<ArgumentNullException>("contentType", () => this.channel1.PostAsync(this.validPayload, null!, Valid.OneEndpoint, Valid.ExpirationUtc));
+            await Assert.ThrowsAsync<ArgumentNullException>("payload", () => this.channel1.PostAsync(null!, Valid.ContentType, new[] { this.channel1.Endpoint.PublicEndpoint }, Valid.ExpirationUtc, cancellationToken: this.TimeoutToken));
+            await Assert.ThrowsAsync<ArgumentNullException>("contentType", () => this.channel1.PostAsync(this.validPayload, null!, new[] { this.channel1.Endpoint.PublicEndpoint }, Valid.ExpirationUtc));
             await Assert.ThrowsAsync<ArgumentNullException>("recipients", () => this.channel1.PostAsync(this.validPayload, Valid.ContentType, null!, Valid.ExpirationUtc));
 
-            await Assert.ThrowsAsync<ArgumentException>("recipients", () => this.channel1.PostAsync(this.validPayload, Valid.ContentType, Valid.EmptyEndpoints, Valid.ExpirationUtc));
-            await Assert.ThrowsAsync<ArgumentException>("expiresUtc", () => this.channel1.PostAsync(this.validPayload, Valid.ContentType, Valid.OneEndpoint, Invalid.ExpirationUtc));
+            await Assert.ThrowsAsync<ArgumentException>("recipients", () => this.channel1.PostAsync(this.validPayload, Valid.ContentType, Array.Empty<Endpoint>(), Valid.ExpirationUtc));
+            await Assert.ThrowsAsync<ArgumentException>("expiresUtc", () => this.channel1.PostAsync(this.validPayload, Valid.ContentType, new[] { this.channel1.Endpoint.PublicEndpoint }, Invalid.ExpirationUtc));
         }
 
         [Fact]
         public async Task PostAndReceiveAsync()
         {
-            await this.channel1.PostAsync(this.validPayload, Valid.ContentType, new[] { Valid.ReceivingEndpoint2.PublicEndpoint }, Valid.ExpirationUtc, cancellationToken: this.TimeoutToken);
+            await this.channel1.PostAsync(this.validPayload, Valid.ContentType, new[] { this.channel2.Endpoint.PublicEndpoint }, Valid.ExpirationUtc, cancellationToken: this.TimeoutToken);
             List<Relay.InboxItem> receivedMessages = await this.channel2.ReceiveInboxItemsAsync(cancellationToken: this.TimeoutToken).ToListAsync(this.TimeoutToken);
 
             Assert.Single(receivedMessages);
             Assert.Equal(Valid.ContentType, receivedMessages[0].PayloadReference.ContentType);
 
             using var actualPayload = new MemoryStream();
-            await receivedMessages[0].PayloadReference.DownloadPayloadAsync(this.httpClient, actualPayload, cancellationToken: this.TimeoutToken);
+            await receivedMessages[0].PayloadReference.DownloadPayloadAsync(this.environment.HttpClient, actualPayload, cancellationToken: this.TimeoutToken);
             Assert.Equal<byte>(this.validPayload.ToArray(), actualPayload.ToArray());
         }
 
@@ -88,10 +84,11 @@ namespace IronPigeon.Tests
         {
             for (int i = 0; i < 100; i++)
             {
-                await this.channel1.PostAsync(this.validPayload, Valid.ContentType, new[] { Valid.ReceivingEndpoint2.PublicEndpoint }, Valid.ExpirationUtc, cancellationToken: this.TimeoutToken);
+                using MemoryStream payload = new MemoryStream(new byte[] { 1, 2, 3 });
+                await this.channel1.PostAsync(payload, Valid.ContentType, new[] { this.channel2.Endpoint.PublicEndpoint }, Valid.ExpirationUtc, cancellationToken: this.TimeoutToken);
 
                 // Tamper with the payload reference.
-                TestUtilities.ApplyFuzzing(this.inboxMock.Inboxes[Valid.ReceivingEndpoint2.PublicEndpoint][0].Content, 1);
+                TestUtilities.ApplyFuzzing(this.environment.InboxServer.Inboxes[this.channel2.Endpoint.MessageReceivingEndpoint].Messages[0].Content, 1);
 
                 List<Relay.InboxItem> receivedMessages = await this.channel2.ReceiveInboxItemsAsync(cancellationToken: this.TimeoutToken).ToListAsync(this.TimeoutToken);
                 Assert.Empty(receivedMessages);
@@ -101,15 +98,24 @@ namespace IronPigeon.Tests
         [Fact]
         public async Task PayloadTamperingTests()
         {
-            for (int i = 0; i < 100; i++)
+            for (int i = 0; i < 16; i++)
             {
-                await this.channel1.PostAsync(this.validPayload, Valid.ContentType, new[] { Valid.ReceivingEndpoint2.PublicEndpoint }, Valid.ExpirationUtc, cancellationToken: this.TimeoutToken);
+                using MemoryStream payload = new MemoryStream(new byte[] { 1, 2, 3 });
+                await this.channel1.PostAsync(payload, Valid.ContentType, new[] { this.channel2.Endpoint.PublicEndpoint }, Valid.ExpirationUtc, cancellationToken: this.TimeoutToken);
 
                 // Tamper with the payload itself.
-                TestUtilities.ApplyFuzzing(this.cloudStorage.Blobs.Single().Value, 1);
+                unchecked
+                {
+                    this.environment.CloudStorage.Blobs.Single().Value[i]++;
+                }
 
-                List<Relay.InboxItem> receivedMessages = await this.channel2.ReceiveInboxItemsAsync(cancellationToken: this.TimeoutToken).ToListAsync(this.TimeoutToken);
-                Assert.Empty(receivedMessages);
+                await foreach (Relay.InboxItem receivedMessages in this.channel2.ReceiveInboxItemsAsync(cancellationToken: this.TimeoutToken))
+                {
+                    using var ms = new MemoryStream();
+                    await Assert.ThrowsAsync<InvalidMessageException>(() => receivedMessages.PayloadReference.DownloadPayloadAsync(this.environment.HttpClient, ms, cancellationToken: this.TimeoutToken));
+                }
+
+                this.environment.CloudStorage.Blobs.Clear();
             }
         }
 
@@ -117,8 +123,6 @@ namespace IronPigeon.Tests
         {
             if (disposing)
             {
-                this.httpClient.Dispose();
-                this.httpHandler.Dispose();
                 this.validPayload.Dispose();
             }
 

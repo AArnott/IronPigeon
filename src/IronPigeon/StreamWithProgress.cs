@@ -167,6 +167,10 @@ namespace IronPigeon
         /// Reports progress for the next segment of bytes transferred.
         /// </summary>
         /// <param name="bytesJustRead">The number of bytes transferred in the last operation.</param>
-        private void ReportProgress(int bytesJustRead) => this.progress?.Report(this.BytesTransferred += bytesJustRead);
+        private void ReportProgress(int bytesJustRead)
+        {
+            this.BytesTransferred += bytesJustRead;
+            this.progress?.Report(this.BytesTransferred);
+        }
     }
 }

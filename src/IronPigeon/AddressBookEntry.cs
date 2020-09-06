@@ -97,10 +97,26 @@ namespace IronPigeon
                 throw new BadAddressBookEntryException(ex.Message, ex);
             }
 
-            using ICryptographicKey signingKey = endpoint.AuthenticatingKeyInputs.CreateKey();
-            if (!WinRTCrypto.CryptographicEngine.VerifySignature(signingKey, this.SerializedEndpoint.AsOrCreateArray(), this.Signature.AsOrCreateArray()))
+            ICryptographicKey? signingKey = null;
+            try
             {
-                throw new BadAddressBookEntryException(Strings.AddressBookEntrySignatureDoesNotMatch);
+                try
+                {
+                    signingKey = endpoint.AuthenticatingKeyInputs.CreateKey();
+                }
+                catch (Exception ex) when (Utilities.IsCorruptionException(ex))
+                {
+                    throw new BadAddressBookEntryException("Failed to extract the endpoint, likely due to corruption or tampering.", ex);
+                }
+
+                if (!WinRTCrypto.CryptographicEngine.VerifySignature(signingKey, this.SerializedEndpoint.AsOrCreateArray(), this.Signature.AsOrCreateArray()))
+                {
+                    throw new BadAddressBookEntryException(Strings.AddressBookEntrySignatureDoesNotMatch);
+                }
+            }
+            finally
+            {
+                signingKey?.Dispose();
             }
 
             return endpoint;

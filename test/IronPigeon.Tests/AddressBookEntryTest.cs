@@ -11,10 +11,13 @@ namespace IronPigeon.Tests
     {
         private static readonly byte[] SerializedEndpoint = new byte[] { 0x1, 0x2 };
         private static readonly byte[] Signature = new byte[] { 0x3, 0x4 };
+        private readonly Mocks.MockEnvironment environment = new Mocks.MockEnvironment();
+        private readonly OwnEndpoint receivingEndpoint;
 
         public AddressBookEntryTest(ITestOutputHelper logger)
             : base(logger)
         {
+            this.receivingEndpoint = this.environment.CreateOwnEndpointAsync(this.TimeoutToken).Result;
         }
 
         [Fact]
@@ -34,7 +37,7 @@ namespace IronPigeon.Tests
         [Fact]
         public void Ctor_OwnEndpoint()
         {
-            var abe = new AddressBookEntry(Valid.ReceivingEndpoint);
+            var abe = new AddressBookEntry(this.receivingEndpoint);
             Assert.NotEqual(0, abe.SerializedEndpoint.Length);
             Assert.NotEqual(0, abe.Signature.Length);
         }
@@ -51,15 +54,15 @@ namespace IronPigeon.Tests
         [Fact]
         public void ExtractEndpoint()
         {
-            AddressBookEntry entry = new AddressBookEntry(Valid.ReceivingEndpoint);
+            AddressBookEntry entry = new AddressBookEntry(this.receivingEndpoint);
             Endpoint endpoint = entry.ExtractEndpoint();
-            Assert.Equal(Valid.ReceivingEndpoint.PublicEndpoint, endpoint);
+            Assert.Equal(this.receivingEndpoint.PublicEndpoint, endpoint);
         }
 
         [Fact]
         public void ExtractEndpointDetectsTampering()
         {
-            AddressBookEntry entry = new AddressBookEntry(Valid.ReceivingEndpoint);
+            AddressBookEntry entry = new AddressBookEntry(this.receivingEndpoint);
 
             byte[] untamperedEndpoint = entry.SerializedEndpoint.ToArray();
             byte[] fuzzedEndpoint = new byte[untamperedEndpoint.Length];

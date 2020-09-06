@@ -28,7 +28,7 @@ namespace IronPigeon.Tests
             for (int i = 0; i < bytesToChange; i++)
             {
                 int index = random.Next(buffer.Length);
-                buffer[index] = (byte)unchecked(buffer[index] + 0x1);
+                buffer[index] = (byte)unchecked(buffer[index] + random.Next(1, 255));
             }
         }
     }
