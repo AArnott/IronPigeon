@@ -42,7 +42,11 @@ namespace IronPigeon.Tests
         /// If the long-lived (authentication) keys are compromised, they cannot be used to
         /// recover any encryption keys because encryption keys were never transmitted.
         /// </summary>
+#if NETCOREAPP2_1
+        [Fact(Skip = "Fails on .NET Core 2.1 due to a crypto bug.")]
+#else
         [Fact]
+#endif
         public async Task ECAsymmetricSigningAndEncryption()
         {
             using var bob = new ECDsaCng(521);
