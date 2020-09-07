@@ -1,4 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>net472;netcoreapp2.1;netcoreapp3.1</TargetFrameworks>
+  </PropertyGroup>
   <ItemGroup>
     <EmbeddedResource Include="Providers/*/*.body" />
     <EmbeddedResource Include="Providers/*/*.headers" />

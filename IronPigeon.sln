@@ -29,6 +29,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IronPigeon.Relay", "src\Iro
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IronPigeon.Functions", "src\IronPigeon.Functions\IronPigeon.Functions.csproj", "{8D828C7F-D223-446D-B902-F98D69778EF2}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IronPigeon.Functions.Tests", "test\IronPigeon.Functions.Tests\IronPigeon.Functions.Tests.csproj", "{346C4681-43D8-44BE-8EB2-F6900E91FD1B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -61,6 +63,10 @@ Global
 		{8D828C7F-D223-446D-B902-F98D69778EF2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8D828C7F-D223-446D-B902-F98D69778EF2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8D828C7F-D223-446D-B902-F98D69778EF2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{346C4681-43D8-44BE-8EB2-F6900E91FD1B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{346C4681-43D8-44BE-8EB2-F6900E91FD1B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{346C4681-43D8-44BE-8EB2-F6900E91FD1B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{346C4681-43D8-44BE-8EB2-F6900E91FD1B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

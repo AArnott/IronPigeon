@@ -13,11 +13,11 @@ namespace IronPigeon.Functions
     using Microsoft.Azure.Cosmos.Table;
 
     internal static class AzureStorage
-    {
+     {
         /// <summary>
         /// Gets the Azure Storage account.
         /// </summary>
-        internal static string ConnectionString { get; } = Environment.GetEnvironmentVariable("AzureWebJobsStorage") ?? throw new InvalidOperationException("Missing configuration.");
+        internal static string ConnectionString { get; } = Environment.GetEnvironmentVariable("AzureWebJobsStorage") ?? "UseDevelopmentStorage=true"; // throw new InvalidOperationException("Missing configuration.");
 
         /// <summary>
         /// Gets the table storage account.
