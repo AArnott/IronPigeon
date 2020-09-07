@@ -19,9 +19,14 @@ using Xunit.Abstractions;
 
 public class InboxManagementTests : TestBase
 {
+    private readonly CreateInbox createInbox;
+    private readonly Inbox inbox;
+
     public InboxManagementTests(ITestOutputHelper logger)
         : base(logger)
     {
+        this.createInbox = new CreateInbox(this.AzureStorage);
+        this.inbox = new Inbox(this.AzureStorage);
     }
 
     [Fact]
@@ -34,7 +39,7 @@ public class InboxManagementTests : TestBase
         // Retrieve 0 elements from the inbox, without authentication.
         HttpRequest request = TestFactory.CreateHttpRequest();
         request.Path = response.MessageReceivingEndpoint.AbsolutePath;
-        Assert.IsType<UnauthorizedResult>(await Inbox.GetInboxAsync(request, name));
+        Assert.IsType<UnauthorizedResult>(await this.inbox.GetInboxAsync(request, name));
     }
 
     [Fact]
@@ -46,7 +51,7 @@ public class InboxManagementTests : TestBase
 
         // Retrieve 0 elements from the inbox, without authentication.
         request.HttpContext.Response.Body = new ResponseStream();
-        Assert.IsType<EmptyResult>(await Inbox.GetInboxAsync(request, name));
+        Assert.IsType<EmptyResult>(await this.inbox.GetInboxAsync(request, name));
         Assert.True(((ResponseStream)request.HttpContext.Response.Body).DisposeAttempted);
         Assert.Equal(StatusCodes.Status200OK, request.HttpContext.Response.StatusCode);
         Assert.Equal(0, request.HttpContext.Response.Body.Length);
@@ -61,7 +66,7 @@ public class InboxManagementTests : TestBase
 
         // Munge up the mailbox name, and make up some authentication.
         ScrambleInboxName(request, ref name);
-        Assert.IsType<NotFoundResult>(await Inbox.GetInboxAsync(request, name));
+        Assert.IsType<NotFoundResult>(await this.inbox.GetInboxAsync(request, name));
     }
 
     [Fact]
@@ -72,10 +77,10 @@ public class InboxManagementTests : TestBase
         var (request, name) = PrepareInboxRequest(response);
 
         // Delete it.
-        Assert.IsType<OkResult>(await Inbox.DeleteInboxAsync(request, name, this.Logger, this.TimeoutToken));
+        Assert.IsType<OkResult>(await this.inbox.DeleteInboxAsync(request, name, this.Logger, this.TimeoutToken));
 
         // Try deleting again.
-        Assert.IsType<NotFoundResult>(await Inbox.DeleteInboxAsync(request, name, this.Logger, this.TimeoutToken));
+        Assert.IsType<NotFoundResult>(await this.inbox.DeleteInboxAsync(request, name, this.Logger, this.TimeoutToken));
     }
 
     [Fact]
@@ -86,7 +91,7 @@ public class InboxManagementTests : TestBase
         var (request, name) = PrepareInboxRequest(response);
 
         request.Body = new MemoryStream(new byte[] { 1, 2, 3 });
-        var result = Assert.IsType<StatusCodeResult>(await Inbox.PostInboxAsync(request, name, this.Logger, this.TimeoutToken));
+        var result = Assert.IsType<StatusCodeResult>(await this.inbox.PostInboxAsync(request, name, this.Logger, this.TimeoutToken));
         Assert.Equal(StatusCodes.Status411LengthRequired, result.StatusCode);
     }
 
@@ -100,7 +105,7 @@ public class InboxManagementTests : TestBase
 
         request.Body = new MemoryStream(new byte[] { 1, 2, 3 });
         request.Headers.Add("Content-Length", request.Body.Length.ToString(CultureInfo.InvariantCulture));
-        Assert.IsType<NotFoundResult>(await Inbox.PostInboxAsync(request, name, this.Logger, this.TimeoutToken));
+        Assert.IsType<NotFoundResult>(await this.inbox.PostInboxAsync(request, name, this.Logger, this.TimeoutToken));
     }
 
     [Fact]
@@ -112,7 +117,7 @@ public class InboxManagementTests : TestBase
 
         request.Body = new MemoryStream(new byte[] { 1, 2, 3 });
         request.Headers.Add("Content-Length", request.Body.Length.ToString(CultureInfo.InvariantCulture));
-        var result = Assert.IsType<BadRequestErrorMessageResult>(await Inbox.PostInboxAsync(request, name, this.Logger, this.TimeoutToken));
+        var result = Assert.IsType<BadRequestErrorMessageResult>(await this.inbox.PostInboxAsync(request, name, this.Logger, this.TimeoutToken));
         this.Logger.LogInformation(result.Message);
     }
 
@@ -126,11 +131,11 @@ public class InboxManagementTests : TestBase
         request.Body = new MemoryStream(new byte[] { 1, 2, 3 });
         request.QueryString = new QueryString("?lifetime=5");
         request.Headers.Add("Content-Length", request.Body.Length.ToString(CultureInfo.InvariantCulture));
-        Assert.IsType<OkResult>(await Inbox.PostInboxAsync(request, name, this.Logger, this.TimeoutToken));
+        Assert.IsType<OkResult>(await this.inbox.PostInboxAsync(request, name, this.Logger, this.TimeoutToken));
 
         (request, name) = PrepareInboxRequest(response);
         request.HttpContext.Response.Body = new ResponseStream();
-        Assert.IsType<EmptyResult>(await Inbox.GetInboxAsync(request, name));
+        Assert.IsType<EmptyResult>(await this.inbox.GetInboxAsync(request, name));
 
         // Parse the response stream for the data.
         // TODO: here here to parse the stream.
@@ -158,7 +163,7 @@ public class InboxManagementTests : TestBase
     private async Task<InboxCreationResponse> CreateMailboxAsync()
     {
         HttpRequest request = TestFactory.CreateHttpRequest();
-        var result = (OkObjectResult)await IronPigeon.Functions.CreateInbox.CreateInboxAsync(request, this.Logger);
+        var result = (OkObjectResult)await this.createInbox.CreateInboxAsync(request, this.Logger);
         var response = (InboxCreationResponse)result.Value;
         Assert.NotNull(response.InboxOwnerCode);
         Assert.NotNull(response.MessageReceivingEndpoint);

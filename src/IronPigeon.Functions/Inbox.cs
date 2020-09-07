@@ -28,17 +28,12 @@ namespace IronPigeon.Functions
     using Microsoft.Net.Http.Headers;
     using Nerdbank.Streams;
 
-    public static class Inbox
+    public class Inbox
     {
         /// <summary>
         /// The maximum allowable size for a notification.
         /// </summary>
         public const int MaxNotificationSize = 10 * 1024;
-
-        /// <summary>
-        /// The maximum lifetime an inbox will retain a posted message.
-        /// </summary>
-        public static readonly TimeSpan MaxLifetimeCeiling = TimeSpan.FromDays(14);
 
         private const string BearerTokenPrefix = "Bearer ";
 
@@ -47,15 +42,27 @@ namespace IronPigeon.Functions
         private const string InboxItemContentType = "ironpigeon/inbox-item";
 
         /// <summary>
+        /// The maximum lifetime an inbox will retain a posted message.
+        /// </summary>
+        private static readonly TimeSpan MaxLifetimeCeiling = TimeSpan.FromDays(14);
+
+        private readonly AzureStorage azureStorage;
+
+        public Inbox(AzureStorage azureStorage)
+        {
+            this.azureStorage = azureStorage;
+        }
+
+        /// <summary>
         /// Reactivates a <see cref="Mailbox"/> whose <see cref="Mailbox.Inactive"/> flag has been set and thus is inaccessible.
         /// </summary>
         [FunctionName("PUT-inbox-name")]
-        public static async Task<IActionResult> ReactivateInboxAsync(
+        public async Task<IActionResult> ReactivateInboxAsync(
             [HttpTrigger(AuthorizationLevel.Function, "put", Route = "inbox/{name}")] HttpRequest req,
             string name,
             ILogger log)
         {
-            (IActionResult? FailedResult, Mailbox? Mailbox) input = await CheckInboxAuthenticationAsync(name, req.Headers, allowInactive: true);
+            (IActionResult? FailedResult, Mailbox? Mailbox) input = await this.CheckInboxAuthenticationAsync(name, req.Headers, allowInactive: true);
             if (input.FailedResult is object)
             {
                 return input.FailedResult;
@@ -65,7 +72,7 @@ namespace IronPigeon.Functions
             {
                 // Reactivate mailbox.
                 input.Mailbox.Inactive = false;
-                await AzureStorage.InboxTable.ExecuteAsync(TableOperation.Merge(input.Mailbox));
+                await this.azureStorage.InboxTable.ExecuteAsync(TableOperation.Merge(input.Mailbox));
 
                 log.LogInformation($"Reactivated inbox: {name}");
             }
@@ -77,13 +84,13 @@ namespace IronPigeon.Functions
         /// Permanently deletes a mailbox and all its contents.
         /// </summary>
         [FunctionName("DELETE-inbox-name")]
-        public static async Task<IActionResult> DeleteInboxAsync(
+        public async Task<IActionResult> DeleteInboxAsync(
             [HttpTrigger(AuthorizationLevel.Function, "delete", Route = "inbox/{name}")] HttpRequest req,
             string name,
             ILogger log,
             CancellationToken cancellationToken)
         {
-            (IActionResult? FailedResult, Mailbox? Mailbox) input = await CheckInboxAuthenticationAsync(name, req.Headers, allowInactive: true, cancellationToken);
+            (IActionResult? FailedResult, Mailbox? Mailbox) input = await this.CheckInboxAuthenticationAsync(name, req.Headers, allowInactive: true, cancellationToken);
             if (input.FailedResult is object)
             {
                 return input.FailedResult;
@@ -93,7 +100,7 @@ namespace IronPigeon.Functions
             // We'll actually purge its contents and remove the mailbox entity itself later in a CRON job.
             // This ensures we respond quickly to the client and that the work completes even if it takes multiple tries.
             input.Mailbox.Deleted = true;
-            await AzureStorage.InboxTable.ExecuteAsync(TableOperation.Merge(input.Mailbox), cancellationToken);
+            await this.azureStorage.InboxTable.ExecuteAsync(TableOperation.Merge(input.Mailbox), cancellationToken);
 
             log.LogInformation($"Deleted mailbox: {input.Mailbox.Name}");
             return new OkResult();
@@ -103,7 +110,7 @@ namespace IronPigeon.Functions
         /// Adds an item to an existing mailbox.
         /// </summary>
         [FunctionName("POST-inbox-name")]
-        public static async Task<IActionResult> PostInboxAsync(
+        public async Task<IActionResult> PostInboxAsync(
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = "inbox/{name}")] HttpRequest req,
             string name,
             ILogger log,
@@ -114,7 +121,7 @@ namespace IronPigeon.Functions
                 return new StatusCodeResult(StatusCodes.Status411LengthRequired);
             }
 
-            Mailbox? mailbox = await AzureStorage.LookupMailboxAsync(name, req.HttpContext.RequestAborted);
+            Mailbox? mailbox = await this.azureStorage.LookupMailboxAsync(name, req.HttpContext.RequestAborted);
             if (mailbox is null || mailbox.Deleted)
             {
                 return new NotFoundResult();
@@ -130,14 +137,20 @@ namespace IronPigeon.Functions
                 return new BadRequestErrorMessageResult("Notification too large.");
             }
 
-            if (req.Query["lifetime"].Count != 1 || !int.TryParse(req.Query["lifetime"][0], out int lifetime))
+            if (req.Query["lifetime"].Count != 1 || !int.TryParse(req.Query["lifetime"][0], out int lifetimeInMinutes))
             {
                 return new BadRequestErrorMessageResult("\"lifetime\" query parameter must specify the lifetime of this notification in minutes.");
             }
 
-            DateTime expiresUtc = DateTime.UtcNow + TimeSpan.FromMinutes(lifetime);
+            TimeSpan lifetime = TimeSpan.FromMinutes(lifetimeInMinutes);
+            if (lifetime > MaxLifetimeCeiling)
+            {
+                return new BadRequestErrorMessageResult($"\"lifetime\" query parameter cannot exceed {MaxLifetimeCeiling.TotalMinutes}.");
+            }
 
-            var blobStorage = new AzureBlobStorage(AzureStorage.InboxItemContainer, mailbox.Name);
+            DateTime expiresUtc = DateTime.UtcNow + lifetime;
+
+            var blobStorage = new AzureBlobStorage(this.azureStorage.InboxItemContainer, mailbox.Name);
             bool retriedOnceAlready = false;
 retry:
             try
@@ -166,11 +179,11 @@ retry:
         /// Retrieves all the items in an existing mailbox.
         /// </summary>
         [FunctionName("GET-inbox-name")]
-        public static async Task<IActionResult> GetInboxAsync(
+        public async Task<IActionResult> GetInboxAsync(
             [HttpTrigger(AuthorizationLevel.Function, "get", Route = "inbox/{name}")] HttpRequest req,
             string name)
         {
-            (IActionResult? FailedResult, Mailbox? Mailbox) input = await CheckInboxAuthenticationAsync(name, req.Headers);
+            (IActionResult? FailedResult, Mailbox? Mailbox) input = await this.CheckInboxAuthenticationAsync(name, req.Headers);
             if (input.FailedResult is object)
             {
                 return input.FailedResult;
@@ -203,11 +216,11 @@ retry:
                     writer.Flush();
                 }
 
-                await foreach (BlobHierarchyItem blob in AzureStorage.InboxItemContainer.GetBlobsByHierarchyAsync(prefix: input.Mailbox.Name + "/", cancellationToken: req.HttpContext.RequestAborted))
+                await foreach (BlobHierarchyItem blob in this.azureStorage.InboxItemContainer.GetBlobsByHierarchyAsync(prefix: input.Mailbox.Name + "/", cancellationToken: req.HttpContext.RequestAborted))
                 {
                     if (blob.IsBlob)
                     {
-                        BlobClient blobClient = AzureStorage.InboxItemContainer.GetBlobClient(blob.Blob.Name);
+                        BlobClient blobClient = this.azureStorage.InboxItemContainer.GetBlobClient(blob.Blob.Name);
                         Azure.Response<BlobDownloadInfo> downloadInfo = await blobClient.DownloadAsync(req.HttpContext.RequestAborted);
                         WriteInboxItemHeader(blob.Blob, downloadInfo.Value);
                         await downloadInfo.Value.Content.CopyToAsync(responseWriter, req.HttpContext.RequestAborted);
@@ -227,18 +240,18 @@ retry:
         /// Retrieves an individual mailbox item.
         /// </summary>
         [FunctionName("GET-inbox-name-number")]
-        public static async Task<IActionResult> GetInboxItemAsync(
+        public async Task<IActionResult> GetInboxItemAsync(
             [HttpTrigger(AuthorizationLevel.Function, "get", Route = "inbox/{name}/{*entry}")] HttpRequest req,
             string name,
             string entry)
         {
-            (IActionResult? FailedResult, Mailbox? Mailbox) input = await CheckInboxAuthenticationAsync(name, req.Headers);
+            (IActionResult? FailedResult, Mailbox? Mailbox) input = await this.CheckInboxAuthenticationAsync(name, req.Headers);
             if (input.FailedResult is object)
             {
                 return input.FailedResult;
             }
 
-            BlobClient blobClient = AzureStorage.InboxItemContainer.GetBlobClient($"{input.Mailbox.Name}/{Uri.EscapeUriString(entry)}");
+            BlobClient blobClient = this.azureStorage.InboxItemContainer.GetBlobClient($"{input.Mailbox.Name}/{Uri.EscapeUriString(entry)}");
             Stream blobStream = await blobClient.OpenReadAsync(cancellationToken: req.HttpContext.RequestAborted);
 
             return new FileStreamResult(blobStream, InboxItemContentType);
@@ -248,18 +261,18 @@ retry:
         /// Retrieves an individual mailbox item.
         /// </summary>
         [FunctionName("DELETE-inbox-name-number")]
-        public static async Task<IActionResult> DeleteInboxItemAsync(
+        public async Task<IActionResult> DeleteInboxItemAsync(
             [HttpTrigger(AuthorizationLevel.Function, "delete", Route = "inbox/{name}/{*entry}")] HttpRequest req,
             string name,
             string entry)
         {
-            (IActionResult? FailedResult, Mailbox? Mailbox) input = await CheckInboxAuthenticationAsync(name, req.Headers);
+            (IActionResult? FailedResult, Mailbox? Mailbox) input = await this.CheckInboxAuthenticationAsync(name, req.Headers);
             if (input.FailedResult is object)
             {
                 return input.FailedResult;
             }
 
-            BlobClient blobClient = AzureStorage.InboxItemContainer.GetBlobClient($"{input.Mailbox.Name}/{Uri.EscapeUriString(entry)}");
+            BlobClient blobClient = this.azureStorage.InboxItemContainer.GetBlobClient($"{input.Mailbox.Name}/{Uri.EscapeUriString(entry)}");
             try
             {
                 await blobClient.DeleteAsync(cancellationToken: req.HttpContext.RequestAborted);
@@ -283,7 +296,7 @@ retry:
         /// If the mailbox is inactive, both a failure result and the mailbox are provided.
         /// If the mailbox is tagged for deletion, a 404 is returned and no mailbox entity.
         /// </returns>
-        private static async Task<(IActionResult? FailedResult, Mailbox? Mailbox)> CheckInboxAuthenticationAsync(string name, IHeaderDictionary headers, bool allowInactive = false, CancellationToken cancellationToken = default)
+        private async Task<(IActionResult? FailedResult, Mailbox? Mailbox)> CheckInboxAuthenticationAsync(string name, IHeaderDictionary headers, bool allowInactive = false, CancellationToken cancellationToken = default)
         {
             Microsoft.Extensions.Primitives.StringValues authorization = headers["Authorization"];
             if (authorization.Count != 1)
@@ -297,7 +310,7 @@ retry:
             }
 
             string ownerCode = authorization[0].Substring(BearerTokenPrefix.Length);
-            Mailbox? mailbox = await AzureStorage.LookupMailboxAsync(name, cancellationToken);
+            Mailbox? mailbox = await this.azureStorage.LookupMailboxAsync(name, cancellationToken);
             if (mailbox is null)
             {
                 return (new NotFoundResult(), null);
@@ -321,7 +334,7 @@ retry:
 
             // Update last authenticated access timestamp.
             mailbox.LastAuthenticatedInteractionUtc = DateTime.UtcNow;
-            await AzureStorage.InboxTable.ExecuteAsync(TableOperation.Merge(mailbox), null, null, cancellationToken);
+            await this.azureStorage.InboxTable.ExecuteAsync(TableOperation.Merge(mailbox), null, null, cancellationToken);
 
             return (null, mailbox);
         }

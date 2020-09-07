@@ -14,7 +14,7 @@ namespace IronPigeon.Functions
     using Microsoft.Azure.WebJobs;
     using Microsoft.Extensions.Logging;
 
-    public static class ArchiveStaleInboxes
+    public class ArchiveStaleInboxes
     {
         /// <summary>
         /// The CRON schedule for running this function.
@@ -27,8 +27,15 @@ namespace IronPigeon.Functions
 
         private static readonly TimeSpan InboxesStaleAfter = TimeSpan.FromDays(365);
 
+        private readonly AzureStorage azureStorage;
+
+        public ArchiveStaleInboxes(AzureStorage azureStorage)
+        {
+            this.azureStorage = azureStorage;
+        }
+
         [FunctionName("ArchiveStaleInboxes")]
-        public static async Task ArchiveStaleInboxesAsync([TimerTrigger(StaleInboxSchedule)] TimerInfo myTimer, ILogger log, CancellationToken cancellationToken)
+        public async Task ArchiveStaleInboxesAsync([TimerTrigger(StaleInboxSchedule)] TimerInfo myTimer, ILogger log, CancellationToken cancellationToken)
         {
             log.LogInformation("Archiving stale inboxes...");
             var timer = Stopwatch.StartNew();
@@ -44,7 +51,7 @@ namespace IronPigeon.Functions
             TableContinuationToken? continuationToken = null;
             do
             {
-                TableQuerySegment<Mailbox> result = await AzureStorage.InboxTable.ExecuteQuerySegmentedAsync(query, continuationToken);
+                TableQuerySegment<Mailbox> result = await this.azureStorage.InboxTable.ExecuteQuerySegmentedAsync(query, continuationToken);
                 TableBatchOperation edits = new TableBatchOperation();
                 foreach (Mailbox inbox in result.Results)
                 {
@@ -52,7 +59,7 @@ namespace IronPigeon.Functions
                     edits.Add(TableOperation.Merge(inbox));
 
                     // Delete all inbox items.
-                    var blobProvider = new AzureBlobStorage(AzureStorage.InboxItemContainer, inbox.Name);
+                    var blobProvider = new AzureBlobStorage(this.azureStorage.InboxItemContainer, inbox.Name);
                     await blobProvider.PurgeBlobsExpiringBeforeAsync(DateTime.MaxValue, cancellationToken);
                 }
 
@@ -61,7 +68,7 @@ namespace IronPigeon.Functions
 
                 if (edits.Count > 0)
                 {
-                    await AzureStorage.InboxTable.ExecuteBatchAsync(edits, null, null, cancellationToken);
+                    await this.azureStorage.InboxTable.ExecuteBatchAsync(edits, null, null, cancellationToken);
                 }
 
                 continuationToken = result.ContinuationToken;
@@ -72,7 +79,7 @@ namespace IronPigeon.Functions
         }
 
         [FunctionName("DeleteInboxes")]
-        public static async Task DeleteInboxesAsync([TimerTrigger(DeletedInboxSchedule)] TimerInfo myTimer, ILogger log, CancellationToken cancellationToken)
+        public async Task DeleteInboxesAsync([TimerTrigger(DeletedInboxSchedule)] TimerInfo myTimer, ILogger log, CancellationToken cancellationToken)
         {
             log.LogInformation("Purging mailboxes marked for deletion...");
             var timer = Stopwatch.StartNew();
@@ -84,15 +91,15 @@ namespace IronPigeon.Functions
             TableContinuationToken? continuationToken = null;
             do
             {
-                TableQuerySegment<Mailbox> result = await AzureStorage.InboxTable.ExecuteQuerySegmentedAsync(query, continuationToken, null, null, cancellationToken);
+                TableQuerySegment<Mailbox> result = await this.azureStorage.InboxTable.ExecuteQuerySegmentedAsync(query, continuationToken, null, null, cancellationToken);
                 foreach (Mailbox inbox in result.Results)
                 {
                     // Delete all inbox items.
-                    var blobProvider = new AzureBlobStorage(AzureStorage.InboxItemContainer, inbox.Name);
+                    var blobProvider = new AzureBlobStorage(this.azureStorage.InboxItemContainer, inbox.Name);
                     await blobProvider.PurgeBlobsExpiringBeforeAsync(DateTime.MaxValue, cancellationToken);
 
                     // Delete the inbox itself.
-                    await AzureStorage.InboxTable.ExecuteAsync(TableOperation.Delete(inbox), null, null, cancellationToken);
+                    await this.azureStorage.InboxTable.ExecuteAsync(TableOperation.Delete(inbox), null, null, cancellationToken);
 
                     purgedInboxes++;
                     log.LogInformation($"Permanently deleted inbox and its contents: {inbox.Name}");
@@ -106,19 +113,19 @@ namespace IronPigeon.Functions
         }
 
         [FunctionName("PurgeExpiredInboxItems")]
-        public static async Task PurgeExpiredInboxItemsAsync([TimerTrigger(ExpiredInboxItemsSchedule)] TimerInfo myTimer, ILogger log, CancellationToken cancellationToken)
+        public async Task PurgeExpiredInboxItemsAsync([TimerTrigger(ExpiredInboxItemsSchedule)] TimerInfo myTimer, ILogger log, CancellationToken cancellationToken)
         {
             DateTime purgeItemsExpiringBefore = DateTime.UtcNow;
             log.LogInformation($"Purging inbox items that expired at {purgeItemsExpiringBefore}...");
             var timer = Stopwatch.StartNew();
 
             long mailboxesReviewed = 0;
-            await foreach (BlobHierarchyItem mailboxDirectory in AzureStorage.InboxItemContainer.GetBlobsByHierarchyAsync(delimiter: "/", cancellationToken: cancellationToken))
+            await foreach (BlobHierarchyItem mailboxDirectory in this.azureStorage.InboxItemContainer.GetBlobsByHierarchyAsync(delimiter: "/", cancellationToken: cancellationToken))
             {
                 if (mailboxDirectory.IsPrefix)
                 {
                     mailboxesReviewed++;
-                    var azureStorage = new AzureBlobStorage(AzureStorage.InboxItemContainer, mailboxDirectory.Prefix);
+                    var azureStorage = new AzureBlobStorage(this.azureStorage.InboxItemContainer, mailboxDirectory.Prefix);
                     await azureStorage.PurgeBlobsExpiringBeforeAsync(purgeItemsExpiringBefore, cancellationToken);
                 }
             }

@@ -6,6 +6,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 using System.Threading;
+using IronPigeon.Functions;
+using Microsoft.Extensions.Configuration;
 using Xunit.Abstractions;
 
 public class TestBase
@@ -27,6 +29,12 @@ public class TestBase
     public TestBase(ITestOutputHelper logger)
     {
         this.Logger = new ListLogger(logger);
+        var configBuilder = new ConfigurationBuilder();
+        configBuilder.AddInMemoryCollection(new Dictionary<string, string>
+        {
+            { "AzureWebJobsStorage", "UseDevelopmentStorage=true" },
+        });
+        this.AzureStorage = new AzureStorage(configBuilder.Build());
     }
 
     /// <summary>
@@ -40,6 +48,8 @@ public class TestBase
     /// per the policy set by <see cref="TimeoutTokenSource"/>.
     /// </summary>
     protected CancellationToken TimeoutToken => this.TimeoutTokenSource.Token;
+
+    protected AzureStorage AzureStorage { get; }
 
     private protected ListLogger Logger { get; }
 

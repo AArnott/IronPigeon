@@ -11,33 +11,43 @@ namespace IronPigeon.Functions
     using IronPigeon.Functions.Models;
     using IronPigeon.Providers;
     using Microsoft.Azure.Cosmos.Table;
+    using Microsoft.Extensions.Configuration;
 
-    internal static class AzureStorage
-     {
+    public class AzureStorage
+    {
+        public AzureStorage(IConfiguration configuration)
+        {
+            this.ConnectionString = configuration.GetValue<string>("AzureWebJobsStorage") ?? throw new InvalidOperationException("Missing connection string in configuration.");
+            this.TableCloudStorageAccount = CloudStorageAccount.Parse(this.ConnectionString);
+            this.TableClient = this.TableCloudStorageAccount.CreateCloudTableClient();
+            this.InboxTable = this.TableClient.GetTableReference("Inboxes");
+            this.InboxItemContainer = new BlobContainerClient(this.ConnectionString, "inbox-items");
+        }
+
         /// <summary>
-        /// Gets the Azure Storage account.
+        /// Gets the Azure Storage account connection string.
         /// </summary>
-        internal static string ConnectionString { get; } = Environment.GetEnvironmentVariable("AzureWebJobsStorage") ?? "UseDevelopmentStorage=true"; // throw new InvalidOperationException("Missing configuration.");
+        public string ConnectionString { get; }
 
         /// <summary>
         /// Gets the table storage account.
         /// </summary>
-        internal static CloudStorageAccount TableCloudStorageAccount { get; } = CloudStorageAccount.Parse(ConnectionString);
+        internal CloudStorageAccount TableCloudStorageAccount { get; }
 
         /// <summary>
         /// Gets an Azure Table client.
         /// </summary>
-        internal static CloudTableClient TableClient { get; } = TableCloudStorageAccount.CreateCloudTableClient();
+        internal CloudTableClient TableClient { get; }
 
         /// <summary>
         /// Gets the inboxes table.
         /// </summary>
-        internal static CloudTable InboxTable { get; } = TableClient.GetTableReference("Inboxes");
+        internal CloudTable InboxTable { get; }
 
         /// <summary>
         /// Gets the blob container to use for inbox items.
         /// </summary>
-        internal static BlobContainerClient InboxItemContainer { get; } = new BlobContainerClient(ConnectionString, "inbox-items");
+        internal BlobContainerClient InboxItemContainer { get; }
 
         /// <summary>
         /// Retrieves a mailbox with a given name.
@@ -46,7 +56,7 @@ namespace IronPigeon.Functions
         /// This method <em>always</em> returns the <see cref="Mailbox"/> entity if it exists in storage,
         /// even if it is marked as <see cref="Mailbox.Inactive"/> or <see cref="Mailbox.Deleted"/>.
         /// </remarks>
-        internal static async Task<Mailbox?> LookupMailboxAsync(string name, CancellationToken cancellationToken)
+        internal async Task<Mailbox?> LookupMailboxAsync(string name, CancellationToken cancellationToken)
         {
             TableQuery<Mailbox> query = new TableQuery<Mailbox>()
                 .Where(TableQuery.CombineFilters(
@@ -57,7 +67,7 @@ namespace IronPigeon.Functions
             TableContinuationToken? continuationToken = null;
             do
             {
-                TableQuerySegment<Mailbox> result = await InboxTable.ExecuteQuerySegmentedAsync(query, continuationToken, null, null, cancellationToken);
+                TableQuerySegment<Mailbox> result = await this.InboxTable.ExecuteQuerySegmentedAsync(query, continuationToken, null, null, cancellationToken);
                 if (result.Results.Count > 0)
                 {
                     return result.Results.Single();

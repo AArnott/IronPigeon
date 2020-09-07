@@ -14,15 +14,22 @@ namespace IronPigeon.Functions
     using Microsoft.Azure.WebJobs.Extensions.Http;
     using Microsoft.Extensions.Logging;
 
-    public static class CreateInbox
+    public class CreateInbox
     {
         /// <summary>
         /// The length in bytes of a cryptographically strong random byte buffer whose base64 (web safe) encoding becomes the bearer token to access an inbox.
         /// </summary>
         private const int CodeLength = 16;
 
+        private readonly AzureStorage azureStorage;
+
+        public CreateInbox(AzureStorage azureStorage)
+        {
+            this.azureStorage = azureStorage;
+        }
+
         [FunctionName("POST-inbox")]
-        public static async Task<IActionResult> CreateInboxAsync(
+        public async Task<IActionResult> CreateInboxAsync(
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = "inbox")] HttpRequest req,
             ILogger log)
         {
@@ -37,7 +44,7 @@ namespace IronPigeon.Functions
 retry:
             try
             {
-                result = await AzureStorage.InboxTable.ExecuteAsync(operation);
+                result = await this.azureStorage.InboxTable.ExecuteAsync(operation);
             }
             catch (StorageException ex) when (ex.RequestInformation.HttpStatusCode == 404)
             {
@@ -48,7 +55,7 @@ retry:
                     return new StatusCodeResult(503); // Service Unavailable.
                 }
 
-                await AzureStorage.InboxTable.CreateIfNotExistsAsync();
+                await this.azureStorage.InboxTable.CreateIfNotExistsAsync();
                 retriedOnceAlready = true;
                 goto retry;
             }
