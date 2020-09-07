@@ -29,15 +29,32 @@ namespace IronPigeon.Providers
         private readonly BlobContainerClient container;
 
         /// <summary>
+        /// The string to prepend to all blob names to apply to the specified <see cref="Directory"/>.
+        /// </summary>
+        private readonly string directoryPrefix = string.Empty;
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="AzureBlobStorage" /> class.
         /// </summary>
         /// <param name="container">The blob container client.</param>
-        public AzureBlobStorage(BlobContainerClient container)
+        /// <param name="directory">The directory within the container to operate under. A trailing path delimiter is optional.</param>
+        public AzureBlobStorage(BlobContainerClient container, string directory = "")
         {
             Requires.NotNull(container, nameof(container));
+            Requires.NotNull(directory, nameof(directory));
 
             this.container = container;
+            this.Directory = directory.TrimEnd(PathDelimiter[0]);
+            if (this.Directory.Length > 0)
+            {
+                this.directoryPrefix = this.Directory + PathDelimiter;
+            }
         }
+
+        /// <summary>
+        /// Gets the directory this provider is operating in.
+        /// </summary>
+        public string Directory { get; }
 
         /// <inheritdoc/>
         public async Task<Uri> UploadMessageAsync(Stream content, DateTime expirationUtc, IProgress<long>? bytesCopiedProgress, CancellationToken cancellationToken = default)
@@ -52,7 +69,7 @@ namespace IronPigeon.Providers
                 blobName = roundedUp.ToString("yyyy.MM.dd", CultureInfo.InvariantCulture) + "/" + blobName;
             }
 
-            BlobClient blobClient = this.container.GetBlobClient(blobName);
+            BlobClient blobClient = this.container.GetBlobClient(this.directoryPrefix + blobName);
 
             // Set metadata with the precise expiration time, although for efficiency we also put the blob into a directory
             // for efficient deletion based on approximate expiration date.
@@ -126,11 +143,11 @@ namespace IronPigeon.Providers
                     CancellationToken = cancellationToken,
                 });
 
-            await foreach (BlobHierarchyItem? hierarchyItem in this.container.GetBlobsByHierarchyAsync(delimiter: PathDelimiter, cancellationToken: cancellationToken))
+            await foreach (BlobHierarchyItem? hierarchyItem in this.container.GetBlobsByHierarchyAsync(delimiter: PathDelimiter, prefix: this.directoryPrefix, cancellationToken: cancellationToken))
             {
                 if (hierarchyItem.IsPrefix)
                 {
-                    DateTime expires = DateTime.Parse(hierarchyItem.Prefix.TrimEnd(PathDelimiter[0]), CultureInfo.InvariantCulture);
+                    DateTime expires = DateTime.Parse(hierarchyItem.Prefix.Substring(this.directoryPrefix.Length).TrimEnd(PathDelimiter[0]), CultureInfo.InvariantCulture);
 
                     // As soon as we see the first 'directory' with a greater date, stop enumerating.
                     if (expires >= deleteBlobsExpiringBefore)

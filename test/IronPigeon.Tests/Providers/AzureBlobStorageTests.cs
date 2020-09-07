@@ -13,15 +13,20 @@ namespace IronPigeon.Tests.Providers
 
     public class AzureBlobStorageTests : CloudBlobStorageProviderTestBase, IAsyncLifetime
     {
-        private BlobContainerClient container;
-        private AzureBlobStorage provider;
+        protected BlobContainerClient container;
+        protected AzureBlobStorage provider;
 
         public AzureBlobStorageTests(ITestOutputHelper logger)
+            : this(logger, string.Empty)
+        {
+        }
+
+        protected AzureBlobStorageTests(ITestOutputHelper logger, string subdirectory)
             : base(logger)
         {
             string testContainerName = "unittests" + Guid.NewGuid().ToString();
             this.container = new BlobContainerClient("UseDevelopmentStorage=true", testContainerName);
-            this.Provider = this.provider = new AzureBlobStorage(this.container);
+            this.Provider = this.provider = new AzureBlobStorage(this.container, subdirectory);
         }
 
         public async Task InitializeAsync()

@@ -35,6 +35,7 @@ namespace IronPigeon.Tests
         {
             using var body = new MemoryStream(Valid.MessageContent);
             Uri uri = await this.Provider.UploadMessageAsync(body, Valid.ExpirationUtc);
+            this.Logger.WriteLine($"Blob uploaded to: {uri.AbsoluteUri}");
             return uri;
         }
     }
