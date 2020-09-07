@@ -9,11 +9,10 @@ namespace IronPigeon.Functions
     using IronPigeon.Relay;
     using Microsoft.AspNetCore.Http;
     using Microsoft.AspNetCore.Mvc;
+    using Microsoft.Azure.Cosmos.Table;
     using Microsoft.Azure.WebJobs;
     using Microsoft.Azure.WebJobs.Extensions.Http;
     using Microsoft.Extensions.Logging;
-    using Microsoft.WindowsAzure.Storage;
-    using Microsoft.WindowsAzure.Storage.Table;
 
     public static class CreateInbox
     {
@@ -44,12 +43,12 @@ retry:
             {
                 // They caught us uninitialized. Ask them to try again after we mitigate the problem.
                 log.LogInformation("JIT creating inbox table.");
-                await AzureStorage.InboxTable.CreateIfNotExistsAsync();
                 if (retriedOnceAlready)
                 {
                     return new StatusCodeResult(503); // Service Unavailable.
                 }
 
+                await AzureStorage.InboxTable.CreateIfNotExistsAsync();
                 retriedOnceAlready = true;
                 goto retry;
             }

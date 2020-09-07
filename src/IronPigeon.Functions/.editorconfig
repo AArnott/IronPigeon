@@ -11,3 +11,9 @@ dotnet_diagnostic.CS1591.severity = suggestion
 
 # SA1600: Elements should be documented
 dotnet_diagnostic.SA1600.severity = suggestion
+
+# SA1611: Element parameters should be documented
+dotnet_diagnostic.SA1611.severity = silent
+
+# SA1615: Element return value should be documented
+dotnet_diagnostic.SA1615.severity = silent

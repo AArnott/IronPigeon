@@ -4,30 +4,39 @@
 namespace IronPigeon.Functions
 {
     using System;
+    using System.Diagnostics;
+    using System.Threading;
     using System.Threading.Tasks;
+    using Azure.Storage.Blobs.Models;
     using IronPigeon.Functions.Models;
+    using IronPigeon.Providers;
+    using Microsoft.Azure.Cosmos.Table;
     using Microsoft.Azure.WebJobs;
     using Microsoft.Extensions.Logging;
-    using Microsoft.WindowsAzure.Storage.Table;
 
     public static class ArchiveStaleInboxes
     {
         /// <summary>
         /// The CRON schedule for running this function.
         /// </summary>
-        private const string CronSchedule = "15 14 * * 2"; // At 14:15 on Tuesday
+        private const string StaleInboxSchedule = "15 14 * * 2"; // At 14:15 on Tuesday
+
+        private const string DeletedInboxSchedule = "45 0 * * *"; // At 00:45 daily.
+
+        private const string ExpiredInboxItemsSchedule = "30 8 * * *"; // At 8:30 daily.
 
         private static readonly TimeSpan InboxesStaleAfter = TimeSpan.FromDays(365);
 
         [FunctionName("ArchiveStaleInboxes")]
-        public static async Task RunAsync([TimerTrigger(CronSchedule)] TimerInfo myTimer, ILogger log)
+        public static async Task ArchiveStaleInboxesAsync([TimerTrigger(StaleInboxSchedule)] TimerInfo myTimer, ILogger log, CancellationToken cancellationToken)
         {
-            log.LogInformation($"Archiving stale inboxes...");
+            log.LogInformation("Archiving stale inboxes...");
+            var timer = Stopwatch.StartNew();
 
             DateTimeOffset inboxStaleIfNotUsedSince = DateTimeOffset.UtcNow - InboxesStaleAfter;
             TableQuery<Mailbox> query = new TableQuery<Mailbox>()
                 .Where(TableQuery.CombineFilters(
-                    TableQuery.GenerateFilterConditionForDate(nameof(Mailbox.LastAccessedUtc), QueryComparisons.LessThan, inboxStaleIfNotUsedSince),
+                    TableQuery.GenerateFilterConditionForDate(nameof(Mailbox.LastAuthenticatedInteractionUtc), QueryComparisons.LessThan, inboxStaleIfNotUsedSince),
                     TableOperators.And,
                     TableQuery.GenerateFilterConditionForBool(nameof(Mailbox.Inactive), QueryComparisons.NotEqual, true)));
 
@@ -42,8 +51,9 @@ namespace IronPigeon.Functions
                     inbox.Inactive = true;
                     edits.Add(TableOperation.Merge(inbox));
 
-                    // Also purge all contents of the inbox.
-                    // TODO: code here.
+                    // Delete all inbox items.
+                    var blobProvider = new AzureBlobStorage(AzureStorage.InboxItemContainer, inbox.Name);
+                    await blobProvider.PurgeBlobsExpiringBeforeAsync(DateTime.MaxValue, cancellationToken);
                 }
 
                 log.LogInformation($"{result.Results.Count} inboxes identified as stale.");
@@ -51,14 +61,69 @@ namespace IronPigeon.Functions
 
                 if (edits.Count > 0)
                 {
-                    await AzureStorage.InboxTable.ExecuteBatchAsync(edits);
+                    await AzureStorage.InboxTable.ExecuteBatchAsync(edits, null, null, cancellationToken);
                 }
 
                 continuationToken = result.ContinuationToken;
             }
             while (continuationToken is object);
 
-            log.LogInformation($"Finished identifying stale inboxes. Total new stale inboxes found: {purgedInboxes}. Next run will be at: {myTimer.ScheduleStatus.Next}");
+            log.LogInformation($"Finished identifying stale inboxes in {timer.Elapsed}. Total new stale inboxes found: {purgedInboxes}. Next run will be at: {myTimer.ScheduleStatus.Next}");
+        }
+
+        [FunctionName("DeleteInboxes")]
+        public static async Task DeleteInboxesAsync([TimerTrigger(DeletedInboxSchedule)] TimerInfo myTimer, ILogger log, CancellationToken cancellationToken)
+        {
+            log.LogInformation("Purging mailboxes marked for deletion...");
+            var timer = Stopwatch.StartNew();
+
+            TableQuery<Mailbox> query = new TableQuery<Mailbox>()
+                .Where(TableQuery.GenerateFilterConditionForBool(nameof(Mailbox.Deleted), QueryComparisons.Equal, true));
+
+            long purgedInboxes = 0;
+            TableContinuationToken? continuationToken = null;
+            do
+            {
+                TableQuerySegment<Mailbox> result = await AzureStorage.InboxTable.ExecuteQuerySegmentedAsync(query, continuationToken, null, null, cancellationToken);
+                foreach (Mailbox inbox in result.Results)
+                {
+                    // Delete all inbox items.
+                    var blobProvider = new AzureBlobStorage(AzureStorage.InboxItemContainer, inbox.Name);
+                    await blobProvider.PurgeBlobsExpiringBeforeAsync(DateTime.MaxValue, cancellationToken);
+
+                    // Delete the inbox itself.
+                    await AzureStorage.InboxTable.ExecuteAsync(TableOperation.Delete(inbox), null, null, cancellationToken);
+
+                    purgedInboxes++;
+                    log.LogInformation($"Permanently deleted inbox and its contents: {inbox.Name}");
+                }
+
+                continuationToken = result.ContinuationToken;
+            }
+            while (continuationToken is object);
+
+            log.LogInformation($"Finished identifying stale inboxes in {timer.Elapsed}. Total new stale inboxes found: {purgedInboxes}. Next run will be at: {myTimer.ScheduleStatus.Next}");
+        }
+
+        [FunctionName("PurgeExpiredInboxItems")]
+        public static async Task PurgeExpiredInboxItemsAsync([TimerTrigger(ExpiredInboxItemsSchedule)] TimerInfo myTimer, ILogger log, CancellationToken cancellationToken)
+        {
+            DateTime purgeItemsExpiringBefore = DateTime.UtcNow;
+            log.LogInformation($"Purging inbox items that expired at {purgeItemsExpiringBefore}...");
+            var timer = Stopwatch.StartNew();
+
+            long mailboxesReviewed = 0;
+            await foreach (BlobHierarchyItem mailboxDirectory in AzureStorage.InboxItemContainer.GetBlobsByHierarchyAsync(delimiter: "/", cancellationToken: cancellationToken))
+            {
+                if (mailboxDirectory.IsPrefix)
+                {
+                    mailboxesReviewed++;
+                    var azureStorage = new AzureBlobStorage(AzureStorage.InboxItemContainer, mailboxDirectory.Prefix);
+                    await azureStorage.PurgeBlobsExpiringBeforeAsync(purgeItemsExpiringBefore, cancellationToken);
+                }
+            }
+
+            log.LogInformation($"Reviewed {mailboxesReviewed} mailboxes in {timer.Elapsed}. Next run will be at: {myTimer.ScheduleStatus.Next}");
         }
     }
 }

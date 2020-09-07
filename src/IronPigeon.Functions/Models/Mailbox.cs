@@ -4,7 +4,7 @@
 namespace IronPigeon.Functions.Models
 {
     using System;
-    using Microsoft.WindowsAzure.Storage.Table;
+    using Microsoft.Azure.Cosmos.Table;
 
     /// <summary>
     /// An Azure Table Storage entity that represents a user's mailbox.
@@ -25,12 +25,11 @@ namespace IronPigeon.Functions.Models
         /// <param name="name">The simple name for the mailbox (which gets appended to a base Uri that represents the inbox function.)</param>
         /// <param name="ownerCode">A bearer token that proves ownership of the mailbox.</param>
         public Mailbox(string name, string ownerCode)
+            : base(name, name)
         {
-            this.PartitionKey = name;
-            this.RowKey = name;
             this.OwnerCode = ownerCode;
             this.CreationTimestampUtc = DateTime.UtcNow;
-            this.LastAccessedUtc = this.CreationTimestampUtc;
+            this.LastAuthenticatedInteractionUtc = this.CreationTimestampUtc;
         }
 
         /// <summary>
@@ -46,13 +45,22 @@ namespace IronPigeon.Functions.Models
         /// <summary>
         /// Gets or sets the UTC time this mailbox was last accessed.
         /// </summary>
-        public DateTime LastAccessedUtc { get; set; }
+        public DateTime LastAuthenticatedInteractionUtc { get; set; }
 
         /// <summary>
         /// Gets or sets a value indicating whether this mailbox has been purged of any items and is rejecting posts
         /// (till it is reactivated by its owner).
         /// </summary>
         public bool Inactive { get; set; }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether this mailbox has been explicitly marked for deletion.
+        /// </summary>
+        /// <remarks>
+        /// Deleting a mailbox should include purging all the inbox items, so while we tag a mailbox for deletion immediately, this entity is only actually deleted
+        /// after its entries have also been removed.
+        /// </remarks>
+        public bool Deleted { get; set; }
 
         /// <summary>
         /// Gets or sets the bearer token that proves ownership of the mailbox.
