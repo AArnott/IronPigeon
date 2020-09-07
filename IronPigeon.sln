@@ -25,6 +25,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WpfChatroom", "src\WpfChatr
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IronPigeon.Tests", "test\IronPigeon.Tests\IronPigeon.Tests.csproj", "{6995C553-7AE1-490E-BCF2-406E105EDEF8}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IronPigeon.Relay", "src\IronPigeon.Relay\IronPigeon.Relay.csproj", "{20A8E55E-40A3-45FB-88EA-5F9671E86B7B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IronPigeon.Functions", "src\IronPigeon.Functions\IronPigeon.Functions.csproj", "{8D828C7F-D223-446D-B902-F98D69778EF2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -51,6 +55,12 @@ Global
 		{6995C553-7AE1-490E-BCF2-406E105EDEF8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6995C553-7AE1-490E-BCF2-406E105EDEF8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6995C553-7AE1-490E-BCF2-406E105EDEF8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{20A8E55E-40A3-45FB-88EA-5F9671E86B7B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{20A8E55E-40A3-45FB-88EA-5F9671E86B7B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8D828C7F-D223-446D-B902-F98D69778EF2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8D828C7F-D223-446D-B902-F98D69778EF2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8D828C7F-D223-446D-B902-F98D69778EF2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8D828C7F-D223-446D-B902-F98D69778EF2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
