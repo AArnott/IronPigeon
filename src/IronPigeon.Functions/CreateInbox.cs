@@ -27,10 +27,6 @@ namespace IronPigeon.Functions
             [HttpTrigger(AuthorizationLevel.Function, "post", Route = "inbox")] HttpRequest req,
             ILogger log)
         {
-            CloudStorageAccount storageAccount = CloudStorageAccount.Parse(Environment.GetEnvironmentVariable("AzureWebJobsStorage"));
-            CloudTableClient tableClient = storageAccount.CreateCloudTableClient();
-            CloudTable cloudTable = tableClient.GetTableReference("Inboxes");
-
             using RandomNumberGenerator? rng = RandomNumberGenerator.Create();
             var inboxOwnerCode = new byte[CodeLength];
             rng.GetBytes(inboxOwnerCode);
@@ -42,13 +38,13 @@ namespace IronPigeon.Functions
 retry:
             try
             {
-                result = await cloudTable.ExecuteAsync(operation);
+                result = await AzureStorage.InboxTable.ExecuteAsync(operation);
             }
             catch (StorageException ex) when (ex.RequestInformation.HttpStatusCode == 404)
             {
                 // They caught us uninitialized. Ask them to try again after we mitigate the problem.
                 log.LogInformation("JIT creating inbox table.");
-                await cloudTable.CreateIfNotExistsAsync();
+                await AzureStorage.InboxTable.CreateIfNotExistsAsync();
                 if (retriedOnceAlready)
                 {
                     return new StatusCodeResult(503); // Service Unavailable.
