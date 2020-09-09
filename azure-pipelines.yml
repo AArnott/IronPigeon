@@ -2,6 +2,7 @@ trigger:
   branches:
     include:
     - master
+    - renovate
     - 'validate/*'
   paths:
     exclude:
