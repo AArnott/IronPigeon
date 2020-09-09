@@ -84,6 +84,11 @@ retry:
                 }
 
                 await this.azureStorage.InboxTable.CreateIfNotExistsAsync(cancellationToken);
+
+                // Go ahead and make sure our blob containers exist too, since uploading blobs to a non-existent container just fails and cannot retry.
+                await new AzureBlobStorage(this.azureStorage.PayloadBlobsContainer).CreateContainerIfNotExistAsync(cancellationToken);
+                await new AzureBlobStorage(this.azureStorage.InboxItemContainer).CreateContainerIfNotExistAsync(cancellationToken);
+
                 retriedOnceAlready = true;
                 goto retry;
             }
@@ -174,8 +179,6 @@ retry:
             DateTime expiresUtc = DateTime.UtcNow + lifetime;
 
             var blobStorage = new AzureBlobStorage(this.azureStorage.InboxItemContainer, mailbox.Name);
-            bool retriedOnceAlready = false;
-retry:
             try
             {
                 await blobStorage.UploadMessageAsync(this.Request.Body, expiresUtc, cancellationToken: cancellationToken);
@@ -183,15 +186,9 @@ retry:
             catch (Azure.RequestFailedException ex) when (ex.Status == 404)
             {
                 // They caught us uninitialized. Ask them to try again after we mitigate the problem.
-                this.logger.LogInformation("JIT creating inbox item container.");
-                if (retriedOnceAlready)
-                {
-                    return this.StatusCode(StatusCodes.Status503ServiceUnavailable);
-                }
-
+                this.logger.LogError("Request failed because blob container did not exist. Creating it now...");
                 await blobStorage.CreateContainerIfNotExistAsync(cancellationToken);
-                retriedOnceAlready = true;
-                goto retry;
+                return this.StatusCode(StatusCodes.Status503ServiceUnavailable);
             }
 
             this.logger.LogInformation($"Saved notification ({contentLength} bytes) to mailbox: {mailbox.Name}");
@@ -234,20 +231,28 @@ retry:
 
                 UriBuilder identityBuilder = this.CreateSelfReferencingUriBuilder();
 
-                await foreach (BlobHierarchyItem blob in this.azureStorage.InboxItemContainer.GetBlobsByHierarchyAsync(prefix: input.Mailbox.Name + "/", cancellationToken: cancellationToken))
+                try
                 {
-                    if (blob.IsBlob)
+                    await foreach (BlobHierarchyItem blob in this.azureStorage.InboxItemContainer.GetBlobsByHierarchyAsync(prefix: input.Mailbox.Name + "/", cancellationToken: cancellationToken))
                     {
-                        BlobClient blobClient = this.azureStorage.InboxItemContainer.GetBlobClient(blob.Blob.Name);
-                        Azure.Response<BlobDownloadInfo> downloadInfo = await blobClient.DownloadAsync(cancellationToken);
-                        identityBuilder.Path = $"{this.Url.Action()}/{blob.Blob.Name.Substring(name.Length + 1)}";
-                        WriteInboxItemHeader(blob.Blob, downloadInfo.Value, identityBuilder.Uri);
-                        await downloadInfo.Value.Content.CopyToAsync(responseWriter, cancellationToken);
-                        downloadInfo.Value.Dispose();
+                        if (blob.IsBlob)
+                        {
+                            BlobClient blobClient = this.azureStorage.InboxItemContainer.GetBlobClient(blob.Blob.Name);
+                            Azure.Response<BlobDownloadInfo> downloadInfo = await blobClient.DownloadAsync(cancellationToken);
+                            identityBuilder.Path = $"{this.Url.Action()}/{blob.Blob.Name.Substring(name.Length + 1)}";
+                            WriteInboxItemHeader(blob.Blob, downloadInfo.Value, identityBuilder.Uri);
+                            await downloadInfo.Value.Content.CopyToAsync(responseWriter, cancellationToken);
+                            downloadInfo.Value.Dispose();
 
-                        // Do not outrun the client that is reading us.
-                        await responseWriter.FlushAsync(cancellationToken);
+                            // Do not outrun the client that is reading us.
+                            await responseWriter.FlushAsync(cancellationToken);
+                        }
                     }
+                }
+                catch (Azure.RequestFailedException ex) when (ex.Status == 404)
+                {
+                    // If the blob container does not exist, clearly the inbox is empty.
+                    this.logger.LogWarning("No blob container exists: {0}", ex);
                 }
 
                 await responseWriter.CompleteAsync();

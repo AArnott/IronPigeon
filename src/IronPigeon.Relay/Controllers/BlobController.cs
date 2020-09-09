@@ -56,8 +56,6 @@ namespace IronPigeon.Relay.Controllers
             ////}
 
             var azureBlobStorage = new AzureBlobStorage(this.azureStorage.PayloadBlobsContainer);
-            bool retriedOnceAlready = false;
-retry:
             try
             {
                 Uri blobUri = await azureBlobStorage.UploadMessageAsync(this.Request.Body, expirationUtc, cancellationToken: cancellationToken);
@@ -66,15 +64,9 @@ retry:
             catch (Azure.RequestFailedException ex) when (ex.Status == StatusCodes.Status404NotFound)
             {
                 // They caught us uninitialized. Ask them to try again after we mitigate the problem.
-                this.logger.LogInformation("JIT creating blob container.");
-                if (retriedOnceAlready)
-                {
-                    return new StatusCodeResult(StatusCodes.Status503ServiceUnavailable);
-                }
-
+                this.logger.LogError("Request failed because blob container did not exist. Creating it now...");
                 await azureBlobStorage.CreateContainerIfNotExistAsync(cancellationToken);
-                retriedOnceAlready = true;
-                goto retry;
+                return this.StatusCode(StatusCodes.Status503ServiceUnavailable);
             }
         }
 
