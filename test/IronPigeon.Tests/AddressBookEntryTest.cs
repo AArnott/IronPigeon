@@ -4,20 +4,31 @@
 namespace IronPigeon.Tests
 {
     using System;
+    using System.Threading.Tasks;
     using Xunit;
     using Xunit.Abstractions;
 
-    public class AddressBookEntryTest : TestBase
+    public class AddressBookEntryTest : TestBase, IAsyncLifetime
     {
         private static readonly byte[] SerializedEndpoint = new byte[] { 0x1, 0x2 };
         private static readonly byte[] Signature = new byte[] { 0x3, 0x4 };
         private readonly Mocks.MockEnvironment environment = new Mocks.MockEnvironment();
-        private readonly OwnEndpoint receivingEndpoint;
+        private OwnEndpoint receivingEndpoint = null!; // InitializeAsync
 
         public AddressBookEntryTest(ITestOutputHelper logger)
             : base(logger)
         {
-            this.receivingEndpoint = this.environment.CreateOwnEndpointAsync(this.TimeoutToken).Result;
+        }
+
+        public async Task InitializeAsync()
+        {
+            this.receivingEndpoint = await this.environment.CreateOwnEndpointAsync(this.TimeoutToken);
+        }
+
+        public Task DisposeAsync()
+        {
+            this.environment.Dispose();
+            return Task.CompletedTask;
         }
 
         [Fact]
