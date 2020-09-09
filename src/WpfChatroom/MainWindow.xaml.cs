@@ -28,6 +28,7 @@ namespace WpfChatroom
     using IronPigeon.Providers;
     using MessagePack;
     using Microsoft;
+    using Microsoft.VisualStudio.Threading;
     using Microsoft.Win32;
 
     /// <summary>
@@ -42,6 +43,7 @@ namespace WpfChatroom
         {
             this.InitializeComponent();
 
+            this.JoinableTaskContext = new JoinableTaskContext();
             this.HttpClient = new HttpClient();
             this.MessageRelayService = new RelayCloudBlobStorageProvider(this.HttpClient)
             {
@@ -49,6 +51,11 @@ namespace WpfChatroom
                 InboxFactoryUrl = new Uri(ConfigurationManager.ConnectionStrings["RelayInboxService"].ConnectionString),
             };
         }
+
+        /// <summary>
+        /// Gets the <see cref="Microsoft.VisualStudio.Threading.JoinableTaskContext"/> for this application.
+        /// </summary>
+        public JoinableTaskContext JoinableTaskContext { get; }
 
         /// <summary>
         /// Gets the HTTP client to use.
@@ -75,72 +82,81 @@ namespace WpfChatroom
         /// </summary>
         public PostalService? PostalService { get; set; }
 
-        private async void CreateNewEndpoint_OnClick(object sender, RoutedEventArgs e)
+        private void CreateNewEndpoint_OnClick(object sender, RoutedEventArgs e)
         {
-            this.CreateNewEndpoint.IsEnabled = false;
-            this.CreateNewEndpoint.Cursor = Cursors.AppStarting;
-            try
+            this.JoinableTaskContext.Factory.RunAsync(async delegate
             {
-                Task<OwnEndpoint> endpointTask = OwnEndpoint.CreateAsync(this.CryptoSettings, this.MessageRelayService);
-                var dialog = new SaveFileDialog();
-                bool? result = dialog.ShowDialog(this);
-                if (result.HasValue && result.Value)
+                this.CreateNewEndpoint.IsEnabled = false;
+                this.CreateNewEndpoint.Cursor = Cursors.AppStarting;
+                try
                 {
-                    OwnEndpoint endpoint = await endpointTask;
-                    Uri addressBookEntry = await endpoint.PublishAddressBookEntryAsync(this.MessageRelayService);
-                    var fileFormat = new EndpointAndAddressBookUri(addressBookEntry, endpoint);
-                    using Stream? stream = dialog.OpenFile();
-                    await MessagePackSerializer.SerializeAsync(stream, fileFormat, MessagePackSerializerOptions.Standard);
+                    Task<OwnEndpoint> endpointTask = OwnEndpoint.CreateAsync(this.CryptoSettings, this.MessageRelayService);
+                    var dialog = new SaveFileDialog();
+                    bool? result = dialog.ShowDialog(this);
+                    if (result.HasValue && result.Value)
+                    {
+                        OwnEndpoint endpoint = await endpointTask;
+                        Uri addressBookEntry = await endpoint.PublishAddressBookEntryAsync(this.MessageRelayService);
+                        var fileFormat = new EndpointAndAddressBookUri(addressBookEntry, endpoint);
+                        using Stream? stream = dialog.OpenFile();
+                        await MessagePackSerializer.SerializeAsync(stream, fileFormat, MessagePackSerializerOptions.Standard);
 
-                    await this.SetEndpointAsync(await endpointTask, addressBookEntry);
+                        await this.SetEndpointAsync(await endpointTask, addressBookEntry);
+                    }
                 }
-            }
-            finally
-            {
-                this.CreateNewEndpoint.Cursor = Cursors.Arrow;
-                this.CreateNewEndpoint.IsEnabled = true;
-            }
+                finally
+                {
+                    this.CreateNewEndpoint.Cursor = Cursors.Arrow;
+                    this.CreateNewEndpoint.IsEnabled = true;
+                }
+            });
         }
 
-        private async void OpenOwnEndpoint_OnClick(object sender, RoutedEventArgs e)
+        private void OpenOwnEndpoint_OnClick(object sender, RoutedEventArgs e)
         {
-            this.OpenOwnEndpoint.IsEnabled = false;
-            this.OpenOwnEndpoint.Cursor = Cursors.AppStarting;
-            try
+            this.JoinableTaskContext.Factory.RunAsync(async delegate
             {
-                var dialog = new OpenFileDialog();
-                bool? result = dialog.ShowDialog(this);
-                if (result.HasValue && result.Value)
+                this.OpenOwnEndpoint.IsEnabled = false;
+                this.OpenOwnEndpoint.Cursor = Cursors.AppStarting;
+                try
                 {
-                    using Stream? fileStream = dialog.OpenFile();
-                    EndpointAndAddressBookUri fileFormat = await MessagePackSerializer.DeserializeAsync<EndpointAndAddressBookUri>(fileStream, MessagePackSerializerOptions.Standard);
-                    await this.SetEndpointAsync(fileFormat.Endpoint, fileFormat.AddressBookUri);
+                    var dialog = new OpenFileDialog();
+                    bool? result = dialog.ShowDialog(this);
+                    if (result.HasValue && result.Value)
+                    {
+                        using Stream? fileStream = dialog.OpenFile();
+                        EndpointAndAddressBookUri fileFormat = await MessagePackSerializer.DeserializeAsync<EndpointAndAddressBookUri>(fileStream, MessagePackSerializerOptions.Standard);
+                        await this.SetEndpointAsync(fileFormat.Endpoint, fileFormat.AddressBookUri);
+                    }
                 }
-            }
-            finally
-            {
-                this.OpenOwnEndpoint.Cursor = Cursors.Arrow;
-                this.OpenOwnEndpoint.IsEnabled = true;
-            }
+                finally
+                {
+                    this.OpenOwnEndpoint.Cursor = Cursors.Arrow;
+                    this.OpenOwnEndpoint.IsEnabled = true;
+                }
+            });
         }
 
         private void OpenChatroom_OnClick(object sender, RoutedEventArgs e)
         {
             Verify.Operation(this.PostalService is object, "Endpoint not initialized yet.");
-            var chatroomWindow = new ChatroomWindow(this.PostalService);
+            var chatroomWindow = new ChatroomWindow(this);
             chatroomWindow.Show();
         }
 
-        private async void ChatWithAuthor_OnClick(object sender, RoutedEventArgs e)
+        private void ChatWithAuthor_OnClick(object sender, RoutedEventArgs e)
         {
-            Verify.Operation(this.PostalService is object, "Endpoint not initialized yet.");
-            var chatroomWindow = new ChatroomWindow(this.PostalService);
-            chatroomWindow.Show();
+            this.JoinableTaskContext.Factory.RunAsync(async delegate
+            {
+                Verify.Operation(this.PostalService is object, "Endpoint not initialized yet.");
+                var chatroomWindow = new ChatroomWindow(this);
+                chatroomWindow.Show();
 
-            var addressBook = new DirectEntryAddressBook(this.Channel.HttpClient);
-            Endpoint? endpoint = await addressBook.LookupAsync("http://tinyurl.com/omhxu6l#-Rrs7LRrCE3bV8x58j1l4JUzAT3P2obKia73k3IFG9k");
-            Assumes.NotNull(endpoint);
-            chatroomWindow.AddMember("App author", endpoint);
+                var addressBook = new DirectEntryAddressBook(this.Channel.HttpClient);
+                Endpoint? endpoint = await addressBook.LookupAsync("http://tinyurl.com/omhxu6l#-Rrs7LRrCE3bV8x58j1l4JUzAT3P2obKia73k3IFG9k");
+                Assumes.NotNull(endpoint);
+                chatroomWindow.AddMember("App author", endpoint);
+            });
         }
 
         private Task SetEndpointAsync(OwnEndpoint endpoint, Uri addressBookEntry)

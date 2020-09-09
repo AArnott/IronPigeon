@@ -18,6 +18,7 @@ namespace WpfChatroom
     using System.Windows.Shapes;
 
     using Microsoft;
+    using Microsoft.VisualStudio.Threading;
 
     /// <summary>
     /// Interaction logic for InviteMember.xaml.
@@ -38,9 +39,15 @@ namespace WpfChatroom
             this.InitializeComponent();
         }
 
-        private async void InviteButton_OnClick(object sender, RoutedEventArgs e)
+        /// <inheritdoc cref="ChatroomWindow.JoinableTaskContext" />
+        public JoinableTaskContext JoinableTaskContext => this.chatroom.JoinableTaskContext;
+
+        private void InviteButton_OnClick(object sender, RoutedEventArgs e)
         {
-            await this.chatroom.InvitingMemberAsync(this);
+            this.JoinableTaskContext.Factory.RunAsync(async delegate
+            {
+                await this.chatroom.InvitingMemberAsync(this);
+            });
         }
     }
 }

@@ -20,6 +20,7 @@ namespace WpfChatroom
     using IronPigeon;
     using IronPigeon.Dart;
     using IronPigeon.Providers;
+    using Microsoft;
     using Microsoft.VisualStudio.Threading;
 
     /// <summary>
@@ -27,17 +28,25 @@ namespace WpfChatroom
     /// </summary>
     public partial class ChatroomWindow : Window
     {
-        private Dictionary<string, Endpoint> members = new Dictionary<string, Endpoint>();
+        private readonly MainWindow mainWindow;
+
+        private readonly Dictionary<string, Endpoint> members = new Dictionary<string, Endpoint>();
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ChatroomWindow" /> class.
         /// </summary>
-        /// <param name="postalService">The postal service.</param>
-        public ChatroomWindow(PostalService postalService)
+        /// <param name="mainWindow">The main window.</param>
+        internal ChatroomWindow(MainWindow mainWindow)
         {
+            Requires.Argument(mainWindow.PostalService is object, nameof(mainWindow), "{0} property must be set.", nameof(MainWindow.PostalService));
+
             this.InitializeComponent();
-            this.PostalService = postalService ?? throw new ArgumentNullException(nameof(postalService));
+            this.mainWindow = mainWindow;
+            this.PostalService = mainWindow.PostalService;
         }
+
+        /// <inheritdoc cref="MainWindow.JoinableTaskContext" />
+        public JoinableTaskContext JoinableTaskContext => this.mainWindow.JoinableTaskContext;
 
         /// <summary>
         /// Gets the channel.
@@ -88,13 +97,16 @@ namespace WpfChatroom
         /// Raises the <see cref="System.Windows.FrameworkElement.Initialized" /> event. This method is invoked whenever <see cref="System.Windows.FrameworkElement.IsInitialized" /> is set to true internally.
         /// </summary>
         /// <param name="e">The <see cref="System.Windows.RoutedEventArgs" /> that contains the event data.</param>
-        protected override async void OnInitialized(EventArgs e)
+        protected override void OnInitialized(EventArgs e)
         {
             base.OnInitialized(e);
 
-            await Task.Yield();
-            this.AddMember("You", this.PostalService.Channel.Endpoint.PublicEndpoint);
-            await this.ReceiveMessageLoopAsync();
+            this.JoinableTaskContext.Factory.RunAsync(async delegate
+            {
+                await Task.Yield();
+                this.AddMember("You", this.PostalService.Channel.Endpoint.PublicEndpoint);
+                await this.ReceiveMessageLoopAsync();
+            });
         }
 
         private async Task ReceiveMessageLoopAsync()
@@ -127,37 +139,40 @@ namespace WpfChatroom
             }
         }
 
-        private async void SendMessageButton_Click(object sender, RoutedEventArgs e)
+        private void SendMessageButton_Click(object sender, RoutedEventArgs e)
         {
-            this.AuthoredMessage.IsReadOnly = true;
-            this.SendMessageButton.IsEnabled = false;
-            try
+            this.JoinableTaskContext.Factory.RunAsync(async delegate
             {
-                if (this.AuthoredMessage.Text.Length > 0)
+                this.AuthoredMessage.IsReadOnly = true;
+                this.SendMessageButton.IsEnabled = false;
+                try
                 {
-                    var message = new Message(this.PostalService.Channel.Endpoint, "Author", this.members.Values.ToList(), "message", this.AuthoredMessage.Text)
+                    if (this.AuthoredMessage.Text.Length > 0)
                     {
-                        ExpirationUtc = DateTime.UtcNow + TimeSpan.FromDays(14),
-                        AuthorName = "WpfChatroom user",
-                    };
-                    await this.PostalService.PostAsync(message);
-                }
+                        var message = new Message(this.PostalService.Channel.Endpoint, "Author", this.members.Values.ToList(), "message", this.AuthoredMessage.Text)
+                        {
+                            ExpirationUtc = DateTime.UtcNow + TimeSpan.FromDays(14),
+                            AuthorName = "WpfChatroom user",
+                        };
+                        await this.PostalService.PostAsync(message);
+                    }
 
-                this.BottomInfoBar.Visibility = Visibility.Collapsed;
-                this.AuthoredMessage.Text = string.Empty;
-            }
+                    this.BottomInfoBar.Visibility = Visibility.Collapsed;
+                    this.AuthoredMessage.Text = string.Empty;
+                }
 #pragma warning disable CA1031 // Do not catch general exception types
-            catch (Exception ex)
+                catch (Exception ex)
 #pragma warning restore CA1031 // Do not catch general exception types
-            {
-                this.BottomInfoBar.Text = "Unable to transmit message: " + ex.Message;
-                this.BottomInfoBar.Visibility = Visibility.Visible;
-            }
-            finally
-            {
-                this.AuthoredMessage.IsReadOnly = false;
-                this.SendMessageButton.IsEnabled = true;
-            }
+                {
+                    this.BottomInfoBar.Text = "Unable to transmit message: " + ex.Message;
+                    this.BottomInfoBar.Visibility = Visibility.Visible;
+                }
+                finally
+                {
+                    this.AuthoredMessage.IsReadOnly = false;
+                    this.SendMessageButton.IsEnabled = true;
+                }
+            });
         }
 
         private void InviteButton_OnClick(object sender, RoutedEventArgs e)
