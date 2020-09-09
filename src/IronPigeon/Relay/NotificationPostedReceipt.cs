@@ -26,23 +26,16 @@ namespace IronPigeon.Relay
         /// Initializes a new instance of the <see cref="NotificationPostedReceipt"/> class.
         /// </summary>
         /// <param name="recipient">The inbox that received the notification.</param>
-        /// <param name="cloudInboxReceiptTimestamp">The timestamp included in the HTTP response from the server.</param>
-        public NotificationPostedReceipt(Endpoint recipient, DateTimeOffset? cloudInboxReceiptTimestamp)
+        public NotificationPostedReceipt(Endpoint recipient)
         {
             Requires.NotNull(recipient, nameof(recipient));
 
             this.Recipient = recipient;
-            this.CloudInboxReceiptTimestamp = cloudInboxReceiptTimestamp;
         }
 
         /// <summary>
         /// Gets the receiver of the notification.
         /// </summary>
         public Endpoint Recipient { get; private set; }
-
-        /// <summary>
-        /// Gets the timestamp the receiving cloud inbox returned after receiving the notification.
-        /// </summary>
-        public DateTimeOffset? CloudInboxReceiptTimestamp { get; private set; }
     }
 }

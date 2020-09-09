@@ -73,7 +73,7 @@ namespace ConsoleChat
             var relayService = new RelayCloudBlobStorageProvider(httpClient)
             {
                 BlobPostUrl = new Uri(ConfigurationManager.ConnectionStrings["RelayBlobService"].ConnectionString),
-                InboxServiceUrl = new Uri(ConfigurationManager.ConnectionStrings["RelayInboxService"].ConnectionString),
+                InboxFactoryUrl = new Uri(ConfigurationManager.ConnectionStrings["RelayInboxService"].ConnectionString),
             };
 
             CryptoSettings cryptoSettings = CryptoSettings.Recommended;

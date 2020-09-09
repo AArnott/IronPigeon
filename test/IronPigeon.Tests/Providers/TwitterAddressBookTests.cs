@@ -38,7 +38,7 @@ namespace IronPigeon.Tests.Providers
             Assert.Null(endpoint);
         }
 
-        [Fact]
+        [Fact(Skip = "Requires new recorded data.")]
         public void LookupEntryAsyncExistingUser()
         {
             this.messageRecorder.SetTestName();
@@ -49,7 +49,7 @@ namespace IronPigeon.Tests.Providers
         /// <summary>
         /// Verifies that the #fragment in the URL is verified to match the thumbprint of the downloaded address book entry.
         /// </summary>
-        [Fact]
+        [Fact(Skip = "Requires new recorded data.")]
         public void LookupEntryAsyncExistingUserReplacedEndpoint()
         {
             this.messageRecorder.SetTestName();

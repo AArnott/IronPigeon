@@ -46,7 +46,7 @@ namespace WpfChatroom
             this.MessageRelayService = new RelayCloudBlobStorageProvider(this.HttpClient)
             {
                 BlobPostUrl = new Uri(ConfigurationManager.ConnectionStrings["RelayBlobService"].ConnectionString),
-                InboxServiceUrl = new Uri(ConfigurationManager.ConnectionStrings["RelayInboxService"].ConnectionString),
+                InboxFactoryUrl = new Uri(ConfigurationManager.ConnectionStrings["RelayInboxService"].ConnectionString),
             };
         }
 

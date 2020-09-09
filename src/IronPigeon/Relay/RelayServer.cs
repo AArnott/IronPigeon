@@ -149,7 +149,13 @@ namespace IronPigeon.Relay
                 builder.Query += "lifetime=" + lifetimeInMinutes.ToString(CultureInfo.InvariantCulture);
             }
 
-            using HttpContent content = new ByteArrayContent(inboxPayload.AsOrCreateArray());
+            using HttpContent content = new ByteArrayContent(inboxPayload.AsOrCreateArray())
+            {
+                Headers =
+                {
+                    ContentLength = inboxPayload.Length,
+                },
+            };
             using HttpResponseMessage response = await this.httpClient.PostAsync(builder.Uri, content, httpTimeoutTokenSource.Token).ConfigureAwait(false);
             if (response.Content is object)
             {
@@ -158,7 +164,7 @@ namespace IronPigeon.Relay
             }
 
             response.EnsureSuccessStatusCode();
-            var receipt = new NotificationPostedReceipt(receivingEndpoint, response.Headers.Date);
+            var receipt = new NotificationPostedReceipt(receivingEndpoint);
             return receipt;
         }
 

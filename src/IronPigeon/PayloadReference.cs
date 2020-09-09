@@ -134,6 +134,7 @@ namespace IronPigeon
             Verify.Operation(this.DecryptionInputs is object, Strings.PayloadDecryptionKeyMissing);
 
             using HttpResponseMessage responseMessage = await httpClient.GetAsync(this.Location, cancellationToken).ConfigureAwait(false);
+            responseMessage.EnsureSuccessStatusCode();
             using Stream downloadingStream = await responseMessage.Content.ReadAsStreamAsync().ConfigureAwait(false);
 
             using ICryptographicKey decryptingKey = this.DecryptionInputs.CreateKey();

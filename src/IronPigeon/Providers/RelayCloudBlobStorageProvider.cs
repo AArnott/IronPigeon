@@ -11,6 +11,7 @@ namespace IronPigeon.Providers
     using System.Threading.Tasks;
     using IronPigeon.Relay;
     using Microsoft;
+    using Newtonsoft.Json;
 
     /// <summary>
     /// A blob storage provider that stores blobs to the message relay service via its well-known blob API.
@@ -32,9 +33,9 @@ namespace IronPigeon.Providers
         public Uri? BlobPostUrl { get; set; }
 
         /// <summary>
-        /// Gets or sets the base URL (without the trailing /create) of the inbox service.
+        /// Gets or sets the URL to POST to in order to create a new inbox.
         /// </summary>
-        public Uri? InboxServiceUrl { get; set; }
+        public Uri? InboxFactoryUrl { get; set; }
 
         /// <summary>
         /// Gets the HTTP client to use for outbound HTTP requests.
@@ -54,12 +55,10 @@ namespace IronPigeon.Providers
             }
 
             int lifetime = expirationUtc == DateTime.MaxValue ? int.MaxValue : (int)(expirationUtc - DateTime.UtcNow).TotalMinutes;
-            HttpResponseMessage? response = await this.HttpClient.PostAsync(this.BlobPostUrl.AbsoluteUri + "?lifetimeInMinutes=" + lifetime, httpContent, cancellationToken).ConfigureAwait(false);
+            HttpResponseMessage? response = await this.HttpClient.PostAsync(this.BlobPostUrl.OriginalString + "?lifetimeInMinutes=" + lifetime, httpContent, cancellationToken).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
 
-            var serializer = new DataContractJsonSerializer(typeof(string));
-            var location = (string)serializer.ReadObject(await response.Content.ReadAsStreamAsync().ConfigureAwait(false));
-            return new Uri(location, UriKind.Absolute);
+            return response.Headers.Location;
         }
 
         /// <summary>
@@ -71,20 +70,14 @@ namespace IronPigeon.Providers
         /// </returns>
         public async Task<InboxCreationResponse> CreateInboxAsync(CancellationToken cancellationToken = default)
         {
-            Verify.Operation(this.InboxServiceUrl is object, $"{nameof(this.InboxServiceUrl)} must be set first.");
-            Verify.Operation(this.InboxServiceUrl is object, Strings.PropertyMustBeSetFirst, nameof(this.InboxServiceUrl));
+            Verify.Operation(this.InboxFactoryUrl is object, Strings.PropertyMustBeSetFirst, nameof(this.InboxFactoryUrl));
 
-            var registerUrl = new Uri(this.InboxServiceUrl, "create");
-
-            HttpResponseMessage? responseMessage =
-                await this.HttpClient.PostAsync(registerUrl, null, cancellationToken).ConfigureAwait(false);
+            HttpResponseMessage responseMessage =
+                await this.HttpClient.PostAsync(this.InboxFactoryUrl, null, cancellationToken).ConfigureAwait(false);
             responseMessage.EnsureSuccessStatusCode();
-            using (Stream? responseStream = await responseMessage.Content.ReadAsStreamAsync().ConfigureAwait(false))
-            {
-                var deserializer = new DataContractJsonSerializer(typeof(InboxCreationResponse));
-                var creationResponse = (InboxCreationResponse)deserializer.ReadObject(responseStream);
-                return creationResponse;
-            }
+            string json = await responseMessage.Content.ReadAsStringAsync().ConfigureAwait(false);
+            InboxCreationResponse creationResponse = JsonConvert.DeserializeObject<InboxCreationResponse>(json);
+            return creationResponse;
         }
     }
 }
