@@ -19,9 +19,7 @@ namespace IronPigeon.Relay.Controllers
 
     [ApiController]
     [Route("[controller]")]
-#if !DEBUG
-    [RequireHttps]
-#endif
+    [DenyHttp]
     public class BlobController : ControllerBase
     {
         private static readonly SortedDictionary<int, TimeSpan> MaxBlobSizesAndLifetimes = new SortedDictionary<int, TimeSpan>

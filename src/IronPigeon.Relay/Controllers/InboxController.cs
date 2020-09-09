@@ -23,9 +23,7 @@ namespace IronPigeon.Relay.Controllers
 
     [ApiController]
     [Route("[controller]")]
-#if !DEBUG
-    [RequireHttps]
-#endif
+    [DenyHttp]
     public class InboxController : ControllerBase
     {
         /// <summary>

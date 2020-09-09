@@ -46,7 +46,8 @@ namespace IronPigeon.Relay
                 app.UseDeveloperExceptionPage();
             }
 
-            app.UseHttpsRedirection();
+            // DO not use HTTPS redirection as that defeats our DenyHttpAttribute.
+            ////app.UseHttpsRedirection();
 
             app.UseRouting();
 

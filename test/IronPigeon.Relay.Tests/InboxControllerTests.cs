@@ -30,12 +30,23 @@ public class InboxControllerTests : TestBase, IClassFixture<RelayAppFactory>
     {
         factory.Logger = logger;
         this.factory = factory;
-        this.httpClient = this.factory.CreateClient();
+        this.httpClient = this.factory.CreateClient(new Microsoft.AspNetCore.Mvc.Testing.WebApplicationFactoryClientOptions { BaseAddress = new Uri("https://localhost") });
         this.relayProvider = new RelayCloudBlobStorageProvider(this.httpClient)
         {
             InboxFactoryUrl = new Uri("Inbox/create", UriKind.Relative),
             BlobPostUrl = new Uri("blob", UriKind.Relative),
         };
+    }
+
+    [Fact]
+    public async Task HttpDenied()
+    {
+        HttpResponseMessage response = await this.httpClient.PostAsync(MakeHttp(this.relayProvider.InboxFactoryUrl!), null, this.TimeoutToken);
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        response = await this.httpClient.GetAsync(new Uri(MakeHttp(this.relayProvider.InboxFactoryUrl!), "/Inbox/FCEA33C1-5B99-46FE-BF82-85567CBA415F"), this.TimeoutToken);
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+
+        Uri MakeHttp(Uri url) => new UriBuilder(new Uri(this.httpClient.BaseAddress, url)) { Scheme = Uri.UriSchemeHttp }.Uri;
     }
 
     [Fact]
