@@ -269,10 +269,18 @@ namespace IronPigeon
                 byte[] serializedSignedInboxItem = WinRTCrypto.CryptographicEngine.Decrypt(signedInboxItemDecryptingKey, envelope.SerializedInboxItem.AsOrCreateArray(), signedInboxItemDecryptingInstructions.IV.AsOrCreateArray());
 
                 SignedInboxItem signedInboxItem = MessagePackSerializer.Deserialize<SignedInboxItem>(serializedSignedInboxItem, Utilities.MessagePackSerializerOptions, cancellationToken);
+                if (signedInboxItem is null)
+                {
+                    throw new InvalidMessageException("The inbox item failed to deserialize, likely due to corruption or tampering.");
+                }
 
                 // Extract the InboxItem
                 cancellationToken.ThrowIfCancellationRequested();
                 InboxItem inboxItem = MessagePackSerializer.Deserialize<InboxItem>(signedInboxItem.SerializedInboxItem, Utilities.MessagePackSerializerOptions, cancellationToken);
+                if (inboxItem is null)
+                {
+                    throw new InvalidMessageException("The inbox item failed to deserialize, likely due to corruption or tampering.");
+                }
 
                 // Verify that the signature on the inbox item matches its alleged author.
                 using ICryptographicKey authorSigningKey = inboxItem.Author.AuthenticatingKeyInputs.CreateKey();
