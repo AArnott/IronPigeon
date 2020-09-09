@@ -11,6 +11,7 @@ steps:
   inputs:
     command: test
     arguments: --no-build -c $(BuildConfiguration) -f net472 --filter "TestCategory!=FailsInCloudTest" -v n /p:CollectCoverage=true --settings "$(Build.Repository.LocalPath)/azure-pipelines/$(Agent.OS).runsettings"
+    workingDirectory: test/IronPigeon.Tests
     testRunTitle: net472-$(Agent.JobName)
   condition: and(succeeded(), eq(variables['Agent.OS'], 'Windows_NT'))
 
@@ -19,6 +20,7 @@ steps:
   inputs:
     command: test
     arguments: --no-build -c $(BuildConfiguration) -f netcoreapp2.1 --filter "TestCategory!=FailsInCloudTest" -v n /p:CollectCoverage=true --settings "$(Build.Repository.LocalPath)/azure-pipelines/$(Agent.OS).runsettings"
+    workingDirectory: test/IronPigeon.Tests
     testRunTitle: netcoreapp2.1-$(Agent.JobName)
 
 - task: DotNetCoreCLI@2
