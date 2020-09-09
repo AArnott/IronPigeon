@@ -39,8 +39,7 @@ jobs:
   - Windows
 #  - Linux
 #  - macOS
-  pool:
-    vmImage: Ubuntu 18.04
+  pool: ${{ parameters.windowsPool }}
   condition: succeededOrFailed()
   steps:
   - checkout: self
