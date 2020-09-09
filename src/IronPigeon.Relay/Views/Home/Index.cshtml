@@ -1,0 +1,11 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+
+<h1>IronPigeon message relay service</h1>
+
+<p>Public service URLs:</p>
+<ul>
+    <li>Inbox: @Url.Action("Index", "inbox", null, "https") </li>
+    <li>Blob: @Url.Action("Index", "blob", null, "https") </li>
+</ul>
