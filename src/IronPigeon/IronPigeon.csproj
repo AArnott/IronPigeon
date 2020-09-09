@@ -23,7 +23,7 @@
     <PackageReference Include="Azure.Storage.Blobs" Version="12.5.1" />
     <PackageReference Include="newtonsoft.json" Version="12.0.3" />
     <PackageReference Include="System.Threading.Channels" Version="4.7.1" />
-    <PackageReference Include="Nerdbank.Streams" Version="2.5.76" />
+    <PackageReference Include="Nerdbank.Streams" Version="2.5.77" />
     <PackageReference Include="Nullable" Version="1.2.1">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
