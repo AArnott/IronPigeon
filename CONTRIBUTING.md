@@ -41,6 +41,12 @@ to the feeds that packages for this repo come from, if any.
 
 This repository can be built on Windows, Linux, and OSX.
 
-Building, testing, and packing this repository can be done by using the standard dotnet CLI commands (e.g. `dotnet build`, `dotnet test`, `dotnet pack`, etc.).
+Building, testing, and packing this repository can be done by using Visual Studio or the standard dotnet CLI commands (e.g. `dotnet build`, `dotnet test`, `dotnet pack`, etc.).
+
+## Testing
+
+Our unit tests requires that the Azure Storage Emulator be started first.
+After installing the emulator (see Prerequisites) it can be started from the Windows Start menu.
+Running the `init` script in the repo root also starts the Azure Storage Emulator.
 
 [pwsh]: https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-6

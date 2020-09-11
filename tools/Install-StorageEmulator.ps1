@@ -22,3 +22,4 @@ if (!(Test-Path $AzureStorageEmulator)) {
 }
 
 & $AzureStorageEmulator start
+Write-Host "Azure Storage Emulator returned: $LASTEXITCODE"
