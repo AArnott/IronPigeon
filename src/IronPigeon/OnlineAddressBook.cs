@@ -63,7 +63,7 @@ namespace IronPigeon
                     AddressBookEntry entry = await MessagePackSerializer.DeserializeAsync<AddressBookEntry>(stream, Utilities.MessagePackSerializerOptions, cancellationToken).ConfigureAwait(false);
                     return entry;
                 }
-                catch (SerializationException ex)
+                catch (MessagePackSerializationException ex)
                 {
                     throw new BadAddressBookEntryException(ex.Message, ex);
                 }
