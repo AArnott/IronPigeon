@@ -175,5 +175,8 @@ dotnet_diagnostic.CA1819.severity = suggestion
 dotnet_diagnostic.MsgPack001.severity = error
 dotnet_diagnostic.MsgPack002.severity = error
 
+# SA1133: Do not combine attributes
+dotnet_diagnostic.SA1133.severity = none
+
 [*.sln]
 indent_style = tab

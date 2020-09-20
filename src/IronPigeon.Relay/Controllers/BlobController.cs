@@ -24,7 +24,7 @@ namespace IronPigeon.Relay.Controllers
     {
         private static readonly SortedDictionary<int, TimeSpan> MaxBlobSizesAndLifetimes = new SortedDictionary<int, TimeSpan>
         {
-            { 10 * 1024, TimeSpan.MaxValue }, // this is intended for address book entries.
+            { 10 * 1024, TimeSpan.FromDays(365 * 20) }, // this is intended for address book entries.
             { 512 * 1024, TimeSpan.FromDays(7) },
         };
 
@@ -38,27 +38,35 @@ namespace IronPigeon.Relay.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> PostAsync([FromQuery] int lifetimeInMinutes, CancellationToken cancellationToken)
+        public async Task<IActionResult> PostAsync([FromQuery] long lifetimeInMinutes, CancellationToken cancellationToken)
         {
-            Requires.Range(lifetimeInMinutes > 0, "lifetimeInMinutes");
-
-            ////if (!this.Request.ContentLength.HasValue)
-            ////{
-            ////    return new StatusCodeResult(StatusCodes.Status411LengthRequired);
-            ////}
+            if (lifetimeInMinutes <= 0)
+            {
+                return this.BadRequest("lifetimeInMinutes is required to be a positive integer in the query string.");
+            }
 
             var lifetime = TimeSpan.FromMinutes(lifetimeInMinutes);
-            DateTime expirationUtc = DateTime.UtcNow + lifetime;
-            ////IActionResult? errorResponse = GetDisallowedLifetimeResponse(this.Request.ContentLength.Value, lifetime);
-            ////if (errorResponse != null)
-            ////{
-            ////    return errorResponse;
-            ////}
+            long lengthLimit;
+            if (this.Request.ContentLength.HasValue)
+            {
+                lengthLimit = this.Request.ContentLength.Value;
+                IActionResult? errorResponse = GetDisallowedLifetimeResponse(this.Request.ContentLength.Value, lifetime);
+                if (errorResponse is object)
+                {
+                    return errorResponse;
+                }
+            }
+            else
+            {
+                lengthLimit = GetMaxAllowedBlobSize(lifetime);
+            }
 
             var azureBlobStorage = new AzureBlobStorage(this.azureStorage.PayloadBlobsContainer);
             try
             {
-                Uri blobUri = await azureBlobStorage.UploadMessageAsync(this.Request.Body, expirationUtc, cancellationToken: cancellationToken);
+                using var lengthLimitingStream = new StreamWithProgress(this.Request.Body, null) { LengthLimit = lengthLimit };
+                DateTime expirationUtc = DateTime.UtcNow + lifetime;
+                Uri blobUri = await azureBlobStorage.UploadMessageAsync(lengthLimitingStream, expirationUtc, cancellationToken: cancellationToken);
                 return this.Created(blobUri, blobUri);
             }
             catch (Azure.RequestFailedException ex) when (ex.Status == StatusCodes.Status404NotFound)
@@ -68,7 +76,17 @@ namespace IronPigeon.Relay.Controllers
                 await azureBlobStorage.CreateContainerIfNotExistAsync(cancellationToken);
                 return this.StatusCode(StatusCodes.Status503ServiceUnavailable);
             }
+            catch (StreamWithProgress.StreamTooLongException)
+            {
+                // The client is pushing too much data. Cut it off now.
+                this.HttpContext.Abort();
+
+                // Return this so the C# compiler is satisfied, but it will likely not be transmitted.
+                return this.StatusCode(StatusCodes.Status413RequestEntityTooLarge);
+            }
         }
+
+        private static long GetMaxAllowedBlobSize(TimeSpan lifetime) => MaxBlobSizesAndLifetimes.Where(kv => kv.Value >= lifetime).Max(kv => kv.Key);
 
         private static IActionResult? GetDisallowedLifetimeResponse(long blobSize, TimeSpan lifetime)
         {

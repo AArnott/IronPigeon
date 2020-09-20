@@ -9,6 +9,8 @@ namespace IronPigeon
     using System.Threading.Tasks;
     using Microsoft;
 
+#pragma warning disable CA1835
+
     /// <summary>
     /// A stream that tracks bytes transferred over some underlying stream.
     /// </summary>
@@ -73,6 +75,11 @@ namespace IronPigeon
         /// </summary>
         internal long BytesTransferred { get; private set; }
 
+        /// <summary>
+        /// Gets or sets the maximum number of bytes that may be transferred or an <see cref="StreamTooLongException"/> will be thrown.
+        /// </summary>
+        internal long? LengthLimit { get; set; }
+
         /// <inheritdoc/>
         public override void Flush() => throw new NotSupportedException();
 
@@ -93,6 +100,17 @@ namespace IronPigeon
             this.ReportProgress(bytesRead);
             return bytesRead;
         }
+
+#if !NETSTANDARD2_0
+        /// <inheritdoc/>
+        public override async ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
+        {
+            this.StartReadOperation();
+            int bytesRead = await this.inner.ReadAsync(buffer, cancellationToken).ConfigureAwait(false);
+            this.ReportProgress(bytesRead);
+            return bytesRead;
+        }
+#endif
 
         /// <inheritdoc/>
         public override int ReadByte()
@@ -128,6 +146,16 @@ namespace IronPigeon
             await this.inner.WriteAsync(buffer, offset, count, cancellationToken).ConfigureAwait(false);
             this.ReportProgress(count);
         }
+
+#if !NETSTANDARD2_0
+        /// <inheritdoc/>
+        public override async ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
+        {
+            this.StartWriteOperation();
+            await this.inner.WriteAsync(buffer, cancellationToken).ConfigureAwait(false);
+            this.ReportProgress(buffer.Length);
+        }
+#endif
 
         /// <inheritdoc/>
         public override void WriteByte(byte value)
@@ -170,7 +198,21 @@ namespace IronPigeon
         private void ReportProgress(int bytesJustRead)
         {
             this.BytesTransferred += bytesJustRead;
+            if (this.LengthLimit.HasValue && this.BytesTransferred > this.LengthLimit.Value)
+            {
+                throw new StreamTooLongException();
+            }
+
             this.progress?.Report(this.BytesTransferred);
+        }
+
+        /// <summary>
+        /// The exception thrown when the stream exceeds <see cref="LengthLimit"/>.
+        /// </summary>
+#pragma warning disable CA1032 // Implement standard exception constructors
+        internal class StreamTooLongException : IOException
+#pragma warning restore CA1032 // Implement standard exception constructors
+        {
         }
     }
 }
