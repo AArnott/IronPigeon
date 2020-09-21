@@ -2,23 +2,18 @@
 // Licensed under the Microsoft Reciprocal License (Ms-RL) license. See LICENSE file in the project root for full license information.
 
 using System;
-using System.Buffers;
-using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Net.Http;
-using System.Net.Mime;
-using System.Text;
 using System.Threading.Tasks;
-using IronPigeon;
 using IronPigeon.Providers;
 using IronPigeon.Relay;
 using IronPigeon.Relay.Tests;
-using MessagePack;
+using Microsoft.Extensions.Configuration;
 using Xunit;
 using Xunit.Abstractions;
 
-public class BlobControllerTests : TestBase, IClassFixture<RelayAppFactory>
+public class BlobControllerTests : TestBase, IClassFixture<RelayAppFactory>, IAsyncLifetime
 {
     private readonly RelayAppFactory factory;
     private readonly HttpClient httpClient;
@@ -40,6 +35,18 @@ public class BlobControllerTests : TestBase, IClassFixture<RelayAppFactory>
         Misleading,
     }
 
+    public async Task InitializeAsync()
+    {
+        IConfigurationBuilder cb = new ConfigurationBuilder()
+            .SetBasePath(Directory.GetCurrentDirectory())
+            .AddJsonFile("appsettings.json");
+        var az = new AzureStorage(cb.Build());
+        var azureBlobStorage = new AzureBlobStorage(az.PayloadBlobsContainer);
+        await azureBlobStorage.CreateContainerIfNotExistAsync(this.TimeoutToken);
+    }
+
+    public Task DisposeAsync() => Task.CompletedTask;
+
     [Fact]
     public async Task LifetimeInMinutes_Omitted()
     {
@@ -55,7 +62,7 @@ public class BlobControllerTests : TestBase, IClassFixture<RelayAppFactory>
     public Task ModerateBlobWithShortExpiration_IsAccepted(LengthHeader header) => this.UploadAsync(header, 30 * 1024, TimeSpan.FromDays(3), HttpStatusCode.Created);
 
     [Theory, PairwiseData]
-    public Task ModerateBlobWithLongExpiration_IsAccepted(LengthHeader header) => this.UploadAsync(header, 30 * 1024, TimeSpan.FromDays(5 * 365), HttpStatusCode.PaymentRequired);
+    public Task ModerateBlobWithLongExpiration_IsRejected(LengthHeader header) => this.UploadAsync(header, 30 * 1024, TimeSpan.FromDays(5 * 365), HttpStatusCode.PaymentRequired);
 
     [Theory, PairwiseData]
     public Task LargeBlobWithShortExpiration_IsRejected(LengthHeader header) => this.UploadAsync(header, 5 * 1024 * 1024, TimeSpan.FromDays(1), HttpStatusCode.RequestEntityTooLarge);

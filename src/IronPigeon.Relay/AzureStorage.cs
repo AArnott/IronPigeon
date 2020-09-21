@@ -32,27 +32,27 @@ namespace IronPigeon.Relay
         /// <summary>
         /// Gets the table storage account.
         /// </summary>
-        internal CloudStorageAccount TableCloudStorageAccount { get; }
+        public CloudStorageAccount TableCloudStorageAccount { get; }
 
         /// <summary>
         /// Gets an Azure Table client.
         /// </summary>
-        internal CloudTableClient TableClient { get; }
+        public CloudTableClient TableClient { get; }
 
         /// <summary>
         /// Gets the inboxes table.
         /// </summary>
-        internal CloudTable InboxTable { get; }
+        public CloudTable InboxTable { get; }
 
         /// <summary>
         /// Gets the blob container to use for inbox items.
         /// </summary>
-        internal BlobContainerClient InboxItemContainer { get; }
+        public BlobContainerClient InboxItemContainer { get; }
 
         /// <summary>
         /// Gets the blob container to use for payloads.
         /// </summary>
-        internal BlobContainerClient PayloadBlobsContainer { get; }
+        public BlobContainerClient PayloadBlobsContainer { get; }
 
         /// <summary>
         /// Retrieves a mailbox with a given name.
