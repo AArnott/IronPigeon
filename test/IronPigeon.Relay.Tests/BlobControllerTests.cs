@@ -37,12 +37,7 @@ public class BlobControllerTests : TestBase, IClassFixture<RelayAppFactory>, IAs
 
     public async Task InitializeAsync()
     {
-        IConfigurationBuilder cb = new ConfigurationBuilder()
-            .SetBasePath(Directory.GetCurrentDirectory())
-            .AddJsonFile("appsettings.json");
-        var az = new AzureStorage(cb.Build());
-        var azureBlobStorage = new AzureBlobStorage(az.PayloadBlobsContainer);
-        await azureBlobStorage.CreateContainerIfNotExistAsync(this.TimeoutToken);
+        await Startup.InitializeDatabasesAsync(this.TimeoutToken);
     }
 
     public Task DisposeAsync() => Task.CompletedTask;

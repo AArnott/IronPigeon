@@ -5,8 +5,11 @@ namespace IronPigeon.Relay
 {
     using System;
     using System.Collections.Generic;
+    using System.IO;
     using System.Linq;
+    using System.Threading;
     using System.Threading.Tasks;
+    using IronPigeon.Providers;
     using Microsoft.AspNetCore.Builder;
     using Microsoft.AspNetCore.Hosting;
     using Microsoft.AspNetCore.HttpsPolicy;
@@ -26,6 +29,20 @@ namespace IronPigeon.Relay
         }
 
         public IConfiguration Configuration { get; }
+
+        public static async Task InitializeDatabasesAsync(CancellationToken cancellationToken)
+        {
+            IConfigurationBuilder cb = new ConfigurationBuilder()
+               .SetBasePath(Directory.GetCurrentDirectory())
+               .AddJsonFile("appsettings.json");
+            var azureStorage = new AzureStorage(cb.Build());
+
+            await azureStorage.InboxTable.CreateIfNotExistsAsync(cancellationToken);
+
+            // Go ahead and make sure our blob containers exist too, since uploading blobs to a non-existent container just fails and cannot retry.
+            await new AzureBlobStorage(azureStorage.PayloadBlobsContainer).CreateContainerIfNotExistAsync(cancellationToken);
+            await new AzureBlobStorage(azureStorage.InboxItemContainer).CreateContainerIfNotExistAsync(cancellationToken);
+        }
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)

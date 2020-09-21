@@ -83,11 +83,7 @@ retry:
                     return this.StatusCode(StatusCodes.Status503ServiceUnavailable);
                 }
 
-                await this.azureStorage.InboxTable.CreateIfNotExistsAsync(cancellationToken);
-
-                // Go ahead and make sure our blob containers exist too, since uploading blobs to a non-existent container just fails and cannot retry.
-                await new AzureBlobStorage(this.azureStorage.PayloadBlobsContainer).CreateContainerIfNotExistAsync(cancellationToken);
-                await new AzureBlobStorage(this.azureStorage.InboxItemContainer).CreateContainerIfNotExistAsync(cancellationToken);
+                await Startup.InitializeDatabasesAsync(CancellationToken.None);
 
                 retriedOnceAlready = true;
                 goto retry;

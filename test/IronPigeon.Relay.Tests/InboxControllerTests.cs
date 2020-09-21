@@ -18,7 +18,7 @@ using MessagePack;
 using Xunit;
 using Xunit.Abstractions;
 
-public class InboxControllerTests : TestBase, IClassFixture<RelayAppFactory>
+public class InboxControllerTests : TestBase, IClassFixture<RelayAppFactory>, IAsyncLifetime
 {
     private const string TestMessageContent = "Test";
     private readonly RelayAppFactory factory;
@@ -37,6 +37,13 @@ public class InboxControllerTests : TestBase, IClassFixture<RelayAppFactory>
             BlobPostUrl = new Uri("blob", UriKind.Relative),
         };
     }
+
+    public async Task InitializeAsync()
+    {
+        await Startup.InitializeDatabasesAsync(this.TimeoutToken);
+    }
+
+    public Task DisposeAsync() => Task.CompletedTask;
 
     [Fact]
     public async Task HttpDenied()

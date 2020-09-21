@@ -13,6 +13,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IronPigeon.Dart", "src\Iron
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{9EA1EF35-0DDC-40DD-88B6-DC95CC839919}"
 	ProjectSection(SolutionItems) = preProject
+		azure-pipelines.yml = azure-pipelines.yml
 		Directory.Build.props = Directory.Build.props
 		Directory.Build.targets = Directory.Build.targets
 		global.json = global.json
@@ -25,9 +26,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WpfChatroom", "src\WpfChatr
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IronPigeon.Tests", "test\IronPigeon.Tests\IronPigeon.Tests.csproj", "{6995C553-7AE1-490E-BCF2-406E105EDEF8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IronPigeon.Relay", "src\IronPigeon.Relay\IronPigeon.Relay.csproj", "{ABD9D7E0-665C-44D8-930D-14B5785F832F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IronPigeon.Relay", "src\IronPigeon.Relay\IronPigeon.Relay.csproj", "{ABD9D7E0-665C-44D8-930D-14B5785F832F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IronPigeon.Relay.Tests", "test\IronPigeon.Relay.Tests\IronPigeon.Relay.Tests.csproj", "{B9CDFDA2-C9A9-425D-B53B-E6E188CC996C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IronPigeon.Relay.Tests", "test\IronPigeon.Relay.Tests\IronPigeon.Relay.Tests.csproj", "{B9CDFDA2-C9A9-425D-B53B-E6E188CC996C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
