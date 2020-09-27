@@ -6,7 +6,7 @@ namespace IronPigeon.Providers
     using System;
     using System.IO;
     using System.Net.Http;
-    using System.Runtime.Serialization.Json;
+    using System.Net.Http.Headers;
     using System.Threading;
     using System.Threading.Tasks;
     using IronPigeon.Relay;
@@ -43,16 +43,19 @@ namespace IronPigeon.Providers
         public HttpClient HttpClient { get; }
 
         /// <inheritdoc/>
-        public async Task<Uri> UploadMessageAsync(Stream content, DateTime expirationUtc, IProgress<long>? bytesCopiedProgress = null, CancellationToken cancellationToken = default)
+        public async Task<Uri> UploadMessageAsync(Stream content, DateTime expirationUtc, MediaTypeHeaderValue? contentType, IProgress<long>? bytesCopiedProgress = null, CancellationToken cancellationToken = default)
         {
             Requires.NotNull(content, nameof(content));
             Verify.Operation(this.BlobPostUrl is object, Strings.PropertyMustBeSetFirst, nameof(this.BlobPostUrl));
 
-            using var httpContent = new StreamContent(content.ReadStreamWithProgress(bytesCopiedProgress));
-            if (content.CanSeek)
+            using var httpContent = new StreamContent(content.ReadStreamWithProgress(bytesCopiedProgress))
             {
-                httpContent.Headers.ContentLength = content.Length;
-            }
+                Headers =
+                {
+                    ContentType = contentType,
+                    ContentLength = content.CanSeek ? (long?)content.Length : null,
+                },
+            };
 
             int lifetime = expirationUtc == DateTime.MaxValue ? int.MaxValue : (int)(expirationUtc - DateTime.UtcNow).TotalMinutes;
             HttpResponseMessage? response = await this.HttpClient.PostAsync(this.BlobPostUrl.OriginalString + "?lifetimeInMinutes=" + lifetime, httpContent, cancellationToken).ConfigureAwait(false);

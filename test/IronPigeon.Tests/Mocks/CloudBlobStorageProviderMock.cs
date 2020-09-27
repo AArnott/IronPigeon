@@ -8,6 +8,7 @@ namespace IronPigeon.Tests.Mocks
     using System.IO;
     using System.Linq;
     using System.Net.Http;
+    using System.Net.Http.Headers;
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
@@ -29,7 +30,7 @@ namespace IronPigeon.Tests.Mocks
             get { return this.blobs; }
         }
 
-        public async Task<Uri> UploadMessageAsync(Stream encryptedMessageContent, DateTime expiration, IProgress<long>? bytesCopiedProgress, CancellationToken cancellationToken)
+        public async Task<Uri> UploadMessageAsync(Stream encryptedMessageContent, DateTime expiration, MediaTypeHeaderValue? contentType, IProgress<long>? bytesCopiedProgress, CancellationToken cancellationToken)
         {
             using var bufferStream = new MemoryStream();
             await encryptedMessageContent.CopyToAsync(bufferStream, 4096, cancellationToken);

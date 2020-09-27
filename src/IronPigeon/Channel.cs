@@ -172,7 +172,7 @@ namespace IronPigeon
             using ICryptoTransform encryptor = WinRTCrypto.CryptographicEngine.CreateEncryptor(encryptionKey, iv);
             using CryptoStream hashingEncryptingStream = CryptoStream.ReadFrom(payload, encryptor, hasher);
 
-            Uri blobUri = await this.CloudBlobStorage.UploadMessageAsync(hashingEncryptingStream, expiresUtc, progress.Adapt(payload.CanSeek ? (long?)payload.Length : null), cancellationToken: cancellationToken).ConfigureAwait(false);
+            Uri blobUri = await this.CloudBlobStorage.UploadMessageAsync(hashingEncryptingStream, expiresUtc, bytesCopiedProgress: progress.Adapt(payload.CanSeek ? (long?)payload.Length : null), cancellationToken: cancellationToken).ConfigureAwait(false);
             byte[] hash = hasher.GetValueAndReset();
             return new PayloadReference(blobUri, contentType, hash, cryptoSettings.HashAlgorithm.GetHashAlgorithmName(), encryptionInputs, expiresUtc);
         }

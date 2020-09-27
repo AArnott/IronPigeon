@@ -5,6 +5,7 @@ namespace IronPigeon
 {
     using System;
     using System.Diagnostics;
+    using System.Net.Http.Headers;
     using System.Runtime.Serialization;
     using MessagePack;
     using Microsoft;
@@ -19,7 +20,7 @@ namespace IronPigeon
         /// <summary>
         /// The Content-Type that identifies a blob containing a serialized instance of this type.
         /// </summary>
-        public const string ContentType = "ironpigeon/addressbookentry";
+        public static readonly MediaTypeHeaderValue ContentType = new MediaTypeHeaderValue("ironpigeon/addressbookentry");
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AddressBookEntry"/> class.
