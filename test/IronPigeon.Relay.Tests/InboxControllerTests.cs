@@ -3,7 +3,6 @@
 
 using System;
 using System.Buffers;
-using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Net.Http;
@@ -13,8 +12,6 @@ using System.Threading.Tasks;
 using IronPigeon;
 using IronPigeon.Providers;
 using IronPigeon.Relay;
-using IronPigeon.Relay.Tests;
-using MessagePack;
 using Xunit;
 using Xunit.Abstractions;
 

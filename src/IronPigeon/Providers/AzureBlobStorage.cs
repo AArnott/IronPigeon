@@ -7,9 +7,8 @@ namespace IronPigeon.Providers
     using System.Collections.Generic;
     using System.Globalization;
     using System.IO;
-    using System.Linq;
+    using System.Net.Http.Headers;
     using System.Threading;
-    using System.Threading.Channels;
     using System.Threading.Tasks;
     using System.Threading.Tasks.Dataflow;
     using Azure.Storage.Blobs;
@@ -57,7 +56,7 @@ namespace IronPigeon.Providers
         public string Directory { get; }
 
         /// <inheritdoc/>
-        public async Task<Uri> UploadMessageAsync(Stream content, DateTime expirationUtc, IProgress<long>? bytesCopiedProgress = null, CancellationToken cancellationToken = default)
+        public async Task<Uri> UploadMessageAsync(Stream content, DateTime expirationUtc, MediaTypeHeaderValue? contentType = null, IProgress<long>? bytesCopiedProgress = null, CancellationToken cancellationToken = default)
         {
             Requires.NotNull(content, nameof(content));
             Requires.Range(expirationUtc > DateTime.UtcNow, "expirationUtc");
@@ -83,6 +82,10 @@ namespace IronPigeon.Providers
             {
                 Metadata = metadata,
                 ProgressHandler = bytesCopiedProgress,
+                HttpHeaders = new BlobHttpHeaders
+                {
+                    ContentType = contentType?.ToString(),
+                },
             };
 
             await blobClient.UploadAsync(content, uploadOptions, cancellationToken).ConfigureAwait(false);

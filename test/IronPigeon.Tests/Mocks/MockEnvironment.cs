@@ -1,61 +1,54 @@
 ﻿// Copyright (c) Andrew Arnott. All rights reserved.
 // Licensed under the Microsoft Reciprocal License (Ms-RL) license. See LICENSE file in the project root for full license information.
 
-namespace IronPigeon.Tests.Mocks
+using System;
+using System.Net.Http;
+using System.Threading;
+using System.Threading.Tasks;
+using IronPigeon;
+
+internal class MockEnvironment : IDisposable
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Net.Http;
-    using System.Text;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using IronPigeon;
-    using IronPigeon.Tests.Mocks;
+    private readonly CryptoSettings defaultCryptoSettings = CryptoSettings.Testing;
+    private readonly HttpMessageHandlerMock httpHandler = new HttpMessageHandlerMock();
 
-    internal class MockEnvironment : IDisposable
+    internal MockEnvironment()
     {
-        private readonly CryptoSettings defaultCryptoSettings = CryptoSettings.Testing;
-        private readonly HttpMessageHandlerMock httpHandler = new HttpMessageHandlerMock();
+        this.CloudStorage.AddHttpHandler(this.httpHandler);
+        this.InboxServer.Register(this.httpHandler);
+        this.HttpClient = new HttpClient(this.httpHandler);
+    }
 
-        internal MockEnvironment()
-        {
-            this.CloudStorage.AddHttpHandler(this.httpHandler);
-            this.InboxServer.Register(this.httpHandler);
-            this.HttpClient = new HttpClient(this.httpHandler);
-        }
+    internal CloudBlobStorageProviderMock CloudStorage { get; } = new CloudBlobStorageProviderMock();
 
-        internal CloudBlobStorageProviderMock CloudStorage { get; } = new CloudBlobStorageProviderMock();
+    internal InboxHttpHandlerMock InboxServer { get; } = new InboxHttpHandlerMock();
 
-        internal InboxHttpHandlerMock InboxServer { get; } = new InboxHttpHandlerMock();
+    internal HttpClient HttpClient { get; }
 
-        internal HttpClient HttpClient { get; }
+    public void Dispose()
+    {
+        this.HttpClient.Dispose();
+        this.httpHandler.Dispose();
+    }
 
-        public void Dispose()
-        {
-            this.HttpClient.Dispose();
-            this.httpHandler.Dispose();
-        }
+    internal HttpClient CreateHttpClient() => new HttpClient(this.httpHandler);
 
-        internal HttpClient CreateHttpClient() => new HttpClient(this.httpHandler);
+    internal Task<OwnEndpoint> CreateOwnEndpointAsync(CancellationToken cancellationToken) => this.CreateOwnEndpointAsync(this.defaultCryptoSettings, cancellationToken);
 
-        internal Task<OwnEndpoint> CreateOwnEndpointAsync(CancellationToken cancellationToken) => this.CreateOwnEndpointAsync(this.defaultCryptoSettings, cancellationToken);
-
-        internal async Task<OwnEndpoint> CreateOwnEndpointAsync(CryptoSettings cryptoSettings, CancellationToken cancellationToken)
-        {
-            return await OwnEndpoint.CreateAsync(cryptoSettings, this.InboxServer, cancellationToken);
-        }
+    internal async Task<OwnEndpoint> CreateOwnEndpointAsync(CryptoSettings cryptoSettings, CancellationToken cancellationToken)
+    {
+        return await OwnEndpoint.CreateAsync(cryptoSettings, this.InboxServer, cancellationToken);
+    }
 
 #pragma warning disable CA2000 // Dispose objects before losing scope
-        internal Channel CreateChannel(OwnEndpoint endpoint, CryptoSettings? cryptoSettings = null) => new Channel(this.CreateHttpClient(), endpoint, this.CloudStorage, cryptoSettings ?? this.defaultCryptoSettings);
+    internal Channel CreateChannel(OwnEndpoint endpoint, CryptoSettings? cryptoSettings = null) => new Channel(this.CreateHttpClient(), endpoint, this.CloudStorage, cryptoSettings ?? this.defaultCryptoSettings);
 #pragma warning restore CA2000 // Dispose objects before losing scope
 
-        internal Task<Channel> CreateChannelAsync(CancellationToken cancellationToken) => this.CreateChannelAsync(this.defaultCryptoSettings, cancellationToken);
+    internal Task<Channel> CreateChannelAsync(CancellationToken cancellationToken) => this.CreateChannelAsync(this.defaultCryptoSettings, cancellationToken);
 
-        internal async Task<Channel> CreateChannelAsync(CryptoSettings cryptoSettings, CancellationToken cancellationToken)
-        {
-            OwnEndpoint endpoint = await this.CreateOwnEndpointAsync(cryptoSettings, cancellationToken);
-            return this.CreateChannel(endpoint);
-        }
+    internal async Task<Channel> CreateChannelAsync(CryptoSettings cryptoSettings, CancellationToken cancellationToken)
+    {
+        OwnEndpoint endpoint = await this.CreateOwnEndpointAsync(cryptoSettings, cancellationToken);
+        return this.CreateChannel(endpoint);
     }
 }
