@@ -1,12 +1,11 @@
 ﻿// Copyright (c) Andrew Arnott. All rights reserved.
 // Licensed under the Microsoft Reciprocal License (Ms-RL) license. See LICENSE file in the project root for full license information.
 
-namespace IronPigeon.Tests.Providers
+namespace Providers
 {
-    using System;
     using System.Net.Http;
+    using IronPigeon;
     using IronPigeon.Providers;
-    using IronPigeon.Tests.Mocks;
     using Xunit;
 
     public class TwitterAddressBookTests
@@ -16,7 +15,7 @@ namespace IronPigeon.Tests.Providers
 
         public TwitterAddressBookTests()
         {
-            this.messageRecorder = Mocks.HttpMessageHandlerRecorder.CreatePlayback(typeof(TwitterAddressBookTests));
+            this.messageRecorder = HttpMessageHandlerRecorder.CreatePlayback(typeof(TwitterAddressBookTests));
 #pragma warning disable CA2000 // Dispose objects before losing scope
             this.twitter = new TwitterAddressBook(new HttpClient(this.messageRecorder));
 #pragma warning restore CA2000 // Dispose objects before losing scope

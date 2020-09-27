@@ -2,17 +2,13 @@
 // Licensed under the Microsoft Reciprocal License (Ms-RL) license. See LICENSE file in the project root for full license information.
 
 using System;
-using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using IronPigeon;
-using IronPigeon.Providers;
 using IronPigeon.Relay;
 using IronPigeon.Relay.Controllers;
-using IronPigeon.Relay.Tests;
 using MessagePack;
-using Microsoft.Extensions.Configuration;
 using Xunit;
 using Xunit.Abstractions;
 
