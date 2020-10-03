@@ -48,12 +48,6 @@ if (!$NoPrerequisites) {
         Exit 3010
     }
 
-    & "$PSScriptRoot\tools\Install-StorageEmulator.ps1"
-    if ($LASTEXITCODE -ne 0 -and $LASTEXITCODE -ne -5) { # -5 means it's already running.
-        Write-Host "Aborting due to storage emulator failure (exit code $LASTEXITCODE)."
-        exit $LASTEXITCODE
-    }
-
     # The procdump tool and env var is required for dotnet test to collect hang/crash dumps of tests.
     # But it only works on Windows.
     if ($env:OS -eq 'Windows_NT') {
@@ -74,6 +68,14 @@ try {
         dotnet restore
         if ($lastexitcode -ne 0) {
             throw "Failure while restoring packages."
+        }
+    }
+
+    if (!$NoRestore -and $PSCmdlet.ShouldProcess("yarn", "install")) {
+        Write-Host "Restoring NPM packages" -ForegroundColor $HeaderColor
+        yarn
+        if ($lastexitcode -ne 0) {
+            throw "Failure while restoring NPM packages."
         }
     }
 

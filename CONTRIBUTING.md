@@ -17,7 +17,10 @@ with any additional questions or comments.
 ## Prerequisites
 
 1. [SQL Server LocalDB](https://docs.microsoft.com/en-us/sql/database-engine/configure-windows/sql-server-express-localdb?view=sql-server-ver15). Manual installation required. This may already be included in your VS installation.
-1. [Azure Storage Emulator](https://docs.microsoft.com/en-us/azure/storage/common/storage-use-emulator). `init.ps1` can install this.
+1. [Node.js](https://nodejs.org/en/) for running Azurite. `init.ps1` will *not* install this.
+1. [Azurite](https://docs.microsoft.com/en-us/azure/storage/common/storage-use-azurite) or
+   the [Azure Storage Emulator](https://docs.microsoft.com/en-us/azure/storage/common/storage-use-emulator).
+   `init.ps1` installs Azurite using `npm`.
 1. [.NET Core SDK](https://get.dot.net/) `init.ps1` can install this.
 
    You should install the version specified in `global.json` or a later version within
@@ -35,7 +38,7 @@ Alternatively, run `init.ps1 -InstallLocality Machine` (which may require elevat
 
 The easiest way to restore packages may be to run `init.ps1` which automatically authenticates
 to the feeds that packages for this repo come from, if any.
-`dotnet restore` or `nuget restore` also work but may require extra steps to authenticate to any applicable feeds.
+`dotnet restore` and `yarn` manually may also be used.
 
 ## Building
 
@@ -45,8 +48,8 @@ Building, testing, and packing this repository can be done by using Visual Studi
 
 ## Testing
 
-Our unit tests requires that the Azure Storage Emulator be started first.
+Our unit tests requires that Azurite (or the Azure Storage Emulator) be started first.
 After installing the emulator (see Prerequisites) it can be started from the Windows Start menu.
-Running the `init` script in the repo root also starts the Azure Storage Emulator.
+Use the `tools/Emulators.ps1` script to run the Azure emulators.
 
 [pwsh]: https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-6

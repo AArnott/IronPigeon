@@ -1,0 +1,11 @@
+{
+  "name": "ironpigeon",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "https://github.com/AArnott/IronPigeon.git",
+  "author": "Andrew Arnott <andrewarnott@gmail.com>",
+  "license": "MIT",
+  "devDependencies": {
+    "azurite": "2.6.5"
+  }
+}
