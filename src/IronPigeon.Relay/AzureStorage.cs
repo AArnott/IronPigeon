@@ -16,18 +16,24 @@ namespace IronPigeon.Relay
     {
         public AzureStorage(IConfiguration configuration)
         {
-            this.ConnectionString = configuration.GetValue<string>("AzureStorageConnectionString") ?? throw new InvalidOperationException("Missing connection string in configuration.");
-            this.TableCloudStorageAccount = CloudStorageAccount.Parse(this.ConnectionString);
+            this.AzureStorageConnectionString = configuration.GetValue<string>("AzureStorageConnectionString") ?? throw new InvalidOperationException("Missing AzureStorageConnectionString in configuration.");
+            this.CosmosDBConnectionString = configuration.GetValue<string>("CosmosDBConnectionString") ?? throw new InvalidOperationException("Missing CosmosDBConnectionString in configuration.");
+            this.TableCloudStorageAccount = CloudStorageAccount.Parse(this.CosmosDBConnectionString);
             this.TableClient = this.TableCloudStorageAccount.CreateCloudTableClient();
             this.InboxTable = this.TableClient.GetTableReference("Inboxes");
-            this.InboxItemContainer = new BlobContainerClient(this.ConnectionString, "inbox-items");
-            this.PayloadBlobsContainer = new BlobContainerClient(this.ConnectionString, "payloads");
+            this.InboxItemContainer = new BlobContainerClient(this.AzureStorageConnectionString, "inbox-items");
+            this.PayloadBlobsContainer = new BlobContainerClient(this.AzureStorageConnectionString, "payloads");
         }
 
         /// <summary>
         /// Gets the Azure Storage account connection string.
         /// </summary>
-        public string ConnectionString { get; }
+        public string AzureStorageConnectionString { get; }
+
+        /// <summary>
+        /// Gets the Cosmos DB account connection string.
+        /// </summary>
+        public string CosmosDBConnectionString { get; }
 
         /// <summary>
         /// Gets the table storage account.

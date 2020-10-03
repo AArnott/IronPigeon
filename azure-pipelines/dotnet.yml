@@ -6,7 +6,7 @@ steps:
 - script: dotnet pack --no-build -c $(BuildConfiguration) /v:m /bl:"$(Build.ArtifactStagingDirectory)/build_logs/pack.binlog"
   displayName: dotnet pack
 
-- bash: ./tools/Emulators.ps1 & # Use bash so we can fork off a process and proceed with the pipeline.
+- pwsh: ./tools/Emulators.ps1
   displayName: Start storage emulators
 
 - task: DotNetCoreCLI@2
