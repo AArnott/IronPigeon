@@ -4,6 +4,8 @@ parameters:
 jobs:
 - job: Windows
   pool: ${{ parameters.windowsPool }}
+  variables:
+    BuildPlatform: Any CPU
   steps:
   - checkout: self
     clean: true
