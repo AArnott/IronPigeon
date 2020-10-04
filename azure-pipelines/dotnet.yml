@@ -13,6 +13,8 @@ steps:
     arguments: --no-build -c $(BuildConfiguration) -f net472 --filter "TestCategory!=FailsInCloudTest" -v n /p:CollectCoverage=true --settings "$(Build.Repository.LocalPath)/azure-pipelines/$(Agent.OS).runsettings"
     workingDirectory: test/IronPigeon.Tests
     testRunTitle: net472-$(Agent.JobName)
+  env:
+    CosmosDBConnectionString: $(CosmosDBConnectionString_NonWindows)
   condition: and(succeeded(), eq(variables['Agent.OS'], 'Windows_NT'))
 
 - task: DotNetCoreCLI@2
