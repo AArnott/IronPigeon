@@ -26,7 +26,9 @@ if (Test-Path "$env:ProgramW6432\Azure Cosmos DB Emulator\PSModules\Microsoft.Az
     Write-Error "Azure CosmosDB Emulator not found."
 }
 
+Write-Host "Starting Cosmos DB Emulator..."
 Start-CosmosDbEmulator
 
+Write-Host "Starting Azurite in another window..."
 if (!(Test-Path $EmulatorStoragePath)) { New-Item -ItemType Directory -Path $EmulatorStoragePath | Out-Null }
 cmd /c start yarn run azurite-blob -l $EmulatorStoragePath -d $EmulatorLogPath

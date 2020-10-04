@@ -3,10 +3,10 @@ steps:
   artifact: coverageResults-Windows
   displayName: Download Windows code coverage results
   continueOnError: true
-# - download: current
-#   artifact: coverageResults-Linux
-#   displayName: Download Linux code coverage results
-#   continueOnError: true
+- download: current
+  artifact: coverageResults-Linux
+  displayName: Download Linux code coverage results
+  continueOnError: true
 # - download: current
 #   artifact: coverageResults-macOS
 #   displayName: Download macOS code coverage results
