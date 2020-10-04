@@ -23,7 +23,7 @@ jobs:
   pool:
     vmImage: Ubuntu 18.04
   variables:
-    CosmosDBConnectionString_NonWindows: $(CosmosDBConnectionString)
+    CosmosDBConnectionString: $(CosmosDBConnectionString)
     BuildPlatform: Non_Windows
   steps:
   - checkout: self
@@ -38,7 +38,7 @@ jobs:
   pool:
     vmImage: macOS-10.15
   variables:
-    CosmosDBConnectionString_NonWindows: $(CosmosDBConnectionString)
+    CosmosDBConnectionString: $(CosmosDBConnectionString)
     BuildPlatform: Non_Windows
   steps:
   - checkout: self
