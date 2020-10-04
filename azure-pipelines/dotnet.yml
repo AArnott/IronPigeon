@@ -6,9 +6,6 @@ steps:
 - script: dotnet pack --no-build -c $(BuildConfiguration) /v:m /bl:"$(Build.ArtifactStagingDirectory)/build_logs/pack.binlog"
   displayName: dotnet pack
 
-- pwsh: ./tools/Emulators.ps1
-  displayName: Start storage emulators
-
 - task: DotNetCoreCLI@2
   displayName: dotnet test -f net472
   inputs:

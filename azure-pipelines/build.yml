@@ -12,6 +12,9 @@ jobs:
   - powershell: '& (./azure-pipelines/Get-nbgv.ps1) cloud'
     displayName: Set build number
 
+  - pwsh: ./tools/Emulators.ps1
+    displayName: Start storage emulators
+
   - template: dotnet.yml
 
 - job: Linux
