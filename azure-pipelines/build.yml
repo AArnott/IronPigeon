@@ -31,6 +31,9 @@ jobs:
   - bash: ./tools/Emulators.sh &
     displayName: Start storage emulators
   - template: dotnet.yml
+    parameters:
+      test_secrets:
+        CosmosDBConnectionString: $(CosmosDBConnectionString)
 
 - job: macOS
   condition: false
@@ -45,6 +48,9 @@ jobs:
   - bash: ./tools/Emulators.sh &
     displayName: Start storage emulators
   - template: dotnet.yml
+    parameters:
+      test_secrets:
+        CosmosDBConnectionString: $(CosmosDBConnectionString)
 
 - job: WrapUp
   dependsOn:
