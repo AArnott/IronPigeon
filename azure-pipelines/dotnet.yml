@@ -15,7 +15,7 @@ steps:
   displayName: dotnet test -f net472
   inputs:
     command: test
-    arguments: --no-build -c $(BuildConfiguration) -p:Platform="$(BuildPlatform)" -f net472 --filter "TestCategory!=FailsInCloudTest" -v n /p:CollectCoverage=true --settings "$(Build.Repository.LocalPath)/azure-pipelines/$(Agent.OS).runsettings"
+    arguments: -c $(BuildConfiguration) -p:Platform="$(BuildPlatform)" -f net472 --filter "TestCategory!=FailsInCloudTest" -v n /p:CollectCoverage=true --settings "$(Build.Repository.LocalPath)/azure-pipelines/$(Agent.OS).runsettings"
     workingDirectory: test/IronPigeon.Tests
     testRunTitle: net472-$(Agent.JobName)
   condition: and(succeeded(), eq(variables['Agent.OS'], 'Windows_NT'))
@@ -24,7 +24,7 @@ steps:
   displayName: dotnet test -f netcoreapp2.1
   inputs:
     command: test
-    arguments: --no-build -c $(BuildConfiguration) -p:Platform="$(BuildPlatform)" -f netcoreapp2.1 --filter "TestCategory!=FailsInCloudTest" -v n /p:CollectCoverage=true --settings "$(Build.Repository.LocalPath)/azure-pipelines/$(Agent.OS).runsettings"
+    arguments: -c $(BuildConfiguration) -p:Platform="$(BuildPlatform)" -f netcoreapp2.1 --filter "TestCategory!=FailsInCloudTest" -v n /p:CollectCoverage=true --settings "$(Build.Repository.LocalPath)/azure-pipelines/$(Agent.OS).runsettings"
     workingDirectory: test/IronPigeon.Tests
     testRunTitle: netcoreapp2.1-$(Agent.JobName)
   env:
@@ -34,7 +34,7 @@ steps:
   displayName: dotnet test -f netcoreapp3.1
   inputs:
     command: test
-    arguments: --no-build -c $(BuildConfiguration) -p:Platform="$(BuildPlatform)" -f netcoreapp3.1 --filter "TestCategory!=FailsInCloudTest" -v n /p:CollectCoverage=true --settings "$(Build.Repository.LocalPath)/azure-pipelines/$(Agent.OS).runsettings"
+    arguments: -c $(BuildConfiguration) -p:Platform="$(BuildPlatform)" -f netcoreapp3.1 --filter "TestCategory!=FailsInCloudTest" -v n /p:CollectCoverage=true --settings "$(Build.Repository.LocalPath)/azure-pipelines/$(Agent.OS).runsettings"
     testRunTitle: netcoreapp3.1-$(Agent.JobName)
   env:
     ${{ parameters.test_secrets }}
