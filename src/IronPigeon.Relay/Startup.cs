@@ -34,7 +34,8 @@ namespace IronPigeon.Relay
         {
             IConfigurationBuilder cb = new ConfigurationBuilder()
                .SetBasePath(Directory.GetCurrentDirectory())
-               .AddJsonFile("appsettings.json");
+               .AddJsonFile("appsettings.json")
+               .AddEnvironmentVariables();
             var azureStorage = new AzureStorage(cb.Build());
 
             await azureStorage.InboxTable.CreateIfNotExistsAsync(cancellationToken);

@@ -48,7 +48,11 @@ if (!$NoPrerequisites) {
         Exit 3010
     }
 
-    & "$PSScriptRoot\tools\Install-AzureCosmosDBEmulator.ps1" -InstallLocality $InstallLocality
+    if ($IsLinux -or $IsMacOS) {
+        Write-Warning "Azure Cosmos DB Emulator is only compatible with Windows. Use an Azure Cosmos DB Table API account for local development instead. Set CosmosDBConnectionString to the connection string as an environment variable."
+    } else {
+        & "$PSScriptRoot\tools\Install-AzureCosmosDBEmulator.ps1" -InstallLocality $InstallLocality
+    }
 
     # The procdump tool and env var is required for dotnet test to collect hang/crash dumps of tests.
     # But it only works on Windows.

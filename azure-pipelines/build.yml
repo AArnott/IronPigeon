@@ -4,6 +4,8 @@ parameters:
 jobs:
 - job: Windows
   pool: ${{ parameters.windowsPool }}
+  variables:
+    BuildPlatform: Any CPU
   steps:
   - checkout: self
     clean: true
@@ -12,32 +14,48 @@ jobs:
   - powershell: '& (./azure-pipelines/Get-nbgv.ps1) cloud'
     displayName: Set build number
 
+  - pwsh: ./tools/Emulators.ps1
+    displayName: Start storage emulators
+
   - template: dotnet.yml
 
 - job: Linux
-  condition: false
   pool:
     vmImage: Ubuntu 18.04
+  variables:
+    BuildPlatform: Non_Windows
   steps:
   - checkout: self
     clean: true
   - template: install-dependencies.yml
+  - bash: ./tools/Emulators.sh &
+    displayName: Start storage emulators
   - template: dotnet.yml
+    parameters:
+      test_secrets:
+        CosmosDBConnectionString: $(CosmosDBConnectionString)
 
 - job: macOS
   condition: false
   pool:
     vmImage: macOS-10.15
+  variables:
+    BuildPlatform: Non_Windows
   steps:
   - checkout: self
     clean: true
   - template: install-dependencies.yml
+  - bash: ./tools/Emulators.sh &
+    displayName: Start storage emulators
   - template: dotnet.yml
+    parameters:
+      test_secrets:
+        CosmosDBConnectionString: $(CosmosDBConnectionString)
 
 - job: WrapUp
   dependsOn:
   - Windows
-#  - Linux
+  - Linux
 #  - macOS
   pool: ${{ parameters.windowsPool }}
   condition: succeededOrFailed()

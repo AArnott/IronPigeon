@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
@@ -43,10 +44,11 @@ public class EllipticCurveCryptoPatterns : TestBase
 #if NETCOREAPP2_1
     [Fact(Skip = "Fails on .NET Core 2.1 due to a crypto bug.")]
 #else
-    [Fact]
+    [SkippableFact]
 #endif
     public async Task ECAsymmetricSigningAndEncryption()
     {
+        Skip.IfNot(RuntimeInformation.IsOSPlatform(OSPlatform.Windows));
         using var bob = new ECDsaCng(521);
         var bobPublic = CngKey.Import(bob.Key.Export(CngKeyBlobFormat.EccPublicBlob), CngKeyBlobFormat.EccPublicBlob);
         using var alice = new ECDsaCng(521);
