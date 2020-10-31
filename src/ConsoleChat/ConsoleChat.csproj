@@ -5,6 +5,9 @@
     <UseWindowsForms>true</UseWindowsForms>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="..\WpfChatroom\EndpointAndAddressBookUri.cs" Link="EndpointAndAddressBookUri.cs" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\IronPigeon\IronPigeon.csproj" />
   </ItemGroup>
   <ItemGroup>

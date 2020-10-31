@@ -175,21 +175,5 @@ namespace WpfChatroom
                 Clipboard.SetText(this.PublicEndpointUrlTextBlock.Text);
             }
         }
-
-        [DataContract]
-        private class EndpointAndAddressBookUri
-        {
-            public EndpointAndAddressBookUri(Uri addressBookUri, OwnEndpoint endpoint)
-            {
-                this.AddressBookUri = addressBookUri;
-                this.Endpoint = endpoint;
-            }
-
-            [DataMember]
-            public Uri AddressBookUri { get; }
-
-            [DataMember]
-            public OwnEndpoint Endpoint { get; }
-        }
     }
 }

@@ -84,18 +84,17 @@ namespace ConsoleChat
             };
 
             CryptoSettings cryptoSettings = CryptoSettings.Recommended;
-            OwnEndpoint? endpoint = await CreateOrOpenEndpointAsync(cryptoSettings, relayService, cancellationToken);
-            if (endpoint is null)
+            EndpointAndAddressBookUri? saved = await CreateOrOpenEndpointAsync(cryptoSettings, relayService, relayService, cancellationToken);
+            if (saved is null)
             {
                 return;
             }
 
-            var channel = new Channel(httpClientChannel, endpoint, relayService, cryptoSettings);
+            var channel = new Channel(httpClientChannel, saved.Endpoint, relayService, cryptoSettings);
 
-            Uri shareableAddress = await endpoint.PublishAddressBookEntryAsync(relayService, cancellationToken);
-            Console.WriteLine("Public receiving endpoint: {0}", shareableAddress.AbsoluteUri);
+            Console.WriteLine("Public receiving endpoint: {0}", saved.AddressBookUri.AbsoluteUri);
 
-            Endpoint friend = await GetFriendEndpointAsync(httpClient, endpoint.PublicEndpoint);
+            Endpoint friend = await GetFriendEndpointAsync(httpClient, saved.Endpoint.PublicEndpoint);
 
             var program = new Program(channel);
 
@@ -185,7 +184,7 @@ namespace ConsoleChat
         /// Creates a new local endpoint to identify the user, or opens a previously created one.
         /// </summary>
         /// <returns>A task whose result is the local user's own endpoint.</returns>
-        private static async Task<OwnEndpoint?> CreateOrOpenEndpointAsync(CryptoSettings cryptoSettings, IEndpointInboxFactory inboxFactory, CancellationToken cancellationToken)
+        private static async Task<EndpointAndAddressBookUri?> CreateOrOpenEndpointAsync(CryptoSettings cryptoSettings, IEndpointInboxFactory inboxFactory, ICloudBlobStorageProvider blobProvider, CancellationToken cancellationToken)
         {
             switch (MessageBox.Show("Do you have an existing endpoint you want to open?", "Endpoint selection", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question))
             {
@@ -198,18 +197,22 @@ namespace ConsoleChat
                         }
 
                         using Stream? fileStream = openFile.OpenFile();
-                        return await MessagePackSerializer.DeserializeAsync<OwnEndpoint>(fileStream, Utilities.MessagePackSerializerOptions, cancellationToken);
+                        return await MessagePackSerializer.DeserializeAsync<EndpointAndAddressBookUri>(fileStream, Utilities.MessagePackSerializerOptions, cancellationToken);
                     }
 
                 case DialogResult.No:
                     {
                         Console.WriteLine("Creating new endpont. This could take a minute...");
                         OwnEndpoint? result = await OwnEndpoint.CreateAsync(cryptoSettings, inboxFactory, cancellationToken);
+
+                        Uri shareableAddress = await result.PublishAddressBookEntryAsync(blobProvider, cancellationToken);
+                        var saved = new EndpointAndAddressBookUri(shareableAddress, result);
+
                         string privateFilePath = Path.GetTempFileName();
                         using FileStream? stream = File.OpenWrite(privateFilePath);
-                        await MessagePackSerializer.SerializeAsync(stream, result, Utilities.MessagePackSerializerOptions, cancellationToken);
+                        await MessagePackSerializer.SerializeAsync(stream, saved, Utilities.MessagePackSerializerOptions, cancellationToken);
                         Console.WriteLine("Private receiving endpoint: \"{0}\"", privateFilePath);
-                        return result;
+                        return saved;
                     }
 
                 default:
