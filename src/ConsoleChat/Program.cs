@@ -11,6 +11,7 @@ namespace ConsoleChat
     using System.Threading;
     using System.Threading.Tasks;
     using System.Windows.Forms;
+    using System.Windows.Threading;
     using Azure.Storage.Blobs;
     using Azure.Storage.Blobs.Models;
     using IronPigeon;
@@ -19,6 +20,7 @@ namespace ConsoleChat
     using MessagePack;
     using Microsoft;
     using Microsoft.Azure.Cosmos.Table;
+    using Microsoft.VisualStudio.Threading;
 
     /// <summary>
     /// Simple console app that demonstrates the IronPigeon protocol in a live chat program.
@@ -53,7 +55,8 @@ namespace ConsoleChat
         /// <summary>
         /// Entrypoint to the console application.
         /// </summary>
-        private static Task Main()
+        [STAThread]
+        private static void Main()
         {
             using var cts = new CancellationTokenSource();
             Console.CancelKeyPress += (s, e) =>
@@ -63,7 +66,10 @@ namespace ConsoleChat
                 e.Cancel = true;
             };
 
-            return StartAsync(cts.Token);
+            var frame = new DispatcherFrame();
+            Task startTask = StartAsync(cts.Token);
+            startTask.ContinueWith(_ => frame.Continue = false, TaskScheduler.Default).Forget();
+            Dispatcher.PushFrame(frame);
         }
 
         private static async Task StartAsync(CancellationToken cancellationToken)
