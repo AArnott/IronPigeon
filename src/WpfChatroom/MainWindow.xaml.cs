@@ -10,7 +10,6 @@ namespace WpfChatroom
     using System.Linq;
     using System.Net.Http;
     using System.Reflection;
-    using System.Runtime.Serialization;
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
@@ -125,7 +124,7 @@ namespace WpfChatroom
                     if (result.HasValue && result.Value)
                     {
                         using Stream? fileStream = dialog.OpenFile();
-                        EndpointAndAddressBookUri fileFormat = await MessagePackSerializer.DeserializeAsync<EndpointAndAddressBookUri>(fileStream, MessagePackSerializerOptions.Standard);
+                        EndpointAndAddressBookUri fileFormat = await MessagePackSerializer.DeserializeAsync<EndpointAndAddressBookUri>(fileStream, Utilities.MessagePackSerializerOptions);
                         await this.SetEndpointAsync(fileFormat.Endpoint, fileFormat.AddressBookUri);
                     }
                 }
@@ -161,7 +160,9 @@ namespace WpfChatroom
 
         private Task SetEndpointAsync(OwnEndpoint endpoint, Uri addressBookEntry)
         {
-            this.PostalService = new PostalService(new Channel(this.HttpClient, endpoint, this.MessageRelayService, this.CryptoSettings));
+#pragma warning disable CA2000 // Dispose objects before losing scope
+            this.PostalService = new PostalService(new Channel(new HttpClient(), endpoint, this.MessageRelayService, this.CryptoSettings));
+#pragma warning restore CA2000 // Dispose objects before losing scope
             this.PublicEndpointUrlTextBlock.Text = addressBookEntry.AbsoluteUri;
             this.OpenChatroom.IsEnabled = true;
             this.ChatWithAuthor.IsEnabled = true;

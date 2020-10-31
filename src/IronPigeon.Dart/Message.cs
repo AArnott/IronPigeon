@@ -43,6 +43,7 @@ namespace IronPigeon.Dart
         /// <param name="recipients">The recipients.</param>
         /// <param name="subject">The subject.</param>
         /// <param name="body">The body.</param>
+        [MessagePack.SerializationConstructor]
         internal Message(Endpoint author, string authorName, IReadOnlyList<Endpoint> recipients, string subject, string body)
         {
             Requires.NotNull(author, nameof(author));
