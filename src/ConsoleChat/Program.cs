@@ -69,6 +69,7 @@ namespace ConsoleChat
         private static async Task StartAsync(CancellationToken cancellationToken)
         {
             using var httpClient = new HttpClient();
+            using var httpClientChannel = new HttpClient();
 
             var relayService = new RelayCloudBlobStorageProvider(httpClient)
             {
@@ -83,7 +84,7 @@ namespace ConsoleChat
                 return;
             }
 
-            var channel = new Channel(httpClient, endpoint, relayService, cryptoSettings);
+            var channel = new Channel(httpClientChannel, endpoint, relayService, cryptoSettings);
 
             Uri shareableAddress = await endpoint.PublishAddressBookEntryAsync(relayService, cancellationToken);
             Console.WriteLine("Public receiving endpoint: {0}", shareableAddress.AbsoluteUri);

@@ -24,6 +24,8 @@ namespace IronPigeon
     [DataContract]
     public class OwnEndpoint
     {
+        private static readonly TimeSpan MaxAddressBookEntryLifetime = TimeSpan.FromDays(365 * 20);
+
         /// <summary>
         /// Backing field for the <see cref="PublicEndpoint"/> property.
         /// </summary>
@@ -114,7 +116,7 @@ namespace IronPigeon
             var abe = new AddressBookEntry(this);
             byte[] serializedAddressBookEntry = MessagePackSerializer.Serialize(abe, Utilities.MessagePackSerializerOptions, cancellationToken);
             using var serializedAbeStream = new MemoryStream(serializedAddressBookEntry);
-            Uri location = await cloudBlobStorage.UploadMessageAsync(serializedAbeStream, DateTime.MaxValue, contentType: AddressBookEntry.ContentType, cancellationToken: cancellationToken).ConfigureAwait(false);
+            Uri location = await cloudBlobStorage.UploadMessageAsync(serializedAbeStream, DateTime.UtcNow + MaxAddressBookEntryLifetime, contentType: AddressBookEntry.ContentType, cancellationToken: cancellationToken).ConfigureAwait(false);
 
             // Append a thumbprint (we use the signature) as a fragment to the URI so that those we share it with can detect if the hosted endpoint changes.
             var locationBuilder = new UriBuilder(location);
