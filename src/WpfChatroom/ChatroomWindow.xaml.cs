@@ -40,9 +40,9 @@ namespace WpfChatroom
         {
             Requires.Argument(mainWindow.PostalService is object, nameof(mainWindow), "{0} property must be set.", nameof(MainWindow.PostalService));
 
-            this.InitializeComponent();
             this.mainWindow = mainWindow;
             this.PostalService = mainWindow.PostalService;
+            this.InitializeComponent();
         }
 
         /// <inheritdoc cref="MainWindow.JoinableTaskContext" />
