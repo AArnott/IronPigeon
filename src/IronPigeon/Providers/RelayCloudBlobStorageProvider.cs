@@ -58,7 +58,15 @@ namespace IronPigeon.Providers
             };
 
             int lifetime = expirationUtc == DateTime.MaxValue ? int.MaxValue : (int)(expirationUtc - DateTime.UtcNow).TotalMinutes;
-            HttpResponseMessage? response = await this.HttpClient.PostAsync(this.BlobPostUrl.OriginalString + "?lifetimeInMinutes=" + lifetime, httpContent, cancellationToken).ConfigureAwait(false);
+            using var request = new HttpRequestMessage(HttpMethod.Post, this.BlobPostUrl.OriginalString + "?lifetimeInMinutes=" + lifetime)
+            {
+                Content = httpContent,
+                Headers =
+                {
+                    TransferEncodingChunked = content.CanSeek ? (bool?)null : true,
+                },
+            };
+            HttpResponseMessage? response = await this.HttpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
 
             return response.Headers.Location;
