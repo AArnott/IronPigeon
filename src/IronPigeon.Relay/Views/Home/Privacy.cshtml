@@ -3,4 +3,31 @@
 }
 <h1>@ViewData["Title"]</h1>
 
-<p>🚧 Use this page to detail your site's privacy policy.</p>
+<p>
+    The IronPigeon online service's <i>primary purpose</i> is to preserve your right to privacy.
+</p>
+
+<p>
+    To that end, this service collects and/or stores the following:
+</p>
+
+<ul>
+    <li>
+        The (presumably encrypted) messages that you send to others.
+        We do <b>not</b> have the key to decrypt this "blob".
+        These message payload blobs are deleted by a periodic cleanup task based on the expiration time the blob was uploaded with,
+        even if your intended recipient(s) have not yet downloaded the blob.
+    </li>
+    <li>
+        Your <em>public</em> keys and the URI to your inbox.
+        This metadata required to send you encrypted messages or verify that messages you send came from you.
+        This metadata may be retained indefinitely and shared with others with whom you share its URL, or who otherwise discover the URL.
+    </li>
+    <li>
+        Your inbox, which contains notifications of messages you receive from others.
+        Individual notifications in your inbox are (presumably) entirely encrypted except for a little structure so the receiver who holds the private key knows how to use it to decrypt the notification.
+        By storing these for you, we allow you to receive messages from others even if you aren't both online simultaneously.
+        You have control over deleting individual inbox entries as well as the entire inbox account.
+        We may delete inboxes or entries that appear to be abandoned.
+    </li>
+</ul>
