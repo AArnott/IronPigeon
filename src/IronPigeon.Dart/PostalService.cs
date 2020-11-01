@@ -45,7 +45,7 @@ namespace IronPigeon.Dart
         /// <param name="bytesCopiedProgress">Progress feedback in terms of bytes uploaded.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>The asynchronous result.</returns>
-        public Task<IReadOnlyCollection<NotificationPostedReceipt>> PostAsync(Message message, IProgress<(long BytesTransferred, long? Total)>? bytesCopiedProgress = null, CancellationToken cancellationToken = default)
+        public async Task<IReadOnlyCollection<NotificationPostedReceipt>> PostAsync(Message message, IProgress<(long BytesTransferred, long? Total)>? bytesCopiedProgress = null, CancellationToken cancellationToken = default)
         {
             Requires.NotNull(message, nameof(message));
 
@@ -58,7 +58,7 @@ namespace IronPigeon.Dart
                 allRecipients.AddRange(message.CarbonCopyRecipients);
             }
 
-            return this.Channel.PostAsync(messageWriter.AsReadOnlySequence.AsStream(), Message.ContentType, allRecipients, message.ExpirationUtc, bytesCopiedProgress, cancellationToken);
+            return await this.Channel.PostAsync(messageWriter.AsReadOnlySequence.AsStream(), Message.ContentType, allRecipients, message.ExpirationUtc, bytesCopiedProgress, cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>

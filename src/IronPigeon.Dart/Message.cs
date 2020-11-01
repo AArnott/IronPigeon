@@ -23,7 +23,8 @@ namespace IronPigeon.Dart
         public static readonly ContentType ContentType = new ContentType("application/dart");
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Message" /> class.
+        /// Initializes a new instance of the <see cref="Message" /> class
+        /// to represent an outgoing message.
         /// </summary>
         /// <param name="author">The author.</param>
         /// <param name="authorName">The author's name.</param>
@@ -36,7 +37,8 @@ namespace IronPigeon.Dart
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Message" /> class.
+        /// Initializes a new instance of the <see cref="Message" /> class
+        /// to represent an incoming message.
         /// </summary>
         /// <param name="author">The author.</param>
         /// <param name="authorName">The author's name.</param>
@@ -44,7 +46,7 @@ namespace IronPigeon.Dart
         /// <param name="subject">The subject.</param>
         /// <param name="body">The body.</param>
         [MessagePack.SerializationConstructor]
-        internal Message(Endpoint author, string authorName, IReadOnlyList<Endpoint> recipients, string subject, string body)
+        public Message(Endpoint author, string authorName, IReadOnlyList<Endpoint> recipients, string subject, string body)
         {
             Requires.NotNull(author, nameof(author));
             Requires.NotNull(authorName, nameof(authorName));
