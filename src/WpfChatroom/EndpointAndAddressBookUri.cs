@@ -5,7 +5,6 @@ namespace IronPigeon
 {
     using System;
     using System.Runtime.Serialization;
-    using IronPigeon;
 
     [DataContract]
     public class EndpointAndAddressBookUri

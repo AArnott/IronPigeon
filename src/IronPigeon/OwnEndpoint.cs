@@ -118,9 +118,9 @@ namespace IronPigeon
             using var serializedAbeStream = new MemoryStream(serializedAddressBookEntry);
             Uri location = await cloudBlobStorage.UploadMessageAsync(serializedAbeStream, DateTime.UtcNow + MaxAddressBookEntryLifetime, contentType: AddressBookEntry.ContentType, cancellationToken: cancellationToken).ConfigureAwait(false);
 
-            // Append a thumbprint (we use the signature) as a fragment to the URI so that those we share it with can detect if the hosted endpoint changes.
+            // Append a thumbprint of the public key as a fragment to the URI so that those we share it with can detect if the hosted endpoint changes.
             var locationBuilder = new UriBuilder(location);
-            locationBuilder.Fragment = "#" + Utilities.ToBase64WebSafe(abe.Signature.AsOrCreateArray());
+            locationBuilder.Fragment = this.PublicEndpoint.Thumbprint;
             return locationBuilder.Uri;
         }
 

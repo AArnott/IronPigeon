@@ -87,16 +87,17 @@ namespace IronPigeon
                 return null;
             }
 
+            Endpoint endpoint = entry.ExtractEndpoint();
+
             if (!string.IsNullOrEmpty(entryLocation.Fragment))
             {
                 var expectedThumbprint = entryLocation.Fragment.Substring(1);
-                if (entry.Thumbprint != expectedThumbprint)
+                if (!endpoint.IsThumbprintMatch(expectedThumbprint))
                 {
                     throw new BadAddressBookEntryException("Fragment thumbprint mismatch.");
                 }
             }
 
-            Endpoint endpoint = entry.ExtractEndpoint();
             return endpoint;
         }
     }

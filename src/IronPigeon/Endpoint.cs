@@ -66,6 +66,20 @@ namespace IronPigeon
         [DataMember(Order = 2)]
         public AsymmetricKeyInputs EncryptionKeyInputs { get; }
 
+        /// <summary>
+        /// Gets the thumbprint for this endpoint.
+        /// </summary>
+        /// <remarks>
+        /// A thumbprint can be passed around in the <see cref="Uri.Fragment"/> of the URL where an <see cref="AddressBookEntry"/> is stored
+        /// to give clients a way to detect whether the <see cref="AddressBookEntry"/> they get is the one intended.
+        /// </remarks>
+        [IgnoreDataMember]
+        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
+        public string Thumbprint => Utilities.CreateWebSafeBase64Thumbprint(this.AuthenticatingKeyInputs.KeyMaterial);
+
+        /// <inheritdoc cref="Utilities.IsThumbprintMatch(ReadOnlyMemory{byte}, string)"/>
+        public bool IsThumbprintMatch(string allegedHashWebSafeBase64Thumbprint) => Utilities.IsThumbprintMatch(this.AuthenticatingKeyInputs.KeyMaterial, allegedHashWebSafeBase64Thumbprint);
+
         /// <inheritdoc />
         public override bool Equals(object? obj) => this.Equals(obj as Endpoint);
 

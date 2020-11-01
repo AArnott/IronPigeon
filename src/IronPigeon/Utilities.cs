@@ -51,6 +51,8 @@ namespace IronPigeon
         /// </summary>
         internal const int BlobNameLength = 15;
 
+        private const HashAlgorithm ThumbprintHashAlgorithm = HashAlgorithm.Sha256;
+
         /// <summary>
         /// The set of unsafe characters that may be found in a base64-encoded string.
         /// </summary>
@@ -77,6 +79,37 @@ namespace IronPigeon
         /// A simple salt for instantiating non-crypto RNGs.
         /// </summary>
         private static int randSeedSalt;
+
+        /// <summary>
+        /// Creates a web safe base64 thumbprint of some buffer.
+        /// </summary>
+        /// <param name="buffer">The buffer.</param>
+        /// <returns>A string representation of a hash of the <paramref name="buffer"/>.</returns>
+        public static string CreateWebSafeBase64Thumbprint(ReadOnlyMemory<byte> buffer)
+        {
+            IHashAlgorithmProvider? hasher = WinRTCrypto.HashAlgorithmProvider.OpenAlgorithm(ThumbprintHashAlgorithm);
+            var hash = hasher.HashData(buffer.AsOrCreateArray());
+            return Utilities.ToBase64WebSafe(hash);
+        }
+
+        /// <summary>
+        /// Determines whether a given thumbprint matches the actual hash of the specified buffer.
+        /// </summary>
+        /// <param name="buffer">The buffer.</param>
+        /// <param name="allegedHashWebSafeBase64Thumbprint">The web-safe base64 encoding of the thumbprint that the specified buffer's thumbprint is expected to match.</param>
+        /// <returns><c>true</c> if the thumbprints match; <c>false</c> otherwise.</returns>
+        /// <exception cref="System.NotSupportedException">If the length of the thumbprint is not consistent with any supported hash algorithm.</exception>
+        public static bool IsThumbprintMatch(ReadOnlyMemory<byte> buffer, string allegedHashWebSafeBase64Thumbprint)
+        {
+            Requires.NotNullOrEmpty(allegedHashWebSafeBase64Thumbprint, nameof(allegedHashWebSafeBase64Thumbprint));
+
+            byte[] allegedThumbprint = Convert.FromBase64String(FromBase64WebSafe(allegedHashWebSafeBase64Thumbprint));
+            HashAlgorithm hashAlgorithm = GuessHashAlgorithmFromLength(allegedThumbprint.Length);
+
+            IHashAlgorithmProvider? hasher = WinRTCrypto.HashAlgorithmProvider.OpenAlgorithm(hashAlgorithm);
+            var actualThumbprint = hasher.HashData(buffer.AsOrCreateArray());
+            return AreEquivalent(actualThumbprint, allegedThumbprint);
+        }
 
         /// <summary>
         /// Tests whether two arrays are equal in contents and ordering.

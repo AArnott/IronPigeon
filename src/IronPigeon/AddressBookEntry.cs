@@ -71,17 +71,6 @@ namespace IronPigeon
         public ReadOnlyMemory<byte> Signature { get; }
 
         /// <summary>
-        /// Gets the thumbprint for this instance.
-        /// </summary>
-        /// <remarks>
-        /// A thumbprint can be passed around in the <see cref="Uri.Fragment"/> of the URL where an <see cref="AddressBookEntry"/> is stored
-        /// to give clients a way to detect whether the <see cref="AddressBookEntry"/> they get is the one intended.
-        /// </remarks>
-        [IgnoreDataMember]
-        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        public string Thumbprint => Utilities.ToBase64WebSafe(this.Signature.AsOrCreateArray());
-
-        /// <summary>
         /// Gets the deserialized <see cref="Endpoint"/> after verifying the <see cref="Signature"/>.
         /// </summary>
         /// <returns>The deserialized endpoint.</returns>
