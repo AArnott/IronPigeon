@@ -242,6 +242,8 @@ retry:
                     int count = 0;
                     do
                     {
+                        // Mitigate race conditions by obtaining the Task that completes with a new message *before* we look for any.
+                        Task incomingMessageWaiter = WaitIncomingMessageAsync(name, cancellationToken);
                         await foreach (BlobHierarchyItem blob in this.azureStorage.InboxItemContainer.GetBlobsByHierarchyAsync(prefix: input.Mailbox.Name + "/", cancellationToken: cancellationToken))
                         {
                             if (blob.IsBlob)
@@ -261,7 +263,17 @@ retry:
 
                         if (longPoll && count == 0)
                         {
-                            await this.WaitIncomingMessageAsync(name, cancellationToken);
+                            try
+                            {
+                                this.logger.LogInformation("Waiting for incoming inbox items on {0} for long poll client...", name);
+                                await incomingMessageWaiter;
+                                this.logger.LogInformation("Long poll wait is signaled. Resuming.");
+                            }
+                            catch (OperationCanceledException)
+                            {
+                                this.logger.LogInformation("Long poll client canceled.");
+                                throw;
+                            }
                         }
                         else
                         {
@@ -303,10 +315,8 @@ retry:
             return this.File(blobStream, InboxItemContentType);
         }
 
-        private async Task WaitIncomingMessageAsync(string name, CancellationToken cancellationToken)
+        private static Task WaitIncomingMessageAsync(string name, CancellationToken cancellationToken)
         {
-            this.logger.LogInformation("Waiting for incoming inbox items on {0} for long poll client...", name);
-
             AsyncManualResetEvent? evt;
             lock (LongPollWaiters)
             {
@@ -316,17 +326,7 @@ retry:
                 }
             }
 
-            try
-            {
-                await evt.WaitAsync(cancellationToken);
-            }
-            catch (OperationCanceledException)
-            {
-                this.logger.LogInformation("Long poll client canceled.");
-                throw;
-            }
-
-            this.logger.LogInformation("Long poll wait is signaled. Resuming.");
+            return evt.WaitAsync(cancellationToken);
         }
 
         private void AlertLongPollWaiter(string name)
@@ -343,7 +343,7 @@ retry:
             if (evt is object)
             {
                 this.logger.LogInformation("Alerting inbox {0} that a message has come in.", name);
-                evt.Set();
+                evt.PulseAll();
             }
         }
 
