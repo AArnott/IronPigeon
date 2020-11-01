@@ -4,6 +4,7 @@
 namespace IronPigeon.Relay.Controllers
 {
     using System;
+    using System.Collections.Generic;
     using System.IO;
     using System.IO.Pipelines;
     using System.Security.Cryptography;
@@ -20,6 +21,7 @@ namespace IronPigeon.Relay.Controllers
     using Microsoft.AspNetCore.Mvc;
     using Microsoft.Azure.Cosmos.Table;
     using Microsoft.Extensions.Logging;
+    using Microsoft.VisualStudio.Threading;
 
     [ApiController]
     [Route("[controller]")]
@@ -46,6 +48,11 @@ namespace IronPigeon.Relay.Controllers
         /// The maximum lifetime an inbox will retain a posted message.
         /// </summary>
         private static readonly TimeSpan MaxLifetimeCeiling = TimeSpan.FromDays(14);
+
+        /// <summary>
+        /// A dictionary of long poll awaiters (e.g. desktop apps) who aren't using push notifications.
+        /// </summary>
+        private static readonly Dictionary<string, AsyncManualResetEvent> LongPollWaiters = new Dictionary<string, AsyncManualResetEvent>();
 
         private readonly ILogger<InboxController> logger;
 
@@ -188,11 +195,14 @@ retry:
             }
 
             this.logger.LogInformation($"Saved notification ({contentLength} bytes) to mailbox: {mailbox.Name}");
+
+            this.AlertLongPollWaiter(name);
+
             return this.Ok();
         }
 
         [HttpGet("{name:guid}")]
-        public async Task<IActionResult> GetInboxContentAsync(string name, CancellationToken cancellationToken)
+        public async Task<IActionResult> GetInboxContentAsync(string name, bool longPoll = false, CancellationToken cancellationToken = default)
         {
             (IActionResult? FailedResult, Mailbox? Mailbox) input = await this.CheckInboxAuthenticationAsync(name);
             if (input.FailedResult is object)
@@ -229,21 +239,36 @@ retry:
 
                 try
                 {
-                    await foreach (BlobHierarchyItem blob in this.azureStorage.InboxItemContainer.GetBlobsByHierarchyAsync(prefix: input.Mailbox.Name + "/", cancellationToken: cancellationToken))
+                    int count = 0;
+                    do
                     {
-                        if (blob.IsBlob)
+                        await foreach (BlobHierarchyItem blob in this.azureStorage.InboxItemContainer.GetBlobsByHierarchyAsync(prefix: input.Mailbox.Name + "/", cancellationToken: cancellationToken))
                         {
-                            BlobClient blobClient = this.azureStorage.InboxItemContainer.GetBlobClient(blob.Blob.Name);
-                            Azure.Response<BlobDownloadInfo> downloadInfo = await blobClient.DownloadAsync(cancellationToken);
-                            identityBuilder.Path = $"{this.Url.Action()}/{blob.Blob.Name.Substring(name.Length + 1)}";
-                            WriteInboxItemHeader(blob.Blob, downloadInfo.Value, identityBuilder.Uri);
-                            await downloadInfo.Value.Content.CopyToAsync(responseWriter, cancellationToken);
-                            downloadInfo.Value.Dispose();
+                            if (blob.IsBlob)
+                            {
+                                BlobClient blobClient = this.azureStorage.InboxItemContainer.GetBlobClient(blob.Blob.Name);
+                                Azure.Response<BlobDownloadInfo> downloadInfo = await blobClient.DownloadAsync(cancellationToken);
+                                identityBuilder.Path = $"{this.Url.Action()}/{blob.Blob.Name.Substring(name.Length + 1)}";
+                                WriteInboxItemHeader(blob.Blob, downloadInfo.Value, identityBuilder.Uri);
+                                await downloadInfo.Value.Content.CopyToAsync(responseWriter, cancellationToken);
+                                downloadInfo.Value.Dispose();
+                                count++;
 
-                            // Do not outrun the client that is reading us.
-                            await responseWriter.FlushAsync(cancellationToken);
+                                // Do not outrun the client that is reading us.
+                                await responseWriter.FlushAsync(cancellationToken);
+                            }
+                        }
+
+                        if (longPoll && count == 0)
+                        {
+                            await this.WaitIncomingMessageAsync(name, cancellationToken);
+                        }
+                        else
+                        {
+                            break;
                         }
                     }
+                    while (true);
                 }
                 catch (Azure.RequestFailedException ex) when (ex.Status == 404)
                 {
@@ -276,6 +301,50 @@ retry:
             Stream blobStream = await blobClient.OpenReadAsync(cancellationToken: cancellationToken);
 
             return this.File(blobStream, InboxItemContentType);
+        }
+
+        private async Task WaitIncomingMessageAsync(string name, CancellationToken cancellationToken)
+        {
+            this.logger.LogInformation("Waiting for incoming inbox items on {0} for long poll client...", name);
+
+            AsyncManualResetEvent? evt;
+            lock (LongPollWaiters)
+            {
+                if (!LongPollWaiters.TryGetValue(name, out evt))
+                {
+                    LongPollWaiters[name] = evt = new AsyncManualResetEvent();
+                }
+            }
+
+            try
+            {
+                await evt.WaitAsync(cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+                this.logger.LogInformation("Long poll client canceled.");
+                throw;
+            }
+
+            this.logger.LogInformation("Long poll wait is signaled. Resuming.");
+        }
+
+        private void AlertLongPollWaiter(string name)
+        {
+            AsyncManualResetEvent? evt;
+            lock (LongPollWaiters)
+            {
+                if (LongPollWaiters.TryGetValue(name, out evt))
+                {
+                    LongPollWaiters.Remove(name);
+                }
+            }
+
+            if (evt is object)
+            {
+                this.logger.LogInformation("Alerting inbox {0} that a message has come in.", name);
+                evt.Set();
+            }
         }
 
         private UriBuilder CreateSelfReferencingUriBuilder()

@@ -3,6 +3,7 @@
 
 using System;
 using System.Buffers;
+using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Net.Http;
@@ -12,6 +13,7 @@ using System.Threading.Tasks;
 using IronPigeon;
 using IronPigeon.Providers;
 using IronPigeon.Relay;
+using Microsoft.VisualStudio.Threading;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -135,6 +137,16 @@ public class InboxControllerTests : TestBase, IClassFixture<RelayAppFactory>, IA
     }
 
     [Fact]
+    public async Task ReceiveInboxItems_LongPoll()
+    {
+        (Channel transmittingChannel, Channel receivingChannel) = await this.CreateTestChannelsAsync();
+        Task<List<InboxItem>> retrieval = receivingChannel.ReceiveInboxItemsAsync(longPoll: true, cancellationToken: this.TimeoutToken).ToListAsync(this.TimeoutToken);
+        await Assert.ThrowsAsync<TimeoutException>(() => retrieval.WithTimeout(ExpectedTimeout));
+        await this.TransferTestMessageAsync(transmittingChannel, receivingChannel);
+        Assert.Single(await retrieval.WithCancellation(this.TimeoutToken));
+    }
+
+    [Fact]
     public async Task DeleteIncomingMessagePreventsItsRedownload()
     {
         (_, Channel receivingChannel) = await this.TransferTestMessageAsync();
@@ -204,7 +216,7 @@ public class InboxControllerTests : TestBase, IClassFixture<RelayAppFactory>, IA
         request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", endpoint.InboxOwnerCode);
     }
 
-    private async Task<(Channel TransmittingChannel, Channel ReceivingChannel)> TransferTestMessageAsync()
+    private async Task<(Channel TransmittingChannel, Channel ReceivingChannel)> CreateTestChannelsAsync()
     {
         OwnEndpoint endpoint1 = await OwnEndpoint.CreateAsync(CryptoSettings.Testing, this.relayProvider, this.TimeoutToken);
         var channel1 = new Channel(this.factory.CreateClient(), endpoint1, this.relayProvider, CryptoSettings.Testing);
@@ -212,12 +224,21 @@ public class InboxControllerTests : TestBase, IClassFixture<RelayAppFactory>, IA
         OwnEndpoint endpoint2 = await OwnEndpoint.CreateAsync(CryptoSettings.Testing, this.relayProvider, this.TimeoutToken);
         var channel2 = new Channel(this.factory.CreateClient(), endpoint2, this.relayProvider, CryptoSettings.Testing);
 
-        // Send the message.
+        return (channel1, channel2);
+    }
+
+    private async Task<(Channel TransmittingChannel, Channel ReceivingChannel)> TransferTestMessageAsync()
+    {
+        (Channel channel1, Channel channel2) = await this.CreateTestChannelsAsync();
+        await this.TransferTestMessageAsync(channel1, channel2);
+        return (channel1, channel2);
+    }
+
+    private async Task TransferTestMessageAsync(Channel transmittingChannel, Channel receivingChannel)
+    {
         string sentText = "Test";
         using var sentStream = new MemoryStream(Encoding.UTF8.GetBytes(sentText));
-        NotificationPostedReceipt receipt = Assert.Single(await channel1.PostAsync(sentStream, new ContentType("text/plain"), new Endpoint[] { channel2.Endpoint.PublicEndpoint }, DateTime.UtcNow.AddHours(1), cancellationToken: this.TimeoutToken));
-        Assert.Same(channel2.Endpoint.PublicEndpoint, receipt.Recipient);
-
-        return (channel1, channel2);
+        NotificationPostedReceipt receipt = Assert.Single(await transmittingChannel.PostAsync(sentStream, new ContentType("text/plain"), new Endpoint[] { receivingChannel.Endpoint.PublicEndpoint }, DateTime.UtcNow.AddHours(1), cancellationToken: this.TimeoutToken));
+        Assert.Same(receivingChannel.Endpoint.PublicEndpoint, receipt.Recipient);
     }
 }

@@ -56,3 +56,6 @@ dotnet_diagnostic.SA1401.severity = silent
 
 # CA1051: Do not declare visible instance fields
 dotnet_diagnostic.CA1051.severity = silent
+
+# VSTHRD003: Avoid awaiting foreign Tasks
+dotnet_diagnostic.VSTHRD003.severity = silent
