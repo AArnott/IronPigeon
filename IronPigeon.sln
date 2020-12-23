@@ -30,6 +30,21 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IronPigeon.Relay", "src\Iro
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IronPigeon.Relay.Tests", "test\IronPigeon.Relay.Tests\IronPigeon.Relay.Tests.csproj", "{B9CDFDA2-C9A9-425D-B53B-E6E188CC996C}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{D2902057-62B4-465A-AD95-E5DA8A9D6E65}"
+	ProjectSection(SolutionItems) = preProject
+		src\.editorconfig = src\.editorconfig
+		src\Directory.Build.props = src\Directory.Build.props
+		src\Directory.Build.targets = src\Directory.Build.targets
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{F4F5A571-0F52-4D5A-AC50-E6637477798B}"
+	ProjectSection(SolutionItems) = preProject
+		test\.editorconfig = test\.editorconfig
+		test\Directory.Build.props = test\Directory.Build.props
+		test\Directory.Build.targets = test\Directory.Build.targets
+		test\TestSettings.testsettings = test\TestSettings.testsettings
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -95,8 +110,14 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
+		{BEFB82D5-C686-4D50-91C7-419846C8F201} = {D2902057-62B4-465A-AD95-E5DA8A9D6E65}
+		{17B52026-93A9-48B1-B7F0-ACAA68C3C664} = {D2902057-62B4-465A-AD95-E5DA8A9D6E65}
 		{98AFB63C-821F-491F-B8CF-394201693F2A} = {17B52026-93A9-48B1-B7F0-ACAA68C3C664}
+		{7413FF6F-DC39-4B86-AD14-EAC145F5C3B7} = {D2902057-62B4-465A-AD95-E5DA8A9D6E65}
 		{4DE86407-877D-4C6B-B457-1236B20F8823} = {17B52026-93A9-48B1-B7F0-ACAA68C3C664}
+		{6995C553-7AE1-490E-BCF2-406E105EDEF8} = {F4F5A571-0F52-4D5A-AC50-E6637477798B}
+		{ABD9D7E0-665C-44D8-930D-14B5785F832F} = {D2902057-62B4-465A-AD95-E5DA8A9D6E65}
+		{B9CDFDA2-C9A9-425D-B53B-E6E188CC996C} = {F4F5A571-0F52-4D5A-AC50-E6637477798B}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {116ABBB4-8DC2-41B8-B1B2-F20DC3F39DCE}

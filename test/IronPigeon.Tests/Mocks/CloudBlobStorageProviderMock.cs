@@ -49,7 +49,7 @@ internal class CloudBlobStorageProviderMock : ICloudBlobStorageProvider
 
     private Task<HttpResponseMessage?> HandleRequest(HttpRequestMessage request)
     {
-        if (this.blobs.TryGetValue(request.RequestUri, out byte[]? buffer))
+        if (this.blobs.TryGetValue(request.RequestUri!, out byte[]? buffer))
         {
             return Task.FromResult<HttpResponseMessage?>(new HttpResponseMessage() { Content = new StreamContent(new MemoryStream(buffer)) });
         }

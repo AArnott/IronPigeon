@@ -77,7 +77,7 @@ internal class InboxHttpHandlerMock : IEndpointInboxFactory
 
     private async Task<HttpResponseMessage?> HttpHandler(HttpRequestMessage request)
     {
-        UriBuilder simpleUrl = new UriBuilder(request.RequestUri);
+        UriBuilder simpleUrl = new UriBuilder(request.RequestUri!);
         simpleUrl.Query = null;
 
         // TODO: add inbox owner code check.

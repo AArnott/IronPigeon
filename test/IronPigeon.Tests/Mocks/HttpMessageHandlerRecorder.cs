@@ -121,7 +121,7 @@ internal class HttpMessageHandlerRecorder : HttpClientHandler
         // Record the request and response.
         string headerFile, bodyFile;
         this.GetRecordedFileNames(request, out headerFile, out bodyFile);
-        Directory.CreateDirectory(Path.GetDirectoryName(headerFile));
+        Directory.CreateDirectory(Path.GetDirectoryName(headerFile)!);
         using (FileStream? file = File.Open(headerFile, FileMode.Create, FileAccess.Write))
         {
             using (var writer = new StreamWriter(file))
@@ -139,7 +139,11 @@ internal class HttpMessageHandlerRecorder : HttpClientHandler
             using (FileStream? file = File.Open(bodyFile, FileMode.Create, FileAccess.Write))
             {
                 var contentCopy = new MemoryStream();
+#if NET5_0
+                await response.Content.CopyToAsync(contentCopy, cancellationToken);
+#else
                 await response.Content.CopyToAsync(contentCopy);
+#endif
                 contentCopy.Position = 0;
                 await contentCopy.CopyToAsync(file, 4096, cancellationToken);
                 contentCopy.Position = 0;
