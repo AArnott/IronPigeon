@@ -159,7 +159,7 @@ namespace ConsoleChat
             do
             {
                 Console.Write("Enter your friend's public endpoint URL (leave blank for loopback): ");
-                string url = Console.ReadLine();
+                string? url = Console.ReadLine();
                 if (string.IsNullOrWhiteSpace(url))
                 {
                     return defaultEndpoint;

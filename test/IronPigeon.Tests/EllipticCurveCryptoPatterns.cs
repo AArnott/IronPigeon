@@ -14,6 +14,8 @@ using Nerdbank.Streams;
 using Xunit;
 using Xunit.Abstractions;
 
+#pragma warning disable CA1416 // We skip execution of each applicable test.
+
 /// <summary>
 /// This test class doesn't test IronPigeon, but rather demonstrates how EC crypto works.
 /// </summary>

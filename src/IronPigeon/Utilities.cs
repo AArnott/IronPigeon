@@ -402,6 +402,18 @@ namespace IronPigeon
             return true;
         }
 
+#if !NET5_0
+        /// <inheritdoc cref="HttpContent.ReadAsStreamAsync()"/>
+#pragma warning disable CA1801 // Review unused parameters
+        internal static Task<Stream> ReadAsStreamAsync(this HttpContent content, CancellationToken cancellationToken) => content.ReadAsStreamAsync();
+#pragma warning restore CA1801 // Review unused parameters
+
+        /// <inheritdoc cref="HttpContent.ReadAsStringAsync()"/>
+#pragma warning disable CA1801 // Review unused parameters
+        internal static Task<string> ReadAsStringAsync(this HttpContent content, CancellationToken cancellationToken) => content.ReadAsStringAsync();
+#pragma warning restore CA1801 // Review unused parameters
+#endif
+
         /// <summary>
         /// Guesses the hash algorithm used given the length of the result.
         /// </summary>
@@ -472,7 +484,7 @@ namespace IronPigeon
             Requires.NotNull(content, nameof(content));
 
             cancellationToken.ThrowIfCancellationRequested();
-            using (Stream? stream = await content.ReadAsStreamAsync().ConfigureAwait(false))
+            using (Stream? stream = await content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false))
             {
                 var memoryStream = new MemoryStream();
                 await stream.CopyToAsync(memoryStream, 4096, cancellationToken).ConfigureAwait(false);

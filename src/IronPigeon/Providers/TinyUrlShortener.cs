@@ -62,11 +62,11 @@ namespace IronPigeon.Providers
                 return longUrl;
             }
 
-            string shorteningRequestUrl = string.Format(
-                CultureInfo.InvariantCulture, ShorteningService, Uri.EscapeDataString(longUrl.AbsoluteUri));
+            Uri shorteningRequestUrl = new Uri(string.Format(
+                CultureInfo.InvariantCulture, ShorteningService, Uri.EscapeDataString(longUrl.AbsoluteUri)));
             HttpResponseMessage? response = await this.HttpClient.GetAsync(shorteningRequestUrl, cancellationToken).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
-            string responseAsString = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+            string responseAsString = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
             return new Uri(responseAsString, UriKind.Absolute);
         }
     }

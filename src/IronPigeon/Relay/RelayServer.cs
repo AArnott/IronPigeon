@@ -59,10 +59,11 @@ namespace IronPigeon.Relay
 
             using var request = new HttpRequestMessage(HttpMethod.Put, this.ownEndpoint.PublicEndpoint.MessageReceivingEndpoint);
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", this.ownEndpoint.InboxOwnerCode);
-            request.Content = new FormUrlEncodedContent(new Dictionary<string, string>
+            var contentDictionary = new Dictionary<string, string>
             {
                 { "gcm_registration_id", googlePlayRegistrationId },
-            });
+            };
+            request.Content = new FormUrlEncodedContent(contentDictionary!);
             HttpResponseMessage response = await this.httpClient.SendAsync(request, httpTimeoutTokenSource.Token).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
         }
@@ -84,10 +85,11 @@ namespace IronPigeon.Relay
 
             using var request = new HttpRequestMessage(HttpMethod.Put, this.ownEndpoint.PublicEndpoint.MessageReceivingEndpoint);
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", this.ownEndpoint.InboxOwnerCode);
-            request.Content = new FormUrlEncodedContent(new Dictionary<string, string>
+            var contentDictionary = new Dictionary<string, string>
             {
                 { "ios_device_token", deviceToken },
-            });
+            };
+            request.Content = new FormUrlEncodedContent(contentDictionary!);
             HttpResponseMessage response = await this.httpClient.SendAsync(request, httpTimeoutTokenSource.Token).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
         }
@@ -111,13 +113,14 @@ namespace IronPigeon.Relay
 
             using var request = new HttpRequestMessage(HttpMethod.Put, this.ownEndpoint.PublicEndpoint.MessageReceivingEndpoint);
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", this.ownEndpoint.InboxOwnerCode);
-            request.Content = new FormUrlEncodedContent(new Dictionary<string, string>
+            var contentDictionary = new Dictionary<string, string>
             {
                 { "package_security_identifier", packageSecurityIdentifier },
                 { "channel_uri", pushNotificationChannelUri.AbsoluteUri },
                 { "channel_content", pushContent ?? string.Empty },
                 { "expiration", channelExpiration.ToString(CultureInfo.InvariantCulture) },
-            });
+            };
+            request.Content = new FormUrlEncodedContent(contentDictionary!);
             HttpResponseMessage? response = await this.httpClient.SendAsync(request, httpTimeoutTokenSource.Token).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
         }
@@ -160,7 +163,7 @@ namespace IronPigeon.Relay
             if (response.Content is object)
             {
                 // Just to help in debugging.
-                string responseContent = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                string responseContent = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
             }
 
             response.EnsureSuccessStatusCode();
@@ -196,7 +199,7 @@ namespace IronPigeon.Relay
 
                 using HttpResponseMessage responseMessage = await this.httpClient.GetAsync(requestUri, this.ownEndpoint.InboxOwnerCode, cancellationToken).ConfigureAwait(false);
                 responseMessage.EnsureSuccessStatusCode();
-                Stream responseStream = await responseMessage.Content.ReadAsStreamAsync().ConfigureAwait(false);
+                Stream responseStream = await responseMessage.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
                 using var streamReader = new MessagePackStreamReader(responseStream);
                 ReadOnlySequence<byte>? serializedIncomingInboxItem;
                 while ((serializedIncomingInboxItem = await streamReader.ReadAsync(cancellationToken).ConfigureAwait(false)).HasValue)

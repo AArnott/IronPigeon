@@ -87,12 +87,11 @@ namespace IronPigeon.Providers
             using (Stream? userProfileStream = await this.HttpClient.GetBufferedStreamAsync(twitterUserProfileLocation, cancellationToken).ConfigureAwait(false))
             {
                 var jsonSerializer = new DataContractJsonSerializer(typeof(TwitterUserInfo));
-                var userInfo = (TwitterUserInfo)jsonSerializer.ReadObject(userProfileStream);
+                var userInfo = (TwitterUserInfo?)jsonSerializer.ReadObject(userProfileStream);
 
                 // TODO: add support for discovering the magic link from the TwitterUserInfo.WebSite property as well.
-                Match? match = AddressBookEntryWithThumbprintFragmentRegex.Match(userInfo.Description);
-                Uri addressBookEntryUrl;
-                if (match.Success && Uri.TryCreate(match.Value, UriKind.Absolute, out addressBookEntryUrl))
+                Match? match = AddressBookEntryWithThumbprintFragmentRegex.Match(userInfo!.Description!);
+                if (match.Success && Uri.TryCreate(match.Value, UriKind.Absolute, out Uri? addressBookEntryUrl))
                 {
                     return addressBookEntryUrl;
                 }

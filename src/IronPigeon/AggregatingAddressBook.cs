@@ -75,8 +75,7 @@ namespace IronPigeon
             Requires.NotNull(claimingEndpoint, nameof(claimingEndpoint));
             Requires.NotNullOrEmpty(claimedIdentifier, nameof(claimedIdentifier));
 
-            Endpoint cachedEndpoint;
-            if (this.resolvedIdentifiersCache.TryGetValue(claimedIdentifier, out cachedEndpoint))
+            if (this.resolvedIdentifiersCache.TryGetValue(claimedIdentifier, out Endpoint? cachedEndpoint))
             {
                 return cachedEndpoint.Equals(claimingEndpoint);
             }

@@ -35,7 +35,7 @@ namespace IronPigeon.Providers
         {
             Requires.NotNull(identifier, nameof(identifier));
 
-            if (!Uri.TryCreate(identifier, UriKind.Absolute, out Uri entryLocation))
+            if (!Uri.TryCreate(identifier, UriKind.Absolute, out Uri? entryLocation))
             {
                 return null;
             }

@@ -16,5 +16,4 @@
     <ProjectReference Include="..\IronPigeon\IronPigeon.csproj" />
   </ItemGroup>
 
-
 </Project>

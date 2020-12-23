@@ -147,7 +147,7 @@ namespace IronPigeon.Dart
         }
 
         /// <inheritdoc />
-        public override bool Equals(object obj) => this.Equals(obj as Message);
+        public override bool Equals(object? obj) => this.Equals(obj as Message);
 
         /// <inheritdoc/>
         public override int GetHashCode() => unchecked(this.Author.GetHashCode() + this.Subject.GetHashCode() + this.Body.GetHashCode());

@@ -49,14 +49,14 @@ namespace IronPigeon
             Requires.NotNull(entryLocation, nameof(entryLocation));
 
             using var request = new HttpRequestMessage(HttpMethod.Get, entryLocation);
-            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(AddressBookEntry.ContentType.MediaType));
+            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue(AddressBookEntry.ContentType.MediaType!));
             HttpResponseMessage? response = await this.HttpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
             if (!response.IsSuccessStatusCode)
             {
                 return null;
             }
 
-            using (Stream stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false))
+            using (Stream stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false))
             {
                 try
                 {

@@ -68,6 +68,7 @@ namespace IronPigeon.Providers
             };
             HttpResponseMessage? response = await this.HttpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
+            Verify.Operation(response.Headers.Location is object, "HTTP Location header is missing.");
 
             return response.Headers.Location;
         }
@@ -84,9 +85,9 @@ namespace IronPigeon.Providers
             Verify.Operation(this.InboxFactoryUrl is object, Strings.PropertyMustBeSetFirst, nameof(this.InboxFactoryUrl));
 
             HttpResponseMessage responseMessage =
-                await this.HttpClient.PostAsync(this.InboxFactoryUrl, null, cancellationToken).ConfigureAwait(false);
+                await this.HttpClient.PostAsync(this.InboxFactoryUrl, null!, cancellationToken).ConfigureAwait(false);
             responseMessage.EnsureSuccessStatusCode();
-            string json = await responseMessage.Content.ReadAsStringAsync().ConfigureAwait(false);
+            string json = await responseMessage.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
             InboxCreationResponse creationResponse = JsonConvert.DeserializeObject<InboxCreationResponse>(json);
             return creationResponse;
         }

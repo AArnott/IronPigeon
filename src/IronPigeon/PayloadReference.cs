@@ -135,7 +135,7 @@ namespace IronPigeon
 
             using HttpResponseMessage responseMessage = await httpClient.GetAsync(this.Location, cancellationToken).ConfigureAwait(false);
             responseMessage.EnsureSuccessStatusCode();
-            using Stream downloadingStream = await responseMessage.Content.ReadAsStreamAsync().ConfigureAwait(false);
+            using Stream downloadingStream = await responseMessage.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
 
             using ICryptographicKey decryptingKey = this.DecryptionInputs.CreateKey();
             using CryptographicHash hasher = WinRTCrypto.HashAlgorithmProvider.OpenAlgorithm(this.HashAlgorithm).CreateHash();

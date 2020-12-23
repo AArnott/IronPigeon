@@ -71,10 +71,10 @@ namespace IronPigeon.Providers
             HttpResponseMessage? postResponse = await this.HttpClient.PostAsync(ShorteningService, requestContent, cancellationToken).ConfigureAwait(false);
 
             postResponse.EnsureSuccessStatusCode();
-            Stream? responseStream = await postResponse.Content.ReadAsStreamAsync().ConfigureAwait(false);
+            Stream? responseStream = await postResponse.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
             var responseSerializer = new DataContractJsonSerializer(typeof(ShortenResponse));
-            var response = (ShortenResponse)responseSerializer.ReadObject(responseStream);
-            return new Uri(response.ShortUrl, UriKind.Absolute);
+            var response = (ShortenResponse?)responseSerializer.ReadObject(responseStream);
+            return new Uri(response.ShortUrl!, UriKind.Absolute);
         }
 
         /// <summary>
