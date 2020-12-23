@@ -30,7 +30,7 @@ namespace IronPigeon.Relay
 
         public IConfiguration Configuration { get; }
 
-        public static async Task InitializeDatabasesAsync(CancellationToken cancellationToken)
+        public static async Task InitializeDatabasesAsync(CancellationToken cancellationToken, bool skipTableStorage = false)
         {
             IConfigurationBuilder cb = new ConfigurationBuilder()
                .SetBasePath(Directory.GetCurrentDirectory())
@@ -38,7 +38,10 @@ namespace IronPigeon.Relay
                .AddEnvironmentVariables();
             var azureStorage = new AzureStorage(cb.Build());
 
-            await azureStorage.InboxTable.CreateIfNotExistsAsync(cancellationToken);
+            if (!skipTableStorage)
+            {
+                await azureStorage.InboxTable.CreateIfNotExistsAsync(cancellationToken);
+            }
 
             // Go ahead and make sure our blob containers exist too, since uploading blobs to a non-existent container just fails and cannot retry.
             await new AzureBlobStorage(azureStorage.PayloadBlobsContainer).CreateContainerIfNotExistAsync(cancellationToken);

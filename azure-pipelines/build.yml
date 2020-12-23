@@ -6,6 +6,7 @@ jobs:
   pool: ${{ parameters.windowsPool }}
   variables:
     BuildPlatform: Any CPU
+    TestFilter: ""
   steps:
   - checkout: self
     clean: true
@@ -24,6 +25,7 @@ jobs:
     vmImage: Ubuntu 18.04
   variables:
     BuildPlatform: Non_Windows
+    TestFilter: "&RequiresTableStorage!=true" # table storage emulator is not available off Windows
   steps:
   - checkout: self
     clean: true
@@ -41,6 +43,7 @@ jobs:
     vmImage: macOS-10.15
   variables:
     BuildPlatform: Non_Windows
+    TestFilter: "&RequiresTableStorage!=true" # table storage emulator is not available off Windows
   steps:
   - checkout: self
     clean: true

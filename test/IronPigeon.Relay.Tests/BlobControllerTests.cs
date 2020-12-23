@@ -36,7 +36,7 @@ public class BlobControllerTests : TestBase, IClassFixture<RelayAppFactory>, IAs
 
     public async Task InitializeAsync()
     {
-        await Startup.InitializeDatabasesAsync(this.TimeoutToken);
+        await Startup.InitializeDatabasesAsync(this.TimeoutToken, skipTableStorage: true);
     }
 
     public Task DisposeAsync() => Task.CompletedTask;

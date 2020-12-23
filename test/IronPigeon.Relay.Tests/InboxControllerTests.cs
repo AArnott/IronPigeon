@@ -17,6 +17,7 @@ using Microsoft.VisualStudio.Threading;
 using Xunit;
 using Xunit.Abstractions;
 
+[Trait("RequiresTableStorage", "true")]
 public class InboxControllerTests : TestBase, IClassFixture<RelayAppFactory>, IAsyncLifetime
 {
     private const string TestMessageContent = "Test";
