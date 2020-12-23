@@ -160,10 +160,10 @@ axios@^0.19.0:
   dependencies:
     follow-redirects "1.5.10"
 
-azurite@^3.9.0:
-  version "3.9.0"
-  resolved "https://registry.yarnpkg.com/azurite/-/azurite-3.9.0.tgz#7617591e5ec273dfaa0962890ffb81cf1eadfe0f"
-  integrity sha512-unnRyvFBFw9fWXt4pf/lFKD7fiwQr5qU0mOgdhLh2xwNtWgeRH0ywK8O2gAy2ajyOrU6DZcARcYgmEHIKa7eBQ==
+azurite@^3.10.0:
+  version "3.10.0"
+  resolved "https://registry.yarnpkg.com/azurite/-/azurite-3.10.0.tgz#a06e03fcca9595690017ffd7804a902e48cae374"
+  integrity sha512-UgcZ9NZ+kDrMQA+CVRNoRgWulKnZV/c7IqsYTvG/nIZEabZe7cMLXAIOIqGk+ysIkAYMsmD7BC+awAtUmrslrw==
   dependencies:
     "@azure/ms-rest-js" "^1.5.0"
     args "^5.0.1"
