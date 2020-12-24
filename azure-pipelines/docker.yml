@@ -19,7 +19,7 @@ steps:
       tags: $(Build.BuildNumber)
   - task: Docker@2
     displayName: docker push
-    condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
+    condition: and(succeeded(), eq(variables['Agent.OS'], 'Linux'), ne(variables['Build.Reason'], 'PullRequest'))
     inputs:
       containerRegistry: $(acr)
       command: push

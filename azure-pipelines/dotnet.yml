@@ -39,8 +39,7 @@ steps:
   env:
     ${{ parameters.test_secrets }}
 
-- template: dotnet.yml
-  condition: and(succeeded(), eq(variables['Agent.OS'], 'Linux'))
+- template: docker.yml
 
 - powershell: azure-pipelines/variables/_pipelines.ps1
   failOnStderr: true
