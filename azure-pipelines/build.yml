@@ -37,6 +37,35 @@ jobs:
       test_secrets:
         CosmosDBConnectionString: $(CosmosDBConnectionString)
 
+  - task: DotNetCoreCLI@2
+    displayName: dotnet publish
+    inputs:
+      command: publish
+      arguments: --no-build -c $(BuildConfiguration)
+      workingDirectory: src/IronPigeon.Relay
+  - task: DockerInstaller@0
+    inputs:
+      dockerVersion: 17.09.0-ce
+  - task: Docker@2
+    displayName: docker build
+    inputs:
+      containerRegistry: $(acr)
+      command: build
+      Dockerfile: src/IronPigeon.Relay/Dockerfile
+      buildContext: $(Build.SourcesDirectory)
+      tags: $(Build.BuildNumber)
+  - task: Docker@2
+    displayName: docker push
+    condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
+    inputs:
+      containerRegistry: $(acr)
+      command: push
+      Dockerfile: src/IronPigeon.Relay/Dockerfile
+      buildContext: $(Build.SourcesDirectory)
+      tags: |
+        latest
+        $(Build.BuildNumber)
+
 - job: macOS
   condition: false
   pool:

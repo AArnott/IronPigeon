@@ -5,7 +5,6 @@ WORKDIR /app
 EXPOSE 80
 EXPOSE 443
 
-FROM base AS final
 WORKDIR /app
-COPY --from=publish /app/publish .
+COPY /bin/IronPigeon.Relay/Release/net5.0/publish .
 ENTRYPOINT ["dotnet", "IronPigeon.Relay.dll"]
