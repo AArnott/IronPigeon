@@ -11,6 +11,9 @@ steps:
 - script: dotnet pack --no-build -c $(BuildConfiguration) -p:Platform="$(BuildPlatform)" /v:m /bl:"$(Build.ArtifactStagingDirectory)/build_logs/pack.binlog"
   displayName: dotnet pack
 
+- script: dotnet publish --no-build -c $(BuildConfiguration) src/IronPigeon.Relay /bl:"$(Build.ArtifactStagingDirectory)/build_logs/publish.binlog"
+  displayName: dotnet publish IronPigeon.Relay
+
 - task: DotNetCoreCLI@2
   displayName: dotnet test -f net472
   inputs:

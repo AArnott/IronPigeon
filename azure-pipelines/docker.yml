@@ -1,10 +1,4 @@
 steps:
-  - task: DotNetCoreCLI@2
-    displayName: dotnet publish
-    inputs:
-      command: publish
-      arguments: --no-build -c $(BuildConfiguration) /bl:"$(Build.ArtifactStagingDirectory)/build_logs/publish.binlog"
-      workingDirectory: src/IronPigeon.Relay
   - task: DockerInstaller@0
     displayName: Install docker CLI
     inputs:
