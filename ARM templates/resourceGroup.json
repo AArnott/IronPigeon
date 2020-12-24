@@ -1,0 +1,99 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "rgName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the resource group that contains all resources."
+      }
+    },
+    "rgLocation": {
+      "type": "string",
+      "defaultValue": "westus2",
+      "metadata": {
+        "description": "Location for all resources."
+      }
+    }
+  },
+  "variables": {
+    "storageAccountName": "[concat('storage', uniquestring(parameters('rgName')))]",
+    "webSvcName": "[concat('websvc', uniquestring(parameters('rgName')))]",
+    "webSvcPlanName": "[concat('websvcPlan', uniquestring(parameters('rgName')))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Resources/resourceGroups",
+      "apiVersion": "2020-06-01",
+      "name": "[parameters('rgName')]",
+      "location": "[parameters('rgLocation')]",
+      "properties": {}
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2020-06-01",
+      "name": "storageDeployment",
+      "resourceGroup": "[parameters('rgName')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/resourceGroups/', parameters('rgName'))]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {},
+          "variables": {},
+          "resources": [
+            {
+              "type": "Microsoft.Storage/storageAccounts",
+              "apiVersion": "2019-06-01",
+              "name": "[variables('storageAccountName')]",
+              "location": "[parameters('rgLocation')]",
+              "sku": {
+                "name": "Standard_LRS"
+              },
+              "kind": "StorageV2",
+              "properties": {}
+            },
+            {
+              "apiVersion": "2018-11-01",
+              "name": "[variables('webSvcName')]",
+              "type": "Microsoft.Web/sites",
+              "location": "[parameters('rgLocation')]",
+              "dependsOn": [
+                "[concat('Microsoft.Web/serverfarms/', variables('webSvcPlanName'))]"
+              ],
+              "properties": {
+                "name": "[variables('webSvcName')]",
+                "siteConfig": {
+                  "appSettings": [],
+                  "linuxFxVersion": "DOTNETCORE|5.0",
+                  "alwaysOn": "false"
+                },
+                "serverFarmId": "[concat('/subscriptions/', subscription().id,'/resourcegroups/', parameters('rgName'), '/providers/Microsoft.Web/serverfarms/', variables('webSvcPlanName'))]",
+                "clientAffinityEnabled": false
+              }
+            },
+            {
+              "apiVersion": "2018-11-01",
+              "name": "[variables('webSvcPlanName')]",
+              "type": "Microsoft.Web/serverfarms",
+              "location": "[parameters('rgLocation')]",
+              "kind": "linux",
+              "properties": {
+                "name": "[variables('webSvcPlanName')]"
+              },
+              "sku": {
+                "Tier": "Free",
+                "Name": "F1"
+              }
+            }
+          ],
+          "outputs": {}
+        }
+      }
+    }
+  ],
+  "outputs": {}
+}
