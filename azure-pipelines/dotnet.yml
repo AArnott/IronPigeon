@@ -39,6 +39,9 @@ steps:
   env:
     ${{ parameters.test_secrets }}
 
+- template: dotnet.yml
+  condition: and(succeeded(), eq(variables['Agent.OS'], 'Linux'))
+
 - powershell: azure-pipelines/variables/_pipelines.ps1
   failOnStderr: true
   displayName: Update pipeline variables based on build outputs
