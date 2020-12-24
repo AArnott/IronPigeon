@@ -8,7 +8,7 @@
         "description": "Name of the resource group that contains all resources."
       }
     },
-    "rgLocation": {
+    "location": {
       "type": "string",
       "defaultValue": "westus2",
       "metadata": {
@@ -26,7 +26,7 @@
       "type": "Microsoft.Resources/resourceGroups",
       "apiVersion": "2020-06-01",
       "name": "[parameters('rgName')]",
-      "location": "[parameters('rgLocation')]",
+      "location": "[parameters('location')]",
       "properties": {}
     },
     {
@@ -49,7 +49,7 @@
               "type": "Microsoft.Storage/storageAccounts",
               "apiVersion": "2019-06-01",
               "name": "[variables('storageAccountName')]",
-              "location": "[parameters('rgLocation')]",
+              "location": "[parameters('location')]",
               "sku": {
                 "name": "Standard_LRS"
               },
@@ -60,7 +60,7 @@
               "apiVersion": "2018-11-01",
               "name": "[variables('webSvcName')]",
               "type": "Microsoft.Web/sites",
-              "location": "[parameters('rgLocation')]",
+              "location": "[parameters('location')]",
               "dependsOn": [
                 "[concat('Microsoft.Web/serverfarms/', variables('webSvcPlanName'))]"
               ],
@@ -68,7 +68,6 @@
                 "name": "[variables('webSvcName')]",
                 "siteConfig": {
                   "appSettings": [],
-                  "linuxFxVersion": "DOTNETCORE|5.0",
                   "alwaysOn": "false"
                 },
                 "serverFarmId": "[concat('/subscriptions/', subscription().id,'/resourcegroups/', parameters('rgName'), '/providers/Microsoft.Web/serverfarms/', variables('webSvcPlanName'))]",
@@ -79,7 +78,7 @@
               "apiVersion": "2018-11-01",
               "name": "[variables('webSvcPlanName')]",
               "type": "Microsoft.Web/serverfarms",
-              "location": "[parameters('rgLocation')]",
+              "location": "[parameters('location')]",
               "kind": "linux",
               "properties": {
                 "name": "[variables('webSvcPlanName')]"
