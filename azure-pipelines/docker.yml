@@ -6,8 +6,9 @@ steps:
   - task: Docker@2
     displayName: docker build
     inputs:
-      containerRegistry: $(acr)
       command: build
+      containerRegistry: $(acr)
+      repository: ironpigeonwebsvc
       Dockerfile: src/IronPigeon.Relay/Dockerfile
       buildContext: $(Build.SourcesDirectory)
       tags: |
@@ -17,9 +18,9 @@ steps:
     displayName: docker push
     condition: and(succeeded(), eq(variables['Agent.OS'], 'Linux'), ne(variables['Build.Reason'], 'PullRequest'))
     inputs:
+      command: push
       containerRegistry: $(acr)
       repository: ironpigeonwebsvc
-      command: push
       Dockerfile: src/IronPigeon.Relay/Dockerfile
       buildContext: $(Build.SourcesDirectory)
       tags: |
