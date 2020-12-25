@@ -3,6 +3,8 @@ steps:
     displayName: Install docker CLI
     inputs:
       dockerVersion: 17.09.0-ce
+  - powershell: echo "##vso[task.setvariable variable=semver2;]$(& (./azure-pipelines/Get-nbgv.ps1) get-version -v SemVer2)"
+    displayName: Calculate docker tag
   - task: Docker@2
     displayName: docker build
     inputs:
@@ -13,7 +15,7 @@ steps:
       buildContext: $(Build.SourcesDirectory)
       tags: |
         latest
-        $(Build.BuildNumber)
+        $(semver2)
   - task: Docker@2
     displayName: docker push
     condition: and(succeeded(), eq(variables['Agent.OS'], 'Linux'), ne(variables['Build.Reason'], 'PullRequest'))
@@ -25,4 +27,4 @@ steps:
       buildContext: $(Build.SourcesDirectory)
       tags: |
         latest
-        $(Build.BuildNumber)
+        $(semver2)
