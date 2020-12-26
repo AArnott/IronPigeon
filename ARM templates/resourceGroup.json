@@ -14,10 +14,16 @@
       "metadata": {
         "description": "Location for all resources."
       }
+    },
+    "dockerTag": {
+      "type": "string",
+      "defaultValue": "latest"
     }
   },
   "variables": {
     "storageAccountName": "[concat('storage', uniquestring(parameters('rgName')))]",
+    "cosmosAccountName": "[concat('cosmos', uniquestring(parameters('rgName')))]",
+    "linuxFxVersion": "[concat('DOCKER|andrewarnott.azurecr.io/ironpigeonwebsvc:', parameters('dockerTag'))]",
     "webSvcName": "[concat('websvc', uniquestring(parameters('rgName')))]",
     "webSvcPlanName": "[concat('websvcPlan', uniquestring(parameters('rgName')))]"
   },
@@ -57,6 +63,37 @@
               "properties": {}
             },
             {
+              "apiVersion": "2020-04-01",
+              "kind": "GlobalDocumentDB",
+              "type": "Microsoft.DocumentDb/databaseAccounts",
+              "name": "[variables('cosmosAccountName')]",
+              "location": "[parameters('rgLocation')]",
+              "properties": {
+                "databaseAccountOfferType": "Standard",
+                "locations": [
+                  {
+                    "id": "[concat(variables('cosmosAccountName'), '-', parameters('rgLocation'))]",
+                    "failoverPriority": 0,
+                    "locationName": "[parameters('rgLocation')]"
+                  }
+                ],
+                "capabilities": [
+                  {
+                    "name": "EnableTable"
+                  },
+                  {
+                    "name": "EnableServerless"
+                  }
+                ],
+                "enableFreeTier": false
+              },
+              "tags": {
+                "defaultExperience": "Azure Table",
+                "hidden-cosmos-mmspecial": "",
+                "CosmosAccountType": "Non-Production"
+              }
+            },
+            {
               "apiVersion": "2018-11-01",
               "name": "[variables('webSvcName')]",
               "type": "Microsoft.Web/sites",
@@ -67,7 +104,25 @@
               "properties": {
                 "name": "[variables('webSvcName')]",
                 "siteConfig": {
-                  "appSettings": [],
+                  "appSettings": [
+                    {
+                      "name": "DOCKER_REGISTRY_SERVER_URL",
+                      "value": "https://andrewarnott.azurecr.io"
+                    },
+                    {
+                      "name": "DOCKER_REGISTRY_SERVER_USERNAME",
+                      "value": "andrewarnott"
+                    },
+                    {
+                      "name": "DOCKER_REGISTRY_SERVER_PASSWORD",
+                      "value": null
+                    },
+                    {
+                      "name": "WEBSITES_ENABLE_APP_SERVICE_STORAGE",
+                      "value": "false"
+                    }
+                  ],
+                  "linuxFxVersion": "[variables('linuxFxVersion')]",
                   "alwaysOn": "false"
                 },
                 "serverFarmId": "[concat('/subscriptions/', subscription().id,'/resourcegroups/', parameters('rgName'), '/providers/Microsoft.Web/serverfarms/', variables('webSvcPlanName'))]",
@@ -81,7 +136,8 @@
               "location": "[parameters('rgLocation')]",
               "kind": "linux",
               "properties": {
-                "name": "[variables('webSvcPlanName')]"
+                "name": "[variables('webSvcPlanName')]",
+                "reserved": true
               },
               "sku": {
                 "Tier": "Free",
