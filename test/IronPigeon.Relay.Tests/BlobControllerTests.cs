@@ -131,7 +131,15 @@ public class BlobControllerTests : TestBase, IClassFixture<RelayAppFactory>, IAs
         }
 
         Uri requestUri = new Uri(this.blobPostUrl.OriginalString + "?lifetimeInMinutes=" + lifetime, UriKind.Relative);
-        return await this.httpClient.PostAsync(requestUri, content, this.TimeoutToken);
+        using var request = new HttpRequestMessage(HttpMethod.Post, requestUri)
+        {
+            Content = content,
+            Headers =
+            {
+                TransferEncodingChunked = includeContentLengthHeader ? (bool?)null : true,
+            },
+        };
+        return await this.httpClient.SendAsync(request, this.TimeoutToken);
     }
 
     private async Task UploadAsync(LengthHeader lengthHeader, long length, TimeSpan expiration, HttpStatusCode expectedCode)
