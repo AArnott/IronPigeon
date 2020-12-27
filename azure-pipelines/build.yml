@@ -26,6 +26,7 @@ jobs:
   variables:
     BuildPlatform: Non_Windows
     TestFilter: ""
+    CosmosDBIsServerless: true
   steps:
   - checkout: self
     clean: true
@@ -44,6 +45,7 @@ jobs:
   variables:
     BuildPlatform: Non_Windows
     TestFilter: ""
+    CosmosDBIsServerless: true
   steps:
   - checkout: self
     clean: true
