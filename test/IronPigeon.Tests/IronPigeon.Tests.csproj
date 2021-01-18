@@ -8,7 +8,7 @@
     <EmbeddedResource Include="Providers/*/*.headers" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="coverlet.msbuild" Version="3.0.0" />
+    <PackageReference Include="coverlet.msbuild" Version="3.0.1" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.8.3" />
     <PackageReference Include="System.Security.Cryptography.Cng" Version="5.0.0" />
     <PackageReference Include="xunit" Version="2.4.1" />
