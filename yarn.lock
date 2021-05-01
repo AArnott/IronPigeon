@@ -160,10 +160,10 @@ axios@^0.19.0:
   dependencies:
     follow-redirects "1.5.10"
 
-azurite@^3.11.0:
-  version "3.11.0"
-  resolved "https://registry.yarnpkg.com/azurite/-/azurite-3.11.0.tgz#f43a709c224867a3f030c0744559911a676656bf"
-  integrity sha512-JwWxYFqbxgKEna6Oa3e7ZExfUKvvtA+BksohB1LueaGHvwviYwA/Dqj6psN2OZ6gEXlmIw8CA5QizzNbsx2iZw==
+azurite@^3.12.0:
+  version "3.12.0"
+  resolved "https://registry.yarnpkg.com/azurite/-/azurite-3.12.0.tgz#bf50aea60e3de2446ea9953a964092a2ca4c0368"
+  integrity sha512-+Vso0oWLMLDFovMKGbpxArp+6FJdI2a/uWAjMTf/o+ti9eW5KpPayljJGS2Ppb6YubevLkn/nlUKGBt23j1mCQ==
   dependencies:
     "@azure/ms-rest-js" "^1.5.0"
     args "^5.0.1"
@@ -177,6 +177,7 @@ azurite@^3.11.0:
     rimraf "^2.6.3"
     sequelize "^6.3.0"
     tedious "^9.2.1"
+    to-readable-stream "^2.1.0"
     tslib "^1.9.3"
     uri-templates "^0.2.0"
     uuid "^3.3.2"
@@ -1358,6 +1359,11 @@ text-hex@1.0.x:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/text-hex/-/text-hex-1.0.0.tgz#69dc9c1b17446ee79a92bf5b884bb4b9127506f5"
   integrity sha512-uuVGNWzgJ4yhRaNSiubPY7OjISw4sw4E5Uv0wbjp+OzcbmVU/rsT8ujgcXJhn9ypzsgr5vlzpPqP+MBBKcGvbg==
+
+to-readable-stream@^2.1.0:
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/to-readable-stream/-/to-readable-stream-2.1.0.tgz#82880316121bea662cdc226adb30addb50cb06e8"
+  integrity sha512-o3Qa6DGg1CEXshSdvWNX2sN4QHqg03SPq7U6jPXRahlQdl5dK8oXjkU/2/sGrnOZKeGV1zLSO8qPwyKklPPE7w==
 
 toidentifier@1.0.0:
   version "1.0.0"
