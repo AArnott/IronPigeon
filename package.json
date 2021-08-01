@@ -6,6 +6,6 @@
   "author": "Andrew Arnott <andrewarnott@gmail.com>",
   "license": "MIT",
   "devDependencies": {
-    "azurite": "^3.12.0"
+    "azurite": "^3.14.0"
   }
 }
