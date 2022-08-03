@@ -165,7 +165,13 @@ namespace IronPigeon.Providers
             directoryToBlobs.Complete();
             await directoryToBlobs.Completion.ConfigureAwait(false);
             deleteBlobBlock.Complete();
-            await deleteBlobBlock.Completion.ConfigureAwait(false);
+            try
+            {
+                await deleteBlobBlock.Completion.ConfigureAwait(false);
+            }
+            catch (Azure.RequestFailedException ex) when (ex.Status == (int)System.Net.HttpStatusCode.NotFound)
+            {
+            }
         }
     }
 }
