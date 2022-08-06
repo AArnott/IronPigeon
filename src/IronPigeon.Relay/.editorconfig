@@ -17,3 +17,6 @@ dotnet_diagnostic.SA1611.severity = silent
 
 # SA1615: Element return value should be documented
 dotnet_diagnostic.SA1615.severity = silent
+
+# VSTHRD111: Use ConfigureAwait(bool)
+dotnet_diagnostic.VSTHRD111.severity = silent

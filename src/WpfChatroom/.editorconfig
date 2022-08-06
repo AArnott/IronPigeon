@@ -8,3 +8,6 @@ dotnet_diagnostic.CA2007.severity = silent
 
 # VSTHRD110: Observe result of async calls
 dotnet_diagnostic.VSTHRD110.severity = suggestion
+
+# VSTHRD111: Use ConfigureAwait(bool)
+dotnet_diagnostic.VSTHRD111.severity = silent
