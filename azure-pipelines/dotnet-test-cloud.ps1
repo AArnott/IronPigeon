@@ -51,7 +51,7 @@ if ($x86) {
     --no-build `
     -c $Configuration `
     -p:Platform=$Platform `
-    --filter "TestCategory!=FailsInCloudTest$env:TestFilter" `
+    --filter "TestCategory!=FailsInCloudTest$env:TESTFILTER" `
     --collect "Code Coverage;Format=cobertura" `
     --settings "$PSScriptRoot/test.runsettings" `
     --blame-hang-timeout 60s `

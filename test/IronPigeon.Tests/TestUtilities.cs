@@ -8,6 +8,8 @@ using System.Threading.Tasks;
 
 internal static class TestUtilities
 {
+    internal static bool IsMono => Type.GetType("Mono.Runtime") is not null;
+
     internal static async Task<List<T>> ToListAsync<T>(this IAsyncEnumerable<T> asyncEnumerable, CancellationToken cancellationToken)
     {
         var list = new List<T>();

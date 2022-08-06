@@ -76,9 +76,10 @@ public class ChannelTests : TestBase, IAsyncLifetime, IDisposable
         Assert.Equal<byte>(this.validPayload.ToArray(), actualPayload.ToArray());
     }
 
-    [Fact]
+    [SkippableFact]
     public async Task PayloadReferenceTamperingTests()
     {
+        Skip.If(TestUtilities.IsMono);
         for (int i = 0; i < 100; i++)
         {
             using MemoryStream payload = new MemoryStream(new byte[] { 1, 2, 3 });
