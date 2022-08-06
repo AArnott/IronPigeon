@@ -122,7 +122,16 @@ namespace IronPigeon.Providers
             Requires.Argument(deleteBlobsExpiringBefore.Value.Kind == DateTimeKind.Utc, "expirationUtc", "UTC required.");
 
             var deleteBlobBlock = new ActionBlock<BlobItem>(
-                blob => this.container.DeleteBlobAsync(blob.Name, cancellationToken: cancellationToken),
+                async blob =>
+                {
+                    try
+                    {
+                        await this.container.DeleteBlobAsync(blob.Name, cancellationToken: cancellationToken).ConfigureAwait(false);
+                    }
+                    catch (Azure.RequestFailedException ex) when (ex.Status == (int)System.Net.HttpStatusCode.NotFound)
+                    {
+                    }
+                },
                 new ExecutionDataflowBlockOptions
                 {
                     MaxDegreeOfParallelism = 4,
@@ -165,13 +174,7 @@ namespace IronPigeon.Providers
             directoryToBlobs.Complete();
             await directoryToBlobs.Completion.ConfigureAwait(false);
             deleteBlobBlock.Complete();
-            try
-            {
-                await deleteBlobBlock.Completion.ConfigureAwait(false);
-            }
-            catch (Azure.RequestFailedException ex) when (ex.Status == (int)System.Net.HttpStatusCode.NotFound)
-            {
-            }
+            await deleteBlobBlock.Completion.ConfigureAwait(false);
         }
     }
 }
