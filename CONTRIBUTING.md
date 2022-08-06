@@ -53,4 +53,21 @@ Our unit tests requires that Azurite (or the Azure Storage Emulator) be started 
 After installing the emulator (see Prerequisites) it can be started from the Windows Start menu.
 Use the `tools/Emulators.ps1` script to run the Azure emulators.
 
+## Docker build & testing
+
+Build the docker image and run it:
+
+```cmd
+dotnet publish -c release .\src\IronPigeon.Relay
+docker-compose build
+docker-compose up webapp
+```
+
+Attach to it from Visual Studio:
+
+1. Debug -> Attach to Process
+1. Set "Connection type:" to "Docker (Linux Container)"
+1. Set "Connection target:" to the name of the docker container. Use the "Find..." button to help identify the name. It may be `ironpigeon_webapp_1`.
+1. Select the `dotnet` process.
+
 [pwsh]: https://docs.microsoft.com/en-us/powershell/scripting/install/installing-powershell?view=powershell-6

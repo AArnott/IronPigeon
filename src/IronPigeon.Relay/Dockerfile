@@ -1,4 +1,5 @@
-#See https://aka.ms/containerfastmode to understand how Visual Studio uses this Dockerfile to build your images for faster debugging.
+# This script assumes the following command has already been run:
+# dotnet publish -c release .\src\IronPigeon.Relay
 
 FROM mcr.microsoft.com/dotnet/aspnet:5.0
 WORKDIR /app

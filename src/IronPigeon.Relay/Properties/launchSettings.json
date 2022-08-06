@@ -1,5 +1,4 @@
-﻿{
-  "$schema": "http://json.schemastore.org/launchsettings.json",
+{
   "iisSettings": {
     "windowsAuthentication": false,
     "anonymousAuthentication": true,
@@ -8,6 +7,7 @@
       "sslPort": 44333
     }
   },
+  "$schema": "http://json.schemastore.org/launchsettings.json",
   "profiles": {
     "IIS Express": {
       "commandName": "IISExpress",
@@ -19,10 +19,21 @@
     "IronPigeon.Relay": {
       "commandName": "Project",
       "launchBrowser": true,
-      "applicationUrl": "https://localhost:5001;http://localhost:5000",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
-      }
+      },
+      "applicationUrl": "https://localhost:5001;http://localhost:5000"
+    },
+    "Docker": {
+      "commandName": "Docker",
+      "launchBrowser": true,
+      "launchUrl": "{Scheme}://{ServiceHost}:{ServicePort}",
+      "environmentVariables": {
+        "AzureStorageConnectionString": "DefaultEndpointsProtocol=https;AccountName=storagef3rbfuk3muktw;AccountKey=OQ1xZvO4Tx+qKrBGJbf7BoL+kPSh6dk/JgAnaI8kQfudoKGtjExYi/kQVf9Y/9H5JK0jyn++K+oBWOSJKeW5zg==;EndpointSuffix=core.windows.net",
+        "CosmosDBConnectionString": "DefaultEndpointsProtocol=https;AccountName=cosmosf3rbfuk3muktw;AccountKey=4jASRDoDZO7MbGHASpLqzSDUVRygbXmFZRg3seQ2068mh9kmCYiY1Vp1YFffSzhO2sF2zStFqcAdqmPIstwEQA==;TableEndpoint=https://cosmosf3rbfuk3muktw.table.cosmos.azure.com:443/;"
+      },
+      "publishAllPorts": true,
+      "useSSL": true
     }
   }
 }

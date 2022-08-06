@@ -19,7 +19,10 @@ namespace IronPigeon.Relay
             this.AzureStorageConnectionString = configuration.GetValue<string>("AzureStorageConnectionString") ?? throw new InvalidOperationException("Missing AzureStorageConnectionString in configuration.");
             this.CosmosDBConnectionString = configuration.GetValue<string>("CosmosDBConnectionString") ?? throw new InvalidOperationException("Missing CosmosDBConnectionString in configuration.");
             this.TableCloudStorageAccount = CloudStorageAccount.Parse(this.CosmosDBConnectionString);
-            this.TableClient = this.TableCloudStorageAccount.CreateCloudTableClient();
+            this.TableClient = this.TableCloudStorageAccount.CreateCloudTableClient(new TableClientConfiguration
+            {
+                UseRestExecutorForCosmosEndpoint = true,
+            });
 
             // We want to isolate tests for a particular run, particularly in case they're using a shared resource like a test environment in Azure.
             string? tableNameSuffix = Environment.GetEnvironmentVariable("BUILD_BUILDID");
