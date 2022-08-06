@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;net5.0</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;net6.0</TargetFrameworks>
   </PropertyGroup>
   <ItemGroup>
     <Compile Update="Strings.Designer.cs">
@@ -17,8 +17,5 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\IronPigeon\IronPigeon.csproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Update="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="3.3.1" />
   </ItemGroup>
 </Project>

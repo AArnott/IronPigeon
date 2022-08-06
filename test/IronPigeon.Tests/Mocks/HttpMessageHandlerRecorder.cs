@@ -139,7 +139,7 @@ internal class HttpMessageHandlerRecorder : HttpClientHandler
             using (FileStream? file = File.Open(bodyFile, FileMode.Create, FileAccess.Write))
             {
                 var contentCopy = new MemoryStream();
-#if NET5_0
+#if NET5_0_OR_GREATER
                 await response.Content.CopyToAsync(contentCopy, cancellationToken);
 #else
                 await response.Content.CopyToAsync(contentCopy);
