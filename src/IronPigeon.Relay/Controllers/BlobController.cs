@@ -139,7 +139,7 @@ namespace IronPigeon.Relay.Controllers
             return streamCopy;
         }
 
-        private static bool TryGetMaxAllowedBlobSize(TimeSpan lifetime, string contentType, [NotNullWhen(true)] out long? maxSize)
+        private static bool TryGetMaxAllowedBlobSize(TimeSpan lifetime, string? contentType, [NotNullWhen(true)] out long? maxSize)
         {
             if (contentType == AddressBookEntry.ContentType.MediaType)
             {
@@ -160,7 +160,7 @@ namespace IronPigeon.Relay.Controllers
             return false;
         }
 
-        private static IActionResult? GetDisallowedLifetimeResponse(long blobSize, TimeSpan lifetime, string contentType)
+        private static IActionResult? GetDisallowedLifetimeResponse(long blobSize, TimeSpan lifetime, string? contentType)
         {
             // We have a special max lifetime for address book entries.
             if (contentType == AddressBookEntry.ContentType.MediaType && lifetime <= MaxAddressBookEntryLifetime)

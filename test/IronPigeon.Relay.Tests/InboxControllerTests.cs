@@ -239,7 +239,7 @@ public class InboxControllerTests : TestBase, IClassFixture<RelayAppFactory>, IA
     {
         string sentText = "Test";
         using var sentStream = new MemoryStream(Encoding.UTF8.GetBytes(sentText));
-        NotificationPostedReceipt receipt = Assert.Single(await transmittingChannel.PostAsync(sentStream, new ContentType("text/plain"), new Endpoint[] { receivingChannel.Endpoint.PublicEndpoint }, DateTime.UtcNow.AddHours(1), cancellationToken: this.TimeoutToken));
+        NotificationPostedReceipt receipt = Assert.Single(await transmittingChannel.PostAsync(sentStream, new ContentType("text/plain"), new[] { receivingChannel.Endpoint.PublicEndpoint }, DateTime.UtcNow.AddHours(1), cancellationToken: this.TimeoutToken));
         Assert.Same(receivingChannel.Endpoint.PublicEndpoint, receipt.Recipient);
     }
 }

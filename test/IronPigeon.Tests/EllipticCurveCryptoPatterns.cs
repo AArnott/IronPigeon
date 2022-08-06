@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
@@ -43,98 +44,101 @@ public class EllipticCurveCryptoPatterns : TestBase
     /// If the long-lived (authentication) keys are compromised, they cannot be used to
     /// recover any encryption keys because encryption keys were never transmitted.
     /// </summary>
-#if NETCOREAPP2_1
-    [Fact(Skip = "Fails on .NET Core 2.1 due to a crypto bug.")]
-#else
     [SkippableFact]
-#endif
     public async Task ECAsymmetricSigningAndEncryption()
     {
-        Skip.IfNot(RuntimeInformation.IsOSPlatform(OSPlatform.Windows));
-        using var bob = new ECDsaCng(521);
-        var bobPublic = CngKey.Import(bob.Key.Export(CngKeyBlobFormat.EccPublicBlob), CngKeyBlobFormat.EccPublicBlob);
-        using var alice = new ECDsaCng(521);
-        var alicePublic = CngKey.Import(alice.Key.Export(CngKeyBlobFormat.EccPublicBlob), CngKeyBlobFormat.EccPublicBlob);
+        Skip.If(TestUtilities.IsMono || !RuntimeInformation.IsOSPlatform(OSPlatform.Windows));
+        await MonoShieldAsync();
 
-        // Bob formulates request.
-        using var bobRequest = new MemoryStream();
-        using var bobDH = ECDiffieHellman.Create();
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        async Task MonoShieldAsync()
         {
-            byte[] bobPublicDH = bobDH.PublicKey.ToByteArray();
-            byte[] bobSignedDH = bob.SignData(bobPublicDH);
-            await this.WriteChunkAsync(bobRequest, bobPublicDH);
-            await this.WriteChunkAsync(bobRequest, bobSignedDH);
-            bobRequest.Position = 0;
-        }
+            using var bob = new ECDsaCng(521);
+            var bobPublic = CngKey.Import(bob.Key.Export(CngKeyBlobFormat.EccPublicBlob), CngKeyBlobFormat.EccPublicBlob);
+            using var alice = new ECDsaCng(521);
+            var alicePublic = CngKey.Import(alice.Key.Export(CngKeyBlobFormat.EccPublicBlob), CngKeyBlobFormat.EccPublicBlob);
 
-        // Alice reads request.
-        using var aliceResponse = new MemoryStream();
-        byte[] aliceKeyMaterial;
-        using var aliceDH = new ECDiffieHellmanCng();
-        {
-            byte[] bobPublicDH = await this.ReadChunkAsync(bobRequest);
-            byte[] bobSignedDH = await this.ReadChunkAsync(bobRequest);
-            using var bobDsa = new ECDsaCng(bobPublic);
-            Assert.True(bobDsa.VerifyData(bobPublicDH, bobSignedDH));
-            ECDiffieHellmanPublicKey? bobDHPK = ECDiffieHellmanCngPublicKey.FromByteArray(bobPublicDH, CngKeyBlobFormat.EccPublicBlob);
-            aliceKeyMaterial = aliceDH.DeriveKeyMaterial(bobDHPK);
-
-            await this.WriteChunkAsync(aliceResponse, aliceDH.PublicKey.ToByteArray());
-            await this.WriteChunkAsync(aliceResponse, alice.SignData(aliceDH.PublicKey.ToByteArray()));
-
-            // Alice also adds a secret message.
-            using (var aes = SymmetricAlgorithm.Create("AES"))
+            // Bob formulates request.
+            using var bobRequest = new MemoryStream();
+            using var bobDH = ECDiffieHellman.Create();
             {
-                using (ICryptoTransform? encryptor = aes.CreateEncryptor(aliceKeyMaterial, new byte[aes.BlockSize / 8]))
+                byte[] bobPublicDH = bobDH.PublicKey.ToByteArray();
+                byte[] bobSignedDH = bob.SignData(bobPublicDH);
+                await this.WriteChunkAsync(bobRequest, bobPublicDH);
+                await this.WriteChunkAsync(bobRequest, bobSignedDH);
+                bobRequest.Position = 0;
+            }
+
+            // Alice reads request.
+            using var aliceResponse = new MemoryStream();
+            byte[] aliceKeyMaterial;
+            using var aliceDH = new ECDiffieHellmanCng();
+            {
+                byte[] bobPublicDH = await this.ReadChunkAsync(bobRequest);
+                byte[] bobSignedDH = await this.ReadChunkAsync(bobRequest);
+                using var bobDsa = new ECDsaCng(bobPublic);
+                Assert.True(bobDsa.VerifyData(bobPublicDH, bobSignedDH));
+                ECDiffieHellmanPublicKey? bobDHPK = ECDiffieHellmanCngPublicKey.FromByteArray(bobPublicDH, CngKeyBlobFormat.EccPublicBlob);
+                aliceKeyMaterial = aliceDH.DeriveKeyMaterial(bobDHPK);
+
+                await this.WriteChunkAsync(aliceResponse, aliceDH.PublicKey.ToByteArray());
+                await this.WriteChunkAsync(aliceResponse, alice.SignData(aliceDH.PublicKey.ToByteArray()));
+
+                // Alice also adds a secret message.
+                using (var aes = SymmetricAlgorithm.Create("AES"))
                 {
-                    var cipherText = new MemoryStream();
-                    using (var cryptoStream = new CryptoStream(cipherText, encryptor, CryptoStreamMode.Write))
+                    using (ICryptoTransform? encryptor = aes.CreateEncryptor(aliceKeyMaterial, new byte[aes.BlockSize / 8]))
                     {
-                        cryptoStream.Write(new byte[] { 0x1, 0x3, 0x2 }, 0, 3);
-                        cryptoStream.FlushFinalBlock();
-                        cipherText.Position = 0;
-                        await this.WriteChunkAsync(aliceResponse, cipherText.ToArray());
+                        var cipherText = new MemoryStream();
+                        using (var cryptoStream = new CryptoStream(cipherText, encryptor, CryptoStreamMode.Write))
+                        {
+                            cryptoStream.Write(new byte[] { 0x1, 0x3, 0x2 }, 0, 3);
+                            cryptoStream.FlushFinalBlock();
+                            cipherText.Position = 0;
+                            await this.WriteChunkAsync(aliceResponse, cipherText.ToArray());
+                        }
+                    }
+                }
+
+                aliceResponse.Position = 0;
+            }
+
+            // Bob reads response
+            byte[] bobKeyMaterial;
+            {
+                byte[] alicePublicDH = await this.ReadChunkAsync(aliceResponse);
+                byte[] aliceSignedDH = await this.ReadChunkAsync(aliceResponse);
+                using var aliceDsa = new ECDsaCng(alicePublic);
+                Assert.True(aliceDsa.VerifyData(alicePublicDH, aliceSignedDH));
+                ECDiffieHellmanPublicKey? aliceDHPK = ECDiffieHellmanCngPublicKey.FromByteArray(alicePublicDH, CngKeyBlobFormat.EccPublicBlob);
+                bobKeyMaterial = bobDH.DeriveKeyMaterial(aliceDHPK);
+
+                // And Bob reads Alice's secret message.
+                using (var aes = SymmetricAlgorithm.Create("AES"))
+                {
+                    using (ICryptoTransform? decryptor = aes.CreateDecryptor(aliceKeyMaterial, new byte[aes.BlockSize / 8]))
+                    {
+                        using var plaintext = new MemoryStream();
+                        Stream substream = aliceResponse.ReadSubstream();
+                        using (var cryptoStream = new CryptoStream(substream, decryptor, CryptoStreamMode.Read))
+                        {
+                            await cryptoStream.CopyToAsync(plaintext);
+                            plaintext.Position = 0;
+                            byte[] secretMessage = new byte[1024];
+                            int readBytes = plaintext.Read(secretMessage, 0, secretMessage.Length);
+                        }
                     }
                 }
             }
 
-            aliceResponse.Position = 0;
+            Assert.Equal<byte>(aliceKeyMaterial, bobKeyMaterial);
         }
-
-        // Bob reads response
-        byte[] bobKeyMaterial;
-        {
-            byte[] alicePublicDH = await this.ReadChunkAsync(aliceResponse);
-            byte[] aliceSignedDH = await this.ReadChunkAsync(aliceResponse);
-            using var aliceDsa = new ECDsaCng(alicePublic);
-            Assert.True(aliceDsa.VerifyData(alicePublicDH, aliceSignedDH));
-            ECDiffieHellmanPublicKey? aliceDHPK = ECDiffieHellmanCngPublicKey.FromByteArray(alicePublicDH, CngKeyBlobFormat.EccPublicBlob);
-            bobKeyMaterial = bobDH.DeriveKeyMaterial(aliceDHPK);
-
-            // And Bob reads Alice's secret message.
-            using (var aes = SymmetricAlgorithm.Create("AES"))
-            {
-                using (ICryptoTransform? decryptor = aes.CreateDecryptor(aliceKeyMaterial, new byte[aes.BlockSize / 8]))
-                {
-                    using var plaintext = new MemoryStream();
-                    Stream substream = aliceResponse.ReadSubstream();
-                    using (var cryptoStream = new CryptoStream(substream, decryptor, CryptoStreamMode.Read))
-                    {
-                        await cryptoStream.CopyToAsync(plaintext);
-                        plaintext.Position = 0;
-                        byte[] secretMessage = new byte[1024];
-                        int readBytes = plaintext.Read(secretMessage, 0, secretMessage.Length);
-                    }
-                }
-            }
-        }
-
-        Assert.Equal<byte>(aliceKeyMaterial, bobKeyMaterial);
     }
 
-    [Fact]
+    [SkippableFact]
     public void ParameterizedAlgorithms()
     {
+        Skip.If(TestUtilities.IsMono || !RuntimeInformation.IsOSPlatform(OSPlatform.Windows));
         using var aa = ECDiffieHellman.Create();
         ECParameters pub = aa.ExportParameters(includePrivateParameters: false);
         ECParameters priv = aa.ExportParameters(includePrivateParameters: true);

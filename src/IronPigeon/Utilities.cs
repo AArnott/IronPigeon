@@ -402,7 +402,7 @@ namespace IronPigeon
             return true;
         }
 
-#if !NET5_0
+#if !NET6_0
         /// <inheritdoc cref="HttpContent.ReadAsStreamAsync()"/>
 #pragma warning disable CA1801 // Review unused parameters
         internal static Task<Stream> ReadAsStreamAsync(this HttpContent content, CancellationToken cancellationToken) => content.ReadAsStreamAsync();
