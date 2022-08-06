@@ -88,8 +88,8 @@ namespace IronPigeon.Providers
                 await this.HttpClient.PostAsync(this.InboxFactoryUrl, null!, cancellationToken).ConfigureAwait(false);
             responseMessage.EnsureSuccessStatusCode();
             string json = await responseMessage.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
-            InboxCreationResponse creationResponse = JsonConvert.DeserializeObject<InboxCreationResponse>(json);
-            return creationResponse;
+            InboxCreationResponse? creationResponse = JsonConvert.DeserializeObject<InboxCreationResponse>(json);
+            return creationResponse ?? throw new InvalidMessageException("Unexpected null value returned.");
         }
     }
 }

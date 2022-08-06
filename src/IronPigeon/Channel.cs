@@ -102,7 +102,14 @@ namespace IronPigeon
                 InboxItem inboxItem;
                 try
                 {
-                    InboxItemEnvelope envelope = MessagePackSerializer.Deserialize<InboxItemEnvelope>(incomingInboxItem.Envelope, Utilities.MessagePackSerializerOptions, cancellationToken);
+                    InboxItemEnvelope? envelope = MessagePackSerializer.Deserialize<InboxItemEnvelope>(incomingInboxItem.Envelope, Utilities.MessagePackSerializerOptions, cancellationToken);
+                    if (envelope is null)
+                    {
+                        // Bad message. Throw it out.
+                        await this.RelayServer.DeleteInboxItemAsync(incomingInboxItem, cancellationToken).ConfigureAwait(false);
+                        continue;
+                    }
+
                     inboxItem = this.OpenEnvelope(envelope, cancellationToken);
                 }
                 catch (MessagePackSerializationException)
