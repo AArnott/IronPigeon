@@ -17,7 +17,7 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Azure.Storage.Blobs" Version="12.13.0" />
+    <PackageReference Include="Azure.Storage.Blobs" Version="12.13.1" />
     <PackageReference Include="MessagePack" Version="2.4.35" />
     <PackageReference Include="MessagePackAnalyzer" Version="2.4.35" />
     <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="6.0.0" Condition=" '$(TargetFramework)' == 'netstandard2.0' "/>
