@@ -307,10 +307,10 @@ axios@^0.27.0:
     follow-redirects "^1.14.9"
     form-data "^4.0.0"
 
-azurite@^3.18.0:
-  version "3.18.0"
-  resolved "https://registry.yarnpkg.com/azurite/-/azurite-3.18.0.tgz#de8a927cf057f3c09c9739f22fcb7dd728b2831a"
-  integrity sha512-qD+Q6+v58uHK0fIUhkvqDaZgO/EMrZrbJDfd3oja6p7FwqrRbffRq5RNhuGJTkpgqr7yqybwKHPSd0ARKTB2sg==
+azurite@^3.20.1:
+  version "3.20.1"
+  resolved "https://registry.yarnpkg.com/azurite/-/azurite-3.20.1.tgz#c05409169010da9606db98ed6f2ab69cb473a0e8"
+  integrity sha512-5LpzCd2gtTSrPpu0ZlCNtUakqQ5kMy418hjpxyA+//25ukTZNeS358+kg2RYKNrMWg7yYl6plYHj2S46YP0TsA==
   dependencies:
     "@azure/ms-rest-js" "^1.5.0"
     args "^5.0.1"
@@ -325,7 +325,7 @@ azurite@^3.18.0:
     mysql2 "^2.1.0"
     rimraf "^3.0.2"
     sequelize "^6.3.0"
-    tedious "^14.0.0"
+    tedious "^15.0.0"
     to-readable-stream "^2.1.0"
     tslib "^2.3.0"
     uri-templates "^0.2.0"
@@ -1746,10 +1746,10 @@ supports-color@^5.3.0:
   dependencies:
     has-flag "^3.0.0"
 
-tedious@^14.0.0:
-  version "14.7.0"
-  resolved "https://registry.yarnpkg.com/tedious/-/tedious-14.7.0.tgz#4126eab68aa3f24ef42406f2e74af5aa96b64e50"
-  integrity sha512-d3qlmZcvZyt7akyPHiOdR+knfzObWZH3mW+gouQTSb7YTSwtpHuYHcvsQabfbY7oOvgbs51xRb7CwOahWK/t9w==
+tedious@^15.0.0:
+  version "15.1.0"
+  resolved "https://registry.yarnpkg.com/tedious/-/tedious-15.1.0.tgz#4f8db104383f50c581f06baeb33ff6966bb27b88"
+  integrity sha512-D96Z8SL4ALE/rS6rOAfzWd/x+RD9vWbnNT3w5KZ0e0Tdh5FX1bKEODS+1oemSQM2ok5SktLHqSJqYQRx4yu3WA==
   dependencies:
     "@azure/identity" "^2.0.4"
     "@azure/keyvault-keys" "^4.4.0"
@@ -1880,12 +1880,7 @@ uuid@^3.2.1, uuid@^3.3.2:
   resolved "https://registry.yarnpkg.com/uuid/-/uuid-3.4.0.tgz#b23e4358afa8a202fe7a100af1f5f883f02007ee"
   integrity sha512-HjSDRw6gZE5JMggctHBcjVak08+KEVhSIiDzFnT9S9aegmp85S/bReBVTb4QTFaRNptJ9kuYaNhnbNEOkbKb/A==
 
-uuid@^8.1.0:
-  version "8.3.1"
-  resolved "https://registry.yarnpkg.com/uuid/-/uuid-8.3.1.tgz#2ba2e6ca000da60fce5a196954ab241131e05a31"
-  integrity sha512-FOmRr+FmWEIG8uhZv6C2bTgEVXsHk08kE7mPlrBbEe+c3r9pjceVPgupIfNIhc4yx55H69OXANrUaSuu9eInKg==
-
-uuid@^8.3.0:
+uuid@^8.1.0, uuid@^8.3.0:
   version "8.3.2"
   resolved "https://registry.yarnpkg.com/uuid/-/uuid-8.3.2.tgz#80d5b5ced271bb9af6c445f21a1a04c606cefbe2"
   integrity sha512-+NYs2QeMWy+GWFOEm9xnn6HCDp0l7QBD7ml8zLUmJ+93Q5NF0NocErnwkTkXVFNiX3/fpC6afS8Dhb/gz7R7eg==
