@@ -22,7 +22,7 @@
     <PackageReference Include="MessagePackAnalyzer" Version="2.4.35" />
     <PackageReference Include="Microsoft.Bcl.AsyncInterfaces" Version="6.0.0" Condition=" '$(TargetFramework)' == 'netstandard2.0' "/>
     <PackageReference Include="Microsoft.Extensions.Http" Version="6.0.0" />
-    <PackageReference Include="Microsoft.VisualStudio.Threading" Version="17.2.32" />
+    <PackageReference Include="Microsoft.VisualStudio.Threading" Version="17.4.33" />
     <PackageReference Include="Nerdbank.Streams" Version="2.8.62" />
     <PackageReference Include="newtonsoft.json" Version="13.0.1" />
     <PackageReference Include="PCLCrypto" Version="2.1.49-alpha" />
